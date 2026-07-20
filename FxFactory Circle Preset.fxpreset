@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>FxFactoryPresetCreatedByParameterID</key>
+	<integer>117</integer>
+	<key>FxFactoryPresetParameterValues</key>
+	<dict>
+		<key>104</key>
+		<integer>12</integer>
+		<key>107</key>
+		<dict>
+			<key>alpha</key>
+			<real>1</real>
+			<key>blue</key>
+			<real>0.20393681526184082</real>
+			<key>colorspace</key>
+			<integer>1</integer>
+			<key>green</key>
+			<real>1.0000001192092896</real>
+			<key>red</key>
+			<real>0.97257953882217407</real>
+		</dict>
+		<key>108</key>
+		<dict>
+			<key>alpha</key>
+			<real>1</real>
+			<key>blue</key>
+			<real>0.0</real>
+			<key>colorspace</key>
+			<integer>1</integer>
+			<key>green</key>
+			<real>0.0</real>
+			<key>red</key>
+			<real>0.0</real>
+		</dict>
+		<key>109</key>
+		<real>220</real>
+		<key>110</key>
+		<real>118</real>
+		<key>111</key>
+		<integer>0</integer>
+		<key>112</key>
+		<dict>
+			<key>x</key>
+			<real>0.5</real>
+			<key>y</key>
+			<real>0.5</real>
+		</dict>
+		<key>113</key>
+		<real>1</real>
+		<key>114</key>
+		<real>0.0</real>
+		<key>118</key>
+		<string>Curve/InverseQuadratic.png</string>
+		<key>20</key>
+		<integer>0</integer>
+	</dict>
+	<key>FxFactoryPresetPlugInAuthor</key>
+	<string>Noise Industries, LLC</string>
+	<key>FxFactoryPresetPlugInLocalizedName</key>
+	<dict>
+		<key>English</key>
+		<string>Circle</string>
+	</dict>
+	<key>FxFactoryPresetPlugInUUID</key>
+	<string>77C0D916-29A6-4D97-A09A-21DE2858C8E5</string>
+	<key>FxFactoryPresetPlugInVersion</key>
+	<string>1.0</string>
+	<key>FxFactoryPresetProductID</key>
+	<string>fxfactorypro</string>
+</dict>
+</plist>

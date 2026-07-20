@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "0F1A6A17-0FD4-43EA-AFF5-4214F39AC0C6",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FxGrip.xcodeproj",
+        "identifier" : "CEA524D12D221BEF00302F8F",
+        "name" : "FxGripTests"
+      }
+    }
+  ],
+  "version" : 1
+}

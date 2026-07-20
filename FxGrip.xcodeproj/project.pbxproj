@@ -1,0 +1,997 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CE1B5E032D87F0FD003CA9FF /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5E022D87F0FD003CA9FF /* CoreMedia.framework */; };
+		CE1B5E052D87F11F003CA9FF /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5E042D87F11F003CA9FF /* Metal.framework */; };
+		CE1B5E062D87F1D6003CA9FF /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE5573F32D1B715000A2B063 /* AppKit.framework */; platformFilters = (macos, ); };
+		CE1B5E082D87F1E0003CA9FF /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5E072D87F1E0003CA9FF /* WebKit.framework */; };
+		CEB11D8A2E53F5000069B893 /* FxPlug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5D5B2D8735BC003CA9FF /* FxPlug.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		CEB11D8C2E53F5610069B893 /* FxGrip.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEA524C92D221BEF00302F8F /* FxGrip.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		CEB11D8D2E53F5610069B893 /* FxGrip.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CEA524C92D221BEF00302F8F /* FxGrip.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CEFC3FE52D6A5334003CF13B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE5573F12D1B715000A2B063 /* Foundation.framework */; };
+		BE00000000000000000000A2 /* BEFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; };
+		BE00000000000000000000A3 /* BEFoundation.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CEA524D42D221BEF00302F8F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CE5573DA2D1B715000A2B063 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CEA524C82D221BEF00302F8F;
+			remoteInfo = FxGrip;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CEB11D8E2E53F5610069B893 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				CEB11D8D2E53F5610069B893 /* FxGrip.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEDD91372D89236A00FD32FA /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				BE00000000000000000000A3 /* BEFoundation.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		CE1B5D5B2D8735BC003CA9FF /* FxPlug.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FxPlug.framework; path = /Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/FxPlug.framework; sourceTree = "<absolute>"; };
+		CE1B5E022D87F0FD003CA9FF /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		CE1B5E042D87F11F003CA9FF /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		CE1B5E072D87F1E0003CA9FF /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		CE5573E52D1B715000A2B063 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		CE5573F12D1B715000A2B063 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		CE5573F32D1B715000A2B063 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		CE5573F52D1B715000A2B063 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		CE5573F72D1B715000A2B063 /* PluginManager.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PluginManager.framework; path = /Library/Developer/Frameworks/PluginManager.framework; sourceTree = "<absolute>"; };
+		CE5579AA2D1D69E000A2B063 /* Personal Notes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Personal Notes.md"; sourceTree = "<group>"; };
+		CE5D79DA2D2E639300C8515A /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D79F52D2E639300C8515A /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D7A142D2E639300C8515A /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D7A482D2E639300C8515A /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D7A672D2E639300C8515A /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D7A852D2E639300C8515A /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D7AAC2D2E639300C8515A /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D7ACA2D2E639300C8515A /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE7AB5BA2D224DC0001A7395 /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE7AB5D52D224DC0001A7395 /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE7AB5F42D224DC0001A7395 /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE7AB6C62D224DC1001A7395 /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE7AB6E52D224DC1001A7395 /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE7AB70D2D224DC1001A7395 /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE7AB7DE2D224DC1001A7395 /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE7AB85A2D224DFB001A7395 /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE7AB9C52D229149001A7395 /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE7AB9E02D229149001A7395 /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE7AB9FF2D229149001A7395 /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE7ABA332D229149001A7395 /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE7ABA522D229149001A7395 /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE7ABA702D229149001A7395 /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE7ABA972D229149001A7395 /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE7ABAB52D229149001A7395 /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE92727A2D33191A0040EB84 /* CoreImage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreImage.framework; path = System/Library/Frameworks/CoreImage.framework; sourceTree = SDKROOT; };
+		CE92727C2D33194A0040EB84 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		BE00000000000000000000A1 /* BEFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BEFoundation.framework; path = Frameworks/BEFoundation.framework; sourceTree = "<group>"; };
+		CEA524C92D221BEF00302F8F /* FxGrip.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FxGrip.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEA524D22D221BEF00302F8F /* FxGripTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FxGripTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEBBF6042E53F200004E836C /* FxGrip.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FxGrip.xctestplan; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CEA524DA2D221BEF00302F8F /* Exceptions for "FxGrip" folder in "FxGrip" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Extensions/FxGripFactory.m,
+				Extensions/FxGripFactoryParameters.m,
+				Extensions/FxGripMeta.m,
+				Extensions/GuruFxExtension.old.h,
+				Extensions/GuruFxExtension.old.m,
+				"Extensions/GuruFxTileableEffect+Extensions.h",
+				"Extensions/GuruFxTileableEffect+Extensions.m",
+				FxGripParameters/Common/FxGripCustomParameterLibrary.m,
+				FxGripParameters/Common/FxGripStringParameterBaseLibrary.m,
+				FxGripParameters/Common/FxGripStringParameterLibrary.m,
+				FxGripParameters/Common/FxGripToggleParameterLibrary.m,
+				FxGripParameters/FxGripParameter.h,
+				FxGripParameters/FxGripParameter.m,
+				FxGripParameters/FxParameterBaseLibrary.m,
+				FxGripParameters/FxParameterLibrary.m,
+				GuruFxMetaManager.h,
+				GuruFxMetaManager.m,
+				GuruFxTileableEffect.h,
+				GuruFxTileableEffect.m,
+				"GuruFxTileableEffect+Analyze.h",
+				"GuruFxTileableEffect+Analyze.m",
+				"GuruFxTileableEffect+Parameters.h",
+				"GuruFxTileableEffect+Parameters.m",
+				"GuruFxTileableEffect+Timing.h",
+				"GuruFxTileableEffect+Timing.m",
+				"GuruFxTileableEffect+Versioning.h",
+				"GuruFxTileableEffect+Versioning.m",
+				"Resources/Final Cut Pro Time Points.png",
+				"Resources/Motion Time Points.png",
+				"Resources/Understanding Time in FxPlug.loc",
+				"Utilities/Object Extensions/FxGripPrimeNumbers.h",
+				"Utilities/Object Extensions/FxGripPrimeNumbers.m",
+			);
+			publicHeaders = (
+				Extensions/FxExtension.h,
+				Extensions/FxGripAboutMenu.h,
+				Extensions/FxGripDebugMenu.h,
+				Extensions/FxGripFactory.h,
+				Extensions/FxGripFactoryParameters.h,
+				Extensions/FxGripGoogleAnalytics.h,
+				Extensions/FxGripI18N.h,
+				Extensions/FxGripInstanceTracker.h,
+				Extensions/FxGripMeta.h,
+				Extensions/FxGripParameterData.h,
+				Extensions/FxGripRegression.h,
+				FxGrip.h,
+				FxGripAPIAccessing/FxAPINotifications.h,
+				FxGripAPIAccessing/FxGripAPIAccessing.h,
+				FxGripAPIAccessing/FxGripCommonAPI.h,
+				FxGripAPIAccessing/FxGripDynamicParameterAPI_v3.h,
+				FxGripAPIAccessing/FxGripDynamicParameterAPI_v4.h,
+				FxGripAPIAccessing/FxGripParameterCreationAPI_v5.h,
+				FxGripAPIAccessing/FxGripParameterGroupingAPI_v1.h,
+				FxGripAPIAccessing/FxGripParameterRetrievalAPI_v6.h,
+				FxGripAPIAccessing/FxGripParameterSettingAPI_v5.h,
+				FxGripAPIAccessing/FxGripParameterSettingAPI_v6.h,
+				FxGripAPIAccessing/FxGripTimingAPI_v4.h,
+				FxGripAPIAccessing/FxParameterTagsAPI_v1.h,
+				FxGripCustom/FxGripInterpolatingDictionary.h,
+				FxGripCustom/FxGripOOBParameterAccess.h,
+				FxGripErrors.h,
+				FxGripParameters/Common/FxGripAllParameters.h,
+				FxGripParameters/Common/FxGripAngleParameter.h,
+				FxGripParameters/Common/FxGripColorParameter.h,
+				FxGripParameters/Common/FxGripCustomParameter.h,
+				FxGripParameters/Common/FxGripFloatParameter.h,
+				FxGripParameters/Common/FxGripFontMenuParameter.h,
+				FxGripParameters/Common/FxGripGradientParameter.h,
+				FxGripParameters/Common/FxGripGroupParameter.h,
+				FxGripParameters/Common/FxGripHelpParameter.h,
+				FxGripParameters/Common/FxGripHistogramParameter.h,
+				FxGripParameters/Common/FxGripImageRefParameter.h,
+				FxGripParameters/Common/FxGripIntParameter.h,
+				FxGripParameters/Common/FxGripMenuParameter.h,
+				FxGripParameters/Common/FxGripPathParameter.h,
+				FxGripParameters/Common/FxGripPercentParameter.h,
+				FxGripParameters/Common/FxGripPointParameter.h,
+				FxGripParameters/Common/FxGripPushButtonParameter.h,
+				FxGripParameters/Common/FxGripRGBParameter.h,
+				FxGripParameters/Common/FxGripStringParameter.h,
+				FxGripParameters/Common/FxGripToggleParameter.h,
+				FxGripParameters/FxGripParameterFlags.h,
+				FxGripParameters/FxParameter.h,
+				FxGripParameters/FxParameterFlags.h,
+				"FxGripParameters/NSView+FxGrip.h",
+				FxGripTypes.h,
+				Utilities/FxGripMTLDeviceCache.h,
+				Utilities/FxGripParameterUtility.h,
+				Utilities/FxGripPluginInfo.h,
+				Utilities/FxGripPrincipalDelegate.h,
+				"Utilities/FxMatrix+FxGrip.h",
+				Utilities/FxTileableEffectBase.h,
+				"Utilities/FxTileableEffectBase+ColorGamut.h",
+				"Utilities/FxTileableEffectBase+Extensions.h",
+				"Utilities/FxTileableEffectBase+Notifications.h",
+				"Utilities/FxTileableEffectBase+OOBParameterAccess.h",
+				"Utilities/FxTileableEffectBase+Parameters.h",
+				"Utilities/FxTileableEffectBase+PluginProperties.h",
+				"Utilities/FxTileableEffectBase+ProjectProperties.h",
+				"Utilities/FxTileableEffectBase+Timing.h",
+				"Utilities/FxTileableEffectBase+Versioning.h",
+				Utilities/FxTileableGeneratorBase.h,
+				"Utilities/FxTileImage+FxGrip.h",
+				"Utilities/NSArray+FxPlug.h",
+				"Utilities/NSCoder+FxPlug.h",
+				"Utilities/NSDictionary+FxTileableEffect.h",
+				Utilities/Registrars/FxGripClassRegistrar.h,
+				Utilities/Registrars/FxGripConfigRegistrar.h,
+				Utilities/Registrars/FxGripDynamicRegistrar.h,
+				Utilities/Registrars/FxGripStaticRegistrar.h,
+				Utilities/Registrars/FxPluginData.h,
+				Utilities/Registrars/FxPluginGroupData.h,
+				Utilities/Registrars/FxRegisteredPlugin.h,
+			);
+			target = CEA524C82D221BEF00302F8F /* FxGrip */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		CEA524CA2D221BEF00302F8F /* FxGrip */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CEA524DA2D221BEF00302F8F /* Exceptions for "FxGrip" folder in "FxGrip" target */,
+			);
+			path = FxGrip;
+			sourceTree = "<group>";
+		};
+		CEA524D62D221BEF00302F8F /* FxGripTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FxGripTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CEA524C62D221BEF00302F8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CEFC3FE52D6A5334003CF13B /* Foundation.framework in Frameworks */,
+				BE00000000000000000000A2 /* BEFoundation.framework in Frameworks */,
+				CEB11D8A2E53F5000069B893 /* FxPlug.framework in Frameworks */,
+				CE1B5E062D87F1D6003CA9FF /* AppKit.framework in Frameworks */,
+				CE1B5E052D87F11F003CA9FF /* Metal.framework in Frameworks */,
+				CE1B5E032D87F0FD003CA9FF /* CoreMedia.framework in Frameworks */,
+				CE1B5E082D87F1E0003CA9FF /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEA524CF2D221BEF00302F8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CEB11D8C2E53F5610069B893 /* FxGrip.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CE5573D92D1B715000A2B063 = {
+			isa = PBXGroup;
+			children = (
+				CEBBF6042E53F200004E836C /* FxGrip.xctestplan */,
+				CE5579AA2D1D69E000A2B063 /* Personal Notes.md */,
+				CEA524CA2D221BEF00302F8F /* FxGrip */,
+				CEA524D62D221BEF00302F8F /* FxGripTests */,
+				CE5573E42D1B715000A2B063 /* Frameworks */,
+				CE5573E32D1B715000A2B063 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CE5573E32D1B715000A2B063 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CEA524C92D221BEF00302F8F /* FxGrip.framework */,
+				CEA524D22D221BEF00302F8F /* FxGripTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5573E42D1B715000A2B063 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				BE00000000000000000000A1 /* BEFoundation.framework */,
+				CE1B5E072D87F1E0003CA9FF /* WebKit.framework */,
+				CE1B5E042D87F11F003CA9FF /* Metal.framework */,
+				CE1B5E022D87F0FD003CA9FF /* CoreMedia.framework */,
+				CE92727C2D33194A0040EB84 /* CoreGraphics.framework */,
+				CE92727A2D33191A0040EB84 /* CoreImage.framework */,
+				CE5573E52D1B715000A2B063 /* Cocoa.framework */,
+				CE5573F12D1B715000A2B063 /* Foundation.framework */,
+				CE5573F32D1B715000A2B063 /* AppKit.framework */,
+				CE5573F52D1B715000A2B063 /* Accelerate.framework */,
+				CE5573F72D1B715000A2B063 /* PluginManager.framework */,
+				CE1B5D5B2D8735BC003CA9FF /* FxPlug.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CE5D7AD32D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D7AD52D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D7AD72D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D7AD92D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D7ADB2D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D7ADD2D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D7ADF2D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D7AE12D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB5F72D224DC0001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB5F92D224DC0001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB5FB2D224DC0001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB6C72D224DC1001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB6E62D224DC1001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB70E2D224DC1001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB7DF2D224DC1001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7AB85C2D224DFB001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABAC12D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABAC32D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABAC52D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABAC72D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABAC92D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABACB2D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABACD2D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7ABACF2D229149001A7395 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		CEA524C42D221BEF00302F8F /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		CEA524C82D221BEF00302F8F /* FxGrip */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CEA524DB2D221BEF00302F8F /* Build configuration list for PBXNativeTarget "FxGrip" */;
+			buildPhases = (
+				CEA524C42D221BEF00302F8F /* Headers */,
+				CEA524C52D221BEF00302F8F /* Sources */,
+				CEA524C62D221BEF00302F8F /* Frameworks */,
+				CEA524C72D221BEF00302F8F /* Resources */,
+				CEDD91372D89236A00FD32FA /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CEA524CA2D221BEF00302F8F /* FxGrip */,
+			);
+			name = FxGrip;
+			packageProductDependencies = (
+			);
+			productName = FxGrip;
+			productReference = CEA524C92D221BEF00302F8F /* FxGrip.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		CEA524D12D221BEF00302F8F /* FxGripTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CEA524DE2D221BEF00302F8F /* Build configuration list for PBXNativeTarget "FxGripTests" */;
+			buildPhases = (
+				CEA524CE2D221BEF00302F8F /* Sources */,
+				CEA524CF2D221BEF00302F8F /* Frameworks */,
+				CEA524D02D221BEF00302F8F /* Resources */,
+				CEB11D8E2E53F5610069B893 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CEA524D52D221BEF00302F8F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				CEA524D62D221BEF00302F8F /* FxGripTests */,
+			);
+			name = FxGripTests;
+			packageProductDependencies = (
+			);
+			productName = FxGripTests;
+			productReference = CEA524D22D221BEF00302F8F /* FxGripTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CE5573DA2D1B715000A2B063 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					CEA524C82D221BEF00302F8F = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					CEA524D12D221BEF00302F8F = {
+						CreatedOnToolsVersion = 16.2;
+					};
+				};
+			};
+			buildConfigurationList = CE5573DD2D1B715000A2B063 /* Build configuration list for PBXProject "FxGrip" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CE5573D92D1B715000A2B063;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = CE5573E32D1B715000A2B063 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = CE7ABACB2D229149001A7395 /* Products */;
+					ProjectRef = CE7AB9C52D229149001A7395 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB5FB2D224DC0001A7395 /* Products */;
+					ProjectRef = CE7AB5BA2D224DC0001A7395 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7AE12D2E639300C8515A /* Products */;
+					ProjectRef = CE5D79DA2D2E639300C8515A /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB5F92D224DC0001A7395 /* Products */;
+					ProjectRef = CE7AB5D52D224DC0001A7395 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABAC92D229149001A7395 /* Products */;
+					ProjectRef = CE7AB9E02D229149001A7395 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7AD92D2E639300C8515A /* Products */;
+					ProjectRef = CE5D79F52D2E639300C8515A /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7AD72D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7A142D2E639300C8515A /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABAC52D229149001A7395 /* Products */;
+					ProjectRef = CE7AB9FF2D229149001A7395 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB5F72D224DC0001A7395 /* Products */;
+					ProjectRef = CE7AB5F42D224DC0001A7395 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB6C72D224DC1001A7395 /* Products */;
+					ProjectRef = CE7AB6C62D224DC1001A7395 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABACF2D229149001A7395 /* Products */;
+					ProjectRef = CE7ABA332D229149001A7395 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7ADF2D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7A482D2E639300C8515A /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7ADB2D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7A672D2E639300C8515A /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB85C2D224DFB001A7395 /* Products */;
+					ProjectRef = CE7AB85A2D224DFB001A7395 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABACD2D229149001A7395 /* Products */;
+					ProjectRef = CE7ABA522D229149001A7395 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABAC72D229149001A7395 /* Products */;
+					ProjectRef = CE7ABA702D229149001A7395 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB6E62D224DC1001A7395 /* Products */;
+					ProjectRef = CE7AB6E52D224DC1001A7395 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7AD52D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7A852D2E639300C8515A /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7ADD2D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7AAC2D2E639300C8515A /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB70E2D224DC1001A7395 /* Products */;
+					ProjectRef = CE7AB70D2D224DC1001A7395 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABAC12D229149001A7395 /* Products */;
+					ProjectRef = CE7ABA972D229149001A7395 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABAC32D229149001A7395 /* Products */;
+					ProjectRef = CE7ABAB52D229149001A7395 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7AB7DF2D224DC1001A7395 /* Products */;
+					ProjectRef = CE7AB7DE2D224DC1001A7395 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7AD32D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7ACA2D2E639300C8515A /* FxTemporalBlur.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				CEA524C82D221BEF00302F8F /* FxGrip */,
+				CEA524D12D221BEF00302F8F /* FxGripTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CEA524C72D221BEF00302F8F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEA524D02D221BEF00302F8F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CEA524C52D221BEF00302F8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEA524CE2D221BEF00302F8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CEA524D52D221BEF00302F8F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CEA524C82D221BEF00302F8F /* FxGrip */;
+			targetProxy = CEA524D42D221BEF00302F8F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		CE55742B2D1B715000A2B063 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ADDITIONAL_SDKS = /Library/Developer/SDKs/FxPlug.sdk;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(inherited)",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks",
+					"$(PROJECT_DIR)/Frameworks",
+					"/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5;
+			};
+			name = Debug;
+		};
+		CE55742C2D1B715000A2B063 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ADDITIONAL_SDKS = /Library/Developer/SDKs/FxPlug.sdk;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(inherited)",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks",
+					"$(PROJECT_DIR)/Frameworks",
+					"/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5;
+			};
+			name = Release;
+		};
+		CEA524DC2D221BEF00302F8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEFINES_MODULE = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(inherited)",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks",
+					"$(PROJECT_DIR)/Frameworks",
+					"/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGrip;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		CEA524DD2D221BEF00302F8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEFINES_MODULE = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					/Library/Frameworks,
+					"$(inherited)",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks",
+					"$(PROJECT_DIR)/Frameworks",
+					"/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGrip;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		CEA524DF2D221BEF00302F8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGripTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Debug;
+		};
+		CEA524E02D221BEF00302F8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGripTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CE5573DD2D1B715000A2B063 /* Build configuration list for PBXProject "FxGrip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CE55742B2D1B715000A2B063 /* Debug */,
+				CE55742C2D1B715000A2B063 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CEA524DB2D221BEF00302F8F /* Build configuration list for PBXNativeTarget "FxGrip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEA524DC2D221BEF00302F8F /* Debug */,
+				CEA524DD2D221BEF00302F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CEA524DE2D221BEF00302F8F /* Build configuration list for PBXNativeTarget "FxGripTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEA524DF2D221BEF00302F8F /* Debug */,
+				CEA524E02D221BEF00302F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CE5573DA2D1B715000A2B063 /* Project object */;
+}

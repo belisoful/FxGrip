@@ -1,0 +1,204 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ozxmlscene>
+<ozml version="5.13">
+
+<factory id="1" uuid="615c4bf6406511d88802000a95af90f2">
+	<description>Generator</description>
+	<manufacturer>Apple</manufacturer>
+	<version>1</version>
+</factory>
+
+
+<primaryObjects>
+	<id>10014</id>
+</primaryObjects>
+
+<primaryFactories>
+	<id>1</id>
+</primaryFactories>
+
+<scenenode name="QR Code Basic" id="10014" factoryID="1" pluginUUID="A6AA3BAA-920E-48EC-918C-D68E78F178B4" pluginVersion="1" pluginName="QR Code Basic" version="5">
+	<aspectRatio>0</aspectRatio>
+	<flags>0</flags>
+	<timing in="0 1 1 0" out="-1 30 1 0" offset="0 1 1 0"/>
+	<foldFlags>0</foldFlags>
+	<baseFlags>524368</baseFlags>
+	<parameter name="Properties" id="1" flags="4112">
+		<parameter name="Transform" id="100" flags="4112">
+			<parameter name="Position" id="101" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+				<parameter name="Z" id="3" flags="16" default="0" value="0"/>
+			</parameter>
+			<parameter name="Rotation" id="109" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+				<parameter name="Z" id="3" flags="16" default="0" value="0"/>
+				<parameter name="Animate" id="4" flags="65552" default="0" value="0"/>
+			</parameter>
+			<parameter name="Scale" id="105" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="1" value="1"/>
+				<parameter name="Y" id="2" flags="16" default="1" value="1"/>
+				<parameter name="Z" id="3" flags="16" default="1" value="1"/>
+			</parameter>
+			<parameter name="Shear" id="106" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+			</parameter>
+			<parameter name="Anchor Point" id="107" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+				<parameter name="Z" id="3" flags="16" default="0" value="0"/>
+			</parameter>
+			<parameter name="Rotation" id="102" flags="18" default="0" value="0"/>
+		</parameter>
+		<parameter name="Blending" id="200" flags="4112">
+			<parameter name="Opacity" id="202" flags="16" default="1" value="1"/>
+			<parameter name="Blend Mode" id="203" flags="65552" default="0" value="0"/>
+			<parameter name="Light Wrap" id="241" flags="4114">
+				<parameter name="Amount" id="238" flags="18" default="10" value="10"/>
+				<parameter name="Intensity" id="239" flags="18" default="1" value="1"/>
+				<parameter name="Intensity Scale" id="242" flags="18" default="1" value="1"/>
+				<parameter name="Opacity" id="240" flags="18" default="1" value="1"/>
+				<parameter name="Mode" id="237" flags="65554" default="0" value="0"/>
+			</parameter>
+			<parameter name="Preserve Opacity" id="217" flags="16" default="0" value="0"/>
+			<parameter name="Casts Reflection" id="236" flags="65552" default="0" value="0"/>
+		</parameter>
+		<parameter name="Lighting" id="230" flags="4112">
+			<foldFlags>15</foldFlags>
+			<parameter name="Shading" id="230" flags="65552" default="0" value="0"/>
+			<parameter name="Highlights" id="232" flags="16" default="0" value="0"/>
+			<parameter name="Shininess" id="233" flags="32784" default="50" value="50"/>
+		</parameter>
+		<parameter name="Shadows" id="234" flags="4112">
+			<foldFlags>15</foldFlags>
+			<parameter name="Cast Shadows" id="1" flags="16" default="1" value="1"/>
+			<parameter name="Receive Shadows" id="2" flags="16" default="1" value="1"/>
+			<parameter name="Shadows Only" id="3" flags="16" default="0" value="0"/>
+		</parameter>
+		<parameter name="Reflection" id="223" flags="36880">
+			<foldFlags>131087</foldFlags>
+			<parameter name="Reflectivity" id="228" flags="16" default="0.80000000000000004" value="0.80000000000000004"/>
+			<parameter name="Blur Amount" id="229" flags="16" default="0" value="0"/>
+			<parameter name="Falloff" id="224" flags="36880">
+				<foldFlags>131087</foldFlags>
+				<parameter name="Begin Distance" id="225" flags="16" default="0" value="0"/>
+				<parameter name="End Distance" id="226" flags="16" default="500" value="500"/>
+				<parameter name="Exponent" id="235" flags="16" default="1.8" value="1.8"/>
+			</parameter>
+			<parameter name="Blend Mode" id="227" flags="65552" default="0" value="0"/>
+		</parameter>
+		<parameter name="Color" id="243" flags="4096">
+			<parameter name="Hidden Channel" id="245" flags="18" default="1" value="3"/>
+			<parameter name="Conversion" id="246" flags="65552" default="0" value="0"/>
+			<parameter name="Conversion Type" id="247" flags="98320" default="3" value="3"/>
+			<parameter name="PQ Peak (nits)" id="248" flags="32784" default="1000" value="1000"/>
+		</parameter>
+		<parameter name="Drop Shadow" id="208" flags="36880">
+			<foldFlags>131087</foldFlags>
+			<parameter name="Color" id="210" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="Red" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Green" id="2" flags="16" default="0" value="0"/>
+				<parameter name="Blue" id="3" flags="16" default="0" value="0"/>
+				<parameter name="Color Space" id="11" flags="65682" default="3" value="3"/>
+			</parameter>
+			<parameter name="Opacity" id="211" flags="16" default="0.75" value="0.75"/>
+			<parameter name="Blur" id="213" flags="16" default="5" value="5"/>
+			<parameter name="Distance" id="212" flags="16" default="5" value="5"/>
+			<parameter name="Angle" id="214" flags="16" default="5.497787143782138" value="5.497787143782138"/>
+			<parameter name="Fixed Source" id="232" flags="16" default="0" value="0"/>
+		</parameter>
+		<parameter name="Four Corner" id="207" flags="36864">
+			<foldFlags>131087</foldFlags>
+			<parameter name="Bottom Left" id="1" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+			</parameter>
+			<parameter name="Bottom Right" id="2" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+			</parameter>
+			<parameter name="Top Right" id="3" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+			</parameter>
+			<parameter name="Top Left" id="4" flags="4112">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Y" id="2" flags="16" default="0" value="0"/>
+			</parameter>
+		</parameter>
+		<parameter name="Crop" id="216" flags="36880">
+			<foldFlags>131087</foldFlags>
+			<parameter name="Left" id="1" flags="16" default="0" value="0"/>
+			<parameter name="Right" id="2" flags="16" default="0" value="0"/>
+			<parameter name="Bottom" id="3" flags="16" default="0" value="0"/>
+			<parameter name="Top" id="4" flags="16" default="0" value="0"/>
+		</parameter>
+		<parameter name="Timing" id="233" flags="4114"/>
+	</parameter>
+	<parameter name="Object" id="2" flags="4112">
+		<parameter name="QR Code Basic" id="1" flags="4112">
+			<parameter name="Width" id="300" flags="4294967312" default="0" value="1"/>
+			<parameter name="Height" id="301" flags="4294967312" default="0" value="1"/>
+			<parameter name="Pixel Aspect Ratio" id="302" default="1" value="1"/>
+			<parameter name="Center" id="90" flags="4294971392">
+				<foldFlags>15</foldFlags>
+				<parameter name="X" id="1" flags="16" default="0.5" value="0.5"/>
+				<parameter name="Y" id="2" flags="16" default="0.5" value="0.5"/>
+			</parameter>
+			<parameter name="Message Style" id="99" flags="4294967312" default="0" value="0"/>
+			<parameter name="Ask to Subscribe" id="98" flags="4299227184" default="0" value="0"/>
+			<parameter name="Address https://" id="100" flags="4295032832"/>
+			<parameter name="Receiver Label" id="97" flags="4299227168"/>
+			<parameter name="Tx Description" id="96" flags="4299227168"/>
+			<parameter name="Error Correction" id="101" flags="4294967312" default="1" value="1"/>
+			<parameter name="Size" id="110" flags="4294967312" default="255" value="255"/>
+			<parameter name="Quiet Border" id="111" flags="4294967312" default="2" value="2"/>
+			<parameter name="Advanced" id="89" flags="4112">
+				<foldFlags>4</foldFlags>
+				<parameter name="Allow Subpixels" id="91" flags="4294967312" default="0" value="0"/>
+				<parameter name="Minify Detail" id="140" flags="4294967312" default="1" value="1"/>
+				<parameter name="Minify Size" id="141" flags="4294967312" default="5" value="5"/>
+				<parameter name="Minify Contrast" id="142" flags="4294967312" default="0.61803398874899995" value="0.61803398874899995"/>
+			</parameter>
+			<parameter name="Dark Color" id="120" flags="4294971408">
+				<foldFlags>15</foldFlags>
+				<parameter name="Red" id="1" flags="16" default="0" value="0"/>
+				<parameter name="Green" id="2" flags="16" default="0" value="0"/>
+				<parameter name="Blue" id="3" flags="16" default="0" value="0"/>
+				<parameter name="Color Space" id="11" flags="65682" default="3" value="3"/>
+			</parameter>
+			<parameter name="Dark Opacity" id="121" flags="4294967312" default="1" value="1"/>
+			<parameter name="Light Color" id="130" flags="4294971408">
+				<foldFlags>15</foldFlags>
+				<parameter name="Red" id="1" flags="16" default="1" value="1"/>
+				<parameter name="Green" id="2" flags="16" default="1" value="1"/>
+				<parameter name="Blue" id="3" flags="16" default="1" value="1"/>
+				<parameter name="Color Space" id="11" flags="65682" default="3" value="3"/>
+			</parameter>
+			<parameter name="Light Opacity" id="131" flags="4294967312" default="1" value="1"/>
+			<parameter name="Debugging 🪳" id="9996" flags="4295032832" default="0" value="0"/>
+			<parameter name="Plugin Data" id="9998" flags="73018703904">
+				<numberOfKeypoints>0</numberOfKeypoints>
+				<defaultVal>*********YoeMb-gOLBoA11I*E61-*I4-klM75NZQbBdPqtN743mMqVdRaJmJ0FoPr-M74xWOaJXR5AG**44c3wE1otHGqJtNKF-QaBcOLNZQh660Ec9L2FVR437QolZNq3XSJwE1o7gOKtYF43oMIxWOaJXR6*0U*4X1EsDJGFiRKlgHl2-XK7kP4ZnR1*kp*20*kE3-UQ8K0FqNL7nOKxiKGFVQaBcOLNZQZEYR4xkK0FjMadZMrFn2U*-Ve-T2*xCIohZSKJYEL7XO4ZqNL9F0*ZPErJnR4xh62FVR44**OU91-2P5-oV83IYPbJgPB6B1UwEIWEkJWFXP43nQs*0U*PH2VAC3-QEJotH9ahZSLBOHZAiPq7eNKBoQu6J3c*1U*GW4-a*-M*5U*NIR43bQpdkML7VPKJoNL7nol6H1VsT280UU*PG6WAY7JcYMqlVQrBiMKpZK0FXP43nQqJnLl*HHZBBRLFVMalZF4ZXR4ZjPa3mSOAY7WRQHZB2OKBoOKxiML7tK2tHHq7eNKBool6H1WYe280UU*M*0**F*-c*7**d*16*Bk-7*2k*K*-O*4A*OE-i*52*S*-u*5k*Uk09*7M*aE0P*7o*c*0W*8E*dU0f*9M*jE0y*9w*kE14*B2*qU1k*DE-*E28*F2-2U2H*********U2*********9********************FI6**U*2E*O*0E*8E*m*1Q*GE-C*3g*PE-j*52*RE-v*Uk********0*E*********E*******************01E**</defaultVal>
+				<dataValue>*********YoeMb-gOLBoA11I*E61-*I4-klM75NZQbBdPqtN743mMqVdRaJmJ0FoPr-M74xWOaJXR5AG**44c3wE1otHGqJtNKF-QaBcOLNZQh660Ec9L2FVR437QolZNq3XSJwE1o7gOKtYF43oMIxWOaJXR6*0U*4X1EsDJGFiRKlgHl2-XK7kP4ZnR1*kp*20*kE3-UQ8K0FqNL7nOKxiKGFVQaBcOLNZQZEYR4xkK0FjMadZMrFn2U*-Ve-T2*xCIohZSKJYEL7XO4ZqNL9F0*ZPErJnR4xh62FVR44**OU91-2P5-oV83IYPbJgPB6B1UwEIWEkJWFXP43nQs*0U*PH2VAC3-QEJotH9ahZSLBOHZAiPq7eNKBoQu6J3c*1U*GW4-a*-M*5U*NIR43bQpdkML7VPKJoNL7nol6H1VsT280UU*PG6WAY7JcYMqlVQrBiMKpZK0FXP43nQqJnLl*HHZBBRLFVMalZF4ZXR4ZjPa3mSOAY7WRQHZB2OKBoOKxiML7tK2tHHq7eNKBool6H1WYe280UU*M*0**F*-c*7**d*16*Bk-7*2k*K*-O*4A*OE-i*52*S*-u*5k*Uk09*7M*aE0P*7o*c*0W*8E*dU0f*9M*jE0y*9w*kE14*B2*qU1k*DE-*E28*F2-2U2H*********U2*********9********************FI6**U*2E*O*0E*8E*m*1Q*GE-C*3g*PE-j*52*RE-v*Uk********0*E*********E*******************01E**</dataValue>
+			</parameter>
+			<parameter name="Flip" id="10002" flags="4299227168" default="0" value="0"/>
+		</parameter>
+	</parameter>
+</scenenode>
+
+
+</ozml>

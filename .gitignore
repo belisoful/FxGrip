@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Xcode build output
+build/
+DerivedData/
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+
+# temp
+_to_delete/
+
+# personal files
+Personal Notes.md
+FxGrip Todo
