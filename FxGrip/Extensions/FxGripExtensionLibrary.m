@@ -22,7 +22,7 @@
 	_extActive = active;
 }
 
-- (BOOL)extLoadWithEffect:(GuruFxTileableEffect* _Nonnull) effect
+- (BOOL)extLoadWithEffect:(id<FxTileableEffectBase> _Nonnull) effect
 {
 #ifndef kExtensionSkipEffect
 	_effect = effect;

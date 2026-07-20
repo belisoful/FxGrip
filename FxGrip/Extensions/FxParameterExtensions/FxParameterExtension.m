@@ -116,8 +116,8 @@
 	}
 }
 
-#include "../../FxGripParameters/FxParameterBaseLibrary.m"
-#include "../../FxGripParameters/FxParameterLibrary.m"
+#include "../../Parameters/FxParameterBaseLibrary.m"
+#include "../../Parameters/FxParameterLibrary.m"
 
 
 @end

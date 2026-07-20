@@ -77,7 +77,7 @@
 								continue;
 							}
 							[missingGroups removeObject:uuid];
-							[self registerGroupDictionary:groupInfo];
+							[self registerGroup:groupInfo];
 						}
 					}
 				}
@@ -134,7 +134,7 @@
 		NSArray<Class> *registeredPlugins = [self.class globalRegisteredPluginClasses];
 		
 		[registeredPlugins enumerateObjectsUsingBlock:^(Class  _Nonnull currentClass, NSUInteger idx, BOOL * _Nonnull stop) {
-			[self addFxRegisteredPlugin:currentClass];
+			[self registerPluginClass:currentClass];
 		}];
 	}
 	@catch (NSException *exception) {

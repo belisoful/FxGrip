@@ -38,7 +38,7 @@ const NSInteger FxExtensionDefaultPriority = 10;
 
 - (nullable id)init
 {
-	//self = [super init];
+	self = [super init];
 	if (self) {
 		_extActive = YES;
 		_effect = NULL;
@@ -49,6 +49,15 @@ const NSInteger FxExtensionDefaultPriority = 10;
 		_extIndividuate = NO;
 	}
 	return self;
+}
+
+- (void)setExtActive:(BOOL)active
+{
+	if (self.effect.addedToDocument) {
+		NSLog(@"Error: cannot set extension active after being added to the document. Set this before FxTileableEffect::pluginInstanceAddedToDocument is signaled");
+		return;
+	}
+	_extActive = active;
 }
 
 // -20 is the highest priority, 10 is normal, 20 is lowest priority

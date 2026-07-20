@@ -25,6 +25,8 @@ NSNotificationName const _Nonnull FxTileableEffectFinishInitialSetupName = @"FxE
 NSNotificationName const _Nonnull FxTileableEffectAddedToDocumentName = @"FxEffectAddedToDocument";
 
 NSNotificationName const _Nonnull FxTileableEffectParameterChangedName = @"FxEffectParameterChanged";
+NSNotificationName const _Nonnull FxTileableEffectParameterChangedIDKey = @"FxEffectParameterChanged_ID";
+NSNotificationName const _Nonnull FxTileableEffectParameterChangedAtTimeKey = @"FxEffectParameterChanged_AtTime";
 NSNotificationName const _Nonnull FxTileableEffectFlushName = @"FxEffectFlush";
 
 NSNotificationName const _Nonnull FxTileableEffectPluginStateCoderKey = @"FxEffectPluginState_Coder";
@@ -33,6 +35,9 @@ NSNotificationName const _Nonnull FxTileableEffectDestinationImageRectName = @"F
 NSNotificationName const _Nonnull FxTileableEffectSourceTileRectName = @"FxEffectSourceTileRect";
 NSNotificationName const _Nonnull FxTileableEffectScheduleInputsName = @"FxEffectScheduleInputs";
 NSNotificationName const _Nonnull FxTileableEffectRenderDestinationImageName = @"FxEffectRenderDestinationImage";
+NSNotificationName const _Nonnull FxTileableEffectRenderDestinationImageKey = @"FxEffectRenderDestinationImage_Destination";
+NSNotificationName const _Nonnull FxTileableEffectRenderSourceImagesKey = @"FxEffectRenderDestinationImage_Sources";
+NSNotificationName const _Nonnull FxTileableEffectRenderAtTimeKey = @"FxEffectRenderDestinationImage_AtTime";
 
 NSNotificationName const _Nonnull FxTileableEffectRemovedFromDocumentName = @"FxEffectRemovedFromDocument";
 NSNotificationName const _Nonnull FxTileableEffectUnloadName = @"FxEffectUnload";

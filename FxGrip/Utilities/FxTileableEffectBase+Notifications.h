@@ -27,6 +27,8 @@ extern NSNotificationName	const _Nonnull FxTileableEffectFinishInitialSetupName;
 extern NSNotificationName	const _Nonnull FxTileableEffectAddedToDocumentName;
 
 extern NSNotificationName	const _Nonnull FxTileableEffectParameterChangedName;
+extern NSNotificationName	const _Nonnull FxTileableEffectParameterChangedIDKey;		// NSNumber(FxParameterId) of the changed parameter
+extern NSNotificationName	const _Nonnull FxTileableEffectParameterChangedAtTimeKey;	// CMTime-as-NSDictionary of the change time
 extern NSNotificationName	const _Nonnull FxTileableEffectFlushName;
 
 extern NSNotificationName	const _Nonnull FxTileableEffectPluginStateCoderKey;
@@ -35,6 +37,9 @@ extern NSNotificationName	const _Nonnull FxTileableEffectDestinationImageRectNam
 extern NSNotificationName	const _Nonnull FxTileableEffectSourceTileRectName;
 extern NSNotificationName	const _Nonnull FxTileableEffectScheduleInputsName;
 extern NSNotificationName	const _Nonnull FxTileableEffectRenderDestinationImageName;
+extern NSNotificationName	const _Nonnull FxTileableEffectRenderDestinationImageKey;	// FxImageTile* destination
+extern NSNotificationName	const _Nonnull FxTileableEffectRenderSourceImagesKey;		// NSArray<FxImageTile*>* sources
+extern NSNotificationName	const _Nonnull FxTileableEffectRenderAtTimeKey;			// CMTime-as-NSDictionary of the render time
 
 extern NSNotificationName	const _Nonnull FxTileableEffectRemovedFromDocumentName;
 extern NSNotificationName	const _Nonnull FxTileableEffectUnloadName;

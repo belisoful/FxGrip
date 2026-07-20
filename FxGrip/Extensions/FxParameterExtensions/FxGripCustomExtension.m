@@ -56,7 +56,7 @@
 	return self;
 }
 
-#include "../../FxGripParameters/Common/FxGripCustomParameterLibrary.m"
+#include "../../Parameters/Common/FxGripCustomParameterLibrary.m"
 
 @end
 

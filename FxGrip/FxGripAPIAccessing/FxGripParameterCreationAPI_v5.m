@@ -8,7 +8,6 @@
 #import "FxParameterFlags.h"
 #import "FxGripParameterCreationAPI_v5.h"
 #import "FxTileableEffectBase.h"
-#import "GuruFxTileableEffect+Parameters.h"
 #import "FxTileableEffectBase+Notifications.h"
 //#import "GuruFxTileableEffect+Extensions.h"
 #import <BEFoundation/NSArray+BExtension.h>

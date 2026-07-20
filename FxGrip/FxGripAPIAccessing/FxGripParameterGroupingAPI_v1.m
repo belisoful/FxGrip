@@ -9,7 +9,7 @@
 #import "FxGripParameterGroupingAPI_v1.h"
 //#import "NSDictionary+FxTileableEffect.h"
 #import "FxTileableEffectBase.h"
-#import "../FxGripParameters/FxParameter.h"
+#import "../Parameters/FxParameter.h"
 //#import "GuruFxTileableEffect+Extensions.h"
 
 @implementation FxGripParameterGroupingAPI_v1

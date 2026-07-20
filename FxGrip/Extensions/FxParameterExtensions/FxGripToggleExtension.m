@@ -25,7 +25,7 @@
 
 @implementation FxGripToggleExtension
 
-#include "../../FxGripParameters/Common/FxGripToggleParameterLibrary.m"
+#include "../../Parameters/Common/FxGripToggleParameterLibrary.m"
 
 @end
 

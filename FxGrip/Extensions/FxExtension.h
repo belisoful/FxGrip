@@ -133,6 +133,11 @@ extern const NSInteger FxExtensionDefaultPriority;
 
 - (nullable id)init;
 
+// Enables/disables the extension. Must be set before the effect is added to the
+// document; changing it afterward is rejected (the notification observers are
+// registered at extLoadWithEffect: time based on extActive).
+- (void)setExtActive:(BOOL)active;
+
 // NSNotificationObjectPriorityItem Implementation
 - (NSInteger)ncPriority:(NSNotificationName _Nullable)aName;
 

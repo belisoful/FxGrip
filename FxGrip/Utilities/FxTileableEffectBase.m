@@ -536,6 +536,11 @@
 				  error:(NSError**)error
 {
 	NSMutableDictionary *userInfo = @{}.mutableCopy;
+	userInfo[FxTileableEffectParameterChangedIDKey] = @(paramID);
+	NSDictionary *timeDict = (__bridge_transfer NSDictionary *)CMTimeCopyAsDictionary(time, kCFAllocatorDefault);
+	if (timeDict) {
+		userInfo[FxTileableEffectParameterChangedAtTimeKey] = timeDict;
+	}
 	[self.notifier postNotificationName:FxTileableEffectParameterChangedName object:self userInfo:userInfo];
 	
 	if ((*error = userInfo.fxError) && ![*error isKindOfClass:NSError.class]) {
@@ -852,6 +857,14 @@
 									  error:error];
 		if (success) {
 			NSMutableDictionary *userInfo = @{FxTileableEffectPluginStateCoderKey: state}.mutableCopy;
+			userInfo[FxTileableEffectRenderDestinationImageKey] = destinationImage;
+			if (sourceImages) {
+				userInfo[FxTileableEffectRenderSourceImagesKey] = sourceImages;
+			}
+			NSDictionary *renderTimeDict = (__bridge_transfer NSDictionary *)CMTimeCopyAsDictionary(renderTime, kCFAllocatorDefault);
+			if (renderTimeDict) {
+				userInfo[FxTileableEffectRenderAtTimeKey] = renderTimeDict;
+			}
 			[self.notifier postNotificationName:FxTileableEffectRenderDestinationImageName object:self userInfo:userInfo];
 			
 			if ((*error = userInfo.fxError) && ![*error isKindOfClass:NSError.class]) {

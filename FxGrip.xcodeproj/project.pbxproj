@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BE00000000000000000000A2 /* BEFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; };
+		BE00000000000000000000A3 /* BEFoundation.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CE1B5E032D87F0FD003CA9FF /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5E022D87F0FD003CA9FF /* CoreMedia.framework */; };
 		CE1B5E052D87F11F003CA9FF /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5E042D87F11F003CA9FF /* Metal.framework */; };
 		CE1B5E062D87F1D6003CA9FF /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE5573F32D1B715000A2B063 /* AppKit.framework */; platformFilters = (macos, ); };
@@ -14,9 +16,8 @@
 		CEB11D8A2E53F5000069B893 /* FxPlug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5D5B2D8735BC003CA9FF /* FxPlug.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		CEB11D8C2E53F5610069B893 /* FxGrip.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEA524C92D221BEF00302F8F /* FxGrip.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		CEB11D8D2E53F5610069B893 /* FxGrip.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CEA524C92D221BEF00302F8F /* FxGrip.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CECDB028300E467E0041B23D /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = CECDB027300E466C0041B23D /* LICENSE */; };
 		CEFC3FE52D6A5334003CF13B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE5573F12D1B715000A2B063 /* Foundation.framework */; };
-		BE00000000000000000000A2 /* BEFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; };
-		BE00000000000000000000A3 /* BEFoundation.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +56,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BE00000000000000000000A1 /* BEFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BEFoundation.framework; path = Frameworks/BEFoundation.framework; sourceTree = "<group>"; };
 		CE1B5D5B2D8735BC003CA9FF /* FxPlug.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FxPlug.framework; path = /Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/FxPlug.framework; sourceTree = "<absolute>"; };
 		CE1B5E022D87F0FD003CA9FF /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		CE1B5E042D87F11F003CA9FF /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
@@ -91,10 +93,13 @@
 		CE7ABAB52D229149001A7395 /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
 		CE92727A2D33191A0040EB84 /* CoreImage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreImage.framework; path = System/Library/Frameworks/CoreImage.framework; sourceTree = SDKROOT; };
 		CE92727C2D33194A0040EB84 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		BE00000000000000000000A1 /* BEFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BEFoundation.framework; path = Frameworks/BEFoundation.framework; sourceTree = "<group>"; };
 		CEA524C92D221BEF00302F8F /* FxGrip.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FxGrip.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEA524D22D221BEF00302F8F /* FxGripTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FxGripTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEBBF6042E53F200004E836C /* FxGrip.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FxGrip.xctestplan; sourceTree = "<group>"; };
+		CECDB025300E46520041B23D /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
+		CECDB026300E465C0041B23D /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
+		CECDB027300E466C0041B23D /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		CECDB028300E46800041B23D /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -108,14 +113,6 @@
 				Extensions/GuruFxExtension.old.m,
 				"Extensions/GuruFxTileableEffect+Extensions.h",
 				"Extensions/GuruFxTileableEffect+Extensions.m",
-				FxGripParameters/Common/FxGripCustomParameterLibrary.m,
-				FxGripParameters/Common/FxGripStringParameterBaseLibrary.m,
-				FxGripParameters/Common/FxGripStringParameterLibrary.m,
-				FxGripParameters/Common/FxGripToggleParameterLibrary.m,
-				FxGripParameters/FxGripParameter.h,
-				FxGripParameters/FxGripParameter.m,
-				FxGripParameters/FxParameterBaseLibrary.m,
-				FxGripParameters/FxParameterLibrary.m,
 				GuruFxMetaManager.h,
 				GuruFxMetaManager.m,
 				GuruFxTileableEffect.h,
@@ -128,6 +125,14 @@
 				"GuruFxTileableEffect+Timing.m",
 				"GuruFxTileableEffect+Versioning.h",
 				"GuruFxTileableEffect+Versioning.m",
+				Parameters/Common/FxGripCustomParameterLibrary.m,
+				Parameters/Common/FxGripStringParameterBaseLibrary.m,
+				Parameters/Common/FxGripStringParameterLibrary.m,
+				Parameters/Common/FxGripToggleParameterLibrary.m,
+				Parameters/FxGripParameter.h,
+				Parameters/FxGripParameter.m,
+				Parameters/FxParameterBaseLibrary.m,
+				Parameters/FxParameterLibrary.m,
 				"Resources/Final Cut Pro Time Points.png",
 				"Resources/Motion Time Points.png",
 				"Resources/Understanding Time in FxPlug.loc",
@@ -135,6 +140,8 @@
 				"Utilities/Object Extensions/FxGripPrimeNumbers.m",
 			);
 			publicHeaders = (
+				CustomParameter/FxGripInterpolatingDictionary.h,
+				CustomParameter/FxGripOOBParameterAccess.h,
 				Extensions/FxExtension.h,
 				Extensions/FxGripAboutMenu.h,
 				Extensions/FxGripDebugMenu.h,
@@ -159,34 +166,32 @@
 				FxGripAPIAccessing/FxGripParameterSettingAPI_v6.h,
 				FxGripAPIAccessing/FxGripTimingAPI_v4.h,
 				FxGripAPIAccessing/FxParameterTagsAPI_v1.h,
-				FxGripCustom/FxGripInterpolatingDictionary.h,
-				FxGripCustom/FxGripOOBParameterAccess.h,
 				FxGripErrors.h,
-				FxGripParameters/Common/FxGripAllParameters.h,
-				FxGripParameters/Common/FxGripAngleParameter.h,
-				FxGripParameters/Common/FxGripColorParameter.h,
-				FxGripParameters/Common/FxGripCustomParameter.h,
-				FxGripParameters/Common/FxGripFloatParameter.h,
-				FxGripParameters/Common/FxGripFontMenuParameter.h,
-				FxGripParameters/Common/FxGripGradientParameter.h,
-				FxGripParameters/Common/FxGripGroupParameter.h,
-				FxGripParameters/Common/FxGripHelpParameter.h,
-				FxGripParameters/Common/FxGripHistogramParameter.h,
-				FxGripParameters/Common/FxGripImageRefParameter.h,
-				FxGripParameters/Common/FxGripIntParameter.h,
-				FxGripParameters/Common/FxGripMenuParameter.h,
-				FxGripParameters/Common/FxGripPathParameter.h,
-				FxGripParameters/Common/FxGripPercentParameter.h,
-				FxGripParameters/Common/FxGripPointParameter.h,
-				FxGripParameters/Common/FxGripPushButtonParameter.h,
-				FxGripParameters/Common/FxGripRGBParameter.h,
-				FxGripParameters/Common/FxGripStringParameter.h,
-				FxGripParameters/Common/FxGripToggleParameter.h,
-				FxGripParameters/FxGripParameterFlags.h,
-				FxGripParameters/FxParameter.h,
-				FxGripParameters/FxParameterFlags.h,
-				"FxGripParameters/NSView+FxGrip.h",
 				FxGripTypes.h,
+				Parameters/Common/FxGripAllParameters.h,
+				Parameters/Common/FxGripAngleParameter.h,
+				Parameters/Common/FxGripColorParameter.h,
+				Parameters/Common/FxGripCustomParameter.h,
+				Parameters/Common/FxGripFloatParameter.h,
+				Parameters/Common/FxGripFontMenuParameter.h,
+				Parameters/Common/FxGripGradientParameter.h,
+				Parameters/Common/FxGripGroupParameter.h,
+				Parameters/Common/FxGripHelpParameter.h,
+				Parameters/Common/FxGripHistogramParameter.h,
+				Parameters/Common/FxGripImageRefParameter.h,
+				Parameters/Common/FxGripIntParameter.h,
+				Parameters/Common/FxGripMenuParameter.h,
+				Parameters/Common/FxGripPathParameter.h,
+				Parameters/Common/FxGripPercentParameter.h,
+				Parameters/Common/FxGripPointParameter.h,
+				Parameters/Common/FxGripPushButtonParameter.h,
+				Parameters/Common/FxGripRGBParameter.h,
+				Parameters/Common/FxGripStringParameter.h,
+				Parameters/Common/FxGripToggleParameter.h,
+				Parameters/FxGripParameterFlags.h,
+				Parameters/FxParameter.h,
+				Parameters/FxParameterFlags.h,
+				"Parameters/NSView+FxGrip.h",
 				Utilities/FxGripMTLDeviceCache.h,
 				Utilities/FxGripParameterUtility.h,
 				Utilities/FxGripPluginInfo.h,
@@ -264,7 +269,11 @@
 		CE5573D92D1B715000A2B063 = {
 			isa = PBXGroup;
 			children = (
+				CECDB028300E46800041B23D /* .gitignore */,
+				CECDB025300E46520041B23D /* AGENTS.md */,
+				CECDB026300E465C0041B23D /* CLAUDE.md */,
 				CEBBF6042E53F200004E836C /* FxGrip.xctestplan */,
+				CECDB027300E466C0041B23D /* LICENSE */,
 				CE5579AA2D1D69E000A2B063 /* Personal Notes.md */,
 				CEA524CA2D221BEF00302F8F /* FxGrip */,
 				CEA524D62D221BEF00302F8F /* FxGripTests */,
@@ -670,6 +679,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CECDB028300E467E0041B23D /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
