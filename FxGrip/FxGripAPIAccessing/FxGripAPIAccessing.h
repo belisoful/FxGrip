@@ -9,12 +9,15 @@
 #define FxGripAPIAccessing_h
 
 #import <FxPlug/FxPlugSDK.h>
+
+@class FxGripCustomCreationAPI_v1;
 #import <FxGrip/FxGripDynamicParameterAPI_v4.h>
 #import "FxParameterTagsAPI_v1.h"
 #import "FxAPINotifications.h"
 
 
 @class FxTileableEffectBase;
+@class FxGripPresetsAPI_v1;
 
 
 @protocol FxGripAPIAccessing <PROAPIAccessing>
@@ -27,9 +30,9 @@
 
 
 - (nullable instancetype)initWithAPIManager:(id<PROAPIAccessing>_Nonnull)newApiManager
-effect:(FxTileableEffectBase*_Nonnull)effect;
+effect:(id<FxGripEffectHost>_Nonnull)effect;
 
-	@property (assign, readonly, nonnull) id<FxTileableEffectBase> effect;
+	@property (assign, readonly, nonnull) id<FxGripEffectHost> effect;
 	@property (assign, readonly) id<PROAPIAccessing> _Nonnull apiAccessing;
 
 //- (FxGripAPITransaction* _Nonnull)transaction:(id _Nonnull)key;
@@ -38,6 +41,8 @@ effect:(FxTileableEffectBase*_Nonnull)effect;
 
 	@property (assign, readonly) id<FxParameterCreationAPI_v5> _Nullable paramCreateAPIv5_Raw;
 	@property (assign, readonly) id<FxParameterCreationAPI_v5> _Nullable paramCreateAPIv5;
+	@property (assign, readonly) id<FxParameterCreationAPI_v6> _Nullable paramCreateAPIv6_Raw;
+	@property (assign, readonly) id<FxParameterCreationAPI_v6> _Nullable paramCreateAPIv6;
 	@property (assign, readonly) id<FxParameterRetrievalAPI_v6> _Nullable paramGetAPIv6_Raw;
 	@property (assign, readonly) id<FxParameterRetrievalAPI_v6> _Nullable paramGetAPIv6;
 	@property (assign, readonly) id<FxParameterRetrievalAPI_v7> _Nullable paramGetAPIv7_Raw;
@@ -73,6 +78,8 @@ effect:(FxTileableEffectBase*_Nonnull)effect;
 	@property (assign, readonly) id<FxRemoteWindowAPI> _Nullable remoteWindowAPIv1;
 	@property (assign, readonly) id<FxRemoteWindowAPI_v2> _Nullable remoteWindowAPIv2_Raw;
 	@property (assign, readonly) id<FxRemoteWindowAPI_v2> _Nullable remoteWindowAPIv2;
+	@property (assign, readonly) id<FxRemoteWindowAPI_v3> _Nullable remoteWindowAPIv3_Raw;
+	@property (assign, readonly) id<FxRemoteWindowAPI_v3> _Nullable remoteWindowAPIv3;
 
 	@property (assign, readonly) id<Fx3DAPI_v5> _Nullable spaceAPIv5_Raw;
 	@property (assign, readonly) id<Fx3DAPI_v5> _Nullable spaceAPIv5;
@@ -104,6 +111,11 @@ effect:(FxTileableEffectBase*_Nonnull)effect;
 	@property (assign, readonly) id<FxDynamicParameterAPI_v4> _Nullable dynamicParamAPIv4_Raw;
 	@property (assign, readonly) id<FxDynamicParameterAPI_v4> _Nullable dynamicParamAPIv4;
 	@property (assign, readonly) id<FxParameterTagsAPI_v1> _Nullable paramTagsAPIv1;
+	@property (assign, readonly) FxGripPresetsAPI_v1 * _Nullable presetsAPIv1;
+
+	/*! Creates FxGrip's custom parameters (status, banner, web view, …) in Apple's creation-API
+		style; nil when the manager has no effect host. FxGrip-implemented. */
+	@property (assign, readonly) FxGripCustomCreationAPI_v1 * _Nullable customCreationAPIv1;
 
 
 @end
@@ -158,9 +170,9 @@ effect:(FxTileableEffectBase*_Nonnull)effect;
 
 
 - (nullable instancetype)initWithAPIManager:(id<PROAPIAccessing>_Nonnull)newApiManager
-effect:(FxTileableEffectBase*_Nonnull)effect;
+effect:(id<FxGripEffectHost>_Nonnull)effect;
 
-	@property (assign, readonly, nonnull) id<FxTileableEffectBase> effect;
+	@property (assign, readonly, nonnull) id<FxGripEffectHost> effect;
 	@property (assign, readonly) id<PROAPIAccessing> _Nonnull apiAccessing;
 
 //- (FxGripAPITransaction* _Nonnull)transaction:(id _Nonnull)key;
@@ -169,6 +181,8 @@ effect:(FxTileableEffectBase*_Nonnull)effect;
 
 	@property (assign, readonly) id<FxParameterCreationAPI_v5> _Nullable paramCreateAPIv5_Raw;
 	@property (assign, readonly) id<FxParameterCreationAPI_v5> _Nullable paramCreateAPIv5;
+	@property (assign, readonly) id<FxParameterCreationAPI_v6> _Nullable paramCreateAPIv6_Raw;
+	@property (assign, readonly) id<FxParameterCreationAPI_v6> _Nullable paramCreateAPIv6;
 	@property (assign, readonly) id<FxParameterRetrievalAPI_v6> _Nullable paramGetAPIv6_Raw;
 	@property (assign, readonly) id<FxParameterRetrievalAPI_v6> _Nullable paramGetAPIv6;
 	@property (assign, readonly) id<FxParameterRetrievalAPI_v7> _Nullable paramGetAPIv7_Raw;
@@ -204,6 +218,8 @@ effect:(FxTileableEffectBase*_Nonnull)effect;
 	@property (assign, readonly) id<FxRemoteWindowAPI> _Nullable remoteWindowAPIv1;
 	@property (assign, readonly) id<FxRemoteWindowAPI_v2> _Nullable remoteWindowAPIv2_Raw;
 	@property (assign, readonly) id<FxRemoteWindowAPI_v2> _Nullable remoteWindowAPIv2;
+	@property (assign, readonly) id<FxRemoteWindowAPI_v3> _Nullable remoteWindowAPIv3_Raw;
+	@property (assign, readonly) id<FxRemoteWindowAPI_v3> _Nullable remoteWindowAPIv3;
 
 	@property (assign, readonly) id<Fx3DAPI_v5> _Nullable spaceAPIv5_Raw;
 	@property (assign, readonly) id<Fx3DAPI_v5> _Nullable spaceAPIv5;
@@ -235,6 +251,11 @@ effect:(FxTileableEffectBase*_Nonnull)effect;
 	@property (assign, readonly) id<FxDynamicParameterAPI_v4> _Nullable dynamicParamAPIv4_Raw;
 	@property (assign, readonly) id<FxDynamicParameterAPI_v4> _Nullable dynamicParamAPIv4;
 	@property (assign, readonly) id<FxParameterTagsAPI_v1> _Nullable paramTagsAPIv1;
+	@property (assign, readonly) FxGripPresetsAPI_v1 * _Nullable presetsAPIv1;
+
+	/*! Creates FxGrip's custom parameters (status, banner, web view, …) in Apple's creation-API
+		style; nil when the manager has no effect host. FxGrip-implemented. */
+	@property (assign, readonly) FxGripCustomCreationAPI_v1 * _Nullable customCreationAPIv1;
 
 @end
 

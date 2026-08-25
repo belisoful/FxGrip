@@ -1,8 +1,6 @@
 //
-//  FxGripParameterCreationAPI_v5.h
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/29/24.
+//  FxGripPreset.h
+//  FxGrip
 //
 
 #ifndef FxGripPreset_h
@@ -10,8 +8,6 @@
 
 #import <FxPlug/FxPlugSDK.h>
 #import "FxGripTypes.h"
-
-@class DirectoryWatcher;
 
 #define kFxPresetProperty_CreatedByParameterId @"createdByParameterId"
 #define kFxPresetProperty_ParameterValues @"parameterValues"
@@ -30,40 +26,126 @@
 #define kFxPresetProperty_ParameterMeta @"parameterMeta"
 #define kFxPresetProperty_ParameterTags @"parameterTags"
 
+// FxFactory file keys, pinned by the repository sample "FxFactory Circle Preset.fxpreset".
+// A written file carries these seven under their exact names so FxFactory reads FxGrip
+// files and FxGrip reads FxFactory files.
+#define kFxFactoryPresetKey_CreatedByParameterId	@"FxFactoryPresetCreatedByParameterID"
+#define kFxFactoryPresetKey_ParameterValues			@"FxFactoryPresetParameterValues"
+#define kFxFactoryPresetKey_PluginAuthor			@"FxFactoryPresetPlugInAuthor"
+#define kFxFactoryPresetKey_LocalizedName			@"FxFactoryPresetPlugInLocalizedName"
+#define kFxFactoryPresetKey_PluginUuid				@"FxFactoryPresetPlugInUUID"
+#define kFxFactoryPresetKey_PluginVersion			@"FxFactoryPresetPlugInVersion"
+#define kFxFactoryPresetKey_ProductId				@"FxFactoryPresetProductID"
+
+// FxGrip file keys. The seven additions have no FxFactory equivalent and ride alongside
+// the FxFactory keys as flat siblings; a reader ignores keys it does not know, so both
+// directions degrade to the shared subset.
+#define kFxGripPresetKey_Framework		@"FxGripPresetFramework"
+#define kFxGripPresetKey_Uuid			@"FxGripPresetUUID"
+#define kFxGripPresetKey_DisplayName	@"FxGripPresetDisplayName"
+#define kFxGripPresetKey_Tag			@"FxGripPresetTag"
+#define kFxGripPresetKey_CreatedTime	@"FxGripPresetCreatedTime"
+#define kFxGripPresetKey_ParameterMeta	@"FxGripPresetParameterMeta"
+#define kFxGripPresetKey_ParameterTags	@"FxGripPresetParameterTags"
+
 /*!
-	@interface  FxGripDynamicParameterAPI_v4:
-	@abstract   Initializes the API manager for your plug-in.
-	@discussion Accesses the apis with error checking.
-
+	@class      FxGripPreset
+	@abstract   The preset model: parameter values, tags, and meta plus the identity of
+				the plugin that produced them.
+	@discussion Introduced in FxGrip 1.0. The on-disk form is an XML property list in
+				FxFactory's `.fxpreset` format, extended with flat `FxGripPreset*` keys.
+				`presetDictionary` and `initWithPresetDictionary:` are the canonical
+				round-trip; `savePresetToURL:` and `loadPresetFromURL:` add the file I/O.
+				Parameter-keyed dictionaries use string parameter-ID keys on disk,
+				matching FxFactory.
  */
-
 @interface FxGripPreset : NSObject
 
 	@property (assign) FxParameterId createdByParameterId;
 
-	@property (assign) NSDictionary *parameterValues; // key=paramId, value= [int, float, string, bool, dict]
-	@property (assign) NSDictionary *parameterMeta;
-	@property (assign) NSDictionary *parameterTags;
+	@property (copy, nullable) NSDictionary *parameterValues; // key=paramId, value= [int, float, string, bool, dict]
+	@property (copy, nullable) NSDictionary *parameterMeta;
+	@property (copy, nullable) NSDictionary *parameterTags;
 
-	@property (assign) NSString *framework; // Guru, FxFactory, Apple, etc
-	@property (assign) NSString *uuid; //preset uuid
-	@property (assign) NSString *name; //display name
-	@property (assign) NSString *tag;
-	@property (assign) NSString *createdTime;
+	@property (copy, nullable) NSString *framework; // FxGrip, FxFactory, etc
+	@property (copy, nullable) NSString *uuid; //preset uuid
+	@property (copy, nullable) NSString *name; //display name
+	@property (copy, nullable) NSString *tag;
+	@property (copy, nullable) NSString *createdTime;
 
-	@property (assign) NSString *pluginAuthor;
-	@property (assign) NSString *pluginLocalizedName;
-	@property (assign) NSString *pluginUuid;
-	@property (assign) NSString *pluginVersion;
-	@property (assign) NSString *productId;
+	@property (copy, nullable) NSString *pluginAuthor;
+	// NSString, or the per-language NSDictionary FxFactory writes; round-trips verbatim.
+	@property (copy, nullable) id pluginLocalizedName;
+	@property (copy, nullable) NSString *pluginUuid;
+	@property (copy, nullable) NSString *pluginVersion;
+	@property (copy, nullable) NSString *productId;
 
-- (BOOL)savePresetToURL:(NSURL*)url;
-+ (FxGripPreset*)loadPresetFromURL:(NSURL*)url;
+/*!
+	@method     initWithPresetDictionary:
+	@abstract   Builds a preset from a file-form dictionary.
+	@discussion Introduced in FxGrip 1.0. Reads the FxFactory keys and the FxGripPreset*
+				keys; unknown keys are ignored. Returns nil when the argument is not a
+				dictionary.
+*/
+- (nullable instancetype)initWithPresetDictionary:(nullable NSDictionary*)dictionary;
 
-+ (BOOL)setParameterValue:(id)value toParameter:(FxParameterId)parameterID atTime:(CMTime)time withAPI:(id<FxParameterSettingAPI_v5>)setterAPI;
+/*!
+	@method     presetDictionary
+	@abstract   The file-form dictionary: FxFactory keys plus FxGripPreset* keys.
+	@discussion Introduced in FxGrip 1.0. Nil properties are omitted. Parameter-keyed
+				dictionaries are written with string keys.
+*/
+- (nonnull NSDictionary*)presetDictionary;
+
+/*!
+	@method     presetSections
+	@abstract   The values/tags/meta sections in the shape applyPreset: consumes.
+	@discussion Introduced in FxGrip 1.0. Sections a preset does not carry are omitted.
+*/
+- (nonnull NSDictionary*)presetSections;
+
+/*!
+	@method     savePresetToURL:
+	@abstract   Writes the preset as an XML property list.
+	@discussion Introduced in FxGrip 1.0. Returns NO when a carried value is not a
+				property-list type or the write fails.
+*/
+- (BOOL)savePresetToURL:(nonnull NSURL*)url;
+
+/*!
+	@method     loadPresetFromURL:
+	@abstract   Reads a preset written by savePresetToURL: or by FxFactory.
+	@discussion Introduced in FxGrip 1.0. Returns nil when the file is missing or is not
+				a property-list dictionary.
+*/
++ (nullable FxGripPreset*)loadPresetFromURL:(nonnull NSURL*)url;
+
+/*!
+	@method     setParameterValue:toParameter:atTime:withAPI:
+	@abstract   Writes one encoded preset value to a parameter.
+	@discussion Introduced in FxGrip 1.0. Dispatches on the parameter's type, resolved
+				through the FxGrip setting wrapper's dynamic API; when no type source is
+				available the encoded value's own shape selects the setter.
+
+				Encodings: RGBA and RGB are dictionaries of `red`/`green`/`blue` with an
+				optional `alpha`; Point is `x`/`y`; String and FontMenu are strings;
+				Toggle, Int, and Menu are numbers; Custom is a dictionary that merges
+				recursively into the parameter's current value so a preset may carry a
+				subset; every other type takes a number as a float.
+	@result     YES when the value is written.
+*/
++ (BOOL)setParameterValue:(nonnull id)value toParameter:(FxParameterId)parameterID atTime:(CMTime)time withAPI:(nonnull id<FxParameterSettingAPI_v5>)setterAPI;
+
+/*!
+	@method     getParameterValue:toParameter:atTime:withAPI:
+	@abstract   Reads a parameter into the encoded preset representation.
+	@discussion The inverse of setParameterValue:toParameter:atTime:withAPI:, producing
+				the same encodings. Requires the FxGrip setting wrapper, which exposes
+				the retrieval API.
+*/
++ (BOOL)getParameterValue:(id _Nullable * _Nonnull)value toParameter:(FxParameterId)parameterID atTime:(CMTime)time withAPI:(nonnull id<FxParameterSettingAPI_v5>)setterAPI;
 
 @end
 
 
 #endif /* FxGripPreset_h */
-

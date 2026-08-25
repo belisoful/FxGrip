@@ -1,0 +1,151 @@
+//
+//  FxGripInferenceBridge.m
+//  FxGrip
+//
+
+#import "FxGripInferenceBridge.h"
+#import "FxGripInferenceRequest.h"
+#import "FxGripInferenceResult.h"
+#import "FxGrip_ARC.h"
+
+// InferKit is not linked. The bridge resolves these classes by name at runtime. The value types the
+// bridge constructs and reads are the required set; an InferKit backend is supplied by the host.
+static NSString * const kFxGripInferKitRequestClassName = @"NFKInferenceRequest";
+static NSString * const kFxGripInferKitResultClassName  = @"NFKInferenceResult";
+
+#pragma mark - Adapter
+
+/*!
+	Wraps an InferKit backend object behind id<FxGripInferenceBackend>. The InferKit backend,
+	request, and result share their selectors with the FxGrip types, so the adapter messages the
+	InferKit objects through the FxGrip declarations imported here.
+*/
+@interface FxGripInferenceKitBackendAdapter : NSObject <FxGripInferenceBackend>
+- (instancetype)initWithInferKitBackend:(id)backend requestClass:(Class)requestClass;
+@end
+
+@implementation FxGripInferenceKitBackendAdapter
+{
+	id _backend;
+	Class _requestClass;
+}
+
+- (instancetype)initWithInferKitBackend:(id)backend requestClass:(Class)requestClass
+{
+	self = [super init];
+	if (self != nil) {
+		_backend = NARC_RETAIN(backend);
+		_requestClass = requestClass;
+	}
+	return self;
+}
+
+- (void)dealloc
+{
+	NARC_RELEASE(_backend);
+	SUPER_DEALLOC();
+}
+
+- (BOOL)isReady
+{
+	return [_backend isReady];
+}
+
+- (NSString *)backendIdentifier
+{
+	return [_backend backendIdentifier];
+}
+
+- (nullable FxGripInferenceResult *)runInferenceForRequest:(FxGripInferenceRequest *)request
+													error:(NSError **)outError
+{
+	// The InferKit request factory and result accessor share their selectors with the FxGrip
+	// types, so the compiler types these sends through the FxGrip declarations while the objects
+	// are InferKit instances at runtime.
+	id kitRequest = [_requestClass requestWithInputs:request.inputs parameters:request.parameters];
+	id kitResult = [_backend runInferenceForRequest:kitRequest error:outError];
+	if (kitResult == nil) {
+		return nil;
+	}
+	NSDictionary<NSString *, id> *outputs = [kitResult outputs];
+	return [FxGripInferenceResult resultWithOutputs:outputs];
+}
+
+- (BOOL)prepareWithError:(NSError **)outError
+{
+	if ([_backend respondsToSelector:@selector(prepareWithError:)]) {
+		return [_backend prepareWithError:outError];
+	}
+	return YES;
+}
+
+@end
+
+#pragma mark - FxGripInferenceBridge
+
+@implementation FxGripInferenceBridge
+
++ (NSArray<NSString *> *)requiredInferKitClassNames
+{
+	return @[ kFxGripInferKitRequestClassName, kFxGripInferKitResultClassName ];
+}
+
++ (NSArray<NSString *> *)absentClassNamesIn:(NSArray<NSString *> *)classNames
+{
+	NSMutableArray<NSString *> *absent = [NSMutableArray arrayWithCapacity:classNames.count];
+	for (NSString *name in classNames) {
+		if (NSClassFromString(name) == Nil) {
+			[absent addObject:name];
+		}
+	}
+	return absent;
+}
+
++ (NSArray<NSString *> *)missingInferKitClassNames
+{
+	return [self absentClassNamesIn:self.requiredInferKitClassNames];
+}
+
++ (BOOL)isInferKitAvailable
+{
+	return self.missingInferKitClassNames.count == 0;
+}
+
++ (nullable id<FxGripInferenceBackend>)backendBridgingInferKitBackend:(id)inferKitBackend
+{
+	if (![self isInferKitAvailable]) {
+		return nil;
+	}
+	Class requestClass = NSClassFromString(kFxGripInferKitRequestClassName);
+	return [self backendBridgingInferKitBackend:inferKitBackend requestClass:requestClass];
+}
+
++ (nullable id<FxGripInferenceBackend>)backendBridgingInferKitBackend:(id)inferKitBackend
+														requestClass:(Class)requestClass
+{
+	if (inferKitBackend == nil || requestClass == Nil) {
+		return nil;
+	}
+	if (![inferKitBackend respondsToSelector:@selector(runInferenceForRequest:error:)]) {
+		return nil;
+	}
+	FxGripInferenceKitBackendAdapter *adapter =
+		[[FxGripInferenceKitBackendAdapter alloc] initWithInferKitBackend:inferKitBackend
+															requestClass:requestClass];
+	return NARC_AUTORELEASE(adapter);
+}
+
++ (nullable id<FxGripInferenceBackend>)backendWithInferKitBackendClassNamed:(NSString *)className
+{
+	if (![self isInferKitAvailable]) {
+		return nil;
+	}
+	Class backendClass = NSClassFromString(className);
+	if (backendClass == Nil) {
+		return nil;
+	}
+	id backend = NARC_AUTORELEASE([[backendClass alloc] init]);
+	return [self backendBridgingInferKitBackend:backend];
+}
+
+@end

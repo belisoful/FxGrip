@@ -9,7 +9,7 @@
 	return FxParameterType_Toggle;
 }
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	BOOL value = NO;
 	NSNumber *number = parameter.parameterDefaultValue;
@@ -27,7 +27,7 @@
 {
 	BOOL boolValue = NO;
 	if(![self.effect.apiManager.paramGetAPIv6 getBoolValue:&boolValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

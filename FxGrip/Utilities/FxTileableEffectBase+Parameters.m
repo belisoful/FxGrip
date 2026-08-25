@@ -31,8 +31,13 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 	
 	id<FxExtension> ext = [self extensionForKey:data.parameterExtensionKey];
 	if (ext) {
-		if ([ext conformsToProtocol:@protocol(FxParameter)]) {
-			return ext;
+		// The extension configures itself from the parameter dictionary — syncing its
+		// id/name/flags and marking itself addedToEffect — and returns the FxParameter
+		// it vends. Returning it unconfigured left FxGripCustomExtension values
+		// permanently nil (addedToEffect stayed NO).
+		if ([ext conformsToProtocol:@protocol(FxParameter)]
+			&& [ext respondsToSelector:@selector(parameterForDictionary:)]) {
+			return [(id)ext parameterForDictionary:data];
 		}
 		return nil;
 	}
@@ -64,7 +69,7 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 		NSLog(@"Error: class %@ does not conform to FxGripParameterProtocol.", parameterClass.className);
 		return nil;
 	}
-	return [parameterClass.alloc initWithDictionary:data];
+	return [parameterClass.alloc initWithDictionary:data effect:self];
 }
 
 - (void)registerParameterType:(nullable Class)paramClass
@@ -94,12 +99,23 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 	[self registerParameterType:FxGripPathParameter.class];
 	[self registerParameterType:FxGripPercentParameter.class];
 	[self registerParameterType:FxGripPointParameter.class];
+	[self registerParameterType:FxGripPresetsParameter.class];
 	[self registerParameterType:FxGripPushButtonParameter.class];
 	[self registerParameterType:FxGripRGBParameter.class];
 	[self registerParameterType:FxGripStringParameter.class];
 	[self registerParameterType:FxGripToggleParameter.class];
-	
-	// Extra classes
+
+	// Custom-UI classes
+	[self registerParameterType:FxGripSwitchParameter.class];
+	[self registerParameterType:FxGripDividerParameter.class];
+	[self registerParameterType:FxGripSectionParameter.class];
+	[self registerParameterType:FxGripRandomParameter.class];
+	[self registerParameterType:FxGripBannerParameter.class];
+	[self registerParameterType:FxGripCapsuleParameter.class];
+	[self registerParameterType:FxGripStatusParameter.class];
+	[self registerParameterType:FxGripProgressParameter.class];
+	[self registerParameterType:FxGripWebViewParameter.class];
+	[self registerParameterType:FxGripVideoViewParameter.class];
 }
 
 
@@ -108,7 +124,20 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 	if (!typeString) {
 		return FxParameterType_None;
 	}
-	return [__typeToClassMap[typeString] parameterType];
+	Class parameterClass = __typeToClassMap[typeString];
+	if (parameterClass) {
+		return [parameterClass parameterType];
+	}
+	// A loaded extension can back a custom type string the built-in map does not know.
+	for (id<FxExtension> ext in [self extensionsForProtocol:@protocol(FxExtension)]) {
+		if ([ext respondsToSelector:@selector(extParameterTypeForString:)]) {
+			FxParameterType type = [ext extParameterTypeForString:typeString];
+			if (type != FxParameterType_None) {
+				return type;
+			}
+		}
+	}
+	return FxParameterType_None;
 }
 
 
@@ -135,7 +164,25 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 	if (!typeString) {
 		return nil;
 	}
-	return __typeToClassMap[typeString];
+	Class parameterClass = __typeToClassMap[typeString];
+	if (parameterClass) {
+		return parameterClass;
+	}
+	// A loaded extension can back a custom type string: resolve the type it declares for the
+	// string, then the class that backs that type.
+	for (id<FxExtension> ext in [self extensionsForProtocol:@protocol(FxExtension)]) {
+		if ([ext respondsToSelector:@selector(extParameterTypeForString:)]
+			&& [ext respondsToSelector:@selector(extParameterClassForType:)]) {
+			FxParameterType type = [ext extParameterTypeForString:typeString];
+			if (type != FxParameterType_None) {
+				Class extClass = [ext extParameterClassForType:type];
+				if (extClass) {
+					return extClass;
+				}
+			}
+		}
+	}
+	return nil;
 }
 
 

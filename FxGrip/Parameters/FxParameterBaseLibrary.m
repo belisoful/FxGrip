@@ -16,33 +16,35 @@
 @synthesize addedToEffect = _addedToEffect;
 @synthesize parameterCurrentFlags = _parameterCurrentFlags;
 
+// The center holds selector observers weakly; the effect's parameters dictionary keeps
+// the parameter alive, and dealloc removes the registrations.
 - (void)installNotifications
 {
-	_notifierObservers[0] = [self.effect.notifier addObserverForName:FxNotifyAPI_ParameterGetFlagsPreName object:self priority:-17 queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
-		// Returns the flags cache when caching.
-		[self notifyGetFlagsPre:notification];
-	}];
-	
-	_notifierObservers[1] = [self.effect.notifier addObserverForName:FxNotifyAPI_ParameterSetFlagsPreName object:self priority:-19 queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
-		// Sets the flags cache when caching.
-		[self notifySetFlagsPre:notification];
-	}];
-	
-	_notifierObservers[2] = [self.effect.notifier addObserverForName:FxNotifyAPI_ParameterSetFlagsName object:self priority:-19 queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
-		[self notifySetFlags:notification];
-	}];
+	[self.effect.notifier addObserver:self selector:@selector(notifyGetFlagsPre:) name:FxNotifyAPI_ParameterGetFlagsPreName object:self.effect];
+	[self.effect.notifier addObserver:self selector:@selector(notifySetFlagsPre:) name:FxNotifyAPI_ParameterSetFlagsPreName object:self.effect];
+	[self.effect.notifier addObserver:self selector:@selector(notifySetFlags:) name:FxNotifyAPI_ParameterSetFlagsName object:self.effect];
 }
 
 - (void)removeObservers
 {
-	for(int i = 0; i < sizeof(_notifierObservers) / sizeof(_notifierObservers[0]); i++) {
-		[self.effect.notifier removeObserver:_notifierObservers[i]];
-	}
+	[self.effect.notifier removeObserver:self];
+}
+
+// ncPriority: is NOT defined here: FxParameterExtension includes this fragment and must
+// keep FxExtension's implementation. FxParameterBase defines its own in FxParameter.m.
+
+// Direct key: thin payloads cannot satisfy the guarded parameterID accessor.
+- (BOOL)notificationTargetsReceiver:(nonnull NSNotification *)notification
+{
+	return [@(_parameterID) isEqual:notification.userInfo.fxParameter[kFxParameterProperty_Id]];
 }
 
 // get on cache returns cache
 - (void)notifyGetFlagsPre:(nonnull NSNotification *)notification
 {
+	if (![self notificationTargetsReceiver:notification]) {
+		return;
+	}
 	if (self.flagCaching || !_addedToEffect) {
 		notification.userInfo.mutableFxParameter.parameterFlags = _parameterFlags;
 		notification.mutableUserInfo.fxResult = @YES;
@@ -52,7 +54,10 @@
 // set on cache, sets the cache
 - (void)notifySetFlagsPre:(nonnull NSNotification *)notification
 {
-	FxParameterFlags flags = notification.userInfo.fxParameter.parameterFlags;
+	if (![self notificationTargetsReceiver:notification]) {
+		return;
+	}
+	FxParameterFlags flags = ((NSNumber*)notification.userInfo.fxParameter[kFxParameterProperty_Flags]).unsignedIntValue;
 	if (flagCache(flags)) {
 		_parameterFlags = UnsavingFlags(flags | kFxParameterFlag_CACHEDIRTY);
 		notification.mutableUserInfo.fxResult = @YES;
@@ -63,7 +68,10 @@
 
 - (void)notifySetFlags:(nonnull NSNotification *)notification
 {
-	FxParameterFlags flags = notification.userInfo.fxParameter.parameterFlags;
+	if (![self notificationTargetsReceiver:notification]) {
+		return;
+	}
+	FxParameterFlags flags = ((NSNumber*)notification.userInfo.fxParameter[kFxParameterProperty_Flags]).unsignedIntValue;
 	if (flagSaving(flags)) {
 		_parameterCurrentFlags = _parameterFlags = UnsavingFlags(flags) & (~kFxParameterFlag_CACHEDIRTY);
 	}
@@ -195,7 +203,8 @@ flagMethodBody(flagIsDefault)
 		if (param.flagNoState) {
 			return NO;
 		}
-		if ((parentId = param.parameterParentID)) {
+		if ((parentId = param.parameterParentID)
+			&& [self.effect respondsToSelector:@selector(objectAtIndexedSubscript:)]) {
 			param = self.effect[parentId];
 		} else {
 			param = nil;
@@ -264,7 +273,7 @@ flagMethodBody(flagIsDefault)
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	@throw [NSException exceptionWithName:NSInternalInconsistencyException
 								   reason:[NSString stringWithFormat:@"Error: Subclasses must override %s", __func__]
@@ -274,9 +283,8 @@ flagMethodBody(flagIsDefault)
 - (void)parameterFlush
 {
 	if (self.flagCaching) {
-		self.flagCaching = NO;
+		_parameterFlags &= ~kFxParameterFlag_CACHE;
 		[self.effect.apiManager.paramSetAPIv5 setParameterFlags:_parameterFlags toParameter:_parameterID];
-		
 	}
 	
 	// If the value is cached, save

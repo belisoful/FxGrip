@@ -1,8 +1,7 @@
 //
-//  FxGripExtension.m
-//  PlugIn
+//  FxParameterExtension.m
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -24,9 +23,26 @@
 #pragma mark -
 #pragma mark FxGripExtensionParameter Implementation
 
+@interface FxParameterExtension ()
+
+/*! YES from the first observed parameter add: registration is underway, the ID is frozen. */
+@property (nonatomic, assign) BOOL sawParameterAdd;
+
+
+- (void)notifyGetFlagsPre:(nonnull NSNotification *)notification;
+- (void)notifySetFlagsPre:(nonnull NSNotification *)notification;
+- (void)notifySetFlags:(nonnull NSNotification *)notification;
+
+@end
+
+
 @implementation FxParameterExtension
 {
-	id _notifierObservers[kFxParameterInnerNotificationCount + 1];
+	id _parameterAddObserver;
+	// Cached at load: self.effect is weak and reads nil during dealloc, so the block
+	// observer must be removed through a reference that outlives the effect. The
+	// notifier is the process-wide center, so holding it strongly forms no cycle.
+	NSPriorityNotificationCenter *_parameterNotifier;
 }
 
 @synthesize customView;
@@ -36,14 +52,11 @@
 	self = [super init];
 	if (self) {
 		_addedToEffect = NO;
-		
+
 		_parameterName = nil;
 		_parameterID = 0;
 		_parameterParentID = 0;
 		_parameterCurrentFlags = _parameterFlags = 0;
-		
-		_notifierObservers[kFxParameterInnerNotificationCount] = nil;
-		
 	}
 	return self;
 }
@@ -51,12 +64,18 @@
 - (void)dealloc
 {
 	[self removeObservers];
-	
+	// removeObserver:self covers selector observers only; the block token is its own
+	// observer object and is removed by identity through the cached notifier (self.effect
+	// is weak and already nil here).
+	[_parameterNotifier removeObserver:_parameterAddObserver];
+	_parameterAddObserver = nil;
+	NARC_RELEASE(_parameterNotifier);
+
 	SUPER_DEALLOC();
 }
 
 - (void)setParameterID:(FxParameterId)parameterID {
-	if (!self.effect.addedParameters) {
+	if (!self.sawParameterAdd) {
 		_parameterID = parameterID;
 	} else {
 		NSLog(@"Error: Attempted to change the FxGrip Extension Parameter Id after being added");
@@ -68,9 +87,13 @@
 	BOOL success = [super extLoadWithEffect:effect];
 	if (success && self.extActive) {
 		// this tags the parameter with the extension if it matches.
-		_notifierObservers[kFxParameterInnerNotificationCount] = [self.effect.notifier addObserverForName:FxNotifyAPI_ParameterAddPreName object:effect priority:-18 queue:nil usingBlock:^(NSNotification *note) {
+		_parameterNotifier = NARC_RETAIN(self.effect.notifier);
+		__weak typeof(self) weakSelf = self;
+		_parameterAddObserver = [_parameterNotifier addObserverForName:FxNotifyAPI_ParameterAddPreName object:effect priority:-18 queue:nil usingBlock:^(NSNotification *note) {
+			// Registration is underway: the parameter ID is frozen from the first add on.
+			weakSelf.sawParameterAdd = YES;
 			//Adds the extension key to the parameter
-			[self notifyParameterAddWithExtension:note];
+			[weakSelf notifyParameterAddWithExtension:note];
 		}];
 	}
 	return success;

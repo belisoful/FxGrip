@@ -47,7 +47,7 @@
 		//  The FxParameterGroupingAPI_v1 is not created by apple yet.
 
 - (nullable instancetype)initWithAPI:(id<FxParameterGroupingAPI_v1> _Nullable)api
-				   dynamicParamAPIv4:(id<FxDynamicParameterAPI_v4>_Nullable)dynamicParamAPIv4 effect:(id<FxTileableEffectBase>_Nonnull)effect;
+				   dynamicParamAPIv4:(id<FxDynamicParameterAPI_v4>_Nullable)dynamicParamAPIv4 effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 @end
 

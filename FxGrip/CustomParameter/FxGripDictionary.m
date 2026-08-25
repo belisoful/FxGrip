@@ -8,6 +8,7 @@
 
 #import "FxGripDictionary.h"
 #import <BEFoundation/FxTime.h>
+#import <BEFoundation/BEMutable.h>
 #import "FxGrip_ARC.h"
 
 // Locked makes the default keys for types (bool, int, float, etc) only settable if they are already set.
@@ -80,36 +81,69 @@
 	return YES;
 }
 
+// NSDictionary substitutes a plain dictionary class during keyed archiving; encoding the
+// receiver's own class keeps initWithCoder: in the round trip.
+- (Class)classForCoder
+{
+	return self.class;
+}
+
 - (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
 	self = [super init];
-	
+
 	if (self != nil)
 	{
-		_data = [aDecoder decodePropertyList];
+		NSDictionary *decoded = nil;
+		if (aDecoder.allowsKeyedCoding) {
+			NSSet<Class> *classes = [NSSet setWithArray:self.class.classesForParameter.array];
+			decoded = [aDecoder decodeObjectOfClasses:classes forKey:@"data"];
+		} else {
+			decoded = [aDecoder decodePropertyList];
+		}
+		if ([decoded isKindOfClass:NSDictionary.class]) {
+			_data = [decoded mutableCopyRecursive];
+		} else {
+			_data = NARC_RETAIN([NSMutableDictionary dictionary]);
+		}
 	}
-	
+
 	return self;
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder
 {
-	[aCoder encodePropertyList:_data];
+	if (aCoder.allowsKeyedCoding) {
+		[aCoder encodeObject:_data forKey:@"data"];
+	} else {
+		[aCoder encodePropertyList:_data];
+	}
 }
 
 - (instancetype)copyWithZone:(NSZone *)zone
 {
 	FxGripDictionary*    newInstance = [[self.class alloc] initWithDictionary:_data];
-	
+
 	return newInstance;
 }
 
 
 - (BOOL)isEqual:(NSObject<NSSecureCoding, NSCopying>*)object
 {
+	if (self == (id)object) {
+		return YES;
+	}
+	if (![object isKindOfClass:FxGripDictionary.class]) {
+		return NO;
+	}
 	FxGripDictionary*    rhs = (FxGripDictionary*)object;
-	
+
 	return [_data isEqual:rhs.data];
+}
+
+- (NSUInteger)hash
+{
+	return _data.hash;
 }
 
 
@@ -119,10 +153,21 @@
 - (instancetype)initWithObjects:(const id _Nonnull [_Nullable])objects forKeys:(const id <NSCopying> _Nonnull [_Nullable])keys count:(NSUInteger)cnt
 {
 	self = [super init];
-	
+
 	if (self != nil)
 	{
 		_data = [NSMutableDictionary dictionaryWithObjects:objects forKeys:keys count:cnt];
+	}
+	return self;
+}
+
+- (instancetype)initWithCapacity:(NSUInteger)numItems
+{
+	self = [super init];
+
+	if (self != nil)
+	{
+		_data = NARC_RETAIN([NSMutableDictionary dictionaryWithCapacity:numItems]);
 	}
 	return self;
 }
@@ -297,8 +342,8 @@
 					 forKey:(id<NSCopying>)aKey
 {
 	id histogram = [self objectForKey:aKey];
-	
-	if (histogram && [histogram isKindOfClass:[NSNumber class]]) {
+
+	if (histogram && [histogram isKindOfClass:[NSArray class]]) {
 		unsigned long count = [histogram count];
 		
 		if (((count == 1 || count == 2) && channel != kFxHistogramChannel_Alpha) || (count >= 3 && channel == kFxHistogramChannel_Red)) {
@@ -368,10 +413,14 @@
 		if ([histogram count] < 4)
 			[histogram addObject:[NSMutableArray arrayWithArray:channel]];
 	}
-	for(unsigned long i = (channel == 0) ? 1 : channel; i < (channel == 0) ? 4 : channel + 1; i++) {
-		id channelData = histogram[channel - 1];
+	// Channel RGB (0) writes the three color channels; a specific channel writes only
+	// its own entry at index channel - 1.
+	for(unsigned long i = (channel == kFxHistogramChannel_RGB) ? 1 : channel;
+		i < ((channel == kFxHistogramChannel_RGB) ? 4 : channel + 1); i++) {
+		id channelData = histogram[i - 1];
 		if (![channelData isKindOfClass:[NSMutableArray class]]) {
 			channelData = [NSMutableArray arrayWithCapacity:5];
+			histogram[i - 1] = channelData;
 		}
 		channelData[0] = [NSNumber numberWithDouble:blackIn];
 		channelData[1] = [NSNumber numberWithDouble:blackOut];
@@ -379,7 +428,7 @@
 		channelData[3] = [NSNumber numberWithDouble:whiteOut];
 		channelData[4] = [NSNumber numberWithDouble:gamma];
 	}
-	
+
 	[self setObject:histogram forKey:aKey];
 	return YES;
 }
@@ -473,7 +522,7 @@
 	return [self getPathID:pathID forKey:kCustomAPI_PathIDKey];
 }
 
-- (BOOL)etPathID:(FxPathID)pathID
+- (BOOL)setPathID:(FxPathID)pathID
 {
 	if (!self.isLocked || [self objectForKey:kCustomAPI_PathIDKey]) {
 		return [self setPathID:pathID forKey:kCustomAPI_PathIDKey];
@@ -699,18 +748,38 @@
 
 
 
-- (NSOrderedSet<Class> *)classesForParameter { 
-	return nil;
+- (NSOrderedSet<Class> *)classesForParameter {
+	return self.class.classesForParameter;
 }
 
-- (nonnull id)mutableCopyWithZone:(nullable NSZone *)zone {
-	return nil;
-}
+// Fast enumeration, mutable copying, description, and the key/value collections all
+// derive from the five dictionary primitives implemented above; overriding them here
+// with stubs is what broke the class-cluster contract.
 
-- (NSUInteger) countByEnumeratingWithState: (NSFastEnumerationState *_Nonnull) enumerationState
-								   objects: (id _Nonnull __unsafe_unretained [_Nullable]) stackBuffer
-									 count: (NSUInteger) len {
-	return 0;
+- (NSMutableArray*)exemptKeys
+{
+	NSMutableArray *exemptKeys = [self objectForKey:kCustomAPI_ExemptKeysKey];
+
+	if (!exemptKeys) {
+		exemptKeys = [NSMutableArray arrayWithCapacity:1];
+	}
+	if (exemptKeys && ![exemptKeys isKindOfClass:[NSMutableArray class]]) {
+		if ([exemptKeys isKindOfClass:[NSArray class]]) {
+			exemptKeys = [NSMutableArray arrayWithArray:exemptKeys];
+		} else {
+			id priorValue = exemptKeys;
+			exemptKeys = [NSMutableArray arrayWithCapacity:2];
+			[exemptKeys addObject:priorValue];
+		}
+	}
+	if (![exemptKeys containsObject:kCustomAPI_ExemptKeysKey]) {
+		[exemptKeys addObject:kCustomAPI_ExemptKeysKey];
+	}
+	if (![exemptKeys containsObject:kCustomAPI_LastChangedKey]) {
+		[exemptKeys addObject:kCustomAPI_LastChangedKey];
+	}
+	[self setObject:exemptKeys forKey:kCustomAPI_ExemptKeysKey];
+	return exemptKeys;
 }
 
 @end

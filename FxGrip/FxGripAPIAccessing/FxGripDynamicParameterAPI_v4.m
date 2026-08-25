@@ -11,6 +11,8 @@
 #import "NSDictionary+FxTileableEffect.h"
 //#import "GuruFxTileableEffect+Extensions.h"
 #import "FxAPINotifications.h"
+#import "FxGripMeta.h"
+#import "FxGripErrors.h"
 
 
 @implementation FxGripDynamicParameterAPI_v4
@@ -267,7 +269,7 @@
 			}.mutableCopy
 		}.mutableCopy;
 	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterGetTypeName object:self.effect userInfo:userInfo];
-	return userInfo.fxParameter.parameterType;
+	return ((NSNumber*)userInfo.fxParameter[kFxParameterProperty_Type]).intValue;
 }
 
 
@@ -282,7 +284,7 @@
 			}.mutableCopy
 		}.mutableCopy;
 	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterGetMenuName object:self.effect userInfo:userInfo];
-	*entries = userInfo.fxParameter.parameterMenuItems;
+	*entries = userInfo.fxParameter[kFxParameterProperty_MenuItems];
 	
 	return userInfo.fxError;
 }
@@ -302,77 +304,72 @@
 
 
 #pragma mark -
-#pragma mark Tag API
+#pragma mark Meta API
 
+#define hasMeta(returnValue) { if (!FxGripHostHasMeta(self.effect)) return (returnValue); }
+#define noMetaError(parameterID) ([NSError errorWithDomain:FxGripPlugErrorDomain \
+	code:kFxError_ThirdPartyDeveloperStart + (parameterID) \
+	userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"No meta manager for parameter (%u).", (parameterID)] }])
+
+- (SInt32)metaCountFromParameter:(FxParameterId)parameterID
+{
+	hasMeta(-1);
+	return [FxGripHostMeta(self.effect) metaCountFromParameter:parameterID];
+}
 
 - (NSError *)getMeta:(NSDictionary **)meta fromParameter:(FxParameterId)parameterID
 {
-	return nil;
+	hasMeta(noMetaError(parameterID));
+	return [FxGripHostMeta(self.effect) getMeta:meta fromParameter:parameterID];
+}
+
+- (NSError *)setMeta:(NSDictionary *)meta toParameter:(FxParameterId)parameterID
+{
+	hasMeta(noMetaError(parameterID));
+	return [FxGripHostMeta(self.effect) setMeta:meta toParameter:parameterID];
 }
 
 - (NSError *)getMetaKeys:(NSArray **)keys fromParameter:(FxParameterId)parameterID
 {
-	return nil;
+	hasMeta(noMetaError(parameterID));
+	return [FxGripHostMeta(self.effect) getMetaKeys:keys fromParameter:parameterID];
 }
-
-- (NSError *)hasMeta:(BOOL *)exists fromParameter:(FxParameterId)parameterID
-{
-	return nil;
-}
-
-
-- (SInt32)parameterMetaCount:(FxParameterId)parameterID
-{
-	return -1;
-}
-
 
 - (NSError *)removeAllMeta:(FxParameterId)parameterID
 {
-	return nil;
+	hasMeta(noMetaError(parameterID));
+	return [FxGripHostMeta(self.effect) removeAllMeta:parameterID];
 }
 
-- (NSError *)removeMeta:(NSString *)key fromParameter:(FxParameterId)parameterID
+- (BOOL)parameter:(FxParameterId)parameterID hasMetaKey:(NSString *)key error:(NSError **)error
 {
-	return nil;
-}
-
-
-
-- (NSError *)setMeta:(NSDictionary *)meta toParameter:(FxParameterId)parameterID
-{
-	return nil;
-}
-
-
-- (NSError *)getMetaKeys:(NSArray **)keys forPreset:(NSString *)tag fromParameter:(FxParameterId)parameterID
-{
-	return nil;
-}
-
-- (BOOL)parameter:(FxParameterId)parameterID hasMetaKey:(NSString *)key error:(NSError *)error
-{
-	return NO;
-}
-
-- (BOOL)removeMetaKey:(NSString *)key fromParameter:(FxParameterId)parameterID
-{
-	return NO;
-}
-
-- (BOOL)setMeta:(id<NSSecureCoding,NSCopying> *)value forKey:(NSString *)key toParameter:(FxParameterId)parameterID
-{
-	return NO;
-}
-
-- (SInt32)metaCountFromParameter:(FxParameterId)parameterID
-{
-	return -1;
+	if (!FxGripHostHasMeta(self.effect)) {
+		if (error) {
+			*error = noMetaError(parameterID);
+		}
+		return NO;
+	}
+	return [FxGripHostMeta(self.effect) parameter:parameterID hasMetaKey:key error:error];
 }
 
 - (BOOL)getMeta:(id<NSSecureCoding,NSCopying> *)value forKey:(NSString *)key fromParameter:(FxParameterId)parameterID
 {
-	return NO;
+	hasMeta(NO);
+	return [FxGripHostMeta(self.effect) getMeta:(NSObject<NSSecureCoding,NSCopying>**)value
+													   forKey:key fromParameter:parameterID];
+}
+
+- (BOOL)setMeta:(id<NSSecureCoding,NSCopying>)value forKey:(NSString *)key toParameter:(FxParameterId)parameterID
+{
+	hasMeta(NO);
+	return [FxGripHostMeta(self.effect) setMeta:(NSObject<NSSecureCoding,NSCopying>*)value
+													   forKey:key toParameter:parameterID];
+}
+
+- (BOOL)removeMetaKey:(NSString *)key fromParameter:(FxParameterId)parameterID
+{
+	hasMeta(NO);
+	return [FxGripHostMeta(self.effect) removeMetaKey:key fromParameter:parameterID];
 }
 
 @end

@@ -23,7 +23,7 @@
 	@property (assign, readonly, nullable) id<FxParameterCreationAPI_v5> api;
 	@property (retain, readonly, nonnull) NSMutableArray<NSNumber*> *subGroupStack;
 
-- (nullable instancetype)initWithAPI:(id<FxParameterCreationAPI_v5> _Nonnull)api effect:(nonnull id<FxTileableEffectBase>)effect;
+- (nullable instancetype)initWithAPI:(id<FxParameterCreationAPI_v5> _Nonnull)api effect:(nonnull id<FxGripEffectHost>)effect;
 
 - (BOOL)addAngleSliderWithName:(nonnull NSString *)name
 				   parameterID:(UInt32)parameterID

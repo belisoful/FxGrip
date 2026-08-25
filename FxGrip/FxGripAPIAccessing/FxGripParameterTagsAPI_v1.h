@@ -25,7 +25,7 @@
 
 	@property (assign, readonly) id<FxParameterTagsAPI_v1> _Nonnull api;
 
-- (nullable instancetype)initWithAPI:(id<FxParameterTagsAPI_v1> _Nullable)api effect:(nonnull id<FxTileableEffectBase>)effect;
+- (nullable instancetype)initWithAPI:(id<FxParameterTagsAPI_v1> _Nullable)api effect:(nonnull id<FxGripEffectHost>)effect;
 
 // Parameter Tags
 

@@ -25,4 +25,12 @@
 #define kFxGripError_NoConfigGroups		(kFxError_ThirdPartyDeveloperStart + 30000)
 #define kFxGripError_NoConfigPlugins	(kFxError_ThirdPartyDeveloperStart + 30001)
 
+#define kFxGripError_Preset				(kFxError_ThirdPartyDeveloperStart + 31000)
+
+#define kFxGripError_InferenceNotReady		(kFxError_ThirdPartyDeveloperStart + 32000)
+#define kFxGripError_InferenceMissingInput	(kFxError_ThirdPartyDeveloperStart + 32001)
+#define kFxGripError_InferenceBackendFailure (kFxError_ThirdPartyDeveloperStart + 32002)
+
+#define kFxGripError_WindowAPIUnavailable	(kFxError_ThirdPartyDeveloperStart + 33000)
+
 #endif

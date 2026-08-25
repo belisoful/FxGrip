@@ -23,6 +23,7 @@ FOUNDATION_EXPORT const unsigned char BEFoundationVersionString[];
 
 #import <BEFoundation/BEPathControl.h>
 #import <BEFoundation/BESecurityScopedURLManager.h>
+#import <BEFoundation/BEDotView.h>
 #import <BEFoundation/BETabView.h>
 #import <BEFoundation/BEWindowController.h>
 #import <BEFoundation/BEWindowControllerManager.h>
@@ -42,6 +43,7 @@ FOUNDATION_EXPORT const unsigned char BEFoundationVersionString[];
 #import <BEFoundation/BEWebData.h>
 #import <BEFoundation/CIImage+BExtension.h>
 #import <BEFoundation/BEColor+BExtension.h>
+#import <BEFoundation/BEColor+BEWebColor.h>
 #import <BEFoundation/BEView+BExtension.h>
 #import <BEFoundation/BEImage+BExtension.h>
 #import <BEFoundation/NSPasteboard+BExtension.h>

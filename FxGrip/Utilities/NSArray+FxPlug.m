@@ -18,7 +18,7 @@
 {
 	__block NSInteger result = kFxImageTileNotFound;
 	[self enumerateObjectsUsingBlock:^(FxImageTile *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-		if ([obj isKindOfClass:FxImageTile.class]) {
+		if (![obj isKindOfClass:FxImageTile.class]) {
 			return;
 		}
 		if (obj.parameterID == 0) {

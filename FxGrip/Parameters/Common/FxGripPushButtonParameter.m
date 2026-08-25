@@ -9,6 +9,7 @@
 #import "FxGripPushButtonParameter.h"
 #import "FxTileableEffectBase.h"
 #import "NSDictionary+FxTileableEffect.h"
+#import "FxGripParameterUtility.h"
 
 @implementation FxGripPushButtonParameter
 
@@ -16,9 +17,9 @@
 @synthesize selectorString = _selectorString;
 
 
--(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect
 {
-	self = [super init];
+	self = [super initWithDictionary:dictionary effect:effect];
 	if(self) {
 		_selectorString = dictionary.parameterSelector;
 		_selector = NSSelectorFromString(_selectorString);
@@ -36,24 +37,20 @@
 	return FxParameterType_PushButton;
 }
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
-	BOOL success = NO;
-	NSString *selectorString = parameter.parameterSelector;
-	SEL selector = NSSelectorFromString(selectorString);
-	if (selector == nil) {
-		//errorReason = @"Missing Selector.";
-		success = NO;
-	} else if ([selectorString.lowercaseString hasPrefix:kFxParameterProperty_SelectorPrefix]) {
-		success = [effect.apiManager.paramCreateAPIv5 addPushButtonWithName: parameter.parameterName
-																parameterID: parameter.parameterID
-																   selector: selector  //selector needs to use FxCustomParameterActionAPI_v4 to access parameters
-															 parameterFlags: parameter.parameterFlags];
-	} else {
-		//errorReason = @"Incorrrect selector prefix.  Must start with 'click' for security reasons";
-		success = NO;
+	// The host registers the synthesized selector encoding the parameter ID; clicks
+	// dispatch through -[FxTileableEffectBase parameterClicked:]. The configuration's
+	// "selector" is the optional subclass hook and keeps the "click" prefix requirement.
+	NSString *declaredSelector = parameter.parameterSelector;
+	if (declaredSelector && ![declaredSelector.lowercaseString hasPrefix:kFxParameterProperty_SelectorPrefix]) {
+		return NO;
 	}
-	return success;
+	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:parameter.parameterID]);
+	return [effect.apiManager.paramCreateAPIv5 addPushButtonWithName: parameter.parameterName
+														 parameterID: parameter.parameterID
+															selector: selector
+													  parameterFlags: parameter.parameterFlags];
 }
 
 

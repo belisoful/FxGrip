@@ -150,8 +150,8 @@
 				that modify the array in place.
  @code
 	NSMutableArray *m = @[@3, @1, @2].mutableCopy;
-	[m insertObjects:@[@8, @9] atIndex:0];  // @[@8, @9, @3, @1, @2]
-	[m removeFirstObject];                  // @[@9, @3, @1, @2]
+	[m insertElementsOfArray:@[@8, @9] atIndex:0];  // @[@8, @9, @3, @1, @2]
+	[m removeFirstElement];                         // @[@9, @3, @1, @2]
 	m.set = [NSSet setWithArray:m];          // replace contents from a set (order not preserved)
 
 	// filterUsingBlock mutates in place: return NO to remove, or mutate *obj and return YES to keep.
@@ -163,15 +163,16 @@
 @interface NSMutableArray <ObjectType> (BExtension)
 
 /*!
- @method		-removeFirstObject
+ @method		-removeFirstElement
  @abstract		Removes the first object from the array if it exists.
  @discussion	Safely removes the object at index 0 if the array is not empty.
 				Does nothing if the array is empty, avoiding index out of bounds exceptions.
+ @since			1.1
  */
-- (void)removeFirstObject;
+- (void)removeFirstElement;
 
 /*!
- @method		-insertObjects:atIndex:
+ @method		-insertElementsOfArray:atIndex:
  @abstract		Inserts multiple objects from an array at the specified index.
  @discussion	Inserts all objects from the provided array at the given index position.
 				Objects at and after the insertion point are shifted to make room.
@@ -180,9 +181,10 @@
  @param			index The index at which to insert the objects. Must be <= count of receiver.
  @exception		NSInvalidArgumentException Thrown if objects is nil, not an NSArray,
 				or if index is greater than the receiver's count.
+ @since			1.1
  */
-- (void) insertObjects:(nonnull NSArray<ObjectType> *) objects
-			   atIndex:(NSUInteger)index;
+- (void) insertElementsOfArray:(nonnull NSArray<ObjectType> *) objects
+					   atIndex:(NSUInteger)index;
 
 /*!
  @property		orderedSet
@@ -190,8 +192,11 @@
  @discussion	When setting, replaces the array's contents with the ordered set's array.
 				When getting, returns an NSOrderedSet containing the array's elements.
 				Setting to nil will clear the array.
+
+				The setter selector is be_setOrderedSet: because Apple defines a private
+				setOrderedSet: on this class; dot syntax is unaffected.
  */
-@property (readwrite, strong, nullable) NSOrderedSet<ObjectType> *orderedSet;
+@property (readwrite, strong, nullable, setter=be_setOrderedSet:) NSOrderedSet<ObjectType> *orderedSet;
 
 /*!
  @property		set
@@ -200,8 +205,11 @@
 				When getting, returns an NSSet containing the array's unique elements.
 				Setting to nil will clear the array. Note that order is not preserved
 				when setting from a set.
+
+				The setter selector is be_setSet: because Apple defines a private
+				setSet: on this class; dot syntax is unaffected.
  */
-@property (readwrite, strong, nullable) NSSet<ObjectType> *set;
+@property (readwrite, strong, nullable, setter=be_setSet:) NSSet<ObjectType> *set;
 
 /*!
  @method		-filterUsingBlock:

@@ -7,8 +7,27 @@
 //
 
 #import "FxGripFontMenuParameter.h"
+#import "FxTileableEffectBase+Notifications.h"
+#import "FxAPINotifications.h"
+#import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxTileableEffectBase.h"
 #import "NSDictionary+FxTileableEffect.h"
+
+/*! The declared configuration with a mutable default, run through the host's parameter-policy
+	observers. */
+static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *parameter,
+															  id<FxGripEffectHost> effect)
+{
+	NSMutableDictionary *config = parameter.mutableCopy;
+	NSDictionary *declared = [parameter valueForKey:kFxParameterProperty_Default];
+	if ([declared isKindOfClass:NSDictionary.class]) {
+		config[kFxParameterProperty_Default] = [declared mutableCopy];
+	}
+	[effect.notifier postNotificationName:FxTileableEffectParameterPolicyName
+								   object:effect
+								 userInfo:@{FxNotifyAPI_ParameterKey: config}];
+	return config;
+}
 
 @implementation FxGripFontMenuParameter
 
@@ -22,11 +41,13 @@
 	return FxParameterType_FontMenu;
 }
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
-	NSString *fontName = parameter.parameterDefaultValue;
-	if (fontName == nil) {
-		fontName = effect.defaultFontName;
+	// The host's policy observers resolve the font (the effect base fills its default font).
+	NSMutableDictionary *config = FxGripPolicyResolvedConfiguration(parameter, effect);
+	NSString *fontName = config.parameterDefaultValue;
+	if (![fontName isKindOfClass:NSString.class] || fontName.length == 0) {
+		fontName = kFxParameterType_FontNameDefault;
 	}
 	return [effect.apiManager.paramCreateAPIv5 addFontMenuWithName: parameter.parameterName
 													   parameterID: parameter.parameterID
@@ -38,7 +59,7 @@
 {
 	NSString* fontNameValue = nil;
 	if(![self.effect.apiManager.paramGetAPIv6 getFontName:&fontNameValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

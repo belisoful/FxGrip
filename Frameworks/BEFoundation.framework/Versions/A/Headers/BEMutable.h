@@ -50,32 +50,32 @@
 				## Usage
 
 				```objc
-				BOOL a = [NSMutableArray new].isMutable;  // YES
-				BOOL b = @[].isMutable;                   // NO
-				BOOL c = NSMutableArray.isMutable;        // YES (class property)
+				BOOL a = [NSMutableArray new].hasMutability;  // YES
+				BOOL b = @[].hasMutability;                   // NO
+				BOOL c = NSMutableArray.hasMutability;        // YES (class property)
 				```
  */
 @interface NSObject (BEMutableProtocol)
 
 /*!
- @property      isMutable
+ @property      hasMutability
  @brief         A class property that indicates whether instances of this class are mutable.
  @discussion    This property returns YES if the class conforms to the BEMutable protocol,
 				indicating that instances of this class can be modified after creation.
 				For most classes, this returns NO.
  @return        YES if the class creates mutable instances, NO otherwise.
  */
-@property (readonly, nonatomic, class) BOOL isMutable;
+@property (readonly, nonatomic, class) BOOL hasMutability;
 
 /*!
- @property      isMutable
+ @property      hasMutability
  @brief         An instance property that indicates whether this specific object is mutable.
  @discussion    This property returns YES if the object's class conforms to the BEMutable protocol.
 				It provides a convenient way to check mutability at the instance level without
 				requiring knowledge of the specific class type.
  @return        YES if this object instance is mutable, NO otherwise.
  */
-@property (readonly, nonatomic) BOOL isMutable;
+@property (readonly, nonatomic) BOOL hasMutability;
 
 @end
 
@@ -131,7 +131,7 @@
 				## Usage
 
 				```objc
-				if (obj.isMutable) {           // YES only when [obj class] conforms to BEMutable
+				if (obj.hasMutability) {           // YES only when [obj class] conforms to BEMutable
 				    [obj addObject:newItem];
 				}
 				```
@@ -475,22 +475,22 @@
 @interface NSMutableSet (BEMutableProtocol) <BEMutableCollection>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableSet instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableSet
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableSet instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableSet instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableSet
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableSet instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -511,22 +511,22 @@
 @interface NSMutableOrderedSet (BEMutableProtocol) <BEMutableCollection>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableOrderedSet instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableOrderedSet
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableOrderedSet instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableOrderedSet instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableOrderedSet
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableOrderedSet instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -547,22 +547,22 @@
 @interface NSMutableArray (BEMutableProtocol) <BEMutableCollection>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableArray instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableArray
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableArray instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableArray instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableArray
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableArray instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -583,22 +583,22 @@
 @interface NSMutableDictionary (BEMutableProtocol) <BEMutableCollection>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableDictionary instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableDictionary
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableDictionary instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableDictionary instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableDictionary
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableDictionary instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -618,22 +618,22 @@
 @interface NSIndexSet (BEMutableProtocol) <BEHasMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSIndexSet instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of NSIndexSet
 				are immutable and cannot be modified after creation.
  @return        NO, indicating that NSIndexSet instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSIndexSet instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific NSIndexSet
 				instance cannot be modified after creation.
  @return        NO, indicating that this NSIndexSet instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -653,22 +653,22 @@
 @interface NSNumber (BEMutableProtocol) <BEHasMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSNumber instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of NSNumber
 				are immutable and cannot be modified after creation.
  @return        NO, indicating that NSNumber instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSNumber instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific NSNumber
 				instance cannot be modified after creation.
  @return        NO, indicating that this NSNumber instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -690,17 +690,17 @@
 @interface NSString (BEMutableProtocol) <BEHasMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSString instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of NSString
 				are designed to be immutable and should not be modified after creation.
  @return        NO, indicating that NSString instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 #if kIncludeImmutableClassesWithMutableImplementation
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSString instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific NSString
 				instance should not be modified after creation.
@@ -709,7 +709,7 @@
 				is defined as YES, as NSString's internal implementation may use mutable backing stores.
  @return        NO, indicating that this NSString instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 #endif
 
 @end
@@ -727,22 +727,22 @@
 @interface NSData (BEMutableProtocol) <BEHasMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSData instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of NSData
 				are immutable and cannot be modified after creation.
  @return        NO, indicating that NSData instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSData instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific NSData
 				instance cannot be modified after creation.
  @return        NO, indicating that this NSData instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -760,22 +760,22 @@
 @interface NSAttributedString (BEMutableProtocol) <BEHasMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSAttributedString instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of NSAttributedString
 				are immutable and cannot be modified after creation.
  @return        NO, indicating that NSAttributedString instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSAttributedString instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific NSAttributedString
 				instance cannot be modified after creation.
  @return        NO, indicating that this NSAttributedString instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -792,22 +792,22 @@
 @interface NSURLRequest (BEMutableProtocol) <BEHasMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSURLRequest instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of NSURLRequest
 				are immutable and cannot be modified after creation.
  @return        NO, indicating that NSURLRequest instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSURLRequest instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific NSURLRequest
 				instance cannot be modified after creation.
  @return        NO, indicating that this NSURLRequest instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -834,17 +834,17 @@
 #endif
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSCharacterSet instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of NSCharacterSet
 				are designed to be immutable and should not be modified after creation.
  @return        NO, indicating that NSCharacterSet instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 #if kIncludeImmutableClassesWithMutableImplementation
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSCharacterSet instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific NSCharacterSet
 				instance should not be modified after creation.
@@ -853,7 +853,7 @@
 				is defined as YES, as NSCharacterSet's internal implementation may use mutable backing stores.
  @return        NO, indicating that this NSCharacterSet instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 #endif
 
 @end
@@ -875,22 +875,22 @@
 @interface BECharacterSet (BEMutableProtocol) <BEHasMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates BECharacterSet instances are immutable.
  @discussion    This class method always returns NO, indicating that all instances of BECharacterSet
 				are immutable and cannot be modified after creation.
  @return        NO, indicating that BECharacterSet instances are immutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this BECharacterSet instance is immutable.
  @discussion    This instance method always returns NO, confirming that this specific BECharacterSet
 				instance cannot be modified after creation.
  @return        NO, indicating that this BECharacterSet instance is immutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -912,22 +912,22 @@
 @interface NSMutableIndexSet (BEMutableProtocol) <BEMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableIndexSet instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableIndexSet
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableIndexSet instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableIndexSet instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableIndexSet
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableIndexSet instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -947,22 +947,22 @@
 @interface NSMutableNumber (BEMutableProtocol) <BEMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableNumber instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableNumber
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableNumber instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableNumber instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableNumber
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableNumber instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -982,7 +982,7 @@
 @interface NSMutableString (BEMutableProtocol) <BEMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that reports whether the receiver class backs mutable string instances.
  @discussion    Mutability is inferred from the concrete class within the NSString class cluster.
 				Returns YES for __NSCFString (the backing class of mutable instances) and for
@@ -990,10 +990,10 @@
 				__NSCFConstantString.
  @return        YES if the receiver class backs mutable string instances, NO otherwise.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that reports whether this string instance is mutable.
  @discussion    Mutability is inferred from the concrete backing class within the NSString class
 				cluster. Returns YES only when the instance is backed by __NSCFString; any other
@@ -1002,7 +1002,7 @@
 				subclass returns NO.
  @return        YES if the instance is backed by __NSCFString, NO otherwise.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -1022,22 +1022,22 @@
 @interface NSMutableData (BEMutableProtocol) <BEMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableData instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableData
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableData instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableData instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableData
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableData instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -1057,22 +1057,22 @@
 @interface NSMutableAttributedString (BEMutableProtocol) <BEMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableAttributedString instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableAttributedString
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableAttributedString instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableAttributedString instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableAttributedString
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableAttributedString instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -1092,22 +1092,22 @@
 @interface NSMutableURLRequest (BEMutableProtocol) <BEMutable>
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableURLRequest instances are mutable.
  @discussion    This class method always returns YES, indicating that all instances of NSMutableURLRequest
 				are mutable and can be modified after creation.
  @return        YES, indicating that NSMutableURLRequest instances are mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableURLRequest instance is mutable.
  @discussion    This instance method always returns YES, confirming that this specific NSMutableURLRequest
 				instance can be modified after creation.
  @return        YES, indicating that this NSMutableURLRequest instance is mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -1133,7 +1133,7 @@
 #endif
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Class method that indicates NSMutableCharacterSet mutability based on framework configuration.
  @discussion    This class method returns the value of kCharSetDifferentiable, which determines whether
 				NSMutableCharacterSet instances are treated as distinguishably mutable within the framework.
@@ -1142,10 +1142,10 @@
  @return        The value of kCharSetDifferentiable, indicating whether NSMutableCharacterSet instances
 				are treated as distinguishably mutable.
  */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
- @method        isMutable
+ @method        hasMutability
  @brief         Instance method that indicates this NSMutableCharacterSet mutability based on framework configuration.
  @discussion    This instance method returns the value of kCharSetDifferentiable, which determines whether
 				this NSMutableCharacterSet instance is treated as distinguishably mutable within the framework.
@@ -1154,7 +1154,7 @@
  @return        The value of kCharSetDifferentiable, indicating whether this NSMutableCharacterSet instance
 				is treated as distinguishably mutable.
  */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 
@@ -1174,11 +1174,11 @@
 			   
 			   ## Usage
 			   
-			   Use the `isMutable` method to determine whether a character set instance supports mutation operations:
+			   Use the `hasMutability` method to determine whether a character set instance supports mutation operations:
 			   
 			   ```objc
 			   BEMutableCharacterSet *mutableSet = [[BEMutableCharacterSet alloc] init];
-			   BOOL canMutate = [mutableSet isMutable]; // Returns YES
+			   BOOL canMutate = [mutableSet hasMutability]; // Returns YES
 			   ```
 			   
 			   This category maintains consistency with other mutable/immutable class pairs in the BE framework,
@@ -1187,7 +1187,7 @@
 @interface BEMutableCharacterSet (BEMutableProtocol) <BEMutable>
 
 /*!
-@method        isMutable
+@method        hasMutability
 @abstract      Returns whether the BEMutableCharacterSet class supports mutation operations.
 @discussion    This class method always returns `YES` since BEMutableCharacterSet is designed to be mutable.
 			   
@@ -1196,10 +1196,10 @@
 			   
 @return        `YES` indicating that BEMutableCharacterSet supports mutation operations.
 */
-+ (BOOL)isMutable;
++ (BOOL)hasMutability;
 
 /*!
-@method        isMutable
+@method        hasMutability
 @abstract      Returns whether this character set instance supports mutation operations.
 @discussion    This instance method always returns `YES` for BEMutableCharacterSet instances, indicating
 			   that the receiver can be safely modified using mutation methods such as `addCharactersInString:`,
@@ -1210,7 +1210,7 @@
 			   
 @return        `YES` indicating that this instance supports mutation operations.
 */
-- (BOOL)isMutable;
+- (BOOL)hasMutability;
 
 @end
 

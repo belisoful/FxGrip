@@ -35,7 +35,7 @@
 	
 	if (missingGroups.count) {
 		@try {
-			//	NSMutableSet doesn'	t like being edited while enumerating, so copy.
+			//	NSMutableSet does not like being edited while enumerating, so copy.
 			for (NSString *groupUUID in missingGroups.copy) {
 				for (NSDictionary *plugin in activePlugins) {
 					NSString *pguuid = plugin[kProPlugPlugIn_GroupUUIDProperty];
@@ -85,7 +85,7 @@
 		}
 		@catch (NSException *exception) {
 			if (error) {
-				*error = [NSError errorWithDomain:FxPlugErrorDomain
+				*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 											 code:kFxGripError_Exception
 										 userInfo:@{NSLocalizedDescriptionKey:
 														[NSString stringWithFormat:@"Error: exception thrown getting group names, reason: %@", exception.reason]}];
@@ -99,23 +99,24 @@
 + (nonnull NSArray<Class> *)globalRegisteredPluginClasses
 {
 	NSMutableArray *clss = NSMutableArray.new;
-	
+
 	unsigned int numClasses;
 	Class *classes = objc_copyClassList(&numClasses);
-	
-	@try {
-		for (int i = 0; i < numClasses; i++) {
-			Class currentClass = classes[i];
-			
-			// Check if class conforms to our protocol
-			if ([currentClass conformsToProtocol:@protocol(FxRegisteredPlugin)]) {
-				[clss addObject:currentClass];
+
+	Protocol *registeredPlugin = @protocol(FxRegisteredPlugin);
+	for (unsigned int i = 0; i < numClasses; i++) {
+		// objc_copyClassList includes classes that lack an NSObject root and trap on any
+		// message send; only runtime C calls are safe here. class_conformsToProtocol does
+		// not consult superclasses, so walk the chain to match -conformsToProtocol:.
+		for (Class cls = classes[i]; cls; cls = class_getSuperclass(cls)) {
+			if (class_conformsToProtocol(cls, registeredPlugin)) {
+				[clss addObject:classes[i]];
+				break;
 			}
 		}
 	}
-	@finally {
-		free(classes);
-	}
+	free(classes);
+
 	return clss.copy;
 }
 
@@ -139,7 +140,7 @@
 	}
 	@catch (NSException *exception) {
 		if (error) {
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxGripError_Exception
 									 userInfo:@{NSLocalizedDescriptionKey:
 													[NSString stringWithFormat:@"Error: could not get inline registered plugins: %@",

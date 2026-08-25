@@ -20,16 +20,30 @@
 #pragma mark FxGripParameter Implementation
 
 
+@interface FxParameterBase ()
+
+- (void)notifyGetFlagsPre:(nonnull NSNotification *)notification;
+- (void)notifySetFlagsPre:(nonnull NSNotification *)notification;
+- (void)notifySetFlags:(nonnull NSNotification *)notification;
+
+@end
+
+
 @implementation FxParameterBase
+
+- (NSInteger)ncPriority:(nullable NSNotificationName)aName
 {
-	id _notifierObservers[kFxParameterInnerNotificationCount];
+	if ([FxNotifyAPI_ParameterGetFlagsPreName isEqualToString:aName]) {
+		return -17;
+	}
+	return -19;
 }
 
 #include "FxParameterBaseLibrary.m"
 
 @synthesize effect = _effect;
 
--(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxTileableEffectBase>)effect
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect
 {
 	self = [super init];
 	if(self) {
@@ -52,6 +66,8 @@
 		} else {
 			_data = dictionary.mutableCopy;
 		}
+
+		[self installNotifications];
 	}
 	return self;
 }
@@ -152,6 +168,21 @@
 @implementation FxParameter
 
 @synthesize customView;
+
+- (NSView *_Nullable)newParameterView
+{
+	return nil;
+}
+
+- (void)attachCustomView:(NSView *_Nullable)view
+{
+	customView = view;
+}
+
++ (NSSet<Class> *_Nullable)customValueClasses
+{
+	return nil;
+}
 
 #include "FxParameterLibrary.m"
 

@@ -13,7 +13,7 @@
 #import <BEFoundation/NSArray+BExtension.h>
 #import <BEFoundation/BEStackExtensions.h>
 #import "FxAPINotifications.h"
-#import "NSDictionary+FxTileableEFfect.h"
+#import "NSDictionary+FxTileableEffect.h"
 #import "FxGrip_ARC.h"
 
 @implementation FxGripParameterCreationAPI_v5
@@ -28,7 +28,7 @@
 //---------------------------------------------------------
 
 - (nullable instancetype)initWithAPI:(id<FxParameterCreationAPI_v5>)api
-							  effect:(id<FxTileableEffectBase>)effect
+							  effect:(id<FxGripEffectHost>)effect
 {
 	self = [super initWithEffect:effect];
 	
@@ -469,11 +469,11 @@
 	if (![_api addIntSliderWithName:param.parameterName
 						parameterID:param.parameterID
 					   defaultValue:[param.parameterDefaultValue intValue]
-					   parameterMin:[param.parameterDefaultValue intValue]
-					   parameterMax:[param.parameterDefaultValue intValue]
-						  sliderMin:[param.parameterDefaultValue intValue]
-						  sliderMax:[param.parameterDefaultValue intValue]
-							  delta:[param.parameterDefaultValue intValue]
+					   parameterMin:param.parameterMinimumInt
+					   parameterMax:param.parameterMaximumInt
+						  sliderMin:[param.parameterSliderMinimum intValue]
+						  sliderMax:[param.parameterSliderMaximum intValue]
+							  delta:[param.parameterDelta intValue]
 					 parameterFlags:FxParameterFlagsFxMask(param.parameterFlags)]) {
 		return NO;
 	}
@@ -610,6 +610,7 @@
 			kFxParameterProperty_Id: @(parameterID),
 			kFxParameterProperty_ParentId: _subGroupStack.lastObject,
 			kFxParameterProperty_MenuItems: entries,
+			kFxParameterProperty_Default: @(defaultValue),
 			kFxParameterProperty_Flags: @(flags)
 		}.mutableCopy
 	}.mutableCopy;
@@ -755,7 +756,7 @@
 					   parameterFlags:FxParameterFlagsFxMask(param.parameterFlags)]) {
 		return NO;
 	}
-	[_subGroupStack push:@(parameterID)];
+	[_subGroupStack pushObject:@(parameterID)];
 	
 	NSDictionary *concreteUserInfo = userInfo.copy;
 	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterAddName object:self.effect userInfo:concreteUserInfo];
@@ -768,9 +769,10 @@
 - (BOOL)endParameterSubGroup
 {
 	BOOL success = [_api endParameterSubGroup];
-	if (success) {
-		NSNumber *parameterID = [_subGroupStack pop];
-		
+	// The @0 root sentinel is the stack floor; an unbalanced end must not pop it.
+	if (success && _subGroupStack.count > 1) {
+		NSNumber *parameterID = [_subGroupStack popObject];
+
 		NSDictionary *userInfo = @{
 			kFxParameterProperty_Id: parameterID,
 		 	FxNotifyAPI_ParameterKey: @{

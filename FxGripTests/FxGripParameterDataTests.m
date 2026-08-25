@@ -1,0 +1,672 @@
+//
+//  FxGripParameterDataTests.m
+//  FxGripTests
+//
+//  Unit tests for the FxGripParameterData extension: the hidden ParameterData
+//  parameter registration, the record it seeds from the creation API payload,
+//  the flag merge and store passes, the menu-item store, the stored* accessors
+//  that read the records back, and the flush that persists the cache.
+//
+
+#import <XCTest/XCTest.h>
+#import <CoreMedia/CoreMedia.h>
+#import <FxGrip/FxGripTypes.h>
+#import <FxGrip/FxGripParameterFlags.h>
+#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxTileableEffectBase+Notifications.h>
+#import <FxGrip/FxGripParameterData.h>
+
+static const FxParameterId kPDataTestParamA = 21;
+static const FxParameterId kPDataTestParamB = 22;
+
+// The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
+// (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
+static NSNotificationCenter *FxPDataTestMakePriorityCenter(void)
+{
+	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
+	return [[cls alloc] init];
+}
+
+/*!
+	The payload the creation API posts: the parameter dictionary sits under
+	FxNotifyAPI_ParameterKey and the top level repeats the ID. The nested dictionary is
+	mutable, matching FxGripParameterCreationAPI_v5.
+*/
+static NSMutableDictionary *FxPDataTestAddUserInfo(FxParameterId parameterID)
+{
+	return @{
+		kFxParameterProperty_Id: @(parameterID),
+		FxNotifyAPI_ParameterKey: @{
+			kFxParameterProperty_Id: @(parameterID),
+			kFxParameterProperty_Type: @(FxParameterType_Float),
+			kFxParameterProperty_Name: @"Test Parameter",
+			kFxParameterProperty_ParentId: @(kFxParameterId_TopLevelGroup),
+			kFxParameterProperty_Flags: @(kFxParameterFlag_DISABLED | kFxParameterFlag_NOT_ANIMATABLE),
+			kFxParameterProperty_Selector: @"clickTestParameter"
+		}.mutableCopy
+	}.mutableCopy;
+}
+
+static NSNotification *FxPDataTestNotification(NSNotificationName name, id object, NSDictionary *userInfo)
+{
+	return [NSNotification notificationWithName:name object:object userInfo:userInfo];
+}
+
+/*! Builds the userInfo shape the flag and menu handlers read. */
+static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameterID, NSDictionary *entries)
+{
+	NSMutableDictionary *parameter = @{kFxParameterProperty_Id: @(parameterID)}.mutableCopy;
+	[parameter addEntriesFromDictionary:entries];
+	return @{
+		kFxParameterProperty_Id: @(parameterID),
+		FxNotifyAPI_ParameterKey: parameter
+	}.mutableCopy;
+}
+
+#pragma mark - Test doubles
+
+// Records every custom-value write the flush performs.
+@interface FxPDataTestStubSetAPI : NSObject
+@property (nonatomic, strong) NSMutableArray *values;
+@property (nonatomic, strong) NSMutableArray<NSNumber *> *parameterIDs;
+@end
+
+@implementation FxPDataTestStubSetAPI
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_values = NSMutableArray.new;
+		_parameterIDs = NSMutableArray.new;
+	}
+	return self;
+}
+
+- (BOOL)setCustomParameterValue:(NSObject<NSSecureCoding, NSCopying> *)value
+					toParameter:(UInt32)parameterID
+						 atTime:(CMTime)time
+{
+	[self.values addObject:value ?: NSNull.null];
+	[self.parameterIDs addObject:@(parameterID)];
+	return YES;
+}
+
+@end
+
+// Hands the extension the dictionary stored in the document.
+@interface FxPDataTestStubGetAPI : NSObject
+@property (nonatomic, strong) NSObject<NSSecureCoding, NSCopying> *storedValue;
+@property (nonatomic, assign) FxParameterId lastRequestedParameter;
+@property (nonatomic, assign) NSUInteger requestCount;
+@end
+
+@implementation FxPDataTestStubGetAPI
+
+- (BOOL)getCustomParameterValue:(NSObject<NSSecureCoding, NSCopying> * _Nullable * _Nonnull)value
+				  fromParameter:(UInt32)parameterID
+						 atTime:(CMTime)time
+{
+	self.lastRequestedParameter = parameterID;
+	self.requestCount += 1;
+	if (!self.storedValue) {
+		return NO;
+	}
+	*value = self.storedValue;
+	return YES;
+}
+
+@end
+
+@interface FxPDataTestStubAPIManager : NSObject
+@property (nonatomic, strong) FxPDataTestStubGetAPI *paramGetAPIv6;
+@property (nonatomic, strong) FxPDataTestStubSetAPI *paramSetAPIv5;
+@end
+
+@implementation FxPDataTestStubAPIManager
+@end
+
+// FxTileableEffectBase's designated initializer registers into the process-wide
+// notification center, so the extension is exercised against a stub exposing the
+// members FxGripParameterData reads.
+@interface FxPDataTestStubEffect : NSObject
+@property (nonatomic, assign) BOOL addedToDocument;
+@property (nonatomic, assign) BOOL addedParameters;
+@property (nonatomic, strong) NSNotificationCenter *notifier;
+@property (nonatomic, strong) FxPDataTestStubAPIManager *apiManager;
+@end
+
+@implementation FxPDataTestStubEffect
+
+- (id)effectBase
+{
+	// The stub plays the full effect; rich reads route back to it, as the old cast did.
+	return self;
+}
+
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_notifier = FxPDataTestMakePriorityCenter();
+		_apiManager = FxPDataTestStubAPIManager.new;
+		_apiManager.paramGetAPIv6 = FxPDataTestStubGetAPI.new;
+		_apiManager.paramSetAPIv5 = FxPDataTestStubSetAPI.new;
+	}
+	return self;
+}
+
+@end
+
+#pragma mark - Tests
+
+@interface FxGripParameterDataTests : XCTestCase
+@property (nonatomic, strong) FxGripParameterData *extension;
+@property (nonatomic, strong) FxPDataTestStubEffect *effect;
+@end
+
+@implementation FxGripParameterDataTests
+
+- (void)setUp
+{
+	[super setUp];
+	self.extension = [FxGripParameterData.alloc init];
+	self.effect = [FxPDataTestStubEffect.alloc init];
+	[self.extension extLoadWithEffect:(id)self.effect];
+}
+
+- (void)tearDown
+{
+	self.extension = nil;
+	self.effect = nil;
+	[super tearDown];
+}
+
+- (FxPDataTestStubSetAPI *)setAPI
+{
+	return self.effect.apiManager.paramSetAPIv5;
+}
+
+- (FxPDataTestStubGetAPI *)getAPI
+{
+	return self.effect.apiManager.paramGetAPIv6;
+}
+
+/*! Drives one creation-API notification, returning the payload that was posted. */
+- (NSMutableDictionary *)seedParameter:(FxParameterId)parameterID
+{
+	NSMutableDictionary *userInfo = FxPDataTestAddUserInfo(parameterID);
+	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName,
+															   self.effect,
+															   userInfo)];
+	return userInfo;
+}
+
+/*! Marks the extension as belonging to a live parameter so the handlers flush eagerly. */
+- (void)attachToLiveParameter
+{
+	[self.extension parameterForDictionary:@{
+		kFxParameterProperty_Id: @(kFxParameterId_ParameterData),
+		kFxParameterProperty_Type: kFxParameterType_Custom,
+		kFxParameterProperty_Name: @"Plugin Parameter Data",
+		kFxParameterProperty_Flags: @(0)
+	}];
+	self.effect.addedToDocument = YES;
+}
+
+#pragma mark Registration
+
+- (void)testInitTargetsTheParameterDataParameterAndStartsUnloaded
+{
+	FxGripParameterData *extension = [FxGripParameterData.alloc init];
+
+	XCTAssertEqual(extension.parameterID, (FxParameterId)kFxParameterId_ParameterData);
+	XCTAssertEqual(extension.parameterID, (FxParameterId)9998);
+	XCTAssertFalse(extension.isLoaded);
+	XCTAssertFalse(extension.isCacheDirty);
+	XCTAssertNil(extension.data);
+	XCTAssertEqualObjects(extension.extKey, @"FxGripParameterData");
+}
+
+- (void)testHandlerPriorityOrdersTheRecordPassesAroundTheEffect
+{
+	XCTAssertEqual([self.extension ncPriority:FxNotifyAPI_ParameterAddName], (NSInteger)-20);
+	XCTAssertEqual([self.extension ncPriority:FxTileableEffectAddedToDocumentName], (NSInteger)-18);
+	// Flush persists AFTER the base's −14 flag flush so it captures the flag words that
+	// pass writes; a value at or before −14 would flush a store re-dirtied moments later.
+	XCTAssertEqual([self.extension ncPriority:FxTileableEffectFlushName], (NSInteger)-13);
+	XCTAssertEqual([self.extension ncPriority:FxTileableEffectInitName], FxExtensionDefaultPriority);
+	XCTAssertEqual([self.extension ncPriority:nil], FxExtensionDefaultPriority);
+}
+
+- (void)testExtAddParametersRegistersTheHiddenParameterDataParameter
+{
+	NSMutableArray *parameters = NSMutableArray.new;
+
+	[self.extension extAddParameters:FxPDataTestNotification(FxTileableEffectAddParametersName,
+															 self.effect,
+															 @{FxTileableEffectParametersKey: parameters})];
+
+	XCTAssertEqual(parameters.count, (NSUInteger)1);
+
+	NSDictionary *parameter = parameters.firstObject;
+	XCTAssertTrue([parameter isKindOfClass:NSMutableDictionary.class],
+				  @"the effect edits the registration entry in place");
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Factory], self.extension);
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Id], @(kFxParameterId_ParameterData));
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Name], @"Plugin Parameter Data");
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Type], kFxParameterType_Custom);
+
+	NSArray *flags = parameter[kFxParameterProperty_Flags];
+	XCTAssertTrue([flags containsObject:kParameterFlagString_DONT_DISPLAY]);
+	XCTAssertTrue([flags containsObject:kParameterFlagString_HIDDEN]);
+	XCTAssertTrue([flags containsObject:kParameterFlagString_NOT_ANIMATABLE]);
+	XCTAssertTrue([flags containsObject:kParameterFlagString_NO_DEBUG]);
+	XCTAssertTrue([flags containsObject:kParameterFlagString_NO_STATE]);
+}
+
+#pragma mark Record Seeding
+
+- (void)testParameterAddSeedsTheRecordFromTheNestedPayload
+{
+	[self seedParameter:kPDataTestParamA];
+
+	XCTAssertTrue(self.extension.isLoaded);
+	XCTAssertTrue(self.extension.isCacheDirty);
+
+	NSDictionary *record = self.extension.data[@(kPDataTestParamA)];
+	XCTAssertNotNil(record);
+	XCTAssertEqualObjects(record[kFxParameterProperty_Id], @(kPDataTestParamA));
+	XCTAssertEqualObjects(record[kFxParameterProperty_Name], @"Test Parameter");
+}
+
+- (void)testParameterAddFallsBackToTheTopLevelIdWhenTheNestedPayloadOmitsIt
+{
+	NSMutableDictionary *userInfo = @{
+		kFxParameterProperty_Id: @(kPDataTestParamA),
+		FxNotifyAPI_ParameterKey: @{kFxParameterProperty_Name: @"No Nested Id"}.mutableCopy
+	}.mutableCopy;
+
+	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName,
+															   self.effect,
+															   userInfo)];
+
+	XCTAssertNotNil(self.extension.data[@(kPDataTestParamA)]);
+	XCTAssertEqualObjects(self.extension.data[@(kPDataTestParamA)][kFxParameterProperty_Name], @"No Nested Id");
+}
+
+- (void)testParameterAddWithoutAnyIdSeedsNothing
+{
+	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName,
+															   self.effect,
+															   @{FxNotifyAPI_ParameterKey: @{}.mutableCopy})];
+
+	XCTAssertFalse(self.extension.isLoaded);
+	XCTAssertFalse(self.extension.isCacheDirty);
+}
+
+- (void)testParameterAddStoresACopyDetachedFromThePostedPayload
+{
+	NSMutableDictionary *userInfo = [self seedParameter:kPDataTestParamA];
+
+	NSMutableDictionary *posted = userInfo[FxNotifyAPI_ParameterKey];
+	posted[kFxParameterProperty_Name] = @"Renamed After The Post";
+
+	XCTAssertEqualObjects(self.extension.data[@(kPDataTestParamA)][kFxParameterProperty_Name],
+						  @"Test Parameter");
+}
+
+- (void)testParameterAddReplacesAnEarlierRecordForTheSameParameter
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension setObject:@"stale" forKey:@"custom" toParameter:kPDataTestParamA];
+
+	[self seedParameter:kPDataTestParamA];
+
+	XCTAssertNil([self.extension objectForKey:@"custom" fromParameter:kPDataTestParamA]);
+	XCTAssertEqual(self.extension.data.count, (NSUInteger)1);
+}
+
+- (void)testParameterAddFlushesImmediatelyOnceTheParameterIsLiveInTheDocument
+{
+	[self attachToLiveParameter];
+
+	[self seedParameter:kPDataTestParamA];
+
+	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)1);
+	XCTAssertEqualObjects(self.setAPI.parameterIDs.firstObject, @(kFxParameterId_ParameterData));
+	XCTAssertFalse(self.extension.isCacheDirty);
+}
+
+- (void)testParameterAddDefersTheWriteWhileTheEffectIsNotInTheDocument
+{
+	[self seedParameter:kPDataTestParamA];
+
+	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)0);
+	XCTAssertTrue(self.extension.isCacheDirty);
+}
+
+#pragma mark Stored Accessors
+
+- (void)testStoredAccessorsReadBackTheEntriesTheSeedingStored
+{
+	[self seedParameter:kPDataTestParamA];
+
+	XCTAssertEqual([self.extension storedType:kPDataTestParamA], FxParameterType_Float);
+	XCTAssertEqual([self.extension storedFlags:kPDataTestParamA],
+				   (FxParameterFlags)(kFxParameterFlag_DISABLED | kFxParameterFlag_NOT_ANIMATABLE));
+	XCTAssertEqual([self.extension storedParentId:kPDataTestParamA], (FxParameterId)kFxParameterId_TopLevelGroup);
+	XCTAssertEqualObjects([self.extension storedSelector:kPDataTestParamA], @"clickTestParameter");
+	XCTAssertNil([self.extension storedMenus:kPDataTestParamA]);
+}
+
+- (void)testStoredAccessorsAndTheRecordKeysNameTheSameEntries
+{
+	XCTAssertEqualObjects(kExtParameterData_Type, kFxParameterProperty_Type);
+	XCTAssertEqualObjects(kExtParameterData_Flag, kFxParameterProperty_Flags);
+	XCTAssertEqualObjects(kExtParameterData_SubGroup, kFxParameterProperty_ParentId);
+	XCTAssertEqualObjects(kExtParameterData_MenuItems, kFxParameterProperty_MenuItems);
+	XCTAssertEqualObjects(kExtParameterData_Selector, kFxParameterProperty_Selector);
+	XCTAssertEqualObjects(kExtParameterData_MenuItems, @"items");
+}
+
+- (void)testStoredAccessorsReturnSentinelsBeforeAnythingIsSeeded
+{
+	XCTAssertEqual([self.extension storedType:kPDataTestParamA], (FxParameterType)0);
+	XCTAssertEqual([self.extension storedFlags:kPDataTestParamA], (FxParameterFlags)0);
+	XCTAssertEqual([self.extension storedParentId:kPDataTestParamA], (FxParameterId)-1);
+	XCTAssertNil([self.extension storedMenus:kPDataTestParamA]);
+	XCTAssertNil([self.extension storedSelector:kPDataTestParamA]);
+}
+
+- (void)testStoredAccessorsReturnSentinelsForAnUnknownParameter
+{
+	[self seedParameter:kPDataTestParamA];
+
+	XCTAssertEqual([self.extension storedType:kPDataTestParamB], (FxParameterType)0);
+	XCTAssertEqual([self.extension storedFlags:kPDataTestParamB], (FxParameterFlags)0);
+	XCTAssertEqual([self.extension storedParentId:kPDataTestParamB], (FxParameterId)-1);
+	XCTAssertNil([self.extension storedMenus:kPDataTestParamB]);
+	XCTAssertNil([self.extension storedSelector:kPDataTestParamB]);
+}
+
+#pragma mark Flags
+
+- (void)testGetFlagsMergesTheStoredApplicationBitsIntoThePayload
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension extAPIParameterSetFlags:
+		FxPDataTestNotification(FxNotifyAPI_ParameterSetFlagsName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamA,
+				@{kFxParameterProperty_Flags: @(kFxParameterFlag_NO_DEBUG | kFxParameterFlag_HIDDEN_PROXY)}))];
+
+	NSMutableDictionary *userInfo = FxPDataTestParameterUserInfo(kPDataTestParamA,
+		@{kFxParameterProperty_Flags: @(kFxParameterFlag_DISABLED)});
+	[self.extension extAPIParameterGetFlags:
+		FxPDataTestNotification(FxNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
+
+	FxParameterFlags merged = ((NSNumber *)userInfo.fxParameter[kFxParameterProperty_Flags]).unsignedIntValue;
+	XCTAssertEqual(merged, (FxParameterFlags)(kFxParameterFlag_DISABLED
+											  | kFxParameterFlag_NO_DEBUG
+											  | kFxParameterFlag_HIDDEN_PROXY));
+}
+
+- (void)testGetFlagsLeavesTheHostBitsAloneWhenTheRecordCarriesNoFlags
+{
+	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName, self.effect,
+		@{
+			kFxParameterProperty_Id: @(kPDataTestParamA),
+			FxNotifyAPI_ParameterKey: @{kFxParameterProperty_Id: @(kPDataTestParamA)}.mutableCopy
+		})];
+
+	NSMutableDictionary *userInfo = FxPDataTestParameterUserInfo(kPDataTestParamA,
+		@{kFxParameterProperty_Flags: @(kFxParameterFlag_DISABLED)});
+	[self.extension extAPIParameterGetFlags:
+		FxPDataTestNotification(FxNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
+
+	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DISABLED));
+}
+
+- (void)testGetFlagsLeavesTheHostBitsAloneForAnUnknownParameter
+{
+	[self seedParameter:kPDataTestParamA];
+
+	NSMutableDictionary *userInfo = FxPDataTestParameterUserInfo(kPDataTestParamB,
+		@{kFxParameterProperty_Flags: @(kFxParameterFlag_DISABLED)});
+	[self.extension extAPIParameterGetFlags:
+		FxPDataTestNotification(FxNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
+
+	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DISABLED));
+}
+
+- (void)testSetFlagsStoresOnlyTheApplicationBits
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	FxParameterFlags notified = kFxParameterFlag_DISABLED			// host bit, dropped
+							  | kFxParameterFlag_CACHE				// temp bit, dropped
+							  | kFxParameterFlag_CACHEDIRTY			// temp bit, dropped
+							  | kFxParameterFlag_SAVING				// temp bit, dropped
+							  | kFxParameterFlag_NO_DEBUG			// application bit, kept
+							  | kFxParameterFlag_PRESETNOMETA;		// application bit, kept
+	[self.extension extAPIParameterSetFlags:
+		FxPDataTestNotification(FxNotifyAPI_ParameterSetFlagsName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamA, @{kFxParameterProperty_Flags: @(notified)}))];
+
+	XCTAssertEqual([self.extension storedFlags:kPDataTestParamA],
+				   (FxParameterFlags)(kFxParameterFlag_NO_DEBUG | kFxParameterFlag_PRESETNOMETA));
+	XCTAssertTrue(self.extension.isCacheDirty);
+}
+
+- (void)testSetFlagsIgnoresAParameterWithNoRecord
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	[self.extension extAPIParameterSetFlags:
+		FxPDataTestNotification(FxNotifyAPI_ParameterSetFlagsName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamB, @{kFxParameterProperty_Flags: @(kFxParameterFlag_NO_DEBUG)}))];
+
+	XCTAssertNil(self.extension.data[@(kPDataTestParamB)]);
+	XCTAssertFalse(self.extension.isCacheDirty);
+}
+
+#pragma mark Menus
+
+- (void)testSetMenuStoresTheItemsUnderTheKeyTheAccessorReads
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	NSArray *items = @[@"First", @"-", @"Second"];
+	[self.extension extAPIParameterSetMenu:
+		FxPDataTestNotification(FxNotifyAPI_ParameterSetMenuName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamA, @{kFxParameterProperty_MenuItems: items}))];
+
+	XCTAssertEqualObjects([self.extension storedMenus:kPDataTestParamA], items);
+	XCTAssertEqualObjects(self.extension.data[@(kPDataTestParamA)][kExtParameterData_MenuItems], items);
+	XCTAssertTrue(self.extension.isCacheDirty);
+}
+
+- (void)testSetMenuIgnoresAParameterWithNoRecord
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	[self.extension extAPIParameterSetMenu:
+		FxPDataTestNotification(FxNotifyAPI_ParameterSetMenuName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamB, @{kFxParameterProperty_MenuItems: @[@"x"]}))];
+
+	XCTAssertNil([self.extension storedMenus:kPDataTestParamB]);
+	XCTAssertFalse(self.extension.isCacheDirty);
+}
+
+#pragma mark Removal
+
+- (void)testParameterRemoveDropsTheRecordTheDynamicAPINames
+{
+	[self seedParameter:kPDataTestParamA];
+	[self seedParameter:kPDataTestParamB];
+
+	[self.extension extAPIParameterRemove:
+		FxPDataTestNotification(FxNotifyAPI_ParameterRemoveName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
+
+	XCTAssertNil(self.extension.data[@(kPDataTestParamA)]);
+	XCTAssertNotNil(self.extension.data[@(kPDataTestParamB)]);
+	XCTAssertTrue(self.extension.isCacheDirty);
+}
+
+- (void)testParameterRemoveBeforeAnythingIsLoadedDoesNothing
+{
+	[self.extension extAPIParameterRemove:
+		FxPDataTestNotification(FxNotifyAPI_ParameterRemoveName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
+
+	XCTAssertFalse(self.extension.isLoaded);
+	XCTAssertFalse(self.extension.isCacheDirty);
+}
+
+- (void)testParameterRemoveFlushesImmediatelyOnceTheParameterIsLiveInTheDocument
+{
+	[self seedParameter:kPDataTestParamA];
+	[self attachToLiveParameter];
+
+	[self.extension extAPIParameterRemove:
+		FxPDataTestNotification(FxNotifyAPI_ParameterRemoveName, self.effect,
+			FxPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
+
+	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)1);
+	XCTAssertFalse(self.extension.isCacheDirty);
+}
+
+#pragma mark Persistence
+
+- (void)testFlushWritesTheCacheOncePerDirtyCycle
+{
+	[self seedParameter:kPDataTestParamA];
+	XCTAssertTrue(self.extension.isCacheDirty);
+
+	NSNotification *flush = FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil);
+	[self.extension extFlush:flush];
+
+	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)1);
+	XCTAssertEqualObjects(self.setAPI.parameterIDs.firstObject, @(kFxParameterId_ParameterData));
+	XCTAssertTrue(self.setAPI.values.firstObject == self.extension.data);
+	XCTAssertFalse(self.extension.isCacheDirty);
+
+	[self.extension extFlush:flush];
+	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)1, @"an unchanged cache is not written again");
+
+	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamA];
+	[self.extension extFlush:flush];
+	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)2);
+}
+
+- (void)testFlushWritesNothingBeforeAnythingIsLoaded
+{
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)0);
+}
+
+#pragma mark Document Load
+
+- (void)testAddedToDocumentAdoptsTheDictionaryStoredInTheDocument
+{
+	NSMutableDictionary *stored = @{
+		@(kPDataTestParamA): @{kFxParameterProperty_Selector: @"storedSelector"}.mutableCopy
+	}.mutableCopy;
+	self.getAPI.storedValue = stored;
+
+	[self.extension extAddedToDocument:FxPDataTestNotification(FxTileableEffectAddedToDocumentName,
+															   self.effect, nil)];
+
+	XCTAssertTrue(self.extension.isLoaded);
+	XCTAssertTrue(self.extension.data == stored);
+	XCTAssertEqual(self.getAPI.lastRequestedParameter, (FxParameterId)kFxParameterId_ParameterData);
+	XCTAssertEqualObjects([self.extension storedSelector:kPDataTestParamA], @"storedSelector");
+}
+
+- (void)testAddedToDocumentKeepsRecordsSeededBeforeTheDocumentArrived
+{
+	[self seedParameter:kPDataTestParamA];
+	self.getAPI.storedValue = @{@(kPDataTestParamB): @{}.mutableCopy}.mutableCopy;
+
+	[self.extension extAddedToDocument:FxPDataTestNotification(FxTileableEffectAddedToDocumentName,
+															   self.effect, nil)];
+
+	XCTAssertNotNil(self.extension.data[@(kPDataTestParamA)]);
+	XCTAssertNil(self.extension.data[@(kPDataTestParamB)]);
+	XCTAssertEqual(self.getAPI.requestCount, (NSUInteger)0, @"the seeded cache is not replaced");
+}
+
+- (void)testAddedToDocumentLeavesTheCacheUnloadedWhenTheDocumentHoldsNothing
+{
+	[self.extension extAddedToDocument:FxPDataTestNotification(FxTileableEffectAddedToDocumentName,
+															   self.effect, nil)];
+
+	XCTAssertFalse(self.extension.isLoaded);
+	XCTAssertEqual(self.getAPI.requestCount, (NSUInteger)1);
+}
+
+#pragma mark Direct Record Access
+
+- (void)testSetObjectAndObjectForKeyRoundTripOnASeededRecord
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamA];
+
+	XCTAssertEqualObjects([self.extension objectForKey:@"custom" fromParameter:kPDataTestParamA], @"value");
+	XCTAssertTrue(self.extension.isCacheDirty);
+}
+
+- (void)testSetObjectWithTheSameValueLeavesTheCacheClean
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamA];
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamA];
+
+	XCTAssertFalse(self.extension.isCacheDirty, @"an unchanged entry does not schedule a write");
+}
+
+- (void)testObjectForKeyReturnsNilForAnUnknownParameter
+{
+	[self seedParameter:kPDataTestParamA];
+
+	XCTAssertNil([self.extension objectForKey:@"custom" fromParameter:kPDataTestParamB]);
+	XCTAssertNil([self.extension objectForKey:@"missing" fromParameter:kPDataTestParamA]);
+}
+
+/*!
+	setObject:forKey:toParameter: writes through the record dictionary, so a parameter that
+	was never announced has nowhere to store the entry. The write is dropped, no record
+	appears, and the cache stays clean.
+*/
+- (void)testSetObjectForAParameterWithNoRecordStoresNothing
+{
+	[self seedParameter:kPDataTestParamA];
+	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+
+	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamB];
+
+	XCTAssertNil([self.extension objectForKey:@"custom" fromParameter:kPDataTestParamB]);
+	XCTAssertNil(self.extension.data[@(kPDataTestParamB)]);
+	XCTAssertFalse(self.extension.isCacheDirty);
+}
+
+#pragma mark Effect Category
+
+- (void)testTheEffectCategoryBuildsAParameterDataExtension
+{
+	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:@selector(parameterData)]);
+	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:@selector(newParameterDataExtension)]);
+}
+
+@end

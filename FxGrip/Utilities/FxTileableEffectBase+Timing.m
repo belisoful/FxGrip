@@ -23,6 +23,12 @@
 
 #import "FxTileableEffectBase+Timing.h"
 #import "FxGripTypes.h"
+#import "FxGrip_ARC.h"
+
+CMTime FxGripTimeByOffsettingFrames(CMTime time, NSInteger frames, CMTime frameDuration)
+{
+	return CMTimeAdd(time, CMTimeMultiply(frameDuration, (int32_t)frames));
+}
 
 
 // In a float, at 8388608, a 1 bit change in mantissa results in ~1.0f change in the number.
@@ -77,7 +83,7 @@ long long floorWithNearest(double value)
 	// speed =  (timelineNumerator * frameDurationDenominator) / (timelineDenominator * frameDurationNumerator)
 	NSUInteger numerator = [timing timelineFpsNumeratorForEffect:self];
 	NSUInteger denominator = [timing timelineFpsDenominatorForEffect:self];
-	return 1.0 / CMTimeGetSeconds(CMTimeMultiplyByRatio(frameDuration, (int)denominator, (int)numerator));
+	return 1.0 / CMTimeGetSeconds(CMTimeMultiplyByRatio(frameDuration, (int)numerator, (int)denominator));
 }
 
 /**
@@ -274,6 +280,26 @@ long long floorWithNearest(double value)
 {
 	[self.effect.apiManager.timingAPIv4 inputTime:inputTime
 								 fromTimelineTime:time];
+}
+
+- (CMTime)timeByOffsettingTime:(CMTime)time byFrames:(NSInteger)frames
+{
+	return FxGripTimeByOffsettingFrames(time, frames, self.frameDuration);
+}
+
+- (nullable FxImageTileRequest *)sourceTileRequestAtTime:(CMTime)time frameOffset:(NSInteger)frames
+{
+	CMTime requestTime = [self timeByOffsettingTime:time byFrames:frames];
+	FxImageTileRequest *request = [[FxImageTileRequest alloc] initWithSource:kFxImageTileRequestSourceEffectClip
+																	  time:requestTime
+															includeFilters:NO
+															   parameterID:0];
+	return NARC_AUTORELEASE(request);
+}
+
+- (nullable FxImageTileRequest *)sourceTileRequestAtTime:(CMTime)time
+{
+	return [self sourceTileRequestAtTime:time frameOffset:0];
 }
 
 @end

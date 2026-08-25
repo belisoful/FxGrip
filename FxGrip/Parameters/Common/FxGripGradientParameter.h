@@ -9,7 +9,7 @@
 #ifndef FxGripGradientParameter_h
 #define FxGripGradientParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 #import <FxPlug/FxTypes.h>
 
 
@@ -21,7 +21,7 @@
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (FxGripGradient*_Nullable)valueAtTime:(CMTime)renderTime NS_RETURNS_INNER_POINTER;
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder;

@@ -38,7 +38,7 @@
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	return [effect.apiManager.paramCreateAPIv5 addGradientWithName: parameter.parameterName
 													   parameterID: parameter.parameterID

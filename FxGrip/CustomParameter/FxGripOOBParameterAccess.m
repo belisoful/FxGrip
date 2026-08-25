@@ -6,6 +6,8 @@
 //
 
 #import "FxGripAPIAccessing.h"
+#import "FxTileableEffectBase+Notifications.h"
+#import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxGripOOBParameterAccess.h"
 //#import "GuruFxTileableEffect+Extensions.h"
 #import "FxGrip_ARC.h"
@@ -44,24 +46,24 @@
 }
 
 
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect
 {
 	return NARC_AUTORELEASE([FxGripOOBParameterAccess.alloc initWithEffect:effect]);
 }
 
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect
 										   delay:(BOOL)delayed
 {
 	return NARC_AUTORELEASE([FxGripOOBParameterAccess.alloc initWithEffect:effect delay:delayed]);
 }
 
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect
 									  flush:(BOOL)flush
 {
 	return NARC_AUTORELEASE([FxGripOOBParameterAccess.alloc initWithEffect:effect flush:flush]);
 }
 
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect
 									  delay:(BOOL)delayed
 									  flush:(BOOL)flush
 {
@@ -105,26 +107,26 @@
 }
 
 
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	return [self initWithEffect:effect delay:NO flush:NO];
 }
 
 
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 								  delay:(BOOL)delayed
 {
 	return [self initWithEffect:effect delay:delayed flush:NO];
 }
 
 
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 							   flush:(BOOL)flush
 {
 	return [self initWithEffect:effect delay:NO flush:flush];
 }
 
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 								  delay:(BOOL)delayed
 								  flush:(BOOL)flush
 {
@@ -175,8 +177,11 @@
 
 - (void)endAction
 {
-	if (_flush && _effect && [_effect respondsToSelector:@selector(extensionsFlush)]) {
-		[_effect extensionsFlush];
+	if (_flush && _effect) {
+		// The flush is announced on the host's notifier; the extensions observe it there, which is
+		// exactly what the effect base's extensionsFlush did.
+		NSMutableDictionary *userInfo = @{}.mutableCopy;
+		[_effect.notifier postNotificationName:FxTileableEffectFlushName object:_effect userInfo:userInfo];
 	}
 	[_customParameterActionAPIv4 endAction:self];
 	_active = NO;

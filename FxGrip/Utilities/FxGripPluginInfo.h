@@ -11,7 +11,7 @@
 
 #import <FxPlug/FxPlugSDK.h>
 #import <PluginManager/PROPlugInBundleRegistration.h>
-#import <FxGripTypes.h>
+#import "FxGripTypes.h"
 #import <BEFoundation/BESingleton.h>
 //#import "FxGripDynamicRegistrar.h"
 

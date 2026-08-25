@@ -23,7 +23,7 @@
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	return [effect.apiManager.paramCreateAPIv5 addImageReferenceWithName: parameter.parameterName
 															 parameterID: parameter.parameterID

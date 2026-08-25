@@ -1,8 +1,7 @@
 //
-//  FxGripParameter.m
-//  PlugIn
+//  FxGripAboutMenu.m
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 

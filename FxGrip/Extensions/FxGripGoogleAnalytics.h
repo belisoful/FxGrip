@@ -1,8 +1,7 @@
 //
-//  FxGripToggle.h
-//  PlugIn
+//  FxGripGoogleAnalytics.h
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -26,7 +25,7 @@
 - (BOOL)removeCaptureRule:(nonnull NSPredicate*)predicate;
 - (nonnull NSArray<NSPredicate*>*)captureRules;
 
-- (void)extInit;
+- (void)extInit:(nonnull NSNotification *)notification;
 
 @end
 
@@ -35,6 +34,13 @@
 @interface FxTileableEffectBase (GoogleAnalytics)
 
 @property (readonly, nullable, nonatomic) FxGripGoogleAnalytics* googleAnalytics;
+
+/*! The Google Analytics identifier declared under the "googleanalytics" plugin property.
+	A nil, empty, or "-"-prefixed value disables the telemetry extension. */
+@property (readonly, nullable, nonatomic) NSString *gaIdentifier;
+
+/*! YES when a usable gaIdentifier is declared; the loader gates the extension on this. */
+@property (readonly, nonatomic) BOOL isGoogleAnalyticsInstalled;
 
 - (nonnull FxGripGoogleAnalytics*)newGoogleAnalyticsExtension;
 

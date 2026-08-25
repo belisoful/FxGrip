@@ -1,14 +1,14 @@
 //
-//  FxGripDebugMenu.m
-//  PlugIn
+//  FxGripRegression.m
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
 #import "FxGripRegression.h"
 #import "FxTileableEffectBase.h"
 #import "FxTileableEffectBase+Extensions.h"
+#import "NSDictionary+FxTileableEffect.h"
 
 #import <BEFoundation/NSString+BExtension.h>
 
@@ -56,6 +56,11 @@
 - (FxGripRegression*)regression
 {
 	return [self extensionForClass:FxGripRegression.class];
+}
+
+- (BOOL)isRegression
+{
+	return self.pluginProperties.pluginRegression;
 }
 
 

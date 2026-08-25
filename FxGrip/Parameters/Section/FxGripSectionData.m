@@ -8,6 +8,7 @@
 
 #import "FxGripSectionData.h"
 #import <BEFoundation/FxTime.h>
+#import <BEFoundation/BEMutable.h>
 #import "FxGripDictionary.h"
 
 // Locked makes the default keys for types (bool, int, float, etc) only settable if they are already set.
@@ -75,18 +76,33 @@
 - (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
 	self = [super init];
-	
+
 	if (self != nil)
 	{
-		_data = [aDecoder decodePropertyList];
+		NSDictionary *decoded = nil;
+		if (aDecoder.allowsKeyedCoding) {
+			NSSet<Class> *classes = [NSSet setWithArray:self.classesForParameter.array];
+			decoded = [aDecoder decodeObjectOfClasses:classes forKey:@"data"];
+		} else {
+			decoded = [aDecoder decodePropertyList];
+		}
+		if ([decoded isKindOfClass:NSDictionary.class]) {
+			_data = [decoded mutableCopyRecursive];
+		} else {
+			_data = [NSMutableDictionary dictionary];
+		}
 	}
-	
+
 	return self;
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder
 {
-	[aCoder encodePropertyList:_data];
+	if (aCoder.allowsKeyedCoding) {
+		[aCoder encodeObject:_data forKey:@"data"];
+	} else {
+		[aCoder encodePropertyList:_data];
+	}
 }
 
 - (instancetype)copyWithZone:(NSZone *)zone
@@ -99,9 +115,20 @@
 
 - (BOOL)isEqual:(NSObject<NSSecureCoding, NSCopying>*)object
 {
+	if (self == (id)object) {
+		return YES;
+	}
+	if (![object isKindOfClass:FxGripSectionData.class]) {
+		return NO;
+	}
 	FxGripSectionData*    rhs = (FxGripSectionData*)object;
-	
+
 	return [_data isEqual:rhs.data];
+}
+
+- (NSUInteger)hash
+{
+	return _data.hash;
 }
 
 
@@ -145,6 +172,33 @@
 - (void)removeObjectForKey:(id)aKey
 {
 	[_data removeObjectForKey:aKey];
+}
+
+
+- (NSMutableArray*)exemptKeys
+{
+	NSMutableArray *exemptKeys = (NSMutableArray*)[self objectForKey:kCustomAPI_ExemptKeysKey];
+
+	if (!exemptKeys) {
+		exemptKeys = [NSMutableArray arrayWithCapacity:1];
+	}
+	if (exemptKeys && ![exemptKeys isKindOfClass:[NSMutableArray class]]) {
+		if ([exemptKeys isKindOfClass:[NSArray class]]) {
+			exemptKeys = [NSMutableArray arrayWithArray:exemptKeys];
+		} else {
+			id priorValue = exemptKeys;
+			exemptKeys = [NSMutableArray arrayWithCapacity:2];
+			[exemptKeys addObject:priorValue];
+		}
+	}
+	if (![exemptKeys containsObject:kCustomAPI_ExemptKeysKey]) {
+		[exemptKeys addObject:kCustomAPI_ExemptKeysKey];
+	}
+	if (![exemptKeys containsObject:kCustomAPI_LastChangedKey]) {
+		[exemptKeys addObject:kCustomAPI_LastChangedKey];
+	}
+	[self setObject:exemptKeys forKey:kCustomAPI_ExemptKeysKey];
+	return exemptKeys;
 }
 
 
@@ -292,7 +346,7 @@
 {
 	id histogram = [self objectForKey:aKey];
 	
-	if (histogram && [histogram isKindOfClass:[NSNumber class]]) {
+	if (histogram && [histogram isKindOfClass:[NSArray class]]) {
 		unsigned long count = [histogram count];
 		
 		if (((count == 1 || count == 2) && channel != kFxHistogramChannel_Alpha) || (count >= 3 && channel == kFxHistogramChannel_Red)) {
@@ -362,10 +416,14 @@
 		if ([histogram count] < 4)
 			[histogram addObject:[NSMutableArray arrayWithArray:channel]];
 	}
-	for(unsigned long i = (channel == 0) ? 1 : channel; i < (channel == 0) ? 4 : channel + 1; i++) {
-		id channelData = histogram[channel - 1];
+	// Channel RGB (0) writes the three color channels; a specific channel writes only
+	// its own entry at index channel - 1.
+	for(unsigned long i = (channel == kFxHistogramChannel_RGB) ? 1 : channel;
+		i < ((channel == kFxHistogramChannel_RGB) ? 4 : channel + 1); i++) {
+		id channelData = histogram[i - 1];
 		if (![channelData isKindOfClass:[NSMutableArray class]]) {
 			channelData = [NSMutableArray arrayWithCapacity:5];
+			histogram[i - 1] = channelData;
 		}
 		channelData[0] = [NSNumber numberWithDouble:blackIn];
 		channelData[1] = [NSNumber numberWithDouble:blackOut];
@@ -467,7 +525,7 @@
 	return [self getPathID:pathID forKey:kCustomAPI_PathIDKey];
 }
 
-- (BOOL)etPathID:(FxPathID)pathID
+- (BOOL)setPathID:(FxPathID)pathID
 {
 	if (!self.isLocked || [self objectForKey:kCustomAPI_PathIDKey]) {
 		return [self setPathID:pathID forKey:kCustomAPI_PathIDKey];

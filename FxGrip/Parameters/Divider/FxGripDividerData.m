@@ -41,7 +41,7 @@
 	if (self != nil) {
 		if (values[@"width"] != nil)
 			_percentWidth = [values[@"width"] doubleValue];
-		if (values[@"margintpo"] != nil)
+		if (values[@"margintop"] != nil)
 			_marginTop = [values[@"margintop"] intValue];
 		if (values[@"marginbottom"] != nil)
 			_marginBottom = [values[@"marginbottom"] intValue];
@@ -93,7 +93,6 @@
 	newInstance.percentWidth = self.percentWidth;
 	newInstance.marginTop = self.marginTop;
 	newInstance.marginBottom = self.marginBottom;
-	newInstance.parameterHeight = self.parameterHeight;
 	newInstance.parameterEffect = self.parameterEffect;
 	newInstance.parameterView = self.parameterView;
 	
@@ -103,9 +102,20 @@
 
 - (BOOL)isEqual:(NSObject<NSSecureCoding, NSCopying>*)object
 {
+	if (self == (id)object) {
+		return YES;
+	}
+	if (![object isKindOfClass:FxGripDividerData.class]) {
+		return NO;
+	}
 	FxGripDividerData*    rhs = (FxGripDividerData*)object;
-	
+
 	return _percentWidth == rhs.percentWidth && _marginTop == rhs.marginTop && _marginBottom == rhs.marginBottom;
+}
+
+- (NSUInteger)hash
+{
+	return [NSNumber numberWithDouble:_percentWidth].hash ^ ((NSUInteger)_marginTop << 16) ^ _marginBottom;
 }
 
 
@@ -147,8 +157,11 @@
 - (void)setParameterHeight:(uint16)parameterHeight
 {
 	_parameterHeight = parameterHeight;
-	_marginTop = (parameterHeight - kFxBoxDividerHeight) >> 1;
-	_marginBottom = parameterHeight - _marginTop - kFxBoxDividerHeight;
+	// A height below the divider itself leaves no margin; unsigned subtraction would
+	// wrap to 65535.
+	uint16 margins = parameterHeight > kFxBoxDividerHeight ? parameterHeight - kFxBoxDividerHeight : 0;
+	_marginTop = margins >> 1;
+	_marginBottom = margins - _marginTop;
 	
 	if (self.parameterView != nil && [self.parameterView conformsToProtocol:@protocol(FxGripCustomViewDataDelegate)]) {
 		

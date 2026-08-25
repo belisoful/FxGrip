@@ -9,6 +9,7 @@
 #import "FxGripHelpParameter.h"
 #import "FxTileableEffectBase.h"
 #import "NSDictionary+FxTileableEffect.h"
+#import "FxGripParameterUtility.h"
 
 @implementation FxGripHelpParameter
 
@@ -23,7 +24,6 @@
 }
 
 
-// @todo: This is the default "help" button action: open the "HelpBook"
 -(void) displayHelp
 {
 	// Info.plist CFBundleHelpBookName CFAppleHelpAnchor CFBundleHelpBookFolder
@@ -31,24 +31,27 @@
 	[[NSHelpManager sharedHelpManager] openHelpAnchor:@"Main" inBook:helpBook];
 }
 
-
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
+- (void)defaultParameterAction
 {
-	BOOL success = NO;
-	NSString *selector = [parameter valueForKey:kFxParameterProperty_Selector];
-	if (selector == nil) {
-		selector = @"";
+	[self displayHelp];
+}
+
+
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
+{
+	// The host registers the synthesized selector encoding the parameter ID; clicks
+	// dispatch through -[FxTileableEffectBase parameterClicked:]. Without a
+	// configuration-declared "selector" hook the click falls through to
+	// defaultParameterAction, which opens the help book.
+	NSString *declaredSelector = parameter.parameterSelector;
+	if (declaredSelector && ![declaredSelector.lowercaseString hasPrefix:kFxParameterProperty_SelectorPrefix]) {
+		return NO;
 	}
-	if ([selector.lowercaseString hasPrefix:kFxParameterProperty_SelectorPrefix]) {
-		success = [effect.apiManager.paramCreateAPIv5 addHelpButtonWithName: parameter.parameterName
-											parameterID: parameter.parameterID
-											   selector:NSSelectorFromString(selector) //selector needs to use FxCustomParameterActionAPI_v4 to access parameters
-										 parameterFlags:parameter.parameterFlags];
-	} else {
-		//errorReason = @"Incorrrect selector prefix.  Must start with 'click' for security reasons";
-		success = NO;
-	}
-	return success;
+	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:parameter.parameterID]);
+	return [effect.apiManager.paramCreateAPIv5 addHelpButtonWithName: parameter.parameterName
+														 parameterID: parameter.parameterID
+															selector: selector
+													  parameterFlags: parameter.parameterFlags];
 }
 
 

@@ -9,7 +9,7 @@
 #ifndef FxGripStringParameter_h
 #define FxGripStringParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 
 @interface FxGripStringParameterBase : FxParameter <FxStateParameter>
@@ -29,7 +29,7 @@
 //
 @interface FxGripStringParameter : FxGripStringParameterBase //NSSecureCoding NSCopying
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 @end
 

@@ -52,7 +52,7 @@
 		NSLog(@"%s(%llu) Could not load FxVersioningAPI", __func__, self.apiManager.sessionID);
 		if (error)
 		{
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxError_APIUnavailable
 									 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxVersioningAPI" }];
 		}

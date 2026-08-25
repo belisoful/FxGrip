@@ -9,11 +9,11 @@
 #ifndef FxGripToggleParameter_h
 #define FxGripToggleParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 @protocol FxGripToggleParameter <FxParameter>
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (BOOL)valueAtTime:(CMTime)renderTime;
 - (void)setValue:(BOOL)value atTime:(CMTime)time;
@@ -30,7 +30,7 @@
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (BOOL)valueAtTime:(CMTime)renderTime;
 - (void)setValue:(BOOL)value atTime:(CMTime)time;

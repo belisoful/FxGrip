@@ -28,7 +28,7 @@ typedef UInt32 FxParameterId;
 @protocol FxTileableEffectExpanded
 @property (readonly, nonnull, retain) NSString *pluginUUID;
 @property (readonly, nonnull, retain) id<FxGripAPIAccessing> apiManager;
-@property (readonly, nullable, assign) NSPriorityNotificationCenter *notifier;
+@property (readonly, nonnull, assign) NSPriorityNotificationCenter *notifier;
 @property (readonly, nonnull, retain) NSDictionary<NSString*, id> *pluginProperties;
 
 @property (assign, readonly) BOOL addedToDocument;
@@ -41,7 +41,9 @@ typedef UInt32 FxParameterId;
 
 
 
-@protocol FxTileableEffectBase <FxTileableEffect, FxTileableEffectExpanded>
+#import "FxGripEffectHost.h"
+
+@protocol FxTileableEffectBase <FxTileableEffect, FxTileableEffectExpanded, FxGripEffectHost>
 
 @property (readonly, nonnull, retain) NSString*		pluginDisplayName;
 @property (readonly, nonnull, retain) NSString*		pluginGroupUUID;
@@ -137,7 +139,7 @@ typedef UInt32 FxParameterId;
 				error:(NSError*_Nullable *_Null_unspecified)outError;
 
 - (BOOL)scheduleInputs:(NSArray<FxImageTileRequest*>* _Nullable * _Nullable)inputImageRequests
-			 withCoder:(NSCoder* _Nullable)pluginCoder
+		   pluginCoder:(NSCoder* _Nullable)pluginCoder
 				atTime:(CMTime)renderTime
 				 error:(NSError*_Nullable*_Nonnull)error;
 
@@ -200,7 +202,7 @@ extern NSString * _Nonnull const FxTileableEffectExtKey;
 
 
 
-
+//  @todo: this is FxGrip and so should be an FxGripTileableEffectBase
 @interface FxTileableEffectBase : FxExtensionBase <FxTileableEffectBase, FxTileableEffectCoderStateWeak>
 {
 	NSMutableDictionary<id, Class> *__typeToClassMap;
@@ -255,6 +257,52 @@ extern NSString * _Nonnull const FxTileableEffectExtKey;
 
 - (nullable NSMutableArray<id<FxExtension>>*)loadExtensions;
 - (BOOL)addParametersWithGroupID:(FxParameterId)groupID error:(NSError*_Nonnull*_Nullable)error;
+
+/*!
+	@method     parametersConfiguration
+	@abstract   Returns the parameter configuration records that seed addParametersWithError:.
+	@discussion Introduced in FxGrip 1.0. The base implementation returns the `"parameters"`
+				array from the plugin's registration dictionary
+				(`kProPlugPlugInX_ParametersProperty`), so a plugin declares its parameters
+				in the plist or dynamic-registration record without writing creation code.
+				A subclass overrides to build the records in code, or calls super and
+				appends. Each record uses `kFxParameterProperty_*` keys.
+*/
+- (nonnull NSMutableArray<NSDictionary *> *)parametersConfiguration;
+
+/*!
+	@method     configurationForParameter:
+	@abstract   Returns the parameter's configuration record from the flattened
+				parameters configuration.
+	@discussion Introduced in FxGrip 1.0. The record carries the declared parameter
+				properties (`kFxParameterProperty_*` keys) including tags, meta, reset
+				value, and target-preset definitions.
+*/
+- (NSDictionary *_Nullable)configurationForParameter:(FxParameterId)parameterID;
+
+/*!
+	@method     parameterClicked:
+	@abstract   Standardized dispatch for push-button and help-button clicks.
+	@discussion Introduced in FxGrip 1.0. Button parameters register a synthesized
+				selector that encodes the parameter ID
+				(`FxGripParameterUtility clickSelectorNameForParameter:`). The runtime
+				resolves that selector to a trampoline that decodes the ID and calls this
+				method, so one entry point serves every button and subclasses do not
+				implement a method per button.
+
+				The dispatch, wrapped in the action API's `startAction:` / `endAction:`
+				when the effect is not an on-screen control:
+				- posts `FxTileableEffectParameterClickedName` with
+				  `FxTileableEffectParameterClickedIDKey` so extensions observe the click
+				- performs the configuration-declared `"selector"` when the subclass
+				  implements it
+				- otherwise performs the parameter object's `defaultParameterAction`
+
+				Subclasses may override to intercept every click; call super to keep the
+				notification and dispatch behavior.
+	@result     NO when a notification observer reports an error; YES otherwise.
+*/
+- (BOOL)parameterClicked:(FxParameterId)parameterID;
 
 @end
 

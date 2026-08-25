@@ -25,7 +25,7 @@
 @interface FxGripOOBParameterAccess : NSObject
 
 	@property (readonly) id<FxCustomParameterActionAPI_v4> _Nullable customParameterActionAPIv4;
-	@property (readonly) id<FxTileableEffectBase> _Nullable effect;
+	@property (readonly) id<FxGripEffectHost> _Nullable effect;
 
 	@property (nonatomic, assign, readonly) CMTime currentTime;
 	@property (readwrite, assign, nonatomic) BOOL active;
@@ -35,24 +35,24 @@
 + (FxGripOOBParameterAccess*_Nonnull)accessAPI:(nonnull id<FxCustomParameterActionAPI_v4>)customParamActionAPI
 										 delay:(BOOL)delayed;
 
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect;
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect;
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect
 										 delay:(BOOL)delayed;
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect
 										 flush:(BOOL)flush;
-+ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxTileableEffectBase>)effect
++ (FxGripOOBParameterAccess*_Nonnull)access:(nonnull id<FxGripEffectHost>)effect
 										 delay:(BOOL)delayed
 										 flush:(BOOL)flush;
 
 - (nullable instancetype)initWithAPI:(nonnull id<FxCustomParameterActionAPI_v4>)customParamActionAPI;
 - (nullable instancetype)initWithAPI:(nonnull id<FxCustomParameterActionAPI_v4>)customParamActionAPI
 							   delay:(BOOL)delayed;
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect;
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect;
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 							   delay:(BOOL)delayed;
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 							   flush:(BOOL)flush;
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 							   delay:(BOOL)delayed
 							   flush:(BOOL)flush;
 

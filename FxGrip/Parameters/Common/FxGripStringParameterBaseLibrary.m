@@ -29,7 +29,7 @@
 	}
 	NSString* strValue = nil;
 	if(![self.effect.apiManager.paramGetAPIv6 getStringParameterValue:&strValue fromParameter:self.parameterID]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

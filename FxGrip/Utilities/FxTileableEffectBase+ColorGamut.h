@@ -9,6 +9,7 @@
 #define FxTileableEffectBase_ColorGamut_h
 
 #import <Foundation/Foundation.h>
+#import <simd/simd.h>
 #import "FxTileableEffectBase.h"
 
 @interface FxTileableEffectBase (ColorGamut)
@@ -43,6 +44,21 @@
  * @abstract		returns YES if the parameters are on a linear curve.
  */
 @property (readonly, assign) BOOL isLinearColorParameters;
+
+/*! The luminance weights for the working gamut (colorPrimaries). */
+@property (readonly, assign) simd_float3 colorLuminanceWeights;
+
+/*! The RGB-to-CIE-XYZ matrix for the working gamut. */
+@property (readonly, assign) simd_float3x3 rgbToXYZMatrix;
+
+/*! The CIE-XYZ-to-RGB matrix for the working gamut. */
+@property (readonly, assign) simd_float3x3 xyzToRGBMatrix;
+
+/*! The matrix converting linear RGB in the working gamut to the target gamut. */
+- (simd_float3x3)gamutMatrixToPrimaries:(FxColorPrimaries)target;
+
+/*! The matrix converting linear RGB in the source gamut to the working gamut. */
+- (simd_float3x3)gamutMatrixFromPrimaries:(FxColorPrimaries)source;
 
 @end
 

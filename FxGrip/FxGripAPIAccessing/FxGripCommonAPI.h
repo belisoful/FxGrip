@@ -10,7 +10,7 @@
 
 #import <FxPlug/FxPlugSDK.h>
 
-@protocol FxTileableEffectBase;
+#import "FxGripEffectHost.h"
 
 /*!
 	@interface  FxGripCommonAPI
@@ -19,9 +19,9 @@
 */
 @interface FxGripCommonAPI : NSObject
 
-	@property (readonly, nullable) id<FxTileableEffectBase> effect;
+	@property (readonly, nullable) id<FxGripEffectHost> effect;
 
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect;
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect;
 
 @end
 

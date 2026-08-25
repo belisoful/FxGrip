@@ -1,36 +1,60 @@
 //
-//  FxGripParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
+//  FxGripDividerParameter.m
+//  FxGrip
 //
 
 #import "FxGripDividerParameter.h"
 #import "FxTileableEffectBase.h"
 #import "NSDictionary+FxTileableEffect.h"
-//#import "FxGripInterpolatingDictionary.h"
 #import "FxGripDividerData.h"
-
-// add NO STATE to flags automatically.
+#import "FXBox.h"
+#import "FxGrip_ARC.h"
 
 @implementation FxGripDividerParameter
 
-- (FxParameterType)parameterType
++ (nullable NSString*)parameterTypeString
+{
+	return kFxParameterType_Divider;
+}
+
++ (FxParameterType)parameterType
 {
 	return FxParameterType_Divider;
 }
 
-- (BOOL)addParameter
++ (NSSet<Class> *_Nullable)customValueClasses
 {
-	id defaultValue = _data.parameterDefaultValue;
-		  if (defaultValue == nil || ![defaultValue isKindOfClass:[NSDictionary class]])
-			  defaultValue = @{};
-		  
-	return [self.effect.apiManager.paramCreateAPIv5 addCustomParameterWithName:@""
-												   parameterID: self.parameterID
-												  defaultValue:[FxGripDividerData dataWithDictionary:defaultValue]
-																parameterFlags: self.parameterFlags | kFxParameterFlag_CUSTOM_UI | kFxParameterFlag_NOT_ANIMATABLE | kFxParameterFlag_USE_FULL_VIEW_WIDTH | kFxParameterFlag_NOSTATE];
+	return [NSSet setWithObject:FxGripDividerData.class];
+}
+
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
+{
+	id declared = parameter.parameterDefaultValue;
+	NSDictionary *defaultValue = [declared isKindOfClass:NSDictionary.class] ? declared : @{};
+
+	return [effect.apiManager.paramCreateAPIv5
+		addCustomParameterWithName: @""
+					   parameterID: parameter.parameterID
+					  defaultValue: [FxGripDividerData dataWithDictionary:defaultValue]
+					parameterFlags: parameter.parameterFlags | kFxParameterFlag_CUSTOM_UI
+									| kFxParameterFlag_NOT_ANIMATABLE
+									| kFxParameterFlag_USE_FULL_VIEW_WIDTH
+									| kFxParameterFlag_NOSTATE];
+}
+
+- (NSView *_Nullable)newParameterView
+{
+	FXBox *box = [FXBox.alloc initWithFrame:NSMakeRect(0, 22, 100, 1)];
+	id declared = _data.parameterDefaultValue;
+	if ([declared isKindOfClass:NSDictionary.class]) {
+		// The configuration declares width/margintop/marginbottom; the data class reads
+		// that shape and the box reads the data class.
+		[box updateFromCustomData:[FxGripDividerData dataWithDictionary:declared]];
+	}
+	// The box is the data-push delegate; the returned container wraps it, so the
+	// parameter attaches the box itself and the view host leaves it in place.
+	[self attachCustomView:box];
+	return box.topView;
 }
 
 @end

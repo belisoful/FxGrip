@@ -9,14 +9,14 @@
 #ifndef FxGripPointParameter_h
 #define FxGripPointParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 
 @interface FxGripPointParameter : FxParameter <FxStateParameter>
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (FxGripPoint)valueAtTime:(CMTime)renderTime;
 - (void)setValue:(FxGripPoint*_Nullable)value atTime:(CMTime)time;

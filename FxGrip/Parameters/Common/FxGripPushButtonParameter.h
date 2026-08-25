@@ -9,7 +9,7 @@
 #ifndef FxGripPushButtonParameter_h
 #define FxGripPushButtonParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 
 @interface FxGripPushButtonParameter : FxParameter
@@ -19,7 +19,7 @@
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 @end
 

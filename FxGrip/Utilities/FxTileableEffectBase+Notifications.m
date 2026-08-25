@@ -27,7 +27,15 @@ NSNotificationName const _Nonnull FxTileableEffectAddedToDocumentName = @"FxEffe
 NSNotificationName const _Nonnull FxTileableEffectParameterChangedName = @"FxEffectParameterChanged";
 NSNotificationName const _Nonnull FxTileableEffectParameterChangedIDKey = @"FxEffectParameterChanged_ID";
 NSNotificationName const _Nonnull FxTileableEffectParameterChangedAtTimeKey = @"FxEffectParameterChanged_AtTime";
+NSNotificationName const _Nonnull FxTileableEffectParameterClickedName = @"FxEffectParameterClicked";
+NSNotificationName const _Nonnull FxTileableEffectParameterClickedIDKey = @"FxEffectParameterClicked_ID";
 NSNotificationName const _Nonnull FxTileableEffectFlushName = @"FxEffectFlush";
+NSNotificationName const _Nonnull FxTileableEffectParameterPolicyName = @"FxEffectParameterPolicy";
+NSNotificationName const _Nonnull FxTileableEffectAddGroupParametersName = @"FxEffectAddGroupParameters";
+NSString * const _Nonnull FxTileableEffectGroupIDKey = @"groupID";
+NSNotificationName const _Nonnull FxTileableEffectResolveMetaName = @"FxEffectResolveMeta";
+NSNotificationName const _Nonnull FxTileableEffectResolveParameterDataName = @"FxEffectResolveParameterData";
+NSString * const _Nonnull FxTileableEffectResolvedObjectKey = @"resolvedObject";
 
 NSNotificationName const _Nonnull FxTileableEffectPluginStateCoderKey = @"FxEffectPluginState_Coder";
 NSNotificationName const _Nonnull FxTileableEffectPluginStateName = @"FxEffectPluginState";
@@ -47,7 +55,7 @@ NSNotificationName const _Nonnull FxTileableEffectUnloadName = @"FxEffectUnload"
 
 @implementation NSDictionary (FxNotificationUserInfo)
 
-- (nullable NSString *)fxApiManager {
+- (nullable id<FxGripAPIAccessing>)fxApiManager {
 	return self[FxTileableEffectInitAPIManagerKey];
 }
 

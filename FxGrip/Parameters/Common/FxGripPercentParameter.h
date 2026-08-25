@@ -9,14 +9,14 @@
 #ifndef FxGripPercentParameter_h
 #define FxGripPercentParameter_h
 
-#import <FxGripFloatParameter.h>
+#import "FxGripFloatParameter.h"
 
 
 @interface FxGripPercentParameter : FxGripFloatParameter
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 @end
 

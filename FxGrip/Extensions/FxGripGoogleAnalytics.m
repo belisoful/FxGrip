@@ -1,8 +1,7 @@
 //
-//  FxGripDebugMenu.m
-//  PlugIn
+//  FxGripGoogleAnalytics.m
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -113,7 +112,9 @@
 
 
 
-- (void)extInit
+// The dispatch table wires the init notification to extInit: (with the NSNotification
+// argument); a zero-argument extInit is never invoked.
+- (void)extInit:(nonnull NSNotification *)notification
 {
 	[self addCaptureEvent:FxTileableEffectFinishInitialSetupName];
 	[self addCaptureEvent:FxTileableEffectAddedToDocumentName];
@@ -143,18 +144,23 @@
 	}
 	
 	[_captureEvents sortArrayUsingItemPriority];
-	
+
+	// Deny by default: an event is logged only when the first matching rule explicitly
+	// accepts it. No match, or a match with any non-accept outcome, denies. This makes
+	// the privacy default structural — omitting a catch-all reject rule can never
+	// fail open into logging every event.
+	BOOL shouldLog = NO;
 	for (BEPredicateRule *predicate in _captureEvents) {
 		if (![predicate evaluateWithObject:notification]) {
 			continue;
 		}
-		if (!predicate.outcome) {
-			return;
-		}
+		shouldLog = (predicate.outcome == BEPredicateRuleAccept);
 		break;
 	}
-	
-	
+	if (!shouldLog) {
+		return;
+	}
+
 	// track aName with UUID, and plugin name.
 	//if anObject is a Parameter, send int, float, bool, color, font, click help, menu item, point, RGB/A, String
 	[self logWithName:name parameters:@{@"Plugin UUID": self.effect.pluginUUID, @"Plugin Name": self.effect.pluginDisplayName}];

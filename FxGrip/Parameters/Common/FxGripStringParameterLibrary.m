@@ -2,11 +2,13 @@
 
 #if kFxGripLibraryActivator
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id string = parameter.parameterDefaultValue;
 	NSString *value = @"";
-	if (string && [string isKindOfClass:NSNumber.class]) {
+	if ([string isKindOfClass:NSString.class]) {
+		value = string;
+	} else if ([string isKindOfClass:NSNumber.class]) {
 		value = [string stringValue];
 	}
 	value = NSLocalizedString(value, value);

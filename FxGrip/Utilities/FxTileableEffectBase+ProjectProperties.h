@@ -17,11 +17,11 @@
 @property (readonly)			BOOL		isProjectMotion;
 @property (readonly)			BOOL		isProjectFinalCutPro;
 @property (readonly)			float		projectAspectRatio;
-@property (readonly, nullable)	NSURL*		projectMediaFolder
+@property (readonly, nullable)	NSURL*		projectMediaFolder;
 
-- (NSUInteger)projectDocumentIDWithError:(NSError *_Nullable *)error;
-- (nullable NSURL *)projectMediaFolderWithError:(NSError *_Nullable *)error;
-- (float) projectAspectRatioWithError:(NSError *_Nullable *)error;
+- (NSUInteger)projectDocumentIDWithError:(NSError *_Nullable *_Nullable)error;
+- (nullable NSURL *)projectMediaFolderWithError:(NSError *_Nullable *_Nullable)error;
+- (float) projectAspectRatioWithError:(NSError *_Nullable *_Nullable)error;
 
 @end
 

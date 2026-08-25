@@ -63,7 +63,7 @@
 }
 
 
-- (FxParameterFlags)parameterFlags
+- (FxParameterFlags)fxParameterFlags
 {
 	FxParameterFlags result = kFxParameterFlag_DEFAULT;
 	
@@ -92,10 +92,10 @@
 	return result;
 }
 
-- (FxParameterFlags)negativeParameterFlags
+- (FxParameterFlags)negativeFxParameterFlags
 {
 	FxParameterFlags result = kFxParameterFlag_DEFAULT;
-	
+
 	for (NSString *_flag in self) {
 		NSString *flag = _flag;
 		if (![flag isKindOfClass:[NSString class]]) {
@@ -106,7 +106,6 @@
 			result |= [FxGripParameterUtility convertFlag:flag];
 		}
 	}
-	[self objectAtIndex:3];
 	return result;
 }
 @end
@@ -146,7 +145,7 @@
 	return self[kProPlugPlugIn_ClassNameProperty];
 }
 
-- (NSString*_Nullable)pluignDisplayName
+- (NSString*_Nullable)pluginDisplayName
 {
 	isPluginDictionary(nil);
 	return self[kProPlugPlugIn_DisplayNameProperty];
@@ -174,6 +173,12 @@
 {
 	isPluginDictionary(nil);
 	return self[kProPlugPlugInX_DefaultFontNameProperty];
+}
+
+- (NSString*_Nullable)pluginVersion
+{
+	isPluginDictionary(nil);
+	return self[kProPlugPlugIn_VersionProperty];
 }
 
 - (NSDictionary<NSString*, NSDictionary*>*_Nullable)pluginPresets
@@ -237,15 +242,54 @@
 	return NO;
 }
 
+- (BOOL)pluginManageParameterData
+{
+	isPluginDictionary(NO);
+
+	NSNumber *value = self[kProPlugPlugInX_ManagedParameterDataProperty];
+	if (value != nil) {
+		return value.boolValue;
+	}
+	return NO;
+}
+
+- (BOOL)pluginRegression
+{
+	isPluginDictionary(NO);
+
+	NSNumber *value = self[kProPlugPlugInX_RegressionProperty];
+	if (value != nil) {
+		return value.boolValue;
+	}
+	// Opt-in, matching the other extension gates: the regression pass validates plugin
+	// identity properties and is only wanted during development.
+	return NO;
+}
+
+- (BOOL)pluginFxFactory
+{
+	isPluginDictionary(NO);
+
+	NSNumber *value = self[kProPlugPlugInX_FxFactoryProperty];
+	if (value != nil) {
+		return value.boolValue;
+	}
+	// Opt-in: only plugins distributed through FxFactory license/watermark through it.
+	return NO;
+}
+
 - (BOOL)pluginTrackInstances
 {
 	isPluginDictionary(NO);
-	
+
 	NSNumber *value = self[kProPlugPlugInX_TrackInstancesProperty];
 	if (value != nil) {
 		return value.boolValue;
 	}
-	return YES;
+	// Opt-in, matching pluginManageMeta / pluginManageParameterData: the process-wide
+	// instance registry only serves neighbour queries, so effects that do not ask for
+	// it pay no registry cost.
+	return NO;
 }
 
 
@@ -341,7 +385,7 @@
 		return [flags intValue];
 	}
 	
-	return [((NSArray*)flags) parameterFlags];
+	return [((NSArray*)flags) fxParameterFlags];
 }
 
 - (NSArray<NSString*>*_Nullable)parameterFlagsArray
@@ -418,9 +462,9 @@
 	return self[kFxParameterProperty_TargetPreset];
 }
 
-- (NSNumber*_Nullable)parameterMinimum
+- (NSNumber*_Nullable)parameterMinimum_Raw
 {
-	isParameterDictionary(0);
+	isParameterDictionary(nil);
 	return self[kFxParameterProperty_Minimum];
 }
 
@@ -440,6 +484,18 @@
 {
 	isParameterDictionary(nil);
 	return self[kFxParameterProperty_Maximum];
+}
+
+- (int)parameterMaximumInt
+{
+	isParameterDictionary(0);
+	return [self[kFxParameterProperty_Maximum] intValue];
+}
+
+- (double)parameterMaximumDouble
+{
+	isParameterDictionary(0.0);
+	return [self[kFxParameterProperty_Maximum] doubleValue];
 }
 
 
@@ -634,11 +690,14 @@
 	}
 	
 	if([depthType isKindOfClass:[NSNumber class]]) {
-		type = [depthType intValue];
-		if (type < FxGripDepthTypeNone) {
+		// Signed intermediate: the enum is unsigned, so comparing it below None is dead.
+		int rawType = [depthType intValue];
+		if (rawType < FxGripDepthTypeNone) {
 			type = FxGripDepthTypeNone;
-		} else if (type > FxGripDepthTypeBytes) {
+		} else if (rawType > FxGripDepthTypeBytes) {
 			type = FxGripDepthTypeFxDepth;
+		} else {
+			type = rawType;
 		}
 	} else if([depthType isKindOfClass:[NSString class]]) {
 		// if "bytes"

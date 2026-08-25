@@ -7,6 +7,7 @@
 
 #import "FxTileableEffectBase+OOBParameterAccess.h"
 #import "FxGripOOBParameterAccess.h"
+#import "FxGripColorGamut.h"
 
 
 @implementation FxTileableEffectBase (ColorGamut)
@@ -41,6 +42,31 @@
 {
 	//	 desiredProcessingColorInfo is set in method `properties:error`
 	return self.desiredProcessingColorInfo == kFxImageColorInfo_RGB_LINEAR;
+}
+
+- (simd_float3)colorLuminanceWeights
+{
+	return FxGripLuminanceWeights(self.colorPrimaries);
+}
+
+- (simd_float3x3)rgbToXYZMatrix
+{
+	return FxGripRGBToXYZMatrix(self.colorPrimaries);
+}
+
+- (simd_float3x3)xyzToRGBMatrix
+{
+	return FxGripXYZToRGBMatrix(self.colorPrimaries);
+}
+
+- (simd_float3x3)gamutMatrixToPrimaries:(FxColorPrimaries)target
+{
+	return FxGripGamutConversionMatrix(self.colorPrimaries, target);
+}
+
+- (simd_float3x3)gamutMatrixFromPrimaries:(FxColorPrimaries)source
+{
+	return FxGripGamutConversionMatrix(source, self.colorPrimaries);
 }
 
 @end

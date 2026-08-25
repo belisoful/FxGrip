@@ -1,13 +1,13 @@
 //
-//  FxGripExtension.m
-//  PlugIn
+//  FxExtension.m
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
 #import "FxExtension.h"
 #import "FxTileableEffectBase.h"
+#import "FxTileableEffectBase+Extensions.h"
 #import "FxTileableEffectBase+Notifications.h"
 #import "NSDictionary+FxTileableEffect.h"
 #import "FxParameterExtension.h"
@@ -69,22 +69,36 @@ const NSInteger FxExtensionDefaultPriority = 10;
 
 
 
-- (BOOL)extLoadWithIndex:(NSInteger)index
+- (NSUInteger)extensionCount
+{
+	return [self.effect.effectBase extensionsForClass:self.class].count;
+}
+
+
+/*!
+	Applies the load index to the extension key. Every instance after the first gets the
+	index appended so instances of one class never share a key; `extIndividuate` forces
+	the suffix for the first instance too.
+*/
+- (void)applyKeyIndex:(NSInteger)index
 {
 	_extKeyIndex = index;
-	if (_extIndividuate) {
-		_extKey = [_extKey stringByAppendingFormat:@"%ld", (long)_extKeyIndex];
+	if (index > 0 || self.extIndividuate) {
+		_extKey = [_extKey stringByAppendingFormat:@"%ld", (long)index];
 	}
+}
+
+
+- (BOOL)extLoadWithIndex:(NSInteger)index
+{
+	[self applyKeyIndex:index];
 	return self.extIncludeWhenDisabled;
 }
 
 
-- (BOOL)extLoadWithEffect:(nonnull id<FxTileableEffectBase>)effect atIndex:(NSInteger)index
+- (BOOL)extLoadWithEffect:(nonnull id<FxTileableEffectBase>)effect index:(NSInteger)index
 {
-	_extKeyIndex = index;
-	if (_extIndividuate) {
-		_extKey = [_extKey stringByAppendingFormat:@"%ld", (long)_extKeyIndex];
-	}
+	[self applyKeyIndex:index];
 	return [self extLoadWithEffect:effect];
 }
 
@@ -107,6 +121,7 @@ const NSInteger FxExtensionDefaultPriority = 10;
 		FxTileableEffectAddedToDocumentName: NSStringFromSelector(@selector(extAddedToDocument:)),
 		
 		FxTileableEffectParameterChangedName: NSStringFromSelector(@selector(extParameterChanged:)),
+		FxTileableEffectParameterClickedName: NSStringFromSelector(@selector(extParameterClicked:)),
 		FxTileableEffectFlushName: NSStringFromSelector(@selector(extFlush:)),
 		
 		FxTileableEffectPluginStateName: NSStringFromSelector(@selector(extPluginState:)),

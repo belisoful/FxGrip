@@ -9,14 +9,14 @@
 #ifndef FxGripImageRefParameter_h
 #define FxGripImageRefParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 
 @interface FxGripImageRefParameter : FxParameter
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (BOOL)includeFilters;
 

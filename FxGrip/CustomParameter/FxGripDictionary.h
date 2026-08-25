@@ -56,6 +56,10 @@
 
 - (instancetype _Null_unspecified)init;
 
+/*! The secure-coding allow-list for values a parameter dictionary may carry. A subclass
+	overrides to extend it; the instance method returns the class-level list. */
++ (NSOrderedSet<Class>*_Nonnull)classesForParameter;
+
 //- (id)customInterpolateValue:(id)left rightValue:(id)right path:(NSString*)path withWeight:(float)weight;
 
 - (BOOL)getBoolValue:(BOOL*_Null_unspecified)boolValue
@@ -125,9 +129,8 @@
 - (BOOL)setXValue:(double)x
 		   YValue:(double)y
 		   forKey:(id<NSCopying>_Null_unspecified)aKey;
-- (NSUInteger) countByEnumeratingWithState: (NSFastEnumerationState *_Nonnull) enumerationState
-								   objects: (id _Nonnull __unsafe_unretained [_Nullable]) stackBuffer
-count: (NSUInteger) len;
+
+// Fast enumeration derives from the dictionary primitives; no declaration is needed.
 
 @end
 

@@ -9,7 +9,7 @@
 #ifndef FxGripCustomParameter_h
 #define FxGripCustomParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 @protocol FxGripCustomParameter <FxParameter>
 @property (readonly) NSSet<Class> * _Nonnull dataClasses;
@@ -26,11 +26,11 @@
 @interface FxGripCustomParameter :
 FxParameter <FxGripCustomParameter, FxStateParameter>
 
--(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(id<FxTileableEffectBase>_Nonnull)effect;
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (id<NSSecureCoding, NSCopying> _Nullable)value;
 - (id<NSSecureCoding, NSCopying> _Nullable)valueAtTime:(CMTime)renderTime;

@@ -23,6 +23,20 @@
  */
 @interface FxGripInterpolatingDictionary : FxGripDictionary <FxCustomParameterInterpolation_v2>
 
+/*!
+	@method     customInterpolateValue:rightValue:path:withWeight:
+	@abstract   The subclass hook for values the base cannot blend.
+	@discussion Introduced in FxGrip 1.0. The base interpolation calls this for a value
+				pair whose class is neither a string, collection, nor number; the base
+				returns nil and the caller keeps a copy of the left value. A subclass
+				returns the blended value for the classes it understands. `path` is the
+				slash-joined key path of the entry.
+*/
+- (id _Nullable)customInterpolateValue:(id _Nullable)left
+							rightValue:(id _Nullable)right
+								  path:(NSString *_Nullable)path
+							withWeight:(float)weight;
+
 @end
 
 #endif

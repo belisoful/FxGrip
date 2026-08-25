@@ -1,8 +1,7 @@
 //
 //  FxGripParameterData.h
-//  PlugIn
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -11,13 +10,15 @@
 
 #import "FxGripCustomExtension.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import <FxTileableEffectBase.h>
+#import "FxTileableEffectBase.h"
 
-#define kExtParameterData_Type @"type"
-#define kExtParameterData_Flag @"flag"
-#define kExtParameterData_SubGroup @"subgroup"
-#define kExtParameterData_MenuItems @"menu"
-#define kExtParameterData_Selector @"selector"
+// Record keys. These alias the parameter property keys the notification payloads carry,
+// so the stored records and the accessors name the same entries.
+#define kExtParameterData_Type kFxParameterProperty_Type
+#define kExtParameterData_Flag kFxParameterProperty_Flags
+#define kExtParameterData_SubGroup kFxParameterProperty_ParentId
+#define kExtParameterData_MenuItems kFxParameterProperty_MenuItems
+#define kExtParameterData_Selector kFxParameterProperty_Selector
 
 // store tags	-	 Custom API
 // store target presets	-	Custom API

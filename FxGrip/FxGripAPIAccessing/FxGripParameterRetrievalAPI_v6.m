@@ -12,7 +12,7 @@
 #import "FxTileableEffectBase.h"
 #import "FxGripCustomViewData.h"
 //#import "GuruFxTileableEffect+Extensions.h"
-#import "NSDictionary+FxTileableEFfect.h"
+#import "NSDictionary+FxTileableEffect.h"
 #import "FxAPINotifications.h"
 
 #import <FxGrip_ARC.h>
@@ -30,7 +30,7 @@
 
 - (nullable instancetype)initWithAPI:(id<FxParameterRetrievalAPI_v6>)api
 				   dynamicParamAPIv4:(id<FxDynamicParameterAPI_v4>)dynamicParamAPIv4
-							  effect:(id<FxTileableEffectBase>)effect
+							  effect:(id<FxGripEffectHost>)effect
 
 {
 	self = [super initWithEffect:effect];
@@ -63,7 +63,7 @@
 - (BOOL)getCustomParameterValue:(NSObject<NSSecureCoding,NSCopying> * _Nullable * _Nonnull)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	BOOL success = [_api getCustomParameterValue:value fromParameter:parameterID atTime:time];
-	if (value != nil && *value != nil) {
+	if (success && value != nil && *value != nil) {
 		if ([*value conformsToProtocol:@protocol(FxGripCustomViewData)]) {
 			NSObject<NSSecureCoding, NSCopying, FxGripCustomViewData> *customValue = (id)*value;
 			//customValue.parameterView = [self.effect viewForParameterID:parameterID];
@@ -155,19 +155,21 @@
 	userInfo.parameterID = parameterID;
 	userInfo.mutableFxParameter.parameterID = parameterID;
 	if (userInfo.fxResult) {
-		*flags = userInfo.fxParameter.parameterFlags;
+		*flags = ((NSNumber*)userInfo.fxParameter[kFxParameterProperty_Flags]).unsignedIntValue;
 		return [userInfo.fxResult boolValue];
 	}
 	
 	if (![_api getParameterFlags:flags fromParameter:parameterID]) {
 		return NO;
 	}
-	
+
 	// The following shouldn't be necessary as Apple does not save undefined flags, but in case they change the behavior or stray bits.
 	//*flags = FxParameterFlagsFxMask(*flags);
-	
+
+	// The host value seeds the payload so observers see it and the readback returns it.
+	userInfo.mutableFxParameter[kFxParameterProperty_Flags] = @(*flags);
 	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterGetFlagsName object:self.effect userInfo:userInfo];
-	*flags = userInfo.fxParameter.parameterFlags;
+	*flags = ((NSNumber*)userInfo.fxParameter[kFxParameterProperty_Flags]).unsignedIntValue;
 	return userInfo.fxError == NULL;
 }
 
@@ -220,10 +222,10 @@
 				FxNotifyAPI_ParameterKey: @{
 					kFxParameterProperty_Id: @(parameterID),
 					kFxParameterProperty_Default: *string
-				}
+				}.mutableCopy
 			}.mutableCopy;
 		[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterGetStringValueName object:self.effect userInfo:userInfo];
-		*string = userInfo.fxParameter.parameterDefaultValue;
+		*string = userInfo.fxParameter[kFxParameterProperty_Default];
 	}
 	return success;
 }

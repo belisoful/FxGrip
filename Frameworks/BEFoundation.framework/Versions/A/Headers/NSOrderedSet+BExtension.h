@@ -37,7 +37,7 @@
  The following methods are provided by this category to `NSMutableOrderedSet`:
 
  `-filterUsingBlock:`: filters the ordered set in place, removing `NULL` mappings and rejected objects.
- Also adds `-intersectArray:`, `-setArray:`, `-setSet:`, `-removeFirstObject`, `-removeLastObject`.
+ Also adds `-intersectArray:`, the readwrite `array` and `set` properties (setters `be_setArray:`/`be_setSet:`), `-removeFirstElement`, `-removeLastElement`.
 
  @code
 	NSOrderedSet *os = [NSOrderedSet orderedSetWithArray:@[@1, @2, @3, @4]];
@@ -150,28 +150,36 @@
  @abstract		Sets the ordered set from a NSArray.
  @discussion	This implements the set method as the get `array` property is
  				already in the parent.
+
+				The setter selector is be_setArray: because Apple defines a private
+				setArray: on this class; dot syntax is unaffected.
  */
-@property (readwrite, strong, nullable) NSArray<ObjectType> *array;
+@property (readwrite, strong, nullable, setter=be_setArray:) NSArray<ObjectType> *array;
 
 /*!
  @property		set
  @abstract		Sets the ordered set to the NSSet.
  @discussion	This implements the set method as the get `set` property is
 				already in the parent.
+
+				The setter selector is be_setSet: because Apple defines a private
+				setSet: on this class; dot syntax is unaffected.
  */
-@property (readwrite, strong, nullable) NSSet<ObjectType> *set;
+@property (readwrite, strong, nullable, setter=be_setSet:) NSSet<ObjectType> *set;
 
 /*!
- @method		-removeFirstObject
+ @method		-removeFirstElement
  @abstract		Removes the first object in the receiver ordered set.
+ @since			1.1
  */
-- (void)removeFirstObject;
+- (void)removeFirstElement;
 
 /*!
- @method		-removeLastObject
+ @method		-removeLastElement
  @abstract		Removes the last object in the receiver ordered set.
+ @since			1.1
  */
-- (void)removeLastObject;
+- (void)removeLastElement;
 
 /*!
  @method		-filterUsingBlock:

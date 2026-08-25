@@ -24,19 +24,14 @@
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	double defaultXValue = 0.5, defaultYValue = 0.5;
-	NSDictionary *pointDict = parameter.parameterDefaultValue;
-	if (pointDict) {
-		NSNumber *defaultValueNumber = pointDict.parameterDefaultX;
-		if (defaultValueNumber != nil) {
-			defaultXValue = defaultValueNumber.doubleValue;
-		}
-		defaultValueNumber = pointDict.parameterDefaultY;
-		if (defaultValueNumber != nil) {
-			defaultYValue = defaultValueNumber.doubleValue;
-		}
+	// parameterDefaultX/Y read the parameter record and accept the dictionary, array,
+	// and string default shapes.
+	if (parameter.parameterDefaultValue != nil || parameter[kFxParameterProperty_X] != nil || parameter[kFxParameterProperty_Y] != nil) {
+		defaultXValue = parameter.parameterDefaultX.doubleValue;
+		defaultYValue = parameter.parameterDefaultY.doubleValue;
 	}
 	return [effect.apiManager.paramCreateAPIv5 addPointParameterWithName: parameter.parameterName
 																  parameterID: parameter.parameterID
@@ -50,7 +45,7 @@
 {
 	FxGripPoint point = {0.0, 0.0};
 	if(![self.effect.apiManager.paramGetAPIv6 getXValue:&point.x YValue:&point.y fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

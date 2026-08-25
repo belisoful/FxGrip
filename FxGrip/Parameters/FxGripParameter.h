@@ -10,9 +10,9 @@
 #define FxGripParameter_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import <FxGripParameterFlags.h>
-#import <FxGripTypes.h>
-#import <NSCoder+FxPlug.h>
+#import "FxGripParameterFlags.h"
+#import "FxGripTypes.h"
+#import "NSCoder+FxPlug.h"
 
 
 
@@ -46,7 +46,7 @@
 @property (readonly) BOOL addedToEffect;
 
 @property (readonly) NSError *_Nullable error;
-//@property (readonly) id<FxTileableEffectBase> _Nonnull effect;
+//@property (readonly) id<FxGripEffectHost> _Nonnull effect;
 @property (readonly) FxParameterId parameterID;
 @property (readonly) FxParameterType parameterType;
 @property (readwrite) FxParameterFlags parameterFlags;
@@ -62,7 +62,7 @@
 - (void)setParameterFlags:(FxParameterFlags)flags;
 
 //Tells the Parameter to add itself to the plugin
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 - (void)parameterFlush;
 
 // When the parameter is created
@@ -162,10 +162,10 @@
 @property (readonly, retain, nullable) id resetValue;
 
 
--(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(id<FxTileableEffectBase>_Nonnull)effect;
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 - (FxParameterType)parameterType NS_UNAVAILABLE;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect NS_UNAVAILABLE;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect NS_UNAVAILABLE;
 
 
 /*!

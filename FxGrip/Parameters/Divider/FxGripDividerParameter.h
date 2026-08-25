@@ -1,21 +1,22 @@
 //
-//  FxGripCustomParameter.h
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
+//  FxGripDividerParameter.h
+//  FxGrip
 //
 
-#ifndef FxGripSwitchParameter_h
-#define FxGripSwitchParameter_h
+#ifndef FxGripDividerParameter_h
+#define FxGripDividerParameter_h
 
 #import "FxGripCustomParameter.h"
 
-
+/*!
+	@class      FxGripDividerParameter
+	@abstract   A horizontal divider line in the inspector.
+	@discussion Introduced in FxGrip 1.0. The value is an FxGripDividerData carrying the
+				line's width fraction and margins; the view is an FXBox inside a sizing
+				container. Creation adds the custom-UI, not-animatable, full-view-width,
+				and no-state flags.
+*/
 @interface FxGripDividerParameter : FxGripCustomParameter
-
-- (FxParameterType)parameterType;
-- (BOOL)addParameter;
 
 @end
 

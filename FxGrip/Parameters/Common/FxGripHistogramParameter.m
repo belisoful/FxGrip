@@ -28,7 +28,7 @@
 	return FxParameterType_Histogram;
 }
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	return [effect.apiManager.paramCreateAPIv5 addHistogramWithName: parameter.parameterName
 														parameterID: parameter.parameterID

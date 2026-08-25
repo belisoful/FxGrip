@@ -356,7 +356,7 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 
 - (long)decodeFxLightCount:(NSString *_Null_unspecified)key {
 	NSString *lightKey = [key stringByAppendingString:FxLightingCoderLightCountKey];
-	return [self decodeDoubleForKey:lightKey];
+	return [self decodeIntegerForKey:lightKey];
 }
 
 - (struct FxLight *)decodeFxLight:(long)lightIndex
@@ -371,9 +371,11 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 	if (lightIndex < 0 || lightIndex >= count) {
 		return nil;
 	}
-	
+
+	// Lights encode under <key><index><FxLightingCoderLightingKey>.
+	NSString *lightKey = [key stringByAppendingFormat:@"%ld%@", lightIndex, FxLightingCoderLightingKey];
 	NSUInteger lengthp = 0;
-	FxLight *p = (FxLight*)[self decodeBytesForKey:key returnedLength:&lengthp];
+	FxLight *p = (FxLight*)[self decodeBytesForKey:lightKey returnedLength:&lengthp];
 	if (lengthp != sizeof(FxLight) || !p) {
 		return nil;
 	}

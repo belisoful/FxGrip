@@ -6,11 +6,14 @@
 //
 
 #import "FxGripAPIAccessing.h"
+#import "FxGripCustomCreationAPI_v1.h"
 #import "FxTileableEffectBase.h"
 #import "FxGripDynamicParameterAPI_v3.h"
 #import "FxGripDynamicParameterAPI_v4.h"
 #import "FxGripParameterCreationAPI_v5.h"
+#import "FxGripParameterCreationAPI_v6.h"
 #import "FxGripParameterRetrievalAPI_v6.h"
+#import "FxGripParameterRetrievalAPI_v7.h"
 #import "FxGripParameterSettingAPI_v5.h"
 #import "FxGripParameterSettingAPI_v6.h"
 #import "FxGripTimingAPI_v4.h"
@@ -127,7 +130,7 @@
 //---------------------------------------------------------
 
 - (nullable instancetype)initWithAPIManager:(id<PROAPIAccessing>)apiManager
-									 effect:(id<FxTileableEffectBase>)effect
+									 effect:(id<FxGripEffectHost>)effect
 {
 	id<__FxPROAPIAccessing> manager = (id<__FxPROAPIAccessing>)apiManager;
 	self = [super init];
@@ -279,7 +282,18 @@
 		}
 		return paramCreateAPI_v5;
 	}
-	
+
+	// After the v5 branch: the v5 wrapper does not conform to v6, so a v5 request never reaches
+	// here, and a v6 request skips the v5 branch to land on this one.
+	if (api && [FxGripParameterCreationAPI_v6 conformsToProtocol:apiProtocol]) {
+		id paramCreateAPI_v6 = NARC_AUTORELEASE([FxGripParameterCreationAPI_v6.alloc initWithAPI:api effect:self.effect]);
+		if (paramCreateAPI_v6 == nil)
+		{
+			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterCreationAPI_v6", _sessionID);
+		}
+		return paramCreateAPI_v6;
+	}
+
 	if (api && [FxGripParameterRetrievalAPI_v6 conformsToProtocol:apiProtocol]) {
 		
 		id paramGetAPI_v6 = nil;
@@ -304,7 +318,19 @@
 		}
 		return paramGetAPI_v6;
 	}
-	
+
+	// After the v6 branch: the v6 wrapper does not conform to v7, so a v6 request never reaches
+	// here, and a v7 request skips the v6 branch to land on this one.
+	if (api && [FxGripParameterRetrievalAPI_v7 conformsToProtocol:apiProtocol]) {
+		id dyParam_v4 = NARC_AUTORELEASE([FxGripDynamicParameterAPI_v4.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
+		id paramGetAPI_v7 = NARC_AUTORELEASE([FxGripParameterRetrievalAPI_v7.alloc initWithAPI:api dynamicParamAPIv4:dyParam_v4 effect:self.effect]);
+		if (paramGetAPI_v7 == nil)
+		{
+			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterRetrievalAPI_v7", _sessionID);
+		}
+		return paramGetAPI_v7;
+	}
+
 	if (api && [FxGripParameterSettingAPI_v5 conformsToProtocol:apiProtocol]) {
 		id<FxParameterRetrievalAPI_v6> paramGetAPIv6 = [_apiAccessing apiForProtocol:@protocol(FxParameterRetrievalAPI_v6)];
 		if (paramGetAPIv6 == nil)
@@ -346,13 +372,24 @@
 		return paramSetAPI_v6;
 	}
 	
-	if (api && [FxGripParameterTagsAPI_v1 conformsToProtocol:apiProtocol]) {
-		id paramTags_v3 = NARC_AUTORELEASE([FxGripParameterTagsAPI_v1.alloc initWithAPI:api effect:self.effect]);
-		if (paramTags_v3 == nil)
+	// FxGrip implements this protocol itself; no host vends it, so the wrapper is built
+	// without a host API. Gating it on `api` would leave it permanently unreachable.
+	if ([FxGripParameterTagsAPI_v1 conformsToProtocol:apiProtocol]) {
+		id paramTags_v1 = NARC_AUTORELEASE([FxGripParameterTagsAPI_v1.alloc initWithAPI:api effect:self.effect]);
+		if (paramTags_v1 == nil)
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterTagsAPI_v1", _sessionID);
 		}
-		return paramTags_v3;
+		return paramTags_v1;
+	}
+	// FxGrip-implemented, like the tags API above.
+	if ([FxGripPresetsAPI_v1 conformsToProtocol:apiProtocol]) {
+		id presets_v1 = NARC_AUTORELEASE([FxGripPresetsAPI_v1.alloc initWithAPI:api effect:self.effect]);
+		if (presets_v1 == nil)
+		{
+			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripPresetsAPI_v1", _sessionID);
+		}
+		return presets_v1;
 	}
 	if (api && [FxGripTimingAPI_v4 conformsToProtocol:apiProtocol]) {
 		id timing_v4 = NARC_AUTORELEASE([FxGripTimingAPI_v4.alloc initWithAPI:api effect:self.effect]);
@@ -387,6 +424,55 @@
 	return paramAPI;
 }
 
+- (id<FxParameterCreationAPI_v6> _Nullable)paramCreateAPIv6_Raw
+{
+	return [_apiAccessing apiForProtocol:@protocol(FxParameterCreationAPI_v6)];
+}
+
+- (id<FxParameterCreationAPI_v6> _Nullable)paramCreateAPIv6
+{
+	id<FxParameterCreationAPI_v6> paramAPI = [self apiForProtocol:@protocol(FxParameterCreationAPI_v6)];
+	if (paramAPI == nil)
+	{
+		NSLog(@"FxGripAPIManager(%llu)::paramCreateAPIv6 Unable to load FxParameterCreationAPI_v6", _sessionID);
+	}
+	return paramAPI;
+}
+
+
+- (id<FxParameterTagsAPI_v1> _Nullable)paramTagsAPIv1
+{
+	// FxGrip-implemented: always available, independent of the host's API set.
+	id<FxParameterTagsAPI_v1> tagsAPI = [self apiForProtocol:@protocol(FxParameterTagsAPI_v1)];
+	if (tagsAPI == nil)
+	{
+		NSLog(@"FxGripAPIManager(%llu)::paramTagsAPIv1 Unable to load FxParameterTagsAPI_v1", _sessionID);
+	}
+	return tagsAPI;
+}
+
+- (FxGripPresetsAPI_v1 * _Nullable)presetsAPIv1
+{
+	// FxGrip-implemented: always available, independent of the host's API set.
+	FxGripPresetsAPI_v1 *presetsAPI = [self apiForProtocol:@protocol(FxPresetsAPI_v1)];
+	if (presetsAPI == nil)
+	{
+		NSLog(@"FxGripAPIManager(%llu)::presetsAPIv1 Unable to load FxGripPresetsAPI_v1", _sessionID);
+	}
+	return presetsAPI;
+}
+
+- (FxGripCustomCreationAPI_v1 * _Nullable)customCreationAPIv1
+{
+	// FxGrip-implemented over the effect host; no host protocol backs it.
+	FxGripCustomCreationAPI_v1 *api =
+		[[FxGripCustomCreationAPI_v1 alloc] initWithEffect:(id<FxGripEffectHost>)self.effect];
+	if (api == nil)
+	{
+		NSLog(@"FxGripAPIManager(%llu)::customCreationAPIv1 requires an effect host", _sessionID);
+	}
+	return NARC_AUTORELEASE(api);
+}
 
 - (id<FxParameterRetrievalAPI_v6> _Nullable)paramGetAPIv6_Raw
 {
@@ -656,6 +742,21 @@
 	if (api == nil)
 	{
 		NSLog(@"FxGripAPIManager(%llu)::remoteWindowAPIv2 Unable to load FxRemoteWindowAPI_v2", _sessionID);
+	}
+	return api;
+}
+
+- (id<FxRemoteWindowAPI_v3> _Nullable)remoteWindowAPIv3_Raw
+{
+	return [_apiAccessing apiForProtocol:@protocol(FxRemoteWindowAPI_v3)];
+}
+
+- (id<FxRemoteWindowAPI_v3> _Nullable)remoteWindowAPIv3
+{
+	id<FxRemoteWindowAPI_v3> api = [self apiForProtocol:@protocol(FxRemoteWindowAPI_v3)];
+	if (api == nil)
+	{
+		NSLog(@"FxGripAPIManager(%llu)::remoteWindowAPIv3 Unable to load FxRemoteWindowAPI_v3", _sessionID);
 	}
 	return api;
 }

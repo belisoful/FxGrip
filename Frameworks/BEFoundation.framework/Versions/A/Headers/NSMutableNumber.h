@@ -38,12 +38,22 @@
  @endcode
  <li> All getters are thread safe. Can be used for cross-thread synchronization. Used recursive mutex for get/set values.
  <li> Same hash method as on @b NSNumber object - required for using as key with key/value coding classes.
- <li> Detected as kind of @b NSNumber or @b NSValue class.
+ <li> A genuine @b NSNumber subclass: kinship, toll-free bridging to @b CFNumberRef, symmetric
+ equality with plain @b NSNumber values, and inherited API such as @b decimalValue all work.
  @code
 	NSMutableNumber * mutableNumber = [[NSMutableNumber alloc] init];
 	[mutableNumber isKindOfClass:[NSNumber class]]; // YES, is kind of class
 	[mutableNumber isKindOfClass:[NSMutableNumber class]]; // YES, is kind of class
+	[@0 isEqual:mutableNumber]; // YES, equality is symmetric
  @endcode
+ <li> Archiving routes through @b encodeWithCoder: (see @b classForCoder), so a keyed archive
+ round-trips as @b NSMutableNumber rather than flattening to an immutable plist number.
+ An archivable subclass must declare its own
+ @code
+	- (Class)classForCoder { return [self class]; }
+	- (Class)classForKeyedArchiver { return [self class]; }
+ @endcode
+ because @b NSKeyedUnarchiver rejects subclasses of plist types whose coder-class methods are inherited.
  <li> Can be compared with self(eg. @b NSMutableNumber) or @b NSNumber class.
  Comparison checks both numbers for real, signed and unsigned value and selects required method for comparing between values.
  @code
@@ -63,7 +73,7 @@
  <li> Internal logic implemented with C++. Same performance as standard @b NSNumber (see time tests) and minimum amount of memory for storing values(eg. unions).
  <li> @b NSNumber can be compared with this class via additional number comparator method @b isEqualToNumber:
  */
-@interface NSMutableNumber : NSObject <NSCopying, NSMutableCopying, NSSecureCoding>
+@interface NSMutableNumber : NSNumber <NSCopying, NSMutableCopying, NSSecureCoding>
 
 
 /**

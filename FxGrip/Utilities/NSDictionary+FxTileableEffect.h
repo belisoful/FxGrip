@@ -9,7 +9,7 @@
 #define NSDictionary_FxTileableEffect_h
 
 #import <Foundation/Foundation.h>
-#import <FxGripTypes.h>
+#import "FxGripTypes.h"
 #import <BEFoundation/NSString+BExtension.h>
 
 @protocol FxParameterFactory;
@@ -46,7 +46,7 @@
 
 - (NSString*_Nullable) pluginUUID;
 - (NSString*_Nullable) pluginClassName;
-- (NSString*_Nullable) pluignDisplayName;
+- (NSString*_Nullable) pluginDisplayName;
 - (NSString*_Nullable) pluginGroupUUID;
 - (NSArray<NSString*>*_Nullable) pluginProtocolNames;
 - (NSString*_Nullable) pluginInfoString;
@@ -60,7 +60,10 @@
 - (BOOL) pluginDebugMenu;
 - (BOOL) pluginDebugActivator;
 - (BOOL) pluginManageMeta;
+- (BOOL) pluginManageParameterData;
 - (BOOL) pluginTrackInstances;
+- (BOOL) pluginRegression;
+- (BOOL) pluginFxFactory;
 
 
 - (nullable id<FxParameterFactory>)parameterFactory;

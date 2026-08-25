@@ -5,9 +5,14 @@
  @author	 belisoful@icloud.com
  @abstract   Adds stack (LIFO) and queue (FIFO) operations to mutable collections.
  @discussion This header file provides categories on NSMutableArray and NSMutableOrderedSet
-			 to enable stack-like and queue-like behaviors using common push, pop, and shift
-			 method names. These extensions allow treating mutable collections as stacks
+			 to enable stack-like and queue-like behaviors using pushObject:, popObject,
+			 and shift. These extensions allow treating mutable collections as stacks
 			 (Last-In, First-Out) or queues (First-In, First-Out) with intuitive method names.
+
+			 Selector naming: Apple attaches private categories to these classes at runtime
+			 (OSAnalytics defines -[NSMutableArray push:] and -[NSMutableArray pop]), so the
+			 stack methods use BE-owned selectors that no Apple framework defines. See
+			 CATEGORY_NAMING.md.
  */
 
 #ifndef BEStackExtensions_h
@@ -21,13 +26,13 @@
  @category   NSMutableArray (StackAdditions)
  @abstract   Adds stack (LIFO) and queue (FIFO) operations to NSMutableArray.
  @discussion This category provides methods to treat an NSMutableArray as a stack using
-			 push: and pop methods, or as a queue using push: and shift methods. All
-			 methods return the array instance to enable method chaining.
+			 pushObject: and popObject methods, or as a queue using pushObject: and shift
+			 methods. Push methods return the array instance to enable method chaining.
 
 			 @code
 			 NSMutableArray *stack = [NSMutableArray array];
-			 [[stack push:@"a"] push:@"b"];   // chaining; stack is now @[@"a", @"b"]
-			 id top = [stack pop];            // @"b" (LIFO)
+			 [[stack pushObject:@"a"] pushObject:@"b"];   // chaining; stack is now @[@"a", @"b"]
+			 id top = [stack popObject];      // @"b" (LIFO)
 
 			 NSMutableArray *queue = [NSMutableArray array];
 			 [queue pushObjects:@"a", @"b", @"c", nil];
@@ -37,14 +42,15 @@
 @interface NSMutableArray <ObjectType> (StackAdditions)
 
 /*!
- @method     push:
+ @method     pushObject:
  @abstract   Adds an object to the end of the array (stack push operation).
  @discussion This method appends the specified object to the end of the array, emulating
 			 the push operation of a stack. If the object is nil, the array remains unchanged.
  @param      obj The object to add to the array. Pass nil to leave the array unchanged.
  @return     The array instance, enabling method chaining.
+ @since      1.1
  */
-- (nonnull instancetype)push:(nullable ObjectType)obj;
+- (nonnull instancetype)pushObject:(nullable ObjectType)obj;
 
 /*!
  @method     pushObjects:
@@ -70,20 +76,21 @@
 - (nonnull instancetype)pushArray:(nullable NSArray<ObjectType> *)array;
 
 /*!
- @method     pop
+ @method     popObject
  @abstract   Removes and returns the last object in the array (stack pop operation).
  @discussion This method removes the last object from the array and returns it, emulating
 			 the pop operation of a stack (Last-In, First-Out). If the array is empty,
 			 no changes are made and nil is returned.
  @return     The last object in the array, or nil if the array is empty.
+ @since      1.1
  */
-- (nullable ObjectType)pop;
+- (nullable ObjectType)popObject;
 
 /*!
  @method     shift
  @abstract   Removes and returns the first object in the array (queue dequeue operation).
  @discussion This method removes the first object from the array and returns it. When
-			 combined with push:, this enables queue-like behavior (First-In, First-Out).
+			 combined with pushObject:, this enables queue-like behavior (First-In, First-Out).
 			 If the array is empty, no changes are made and nil is returned.
  @return     The first object in the array, or nil if the array is empty.
  */
@@ -97,9 +104,9 @@
  @category   NSMutableOrderedSet (StackAdditions)
  @abstract   Adds stack (LIFO) and queue (FIFO) operations to NSMutableOrderedSet.
  @discussion This category provides methods to treat an NSMutableOrderedSet as a stack
-			 using push: and pop methods, or as a queue using push: and shift methods.
-			 The behavior when pushing existing objects is controlled by the isPushOnTop
-			 property. All methods return the set instance to enable method chaining.
+			 using pushObject: and popObject methods, or as a queue using pushObject: and
+			 shift methods. The behavior when pushing existing objects is controlled by the
+			 isPushOnTop property. Push methods return the set instance to enable method chaining.
  */
 @interface NSMutableOrderedSet <ObjectType> (StackAdditions)
 
@@ -114,15 +121,16 @@
 @property (readwrite, assign, nonatomic) BOOL isPushOnTop;
 
 /*!
- @method     push:
+ @method     pushObject:
  @abstract   Adds an object to the end of the ordered set (stack push operation).
  @discussion This method adds the specified object to the end of the ordered set. The
 			 behavior with existing objects is controlled by the isPushOnTop property.
 			 If the object is nil, the set remains unchanged.
  @param      obj The object to add to the set. Pass nil to leave the set unchanged.
  @return     The ordered set instance, enabling method chaining.
+ @since      1.1
  */
-- (nonnull instancetype)push:(nullable ObjectType)obj;
+- (nonnull instancetype)pushObject:(nullable ObjectType)obj;
 
 /*!
  @method     pushObjects:
@@ -150,20 +158,21 @@
 - (nonnull instancetype)pushArray:(nullable NSArray<ObjectType> *)array;
 
 /*!
- @method     pop
+ @method     popObject
  @abstract   Removes and returns the last object in the ordered set (stack pop operation).
  @discussion This method removes the last object from the ordered set and returns it,
 			 emulating the pop operation of a stack (Last-In, First-Out). If the set
 			 is empty, no changes are made and nil is returned.
  @return     The last object in the set, or nil if the set is empty.
+ @since      1.1
  */
-- (nullable ObjectType)pop;
+- (nullable ObjectType)popObject;
 
 /*!
  @method     shift
  @abstract   Removes and returns the first object in the ordered set (queue dequeue operation).
  @discussion This method removes the first object from the ordered set and returns it.
-			 When combined with push:, this enables queue-like behavior (First-In, First-Out).
+			 When combined with pushObject:, this enables queue-like behavior (First-In, First-Out).
 			 If the set is empty, no changes are made and nil is returned.
  @return     The first object in the set, or nil if the set is empty.
  */

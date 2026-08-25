@@ -1,17 +1,16 @@
 //
-//  FxGripToggle.h
-//  PlugIn
+//  FxGripInstanceTracker.h
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
 #ifndef FxGripInstanceTracker_h
 #define FxGripInstanceTracker_h
 
-#import <FxGripTypes.h>
-#import <FxExtension.h>
-#import <FxTileableEffectBase.h>
+#import "FxGripTypes.h"
+#import "FxExtension.h"
+#import "FxTileableEffectBase.h"
 
 #define kInstanceTrackerKey @"instanceTracker"
 
@@ -19,7 +18,6 @@
 @interface FxGripInstanceTracker : FxExtension
 
 - (nullable id)init;
-- (void)dealloc;
 
 @property (readonly, nonnull) NSArray<id<FxTileableEffectBase>> *instances;
 
@@ -41,7 +39,7 @@
 @property (readonly) BOOL isTrackingInstances;
 @property (readonly, nullable, nonatomic) FxGripInstanceTracker *instanceTracker;
 
-// Cast arr[i].pointerValue into id<FxTileableEffect> or GuruFxTileableEffect to retreive the effect object.
+// Cast arr[i].pointerValue into id<FxTileableEffect> or GuruFxTileableEffect to retrieve the effect object.
 @property (readonly) NSArray<id<FxTileableEffectBase>>*_Nonnull instances;
 
 - (NSUInteger)instanceCount;

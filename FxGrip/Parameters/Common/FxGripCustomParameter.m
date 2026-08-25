@@ -15,7 +15,7 @@
 
 @implementation FxGripCustomParameter
 
--(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(nonnull id<FxTileableEffectBase>)effect
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(nonnull id<FxGripEffectHost>)effect
 {
 	self = [super initWithDictionary:dictionary effect:effect];
 	if(self) {

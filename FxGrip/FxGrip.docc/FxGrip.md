@@ -12,6 +12,10 @@ There are two primary classes
 
 There are multiple topics introduced
 
+### Adopting FxGrip
+
+- <doc:Adoption>
+
 ### FxTileableEffectBase
 
 ### Registrars
@@ -24,12 +28,13 @@ This puts a wrapper around the standard FxPlug API Protocols and adds its own AP
 
 ### FxCustomParameter
 
+- <doc:CustomControls>
+- <doc:WebContent>
+
 ### FxExtension
 
 FxGripAboutMenu
 FxGripDebugMenu
-FxGripFactory Integrator
-FxGripFactoryParameters
 FxGripGoogleAnalytics
 FxGripI18N
 FxGripInstanceTracker

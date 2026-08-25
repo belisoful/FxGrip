@@ -9,14 +9,14 @@
 #ifndef FxGripHistogramParameter_h
 #define FxGripHistogramParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 
 @interface FxGripHistogramParameter : FxParameter <FxStateParameter>
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (FxGripHistogram*_Nullable)valueAtTime:(CMTime)renderTime;
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder;

@@ -9,7 +9,7 @@
 #ifndef FxTileableEffectBase_Parameters_h
 #define FxTileableEffectBase_Parameters_h
 
-#import <FxTileableEffectBase.h>
+#import "FxTileableEffectBase.h"
 
 
 @interface FxTileableEffectBase (FxParameters) <FxParameterFactory>

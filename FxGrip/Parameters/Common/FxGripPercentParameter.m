@@ -22,7 +22,7 @@
 	return FxParameterType_Percent;
 }
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	double defaultValue = 0.0, defaultDelta = NAN;
 	double minimumValue = 0.0, maximumValue = 1.0;

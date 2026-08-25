@@ -24,7 +24,7 @@
 
 	@property (assign, readonly) id<FxDynamicParameterAPI_v3> _Nonnull api;
 
-- (nullable instancetype)initWithAPI:(id<FxDynamicParameterAPI_v3> _Nonnull)api effect:(nonnull id<FxTileableEffectBase>)effect;
+- (nullable instancetype)initWithAPI:(id<FxDynamicParameterAPI_v3> _Nonnull)api effect:(nonnull id<FxGripEffectHost>)effect;
 
 @end
 

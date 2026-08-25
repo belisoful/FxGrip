@@ -16,8 +16,8 @@
  • NSDictionary of Plugin's Data
  • Array of NSDictionary of Plugins' Data
  • NSDictionary of @{
- 	@"ProPlugPlugInList": <NSDictinoray of Plugin> | <NSArray of NSDictionary of Plugins>,
- 	@"ProPlugPlugInGroupList": <NSDictinoray of group>, | <NSArray of NSDictionary of groups>
+ 	@"ProPlugPlugInList": <NSDictionary of Plugin> | <NSArray of NSDictionary of Plugins>,
+ 	@"ProPlugPlugInGroupList": <NSDictionary of group>, | <NSArray of NSDictionary of groups>
  	}
  
  	// kProPlugPlugInList_Property and kProPlugPlugInGroupList_Property are the constants

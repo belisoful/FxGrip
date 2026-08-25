@@ -5,8 +5,7 @@
 //  Created by ~ ~ on 2/29/24.
 //
 
-#ifdef FxGripParameterFlags_h
-//#ifndef FxGripParameterFlags_h
+#ifndef FxGripParameterFlags_h
 #define FxGripParameterFlags_h
 
 #import <FxPlug/FxPlugSDK.h>
@@ -36,7 +35,7 @@ typedef union FxGripParameterFlags {
 			unsigned int _reserved18:1;		//	bit 18
 			unsigned int _reserved19:1;		//	bit 19
 			unsigned int _reserved20:1;		//	bit 20
-			unsigned int _reserved21:1;		//	bit 21
+		unsigned int presetNoValue:1;		//	bit 21
 		
 		unsigned int saving:1;				//	bit 22
 		unsigned int cacheDirty:1;			//	bit 23
@@ -102,11 +101,18 @@ typedef union FxGripParameterFlags {
 	#define	kFxParameterFlag_SAVING			(((FxParameterFlags64) 1) << 22)
 
 
+#define	kFxParameterFlag_TEMP_MASK		( kFxParameterFlag_CACHE | kFxParameterFlag_CACHEDIRTY | kFxParameterFlag_SAVING )
+
 #define SavingFlags(flags)  (flags | kFxParameterFlag_SAVING)
 #define UnsavingFlags(flags)  (flags & ~kFxParameterFlag_SAVING)
 
-#define RemoveTempFlags(flags)  (flags & ~(kFxParameterFlag_SAVING | kFxParameterFlag_CACHE | kFxParameterFlag_CACHEDIRTY))
+#define RemoveTempFlags(flags)  (flags & ~kFxParameterFlag_TEMP_MASK)
 
+
+// The APP range (bits 25-31) is full; this preset opt-out lives in the unclaimed gap
+// between Apple's known flags and the temp bits. Like the temp bits, it can reach the
+// host through FxParameterFlagsFxMask (the #12 watch item); hosts ignore unknown bits.
+	#define	kFxParameterFlag_PRESETNOVALUE	(((FxParameterFlags64) 1) << 21)
 
 // We don't know what this is yet.
 	#define	kFxParameterFlag_UNKNOWN_APPLE_FLAG	(((FxParameterFlags64) 1) << 17)
@@ -114,6 +120,7 @@ typedef union FxGripParameterFlags {
 #define flagInvalid(x)			((x & kFxParameterFlag_INVALID) != 0)
 #define flagNoMeta(x)			((x & kFxParameterFlag_PRESETNOMETA) != 0)
 #define flagNoTags(x)			((x & kFxParameterFlag_PRESETNOTAGS) != 0)
+#define flagNoValue(x)			((x & kFxParameterFlag_PRESETNOVALUE) != 0)
 #define flagNoState(x)			((x & kFxParameterFlag_NOSTATE) != 0)
 #define flagNoDebug(x)			((x & kFxParameterFlag_NO_DEBUG) != 0)
 #define flagInDebugMode(x)		((x & kFxParameterFlag_IN_DEBUG_MODE) != 0)
@@ -163,6 +170,7 @@ typedef union FxGripParameterFlags {
 // @todo move these to tags
 #define kParameterFlagString_PRESETNOMETA			@"presetnometa"
 #define kParameterFlagString_PRESETNOTAGS			@"presetnotags"
+#define kParameterFlagString_PRESETNOVALUE			@"presetnovalue"
 #define kParameterFlagString_NO_STATE				@"nostate"
 #define kParameterFlagString_NO_DEBUG				@"nodebug"
 #define kParameterFlagString_IN_DEBUG_MODE			@"indebugmode"

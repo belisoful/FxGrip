@@ -24,14 +24,27 @@
 
 #import "FxGripPluginInfo.h"
 #import "FxGripInstanceTracker.h"
+#import "FxGripParameterUtility.h"
+#import "FxGripMetaManager.h"
+#import "FxGripMeta.h"
+#import "FxGripDebugMenu.h"
+#import "FxGripI18N.h"
+#import "FxGripRegression.h"
+#import "FxGripGoogleAnalytics.h"
+#import "FxGripFxFactory.h"
+#import "FxGripAnalysis.h"
 #import "FxGrip_ARC.h"
+#import <FxPlug/FxOnScreenControl.h>
+#import <objc/runtime.h>
+#import <objc/message.h>
 
 
 @implementation FxTileableEffectBase
 {
 	NSMutableDictionary<NSNumber*, id<FxParameter>> *__parameters;
 	NSDictionary<NSNumber*, NSDictionary*> *__configParameters;
-	id _notifierObservers[5];
+	NSArray<NSNumber*> *__configParameterOrder;	// creation order; drives host add order
+	id _notifierObservers[7];
 }
 
 //effect properties
@@ -106,26 +119,36 @@
 		// We don't use normal object selector for observer because subclasses
 		//	 should have full management over that.
 		// Thus we use a block to notify the method indirectly.
-		
-		
-		
+		//
+		// The blocks capture self weakly: the center retains the block, so a strong
+		// capture would keep the effect alive for the process lifetime and dealloc
+		// (which removes these observers) could never run. A nil weakSelf after
+		// teardown makes each block a no-op.
+		__weak typeof(self) weakSelf = self;
+
 		_notifierObservers[0] = [self.notifier addObserverForName:FxNotifyAPI_ParameterAddPreName object:self priority:-18 queue:nil usingBlock:^(NSNotification *note) {
 			// Add initial parameter configuration information
 			// like gradient sample size and type
-			[self notifyParameterAddPre:note];
+			[weakSelf notifyParameterAddPre:note];
 		}];
 		_notifierObservers[1] = [self.notifier addObserverForName:FxNotifyAPI_ParameterAddName object:self priority:-18 queue:nil usingBlock:^(NSNotification *note) {
-			[self notifyParameterAdd:note];
+			[weakSelf notifyParameterAdd:note];
 		}];
-		
+
 		_notifierObservers[2] = [self.notifier addObserverForName:FxTileableEffectAddedToDocumentName object:self priority:-17 queue:nil usingBlock:^(NSNotification *note) {
-			[self notifyParameterLoad:note];
+			[weakSelf notifyParameterLoad:note];
 		}];
 		_notifierObservers[3] = [self.notifier addObserverForName:FxTileableEffectFlushName object:self priority:-14 queue:nil usingBlock:^(NSNotification *note) {
-			[self notifyParametersFlush:note];
+			[weakSelf notifyParametersFlush:note];
+		}];
+		_notifierObservers[5] = [self.notifier addObserverForName:FxTileableEffectParameterPolicyName object:self priority:-18 queue:nil usingBlock:^(NSNotification *note) {
+			[weakSelf notifyParameterPolicy:note];
+		}];
+		_notifierObservers[6] = [self.notifier addObserverForName:FxTileableEffectAddGroupParametersName object:self priority:-18 queue:nil usingBlock:^(NSNotification *note) {
+			[weakSelf notifyAddGroupParameters:note];
 		}];
 		_notifierObservers[4] = [self.notifier addObserverForName:FxNotifyAPI_ParameterRemoveName object:self priority:-18 queue:nil usingBlock:^(NSNotification *note) {
-			[self notifyParameterRemove:note];
+			[weakSelf notifyParameterRemove:note];
 		}];
 		
 		//Initialize extensions
@@ -138,13 +161,15 @@
 
 - (void)dealloc
 {
-	if (_addedToDocument) {
-		[self.notifier postNotificationName:FxTileableEffectRemovedFromDocumentName object:self reverse:YES];
-		_addedToDocument = NO;
-	}
-	[self.notifier postNotificationName:FxTileableEffectUnloadName object:self reverse:YES];
-	
-	for(id<FxExtension> extension in _extensions) {
+	// Teardown does NOT post RemovedFromDocument/Unload here: the notification retains
+	// its object, and an autoreleased notification carrying a mid-dealloc self is a
+	// resurrection over-release when the pool drains. The posts also matched no
+	// observer — the center's object filter is weak and reads nil during dealloc.
+	// Extensions that hold effect-keyed state deregister in their own dealloc instead
+	// (see FxGripInstanceTracker), which is bounded by this effect's lifetime.
+	_addedToDocument = NO;
+
+	for(id<FxExtension> extension in _extensions.allValues) {
 		[self.notifier removeObserver:extension];
 	}
 	
@@ -156,6 +181,7 @@
 	NARC_RELEASE(_parameters);
 	NARC_RELEASE(_extensions);
 	NARC_RELEASE(__configParameters);
+	NARC_RELEASE(__configParameterOrder);
 	NARC_RELEASE(__typeToClassMap);
 	
 	SUPER_DEALLOC();
@@ -164,6 +190,11 @@
 - (NSPriorityNotificationCenter *)notifier
 {
 	return [NSPriorityNotificationCenter defaultCenter];
+}
+
+- (nullable FxTileableEffectBase *)effectBase
+{
+	return self;
 }
 
 
@@ -185,32 +216,49 @@
 		id<FxExtension> tracker = self.newFxInstanceTracker;
 		[extensions addObject:tracker];
 	}
-	/*
-	if (self.hasDebugMenu) {
-		id<FxExtension> tracker = self.newFxDebugMenu;
-		[extensions addObject:tracker];
+
+	if (self.pluginProperties.pluginManageParameterData) {
+		[extensions addObject:self.newParameterDataExtension];
 	}
-	 if (self.isInternationalized) {
-		 id<FxExtension> tracker = self.newFxI18N;
-		 [extensions addObject:tracker];
-	 }
-	 #ifdef DEBUG
-	 if (self.isRegression) {
-		 id<FxExtension> tracker = self.newFxRegression;
-		 [extensions addObject:tracker];
-	 }
-	 #endif
-	 */
+
+	if (self.pluginProperties.pluginManageMeta) {
+		[extensions addObject:self.newMetaExtension];
+	}
+
+	// An effect that declares FxAnalyzer conformance gets per-frame analysis storage.
+	if ([self conformsToProtocol:@protocol(FxAnalyzer)]) {
+		[extensions addObject:self.newAnalysisExtension];
+	}
+
+	// The following extensions are opt-in through plugin properties (default off), matching
+	// the gates above. They stay inert for a plugin that does not request them.
+	if (self.hasDebugMenu) {
+		[extensions addObject:self.newDebugMenuExtension];
+	}
+	if (self.isInternationalized) {
+		[extensions addObject:self.newI18NExtension];
+	}
+	if (self.isGoogleAnalyticsInstalled) {
+		[extensions addObject:self.newGoogleAnalyticsExtension];
+	}
+	if (self.pluginProperties.pluginFxFactory) {
+		[extensions addObject:self.newFxFactoryExtension];
+	}
+#ifdef DEBUG
+	if (self.isRegression) {
+		[extensions addObject:self.newRegressionExtension];
+	}
+#endif
 	return extensions;
 }
 
 - (NSMutableArray<NSDictionary *> *)parametersConfiguration
 {
-	NSMutableArray<NSDictionary *> *parameters = NSMutableArray.new;
-	
-	//
-	
-	return parameters;
+	NSArray<NSDictionary *> *declared = self.pluginProperties.pluginParameters;
+	if (declared != nil) {
+		return [declared mutableCopy];
+	}
+	return NSMutableArray.new;
 }
 
 
@@ -223,7 +271,9 @@
 		return NO;
 	}
 	
-	for (NSDictionary* parameter in __configParameters) {
+	NSArray<NSNumber*> *orderedPids = __configParameterOrder ?: __configParameters.allKeys;
+	for (NSNumber *pidKey in orderedPids) {
+		NSDictionary *parameter = __configParameters[pidKey];
 		FxParameterId pid = parameter.parameterID;
 		FxParameterType ptype = parameter.parameterType;
 		if (parameter.parameterParentID != groupID || __parameters[@(pid)]) {
@@ -312,7 +362,7 @@
 	if (properties == nil) {
 		//No reference for properties
 		if (error != nil) {
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxError_InvalidParameter
 									 userInfo:@{ NSLocalizedFailureReasonErrorKey :
 													 @"properties pointer is nil" }];
@@ -445,6 +495,9 @@
 	NSMutableDictionary *userInfo = @{FxTileableEffectParametersKey: parameters}.mutableCopy;
 	[self.notifier postNotificationName:FxTileableEffectAddParametersName object:self userInfo:userInfo postBlock:^(NSNotification * _Nonnull notification) {
 		[FxGripParameterUtility flattenDictionaryParameters:notification.userInfo.fxEffectParameters];
+		// Runs on the flattened list so extension-added parameters participate.
+		[FxGripParameterUtility applyTargetPresetDefaults:notification.userInfo.fxEffectParameters
+											pluginPresets:self.pluginProperties.pluginPresets];
 	}];
 	
 	if ((*error = userInfo.fxError) && ![*error isKindOfClass:NSError.class]) {
@@ -452,7 +505,18 @@
 	}
 	
 	parameters = userInfo.fxEffectParameters;
-	__configParameters = parameters.copy;
+
+	NSMutableDictionary<NSNumber*, NSDictionary*> *configParameters = NSMutableDictionary.new;
+	NSMutableArray<NSNumber*> *configOrder = NSMutableArray.new;
+	for (NSDictionary *parameter in parameters) {
+		NSNumber *pid = @(parameter.parameterID);
+		if (!configParameters[pid]) {
+			[configOrder addObject:pid];
+		}
+		configParameters[pid] = parameter;
+	}
+	__configParameters = configParameters.copy;
+	__configParameterOrder = configOrder.copy;
 	
 	[self addParametersWithGroupID:kFxParameterId_TopLevelGroup error:error];
 	
@@ -519,12 +583,26 @@
 // @optional
 - (Class)classForCustomParameterID:(UInt32)parameterID
 {
+	if (parameterID == kFxParameterId_InstanceMeta) {
+		return FxGripMetaManager.class;
+	}
 	return nil;
 }
 
 // @optional
-- (Class)classesForCustomParameterID:(UInt32)parameterID
+- (NSSet<Class>*)classesForCustomParameterID:(UInt32)parameterID
 {
+	if (parameterID == kFxParameterId_InstanceMeta) {
+		NSMutableSet<Class> *classes = [NSMutableSet setWithObject:FxGripMetaManager.class];
+		[classes unionSet:FxGripMetaManager.classesForParameter.set];
+		return classes.copy;
+	}
+	// The parameter class registered for the configured type declares its value classes.
+	NSDictionary *configuration = [self configurationForParameter:parameterID];
+	Class parameterClass = [self parameterClassWithTypeString:configuration[kFxParameterProperty_Type]];
+	if ([parameterClass respondsToSelector:@selector(customValueClasses)]) {
+		return [parameterClass customValueClasses];
+	}
 	return nil;
 }
 
@@ -552,8 +630,141 @@
 	}
 	
 	*error = [self extensionsFlush];
-	
+
 	return *error == NULL;
+}
+
+
+#pragma mark Parameter Clicks
+
+// Trampoline for the synthesized button selectors. The host performs the zero-argument
+// selector registered at parameter creation; the parameter ID is decoded from _cmd.
+static void FxGripParameterClickTrampoline(id self, SEL _cmd)
+{
+	FxParameterId parameterID = 0;
+	if ([FxGripParameterUtility getParameterID:&parameterID fromClickSelector:_cmd]) {
+		[(FxTileableEffectBase*)self parameterClicked:parameterID];
+	}
+}
+
++ (BOOL)resolveInstanceMethod:(SEL)sel
+{
+	FxParameterId parameterID = 0;
+	if ([FxGripParameterUtility getParameterID:&parameterID fromClickSelector:sel]) {
+		class_addMethod(self, sel, (IMP)FxGripParameterClickTrampoline, "v@:");
+		return YES;
+	}
+	return [super resolveInstanceMethod:sel];
+}
+
+- (NSDictionary *_Nullable)configurationForParameter:(FxParameterId)parameterID
+{
+	return __configParameters[@(parameterID)];
+}
+
+/*! Applies the effect's parameter policy to a declared configuration: a font menu without a
+	declared font takes the effect's default, and a color declaring a color space converts to the
+	effect's working gamut. Observed on FxTileableEffectParameterPolicyName. */
+- (void)notifyParameterPolicy:(NSNotification *)notification
+{
+	NSMutableDictionary *config = notification.userInfo.fxParameter;
+	if (![config isKindOfClass:NSMutableDictionary.class]) {
+		return;
+	}
+	FxParameterType type = config.parameterType;
+
+	if (type == FxParameterType_FontMenu) {
+		NSString *font = config.parameterDefaultValue;
+		if (![font isKindOfClass:NSString.class] || font.length == 0
+			|| [font isEqualToString:kFxParameterType_FontNameDefault]) {
+			config[kFxParameterProperty_Default] = self.defaultFontName;
+		}
+		return;
+	}
+
+	if (type == FxParameterType_RGBA || type == FxParameterType_RGB) {
+		NSMutableDictionary *colors = config[kFxParameterProperty_Default];
+		if (![colors isKindOfClass:NSMutableDictionary.class]) {
+			return;
+		}
+		NSNumber *space = colors.parameterColorSpace;
+		if (space == nil) {
+			return;
+		}
+		int convertGamma = 0;
+		if (space.intValue == 1 && self.isLinearColorParameters) {
+			convertGamma = -1;
+		} else if (space.intValue == 0 && self.isGammaColorParameters) {
+			convertGamma = 1;
+		}
+		if (convertGamma == 0) {
+			return;
+		}
+		const double gamma = 2.2;
+		double exponent = convertGamma > 0 ? gamma : 1.0 / gamma;
+		for (NSString *key in @[kFxParameterProperty_Red, kFxParameterProperty_Green, kFxParameterProperty_Blue]) {
+			NSNumber *component = colors[key];
+			if ([component isKindOfClass:NSNumber.class]) {
+				colors[key] = @(pow(component.doubleValue, exponent));
+			}
+		}
+	}
+}
+
+/*! Adds a group's configured children when a group parameter announces its subgroup. Observed on
+	FxTileableEffectAddGroupParametersName. */
+- (void)notifyAddGroupParameters:(NSNotification *)notification
+{
+	NSNumber *groupID = notification.userInfo[FxTileableEffectGroupIDKey];
+	if (![groupID isKindOfClass:NSNumber.class]) {
+		return;
+	}
+	NSError *error = nil;
+	if (![self addParametersWithGroupID:groupID.unsignedIntValue error:&error] && error != nil) {
+		((NSMutableDictionary *)notification.userInfo).fxError = error;
+	}
+}
+
+- (BOOL)parameterClicked:(FxParameterId)parameterID
+{
+	// OSC plug-ins must not bracket with startAction/endAction; the host already expects
+	// parameter changes.
+	id<FxCustomParameterActionAPI_v4> actionAPI = nil;
+	if (![self conformsToProtocol:@protocol(FxOnScreenControl_v4)]) {
+		actionAPI = self.apiManager.customParameterActionAPIv4;
+		[actionAPI startAction:self];
+	}
+
+	NSMutableDictionary *userInfo = @{FxTileableEffectParameterClickedIDKey: @(parameterID)}.mutableCopy;
+	[self.notifier postNotificationName:FxTileableEffectParameterClickedName object:self userInfo:userInfo];
+
+	NSError *error = userInfo.fxError;
+	if (error && ![error isKindOfClass:NSError.class]) {
+		NSLog(@"%s Error: Error returned from notification is not NSError class but %@.", __func__, error.className);
+	} else if (error) {
+		NSLog(@"%s Error: Error returned from Parameter Clicked Notification %@", __func__, error);
+	}
+
+	// The configuration's "selector" names the subclass hook; the method is optional. A
+	// strict-form synthesized name never dispatches here (it would re-enter the trampoline).
+	NSString *declaredName = [self configurationForParameter:parameterID].parameterSelector;
+	SEL declared = declaredName ? NSSelectorFromString(declaredName) : NULL;
+	FxParameterId declaredPid = 0;
+	if (declared && [FxGripParameterUtility getParameterID:&declaredPid fromClickSelector:declared]) {
+		declared = NULL;
+	}
+
+	if (declared && [self respondsToSelector:declared]) {
+		((void (*)(id, SEL))objc_msgSend)(self, declared);
+	} else {
+		id<FxParameter> parameter = __parameters[@(parameterID)];
+		if ([parameter respondsToSelector:@selector(defaultParameterAction)]) {
+			[(id)parameter defaultParameterAction];
+		}
+	}
+
+	[actionAPI endAction:self];
+	return error == nil;
 }
 
 //---------------------------------------------------------
@@ -628,46 +839,49 @@
 	{
 		if (error != nil)
 		{
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxError_ThirdPartyDeveloperStart + 1
 									 userInfo:@{ NSLocalizedDescriptionKey : [NSString stringWithFormat:@"Invalid pluginState in %s", __func__] }];
 		}
 		return NO;
 	}
 	
-	// @todo if a generator, skip out?
-	
+	NSKeyedUnarchiver *state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
+																		 error:error]);
+	if (*error || !state) {
+		return NO;
+	}
 	if ([self conformsToProtocol:@protocol(FxTileableEffectCoderState)]) {
-		
-		NSKeyedUnarchiver *state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
-																			 error:error]);
-		if (*error || !state) {
-			return NO;
-		}
 		state.renderTime = renderTime;
-		
-		NSMutableArray *mutableInputImageRequests = NARC_AUTORELEASE([NSMutableArray.alloc initWithCapacity:5]);
+	}
+
+	// The requests reach the host only when the subclass schedules; leaving the out
+	// parameter untouched keeps the host's default input delivery.
+	BOOL scheduled = NO;
+	NSMutableArray *mutableInputImageRequests = NARC_AUTORELEASE([NSMutableArray.alloc initWithCapacity:5]);
+	if ([self respondsToSelector:@selector(scheduleInputs:pluginCoder:atTime:error:)]) {
 		if (![self scheduleInputs:&mutableInputImageRequests
-						withCoder:state
+					  pluginCoder:state
 						   atTime:renderTime
 							error:error]) {
 			return NO;
 		}
-		
-		NSMutableDictionary *userInfo = @{FxTileableEffectPluginStateCoderKey: state}.mutableCopy;
-		[self.notifier postNotificationName:FxTileableEffectScheduleInputsName object:self userInfo:userInfo];
-		
-		if ((*error = userInfo.fxError) && ![*error isKindOfClass:NSError.class]) {
-			NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
-			return NO;
-		} else if (*error) {
-			NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
-			return NO;
-		}
-		
-		if (mutableInputImageRequests) {
-			*inputImageRequests = [mutableInputImageRequests copy];
-		}
+		scheduled = YES;
+	}
+
+	NSMutableDictionary *userInfo = @{FxTileableEffectPluginStateCoderKey: state}.mutableCopy;
+	[self.notifier postNotificationName:FxTileableEffectScheduleInputsName object:self userInfo:userInfo];
+
+	if ((*error = userInfo.fxError) && ![*error isKindOfClass:NSError.class]) {
+		NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
+		return NO;
+	} else if (*error) {
+		NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
+		return NO;
+	}
+
+	if (scheduled && mutableInputImageRequests) {
+		*inputImageRequests = [mutableInputImageRequests copy];
 	}
 	return YES;
 }
@@ -684,6 +898,41 @@
 //	@required
 //---------------------------------------------------------
 
+/*! The tile's bounds converted from pixel space to image space. */
+- (FxRect)fxImageSpaceBoundsOfTile:(FxImageTile *)tile
+{
+	FxRect pixelBounds = tile.imagePixelBounds;
+	FxPoint2D ll = { pixelBounds.left, pixelBounds.bottom };
+	FxPoint2D ur = { pixelBounds.right, pixelBounds.top };
+	ll = [tile.inversePixelTransform transform2DPoint:ll];
+	ur = [tile.inversePixelTransform transform2DPoint:ur];
+	FxRect bounds;
+	bounds.left = ll.x;
+	bounds.bottom = ll.y;
+	bounds.right = ur.x;
+	bounds.top = ur.y;
+	return bounds;
+}
+
+/*! The image-space union of the sources' bounds; the destination's bounds when there
+	are no sources (the generator base overrides with the output bounds directly). */
+- (FxRect)fxImageSpaceUnionOfImages:(NSArray<FxImageTile *> *)sourceImages
+						   fallback:(FxImageTile *)destinationImage
+{
+	if (sourceImages.count == 0) {
+		return [self fxImageSpaceBoundsOfTile:destinationImage];
+	}
+	FxRect unionRect = [self fxImageSpaceBoundsOfTile:sourceImages[0]];
+	for (NSUInteger index = 1; index < sourceImages.count; index++) {
+		FxRect bounds = [self fxImageSpaceBoundsOfTile:sourceImages[index]];
+		unionRect.left = MIN(unionRect.left, bounds.left);
+		unionRect.bottom = MIN(unionRect.bottom, bounds.bottom);
+		unionRect.right = MAX(unionRect.right, bounds.right);
+		unionRect.top = MAX(unionRect.top, bounds.top);
+	}
+	return unionRect;
+}
+
 - (BOOL)destinationImageRect:(FxRect *)destinationImageRect
                 sourceImages:(NSArray<FxImageTile *> *)sourceImages
             destinationImage:(nonnull FxImageTile *)destinationImage
@@ -691,25 +940,35 @@
                       atTime:(CMTime)renderTime
                        error:(NSError * _Nullable *)error
 {
-	/*
-	 if (isGenerator) {  // This is a generator so always use the output image's pixel bounds
-  		*destinationImageRect = destinationImage.imagePixelBounds;
-	 }
-	 */
-	
+	// Assigned before dispatch so the rect is defined even when neither the subclass
+	// nor an observer writes it.
+	*destinationImageRect = [self fxImageSpaceUnionOfImages:sourceImages
+												   fallback:destinationImage];
+
 	NSKeyedUnarchiver *state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
 																		 error:error]);
 	if (*error || !state) {
 		return NO;
 	}
-	
+
 	if ([self conformsToProtocol:@protocol(FxTileableEffectCoderState)]) {
 		state.renderTime = renderTime;
 	}
-	
+
+	if ([self respondsToSelector:@selector(destinationImageRect:sourceImages:destinationImage:pluginCoder:atTime:error:)]) {
+		if (![self destinationImageRect:destinationImageRect
+						   sourceImages:sourceImages
+					   destinationImage:destinationImage
+							pluginCoder:state
+								 atTime:renderTime
+								  error:error]) {
+			return NO;
+		}
+	}
+
 	NSMutableDictionary *userInfo = @{FxTileableEffectPluginStateCoderKey: state}.mutableCopy;
 	[self.notifier postNotificationName:FxTileableEffectDestinationImageRectName object:self userInfo:userInfo];
-	
+
 	if ((*error = userInfo.fxError) && ![*error isKindOfClass:NSError.class]) {
 		NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
 		return NO;
@@ -717,9 +976,9 @@
 		NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
 		return NO;
 	}
-    
+
     return YES;
-    
+
 }
 
 //---------------------------------------------------------
@@ -739,51 +998,63 @@
                 atTime:(CMTime)renderTime
                  error:(NSError * _Nullable *)error
 {
-	/*
-	 if (isGenerator) {  // This is a generator so always use the output image's pixel bounds
-		*sourceTileRect = kFxRect_Empty;
-	 }
-	 */
 	if (!self.changesOutputSize) {
+		// Same-size default: the source tile mirrors the destination tile. The
+		// subclass coder method below still runs so a filter can pad its tiles
+		// (a blur reading beyond the destination) without changing output size.
 		*sourceTileRect = destinationTileRect;
-		return YES;
+	} else {
+		if (sourceImageIndex >= sourceImages.count) {
+			if (error) {
+				*error = [NSError errorWithDomain:FxGripPlugErrorDomain
+											 code:kFxError_InvalidParameter
+										 userInfo:@{ NSLocalizedDescriptionKey :
+											 [NSString stringWithFormat:@"Source image index %lu out of range in %s",
+											  (unsigned long)sourceImageIndex, __func__] }];
+			}
+			return NO;
+		}
+
+		// Round-trip the destination tile through image space into the indexed
+		// source's pixel space.
+		FxPoint2D   ll = { destinationTileRect.left, destinationTileRect.bottom };
+		FxPoint2D   ur = { destinationTileRect.right, destinationTileRect.top };
+
+		ll = [destinationImage.inversePixelTransform transform2DPoint:ll];
+		ur = [destinationImage.inversePixelTransform transform2DPoint:ur];
+
+		ll = [sourceImages [ sourceImageIndex ].pixelTransform transform2DPoint:ll];
+		ur = [sourceImages [ sourceImageIndex ].pixelTransform transform2DPoint:ur];
+
+		sourceTileRect->left = ll.x;
+		sourceTileRect->right = ur.x;
+		sourceTileRect->bottom = ll.y;
+		sourceTileRect->top = ur.y;
 	}
-	
-	if ([self conformsToProtocol:@protocol(FxTileableEffectCoderState)]) {
-		// coder.imageRefs = sourceImages;
-	}
-	
-	// @todo, is this different for screen space drawing?
-	
-	int srcIndex = -1;
-	
-	// Get output pixel space coordinates
-	FxPoint2D   ll = { destinationTileRect.left, destinationTileRect.bottom };
-	FxPoint2D   ur = { destinationTileRect.right, destinationTileRect.top };
-	
-	// Convert to image space
-	ll = [destinationImage.inversePixelTransform transform2DPoint:ll];
-	ur = [destinationImage.inversePixelTransform transform2DPoint:ur];
-	
-	// Convert to input pixel space
-	ll = [sourceImages [ srcIndex ].pixelTransform transform2DPoint:ll];
-	ur = [sourceImages [ srcIndex ].pixelTransform transform2DPoint:ur];
-	
-	sourceTileRect->left = ll.x;
-	sourceTileRect->right = ur.x;
-	sourceTileRect->bottom = ll.y;
-	sourceTileRect->top = ur.y;
-	
+
 	NSKeyedUnarchiver *state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
 																		 error:error]);
 	if (*error || !state) {
 		return NO;
 	}
-	
+
 	if ([self conformsToProtocol:@protocol(FxTileableEffectCoderState)]) {
 		state.renderTime = renderTime;
 	}
-	
+
+	if ([self respondsToSelector:@selector(sourceTileRect:sourceImageIndex:sourceImages:destinationTileRect:destinationImage:pluginCoder:atTime:error:)]) {
+		if (![self sourceTileRect:sourceTileRect
+				 sourceImageIndex:sourceImageIndex
+					 sourceImages:sourceImages
+			  destinationTileRect:destinationTileRect
+				 destinationImage:destinationImage
+					  pluginCoder:state
+						   atTime:renderTime
+							error:error]) {
+			return NO;
+		}
+	}
+
 	NSMutableDictionary *userInfo = @{FxTileableEffectPluginStateCoderKey: state}.mutableCopy;
 	[self.notifier postNotificationName:FxTileableEffectSourceTileRectName object:self userInfo:userInfo];
 	
@@ -820,7 +1091,7 @@
 		NSLog(@"%s Error No pluginState", __func__);
 		NSDictionary*   userInfo    = @{ NSLocalizedDescriptionKey : @"Invalid plugin state received from host" };
 		if (error) {
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxError_InvalidParameter
 									 userInfo:userInfo];
 		}
@@ -832,7 +1103,7 @@
 		NSLog(@"%s Error: No destinationImage ioSurface", __func__);
 		NSDictionary*   userInfo = @{ NSLocalizedDescriptionKey : @"Invalid No Destination ioSurface" };
 		if (error) {
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxError_InvalidParameter
 									 userInfo:userInfo];
 		}
@@ -913,7 +1184,9 @@
 			return nil;
 		index = [dyParam parameterIDAtIndex:(UInt32)index];
 	}
-	return [_parameters objectForKey:@(index)];
+	// The getter rebuilds the cache constructParameter: invalidates; the ivar is nil
+	// after every registration.
+	return [self.parameters objectForKey:@(index)];
 }
 
 
@@ -1036,8 +1309,15 @@
 - (void)notifyParameterRemove:(NSNotification*)notification
 {
 	NSDictionary *parameter = notification.userInfo.fxParameter;
-	FxParameterId pid = parameter.parameterID;
-	[__parameters removeObjectForKey:@(pid)];
+	// The remove payload carries only the id, so the guarded parameterID accessor
+	// (which needs id+type+name together) returns kFxParameterId_None and would remove
+	// nothing — leaving the dead parameter object registered and observing. Read the
+	// raw id key with the top-level fallback, matching the extension handlers.
+	NSNumber *pid = parameter[kFxParameterProperty_Id] ?: notification.userInfo[kFxParameterProperty_Id];
+	if (pid == nil) {
+		return;
+	}
+	[__parameters removeObjectForKey:pid];
 	_parameters = nil;
 }
 

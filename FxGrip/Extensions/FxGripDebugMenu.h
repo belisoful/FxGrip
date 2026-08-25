@@ -1,8 +1,7 @@
 //
-//  FxGripToggle.h
-//  PlugIn
+//  FxGripDebugMenu.h
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -23,6 +22,11 @@ extern NSString*	const _Nonnull FxGripDebugMenuExtensionKey;
 @interface FxTileableEffectBase (DebugMenu)
 
 @property (readonly, nullable) FxGripDebugMenu *debugMenu;
+
+/*! YES when the plugin declares a debug menu or debug activator; the loader gates on this. */
+@property (readonly) BOOL hasDebugMenu;
+
+- (nonnull FxGripDebugMenu *)newDebugMenuExtension;
 
 @end
 

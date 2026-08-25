@@ -24,7 +24,7 @@
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	double defaultValue = 0.0, defaultDelta = NAN;
 	double minimumValue = 0.0, maximumValue = 1.0;
@@ -83,7 +83,7 @@
 {
 	double floatValue = 0;
 	if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&floatValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

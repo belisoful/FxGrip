@@ -17,7 +17,7 @@
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 { /*
 	NSObject<NSSecureCoding, NSCopying, NSObject> *customDefaultValue = nil;
 	NSString *customClassStr = nil;//_data.parameterCustomClass;
@@ -88,7 +88,7 @@
 	}
 	id<NSSecureCoding, NSCopying> customValue = nil;
 	if(![self.effect.apiManager.paramGetAPIv6 getCustomParameterValue:(NSObject<NSSecureCoding, NSCopying>**)&customValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];;
 	}
@@ -98,7 +98,7 @@
 - (void)setValue:(id<NSSecureCoding, NSCopying> _Nullable)value atTime:(CMTime)renderTime
 {
 	if(![self.effect.apiManager.paramSetAPIv6 setCustomParameterValue:(NSObject<NSSecureCoding, NSCopying>*)value toParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];;
 	}

@@ -13,6 +13,13 @@
 
 @implementation FxGripInterpolatingDictionary
 
+// The secure unarchiver requires every concrete class to answer classForCoder itself;
+// an inherited override fails the possibly-altered-archive check.
+- (Class)classForCoder
+{
+	return self.class;
+}
+
 
 #pragma mark -
 #pragma mark Custom Parameter Interpolation
@@ -25,7 +32,8 @@
 	FxGripInterpolatingDictionary*	rightValues = (FxGripInterpolatingDictionary*)rightValue;
 	
 	//Start with all the exempt keys from the left
-	FxGripInterpolatingDictionary*	result = [FxGripInterpolatingDictionary.alloc initWithCapacity:[self count]];
+	// self.class, so a subclass interpolates into its own kind.
+	FxGripInterpolatingDictionary*	result = [[self.class alloc] initWithCapacity:[self count]];
 	
 	// Interpolate the keys
 	for(id key in [self allKeys]) {
@@ -117,7 +125,7 @@
 				result = [NSNumber numberWithShort:(short)(round(((double)[right shortValue] - (double)[left shortValue]) * weight) + [left shortValue]) ];
 				break;
 			case kCFNumberSInt32Type:
-				result = [NSNumber numberWithInt:(SInt32)(round(((double)[right int32Value] - (double)[left int32Value]) * weight) + [left int32Value]) ];
+				result = [NSNumber numberWithInt:(SInt32)(round(((double)[right intValue] - (double)[left intValue]) * weight) + [left intValue]) ];
 				break;
 			case kCFNumberIntType:
 				result = [NSNumber numberWithInt:(int)(round(((double)[right intValue] - (double)[left intValue]) * weight) + [left intValue]) ];
@@ -158,31 +166,7 @@
 	return NARC_AUTORELEASE([left copy]);
 }
 
-- (NSMutableArray*)exemptKeys
-{
-	NSMutableArray *exemptKeys = [self objectForKey:kCustomAPI_ExemptKeysKey];
-	
-	if (!exemptKeys) {
-		exemptKeys = [NSMutableArray arrayWithCapacity:1];
-	}
-	if (exemptKeys && ![exemptKeys isKindOfClass:[NSMutableArray class]]) {
-		if ([exemptKeys isKindOfClass:[NSArray class]]) {
-			exemptKeys = [NSMutableArray arrayWithArray:exemptKeys];
-		} else {
-			id priorValue = exemptKeys;
-			exemptKeys = [NSMutableArray arrayWithCapacity:2];
-			[exemptKeys addObject:priorValue];
-		}
-	}
-	if (![exemptKeys containsObject:kCustomAPI_ExemptKeysKey]) {
-		[exemptKeys addObject:kCustomAPI_ExemptKeysKey];
-	}
-	if (![exemptKeys containsObject:kCustomAPI_LastChangedKey]) {
-		[exemptKeys addObject:kCustomAPI_LastChangedKey];
-	}
-	[self setObject:exemptKeys forKey:kCustomAPI_ExemptKeysKey];
-	return exemptKeys;
-}
+// exemptKeys is inherited from FxGripDictionary.
 
 - (id)customInterpolateValue:(id)left rightValue:(id)right path:(NSString*)path withWeight:(float)weight
 {

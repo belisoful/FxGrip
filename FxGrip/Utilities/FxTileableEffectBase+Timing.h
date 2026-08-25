@@ -11,7 +11,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import <FxTileableEffectBase.h>
+#import "FxTileableEffectBase.h"
 
 #define kWatchInputStartTime	(1 << 0)
 #define kWatchInputDuration		(1 << 1)
@@ -89,6 +89,20 @@ inline long long floorWithNearest(double value);
 
 - (void)timelineTime:(nonnull CMTime*)timelineTime fromInputTime:(CMTime)time;
 - (void)inputTime:(nonnull CMTime*)inputTime fromTimelineTime:(CMTime)time;
+
+/*! The time frames away from time, at the given frame duration. A negative frame count moves
+	earlier. Pure arithmetic; the category methods supply the effect's frame duration. */
+CMTime FxGripTimeByOffsettingFrames(CMTime time, NSInteger frames, CMTime frameDuration);
+
+/*! time moved by frames at the effect's frame duration; a negative count moves earlier. */
+- (CMTime)timeByOffsettingTime:(CMTime)time byFrames:(NSInteger)frames;
+
+/*! A request for the effect's source clip at time, offset by frames, for a temporal effect that
+	samples neighboring frames. Leading filters are excluded. */
+- (nullable FxImageTileRequest *)sourceTileRequestAtTime:(CMTime)time frameOffset:(NSInteger)frames;
+
+/*! sourceTileRequestAtTime:frameOffset: with no offset. */
+- (nullable FxImageTileRequest *)sourceTileRequestAtTime:(CMTime)time;
 
 @end
 

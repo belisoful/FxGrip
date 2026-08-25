@@ -12,9 +12,9 @@
 
 @implementation FxGripMenuParameter
 
--(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect
 {
-	self = [super init];
+	self = [super initWithDictionary:dictionary effect:effect];
 	if(self) {
 		_parameterMenuItems = dictionary.parameterMenuItems;
 	}
@@ -33,7 +33,7 @@
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	NSArray<NSString*> *items = parameter.parameterMenuItems;
 	

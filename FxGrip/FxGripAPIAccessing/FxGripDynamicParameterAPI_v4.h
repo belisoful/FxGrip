@@ -190,6 +190,9 @@
 
 - (NSArray<NSNumber*>*)allParameterIDs;
 
+// fills in the parameterId menu entries; entries come from the notification observers
+- (NSError*)parameter:(FxParameterId)parameterID entries:(NSArray<NSString*>**)entries;
+
 // Parameter Meta
 
 - (SInt32)metaCountFromParameter:(FxParameterId)parameterID;
@@ -198,9 +201,9 @@
 - (NSError*)getMetaKeys:(NSArray **)keys fromParameter:(FxParameterId)parameterID;
 - (NSError*)removeAllMeta:(FxParameterId)parameterID;
 
-- (BOOL)parameter:(FxParameterId)parameterID hasMetaKey:(NSString*)key error:(NSError*)error;
+- (BOOL)parameter:(FxParameterId)parameterID hasMetaKey:(NSString*)key error:(NSError**)error;
 - (BOOL)getMeta:(id<NSSecureCoding, NSCopying> *)value forKey:(NSString*)key fromParameter:(FxParameterId)parameterID;
-- (BOOL)setMeta:(id<NSSecureCoding, NSCopying> *) value forKey:(NSString*)key toParameter:(FxParameterId)parameterID;
+- (BOOL)setMeta:(id<NSSecureCoding, NSCopying>) value forKey:(NSString*)key toParameter:(FxParameterId)parameterID;
 - (BOOL)removeMetaKey:(NSString*)key fromParameter:(FxParameterId)parameterID;
 
 

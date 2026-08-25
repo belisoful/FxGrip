@@ -24,7 +24,7 @@
 //---------------------------------------------------------
 
 - (nullable instancetype)initWithAPI:(id<FxDynamicParameterAPI_v3> _Nonnull)api
-								effect:(id<FxTileableEffectBase>)effect
+								effect:(id<FxGripEffectHost>)effect
 {
 	self = [super initWithEffect:effect];
 	
@@ -100,8 +100,8 @@
 				 name:(NSString**)parameterName
 {
 	NSError *error = [_api parameter:parameterID name:parameterName];
-	
-	if(!error) {
+
+	if(!error && *parameterName != nil) {
 		NSMutableDictionary *userInfo = @{
 			kFxParameterProperty_Id: @(parameterID),
 			FxNotifyAPI_ParameterKey: @{
@@ -110,7 +110,9 @@
 			}.mutableCopy
 		}.mutableCopy;
 		[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterGetNameName object:self.effect userInfo:userInfo];
-		*parameterName = userInfo.fxParameter.parameterName;
+		// Direct key: the guarded parameterName accessor requires id+type+name, which
+		// this payload does not carry.
+		*parameterName = userInfo.fxParameter[kFxParameterProperty_Name];
 	}
 	
 	return error;
@@ -135,7 +137,7 @@
 	id nObject = self.effect[parameterID];
 	
 	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterSetNamePreName object:nObject userInfo:userInfo];
-	newName = userInfo.fxParameter.parameterName;
+	newName = userInfo.fxParameter[kFxParameterProperty_Name];
 	
 	userInfo.parameterID = parameterID;
 	userInfo.mutableFxParameter.parameterID = parameterID;
@@ -282,9 +284,10 @@
 		return userInfo.fxError;
 	}
 	NSDictionary *param = userInfo.fxParameter = userInfo.mutableFxParameter.copy;
+	// Direct keys: the guarded accessors require id+type+name, which this payload lacks.
 	NSError *error = [_api setPopupMenuParameter:parameterID
-										 entries:param.parameterMenuItems
-									defaultValue:[param.parameterDefaultValue intValue]];
+										 entries:param[kFxParameterProperty_MenuItems]
+									defaultValue:[param[kFxParameterProperty_Default] intValue]];
 	if (error) {
 #if DEBUG
 		NSLog(@"%@", error);

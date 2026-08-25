@@ -1,0 +1,269 @@
+//
+//  FxGripParameterClickTests.m
+//  FxGripTests
+//
+//  Unit tests for the standardized button-click dispatch: the synthesized click
+//  selector encoding, the runtime resolution that installs the trampoline, the
+//  parameter-clicked notification payload, and the default action hook.
+//
+
+#import <XCTest/XCTest.h>
+#import <objc/runtime.h>
+#import "FxGrip/FxGripTypes.h"
+#import "FxGrip/FxGripParameterUtility.h"
+#import "FxGrip/FxTileableEffectBase.h"
+#import "FxGrip/FxTileableEffectBase+Notifications.h"
+#import "FxGrip/FxExtension.h"
+
+// FxGripHelpParameter.h is a public header, but it (and FxGripPushButtonParameter.h)
+// import their superclass with a flat angled include, so neither resolves outside the
+// framework target. The class is reached by name instead.
+
+// The test target links only FxGrip and XCTest. NSPriorityNotificationCenter
+// (BEFoundation) is loaded in-process through FxGrip and is reached by name at
+// runtime to avoid an unlinked symbol.
+static NSNotificationCenter *FxClickTestMakePriorityCenter(void)
+{
+	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
+	return [[cls alloc] init];
+}
+
+#pragma mark - Test doubles
+
+// FxTileableEffectBase's designated initializer registers into the process-wide
+// notification center, so the click notification tests use a stub exposing the
+// two members FxExtensionBase reads.
+@interface FxClickTestStubEffect : NSObject
+@property (nonatomic, assign) BOOL addedToDocument;
+@property (nonatomic, strong) NSNotificationCenter *notifier;
+@end
+
+@implementation FxClickTestStubEffect
+
+- (id)effectBase
+{
+	// The stub plays the full effect; rich reads route back to it, as the old cast did.
+	return self;
+}
+
+@end
+
+// Subclass used only to confirm +resolveInstanceMethod: is inherited.
+@interface FxClickTestEffectSubclass : FxTileableEffectBase
+@end
+
+@implementation FxClickTestEffectSubclass
+@end
+
+@interface FxClickTestClickExtension : FxExtensionBase
+@property (nonatomic, strong) NSDictionary *lastUserInfo;
+@property (nonatomic, assign) BOOL didReceiveClick;
+@end
+
+@implementation FxClickTestClickExtension
+- (void)extParameterClicked:(NSNotification *)notification
+{
+	self.didReceiveClick = YES;
+	self.lastUserInfo = notification.userInfo;
+}
+@end
+
+@interface FxClickTestSilentExtension : FxExtensionBase
+@end
+
+@implementation FxClickTestSilentExtension
+@end
+
+#pragma mark - Tests
+
+@interface FxGripParameterClickTests : XCTestCase
+@end
+
+@implementation FxGripParameterClickTests
+
+#pragma mark Selector encode / decode
+
+- (void)testClickSelectorNameRoundTripsForRepresentativeParameterIDs
+{
+	FxParameterId ids[] = { 0, 1, 42, kFxParameterId_InstanceMeta, UINT32_MAX };
+
+	for (size_t i = 0; i < sizeof(ids) / sizeof(ids[0]); i++) {
+		FxParameterId expected = ids[i];
+		NSString *name = [FxGripParameterUtility clickSelectorNameForParameter:expected];
+		XCTAssertNotNil(name);
+
+		SEL selector = NSSelectorFromString(name);
+		FxParameterId decoded = 0;
+		XCTAssertTrue([FxGripParameterUtility getParameterID:&decoded fromClickSelector:selector],
+					  @"selector %@ must decode", name);
+		XCTAssertEqual(decoded, expected);
+	}
+}
+
+- (void)testClickSelectorNameUsesPrefixAndTakesNoArgument
+{
+	NSArray<NSNumber *> *ids = @[@0u, @1u, @42u, @9995u, @(UINT32_MAX)];
+
+	for (NSNumber *identifier in ids) {
+		NSString *name = [FxGripParameterUtility clickSelectorNameForParameter:identifier.unsignedIntValue];
+		XCTAssertTrue([name hasPrefix:kFxGripClickSelectorPrefix]);
+		// The FxPlug button contract registers a zero-argument selector.
+		XCTAssertEqual([name rangeOfString:@":"].location, (NSUInteger)NSNotFound);
+	}
+}
+
+- (void)testGetParameterIDRejectsMalformedSelectors
+{
+	NSArray<NSString *> *rejected = @[
+		@"clickFxGripParameterId",			// no digits
+		@"clickFxGripParameterId12x",		// trailing junk
+		@"clickFxGripParameterId 12",		// embedded space
+		@"clickMyButton",					// unrelated plugin selector
+		@"clickfxgripparameterid12",		// wrong case
+		@"FxGripParameterId12",				// missing prefix
+		@"clickFxGripParameterId4294967296",// greater than UINT32_MAX
+	];
+
+	for (NSString *name in rejected) {
+		FxParameterId decoded = 12345;
+		XCTAssertFalse([FxGripParameterUtility getParameterID:&decoded fromClickSelector:NSSelectorFromString(name)],
+					   @"%@ must not decode as a click selector", name);
+	}
+}
+
+- (void)testGetParameterIDRejectsNullSelectorAndNullOutPointer
+{
+	FxParameterId decoded = 0;
+	SEL nullSelector = NULL;
+	XCTAssertFalse([FxGripParameterUtility getParameterID:&decoded fromClickSelector:nullSelector]);
+
+	FxParameterId *nullOut = NULL;
+	SEL valid = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:7]);
+	XCTAssertFalse([FxGripParameterUtility getParameterID:nullOut fromClickSelector:valid]);
+}
+
+#pragma mark Runtime resolution
+
+- (void)testSynthesizedClickSelectorResolvesOnEffectBase
+{
+	SEL selector = NSSelectorFromString(@"clickFxGripParameterId777");
+	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:selector]);
+}
+
+- (void)testResolvedClickSelectorInstallsTrampolineMethod
+{
+	SEL selector = NSSelectorFromString(@"clickFxGripParameterId777");
+	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:selector]);
+	XCTAssertTrue(class_getInstanceMethod(FxTileableEffectBase.class, selector) != NULL);
+}
+
+- (void)testNonSynthesizedSelectorsAreNotResolved
+{
+	XCTAssertFalse([FxTileableEffectBase instancesRespondToSelector:NSSelectorFromString(@"clickMyButton")]);
+	XCTAssertFalse([FxTileableEffectBase instancesRespondToSelector:NSSelectorFromString(@"clickFxGripParameterId12x")]);
+}
+
+- (void)testSubclassInheritsClickSelectorResolution
+{
+	SEL selector = NSSelectorFromString(@"clickFxGripParameterId31337");
+	XCTAssertTrue([FxClickTestEffectSubclass instancesRespondToSelector:selector]);
+}
+
+#pragma mark Notification payload contract
+
+- (void)testParameterClickedConstantsAreNonEmptyAndDistinct
+{
+	XCTAssertNotNil(FxTileableEffectParameterClickedName);
+	XCTAssertNotNil(FxTileableEffectParameterClickedIDKey);
+	XCTAssertGreaterThan(FxTileableEffectParameterClickedName.length, (NSUInteger)0);
+	XCTAssertGreaterThan(FxTileableEffectParameterClickedIDKey.length, (NSUInteger)0);
+
+	NSArray<NSString *> *clicked = @[
+		FxTileableEffectParameterClickedName,
+		FxTileableEffectParameterClickedIDKey,
+	];
+	NSArray<NSString *> *changed = @[
+		FxTileableEffectParameterChangedName,
+		FxTileableEffectParameterChangedIDKey,
+		FxTileableEffectParameterChangedAtTimeKey,
+	];
+
+	XCTAssertNotEqualObjects(FxTileableEffectParameterClickedName, FxTileableEffectParameterClickedIDKey);
+	for (NSString *clickConstant in clicked) {
+		XCTAssertFalse([changed containsObject:clickConstant],
+					   @"%@ must be distinct from the parameter-changed constants", clickConstant);
+	}
+}
+
+- (void)testParameterClickedPayloadRoundTripThroughPriorityCenter
+{
+	NSNotificationCenter *center = FxClickTestMakePriorityCenter();
+	id sender = [NSObject.alloc init];
+	NSNumber *paramID = @(4207u);
+
+	__block BOOL received = NO;
+	__block NSNumber *receivedID = nil;
+
+	id token = [center addObserverForName:FxTileableEffectParameterClickedName
+								   object:sender
+									queue:nil
+							   usingBlock:^(NSNotification *note) {
+		received = YES;
+		receivedID = note.userInfo[FxTileableEffectParameterClickedIDKey];
+	}];
+
+	[center postNotificationName:FxTileableEffectParameterClickedName
+						  object:sender
+						userInfo:@{FxTileableEffectParameterClickedIDKey: paramID}];
+
+	XCTAssertTrue(received);
+	XCTAssertEqualObjects(receivedID, paramID);
+	XCTAssertEqual(receivedID.unsignedIntValue, (FxParameterId)4207u);
+
+	[center removeObserver:token];
+}
+
+- (void)testParameterClickedPayloadDeliveredToExtensionObserver
+{
+	FxClickTestStubEffect *effect = [FxClickTestStubEffect.alloc init];
+	effect.notifier = FxClickTestMakePriorityCenter();
+
+	FxClickTestClickExtension *ext = [FxClickTestClickExtension.alloc init];
+	XCTAssertTrue([ext extLoadWithEffect:(id)effect]);
+
+	NSNumber *paramID = @(88u);
+	[effect.notifier postNotificationName:FxTileableEffectParameterClickedName
+								   object:effect
+								 userInfo:@{FxTileableEffectParameterClickedIDKey: paramID}];
+
+	XCTAssertTrue(ext.didReceiveClick);
+	XCTAssertEqualObjects(ext.lastUserInfo[FxTileableEffectParameterClickedIDKey], paramID);
+}
+
+- (void)testParameterClickedNotificationIgnoredByExtensionWithoutHook
+{
+	FxClickTestStubEffect *effect = [FxClickTestStubEffect.alloc init];
+	effect.notifier = FxClickTestMakePriorityCenter();
+
+	FxClickTestSilentExtension *ext = [FxClickTestSilentExtension.alloc init];
+	XCTAssertTrue([ext extLoadWithEffect:(id)effect]);
+
+	XCTAssertNoThrow([effect.notifier postNotificationName:FxTileableEffectParameterClickedName
+													object:effect
+												  userInfo:@{FxTileableEffectParameterClickedIDKey: @(5u)}]);
+}
+
+#pragma mark Default action hook
+
+- (void)testHelpParameterRespondsToDefaultParameterAction
+{
+	Class helpClass = NSClassFromString(@"FxGripHelpParameter");
+	XCTAssertNotNil(helpClass);
+
+	id parameter = [[helpClass alloc] init];
+	XCTAssertNotNil(parameter);
+	// Conformance only; invoking it opens the system help viewer.
+	XCTAssertTrue([parameter respondsToSelector:NSSelectorFromString(@"defaultParameterAction")]);
+}
+
+@end

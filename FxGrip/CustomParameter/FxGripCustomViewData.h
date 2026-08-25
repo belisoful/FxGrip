@@ -12,6 +12,7 @@
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
 #import "FxGripCustomViewDataDelegate.h"
+#import "FxGripEffectHost.h"
 
 @protocol FxTileableEffectBase;
 
@@ -21,7 +22,7 @@
 
 
 @property (assign) NSView*_Nullable parameterView;
-@property (assign) id<FxTileableEffectBase>_Nullable parameterEffect;
+@property (assign) id<FxGripEffectHost>_Nullable parameterEffect;
 
 @end
 

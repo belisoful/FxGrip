@@ -1,8 +1,7 @@
 //
 //  FxGripI18N.m
-//  PlugIn
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -10,6 +9,7 @@
 #import "FxTileableEffectBase.h"
 #import "FxTileableEffectBase+Extensions.h"
 #import "NSDictionary+FxTileableEffect.h"
+#import "FxAPINotifications.h"
 #import "FxGrip_ARC.h"
 #import <BEFoundation/NSArray+BExtension.h>
 
@@ -23,29 +23,44 @@
 		_isLocalizingNames = YES;
 		_isLocalizingValues = YES;
 		_isLocalizingMenus = YES;
-		
+
 		_isDelocalizingNames = YES;
-		
-		NSNumber *value = self.effect.pluginProperties[kProPlugPlugInX_DelocalizeNamesProperty];
-		if (value) {
-			_isDelocalizingNames = [value boolValue];
-		}
-		
-		value = self.effect.pluginProperties[kProPlugPlugInX_DelocalizeValuesProperty];
-		if (value) {
-			_isDelocalizingValues = [value boolValue];
-		} else {
-			_isDelocalizingValues = _isDelocalizingNames;
-		}
-		
-		value = self.effect.pluginProperties[kProPlugPlugInX_DelocalizeMenusProperty];
-		if (value) {
-			_isDelocalizingMenus = [value boolValue];
-		} else {
-			_isDelocalizingMenus = _isDelocalizingValues;
-		}
+		_isDelocalizingValues = YES;
+		_isDelocalizingMenus = YES;
 	}
 	return self;
+}
+
+// The plist properties are read here: the effect is nil until load.
+- (BOOL)extLoadWithEffect:(nonnull id<FxTileableEffectBase>)effect
+{
+	BOOL success = [super extLoadWithEffect:effect];
+	if (!success) {
+		return success;
+	}
+
+	NSDictionary *properties = ((FxTileableEffectBase*)effect).pluginProperties;
+
+	NSNumber *value = properties[kProPlugPlugInX_DelocalizeNamesProperty];
+	if (value) {
+		_isDelocalizingNames = [value boolValue];
+	}
+
+	value = properties[kProPlugPlugInX_DelocalizeValuesProperty];
+	if (value) {
+		_isDelocalizingValues = [value boolValue];
+	} else {
+		_isDelocalizingValues = _isDelocalizingNames;
+	}
+
+	value = properties[kProPlugPlugInX_DelocalizeMenusProperty];
+	if (value) {
+		_isDelocalizingMenus = [value boolValue];
+	} else {
+		_isDelocalizingMenus = _isDelocalizingValues;
+	}
+
+	return success;
 }
 
 
@@ -60,13 +75,18 @@
 
 
 
+// The handlers operate on the nested FxNotifyAPI_ParameterKey dictionary with direct key
+// access: the payloads are thin (no type/name for every key), so the guarded
+// NSDictionary accessors cannot read them.
+
 /*
 	delocalize the parameter names where requested
  */
 - (void)extAPIParameterGetName:(nonnull NSNotification *)notification
 {
-	if (_isDelocalizingNames && notification.userInfo[kFxParameterProperty_Name]) {
-		((NSMutableDictionary*)notification.userInfo)[kFxParameterProperty_Name] = [self delocalize:notification.userInfo[kFxParameterProperty_Name]];
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	if (_isDelocalizingNames && [parameter[kFxParameterProperty_Name] isKindOfClass:NSString.class]) {
+		parameter[kFxParameterProperty_Name] = [self delocalize:parameter[kFxParameterProperty_Name]];
 	}
 }
 
@@ -75,29 +95,37 @@
  */
 - (void)extAPIParameterSetNamePre:(nonnull NSNotification *)notification
 {
-	NSMutableDictionary *userInfo = (NSMutableDictionary*) notification.userInfo;
-	if(_isLocalizingNames && userInfo.parameterName) {
-		((NSMutableDictionary*)userInfo)[kFxParameterProperty_Name] = NSLocalizedString(userInfo.parameterName, userInfo.parameterName);
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	NSString *name = parameter[kFxParameterProperty_Name];
+	if (_isLocalizingNames && [name isKindOfClass:NSString.class]) {
+		parameter[kFxParameterProperty_Name] = [self localize:name];
 	}
 }
 
 
 - (void)extAPIParameterAdd:(nonnull NSNotification *)notification
 {
-	NSMutableDictionary *userInfo = (NSMutableDictionary*) notification.userInfo;
-	if(_isLocalizingNames && userInfo.parameterName) {
-		((NSMutableDictionary*)userInfo)[kFxParameterProperty_Name] = NSLocalizedString(userInfo.parameterName, userInfo.parameterName);
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	if (!parameter) {
+		return;
 	}
-	if (_isLocalizingValues && userInfo.parameterType == FxParameterType_String) {
-		((NSMutableDictionary*)userInfo)[kFxParameterProperty_Default] = NSLocalizedString(userInfo.parameterDefaultValue, userInfo.parameterDefaultValue);
+	FxParameterType type = ((NSNumber*)parameter[kFxParameterProperty_Type]).intValue;
+
+	NSString *name = parameter[kFxParameterProperty_Name];
+	if (_isLocalizingNames && [name isKindOfClass:NSString.class]) {
+		parameter[kFxParameterProperty_Name] = [self localize:name];
 	}
-	if (_isLocalizingMenus && userInfo.parameterType == FxParameterType_Menu) {
-		NSArray<NSString*> *entries = userInfo.parameterMenuItems;
+	NSString *defaultValue = parameter[kFxParameterProperty_Default];
+	if (_isLocalizingValues && type == FxParameterType_String && [defaultValue isKindOfClass:NSString.class]) {
+		parameter[kFxParameterProperty_Default] = [self localize:defaultValue];
+	}
+	NSArray<NSString*> *entries = parameter[kFxParameterProperty_MenuItems];
+	if (_isLocalizingMenus && type == FxParameterType_Menu && [entries isKindOfClass:NSArray.class]) {
 		entries = [entries mapUsingBlock:^BOOL(id  _Nullable __autoreleasing * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-			*obj = NSLocalizedString(*obj, *obj);
+			*obj = [self localize:*obj];
 			return YES;
 		}];
-		((NSMutableDictionary*)userInfo)[kFxParameterProperty_MenuItems] = entries;
+		parameter[kFxParameterProperty_MenuItems] = entries;
 	}
 }
 
@@ -108,9 +136,9 @@
  */
 - (void)extAPIParameterGetStringValue:(nonnull NSNotification *)notification
 {
-	NSMutableDictionary *userInfo = (NSMutableDictionary*) notification.userInfo;
-	if (_isDelocalizingValues && userInfo.parameterDefaultValue) {
-		((NSMutableDictionary*)notification.userInfo)[kFxParameterProperty_Default] = [self delocalize:userInfo.parameterDefaultValue];
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	if (_isDelocalizingValues && [parameter[kFxParameterProperty_Default] isKindOfClass:NSString.class]) {
+		parameter[kFxParameterProperty_Default] = [self delocalize:parameter[kFxParameterProperty_Default]];
 	}
 }
 
@@ -119,9 +147,10 @@
  */
 - (void)extAPIParameterSetStringValuePre:(nonnull NSNotification *)notification
 {
-	NSMutableDictionary *userInfo = (NSMutableDictionary*) notification.userInfo;
-	if (_isLocalizingValues && userInfo.parameterType == FxParameterType_String) {
-		((NSMutableDictionary*)userInfo)[kFxParameterProperty_Default] = NSLocalizedString(userInfo.parameterDefaultValue, userInfo.parameterDefaultValue);
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	NSString *defaultValue = parameter[kFxParameterProperty_Default];
+	if (_isLocalizingValues && [defaultValue isKindOfClass:NSString.class]) {
+		parameter[kFxParameterProperty_Default] = [self localize:defaultValue];
 	}
 }
 
@@ -132,14 +161,14 @@
  */
 - (void)extAPIParameterSetMenuPre:(nonnull NSNotification *)notification
 {
-	if (_isLocalizingMenus) {
-		NSMutableDictionary *userInfo = (NSMutableDictionary*) notification.userInfo;
-		NSArray<NSString*> *entries = userInfo.parameterMenuItems;
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	NSArray<NSString*> *entries = parameter[kFxParameterProperty_MenuItems];
+	if (_isLocalizingMenus && [entries isKindOfClass:NSArray.class]) {
 		entries = [entries mapUsingBlock:^BOOL(id *obj, NSUInteger idx, BOOL *stop) {
-			*obj = NSLocalizedString(*obj, *obj);
+			*obj = [self localize:*obj];
 			return YES;
 		}];
-		((NSMutableDictionary*)userInfo)[kFxParameterProperty_MenuItems] = entries;
+		parameter[kFxParameterProperty_MenuItems] = entries;
 	}
 }
 
@@ -148,14 +177,14 @@
  */
 - (void)extAPIParameterGetMenu:(nonnull NSNotification *)notification
 {
-	if (_isDelocalizingMenus) {
-		NSMutableDictionary *userInfo = (NSMutableDictionary*) notification.userInfo;
-		NSArray<NSString*> *entries = userInfo.parameterMenuItems;
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	NSArray<NSString*> *entries = parameter[kFxParameterProperty_MenuItems];
+	if (_isDelocalizingMenus && [entries isKindOfClass:NSArray.class]) {
 		entries = [entries mapUsingBlock:^BOOL(id *obj, NSUInteger idx, BOOL *stop) {
 			*obj = [self delocalize:*obj];
 			return YES;
 		}];
-		((NSMutableDictionary*)userInfo)[kFxParameterProperty_MenuItems] = entries;
+		parameter[kFxParameterProperty_MenuItems] = entries;
 	}
 }
 
@@ -167,34 +196,63 @@
 		return;
 	}
 	[self.effect.apiManager.dynamicParamAPIv3_Raw parameter:parameterID name:parameterName];
-	
-	*parameterName = [self delocalize:*parameterName];
+
+	if (_isDelocalizingNames) {
+		*parameterName = [self delocalize:*parameterName];
+	}
 }
 
 
 
 
+- (nonnull NSBundle*)localizationBundle
+{
+	NSBundle *bundle = self.effect ? [NSBundle bundleForClass:[(NSObject*)self.effect class]] : nil;
+	return bundle ?: NSBundle.mainBundle;
+}
+
+- (nonnull NSDictionary<NSString*, NSString*>*)localizationTable
+{
+	// Cached in localizeDictionary; a plugin's strings do not change at run time. A subclass
+	// that overrides this bypasses the cache and supplies its own table.
+	if (localizeDictionary == nil) {
+		NSURL *tableURL = [self.localizationBundle URLForResource:@"Localizable" withExtension:@"strings"];
+		NSDictionary *table = tableURL ? [NSDictionary dictionaryWithContentsOfURL:tableURL] : nil;
+		localizeDictionary = [table isKindOfClass:NSDictionary.class] ? [table copy] : @{};
+	}
+	return (NSDictionary<NSString*, NSString*>*)localizeDictionary;
+}
+
+- (nonnull NSString*)localize:(nonnull NSString*)key
+{
+	if (![key isKindOfClass:NSString.class]) {
+		return key;
+	}
+	id value = self.localizationTable[key];
+	return [value isKindOfClass:NSString.class] ? value : key;
+}
+
+// Delocalization inverts the same table the forward path localizes through, so a round-trip
+// closes: the map is keyed by the localized value and returns the original key.
 - (nullable NSString*)delocalize:(nullable NSString*)string
 {
-	if (!string) {
+	if (![string isKindOfClass:NSString.class]) {
 		return string;
 	}
-	
-	NSBundle *mainBundle = [NSBundle mainBundle];
-	if (!mainBundle) {
-		return string;
-	}
-	NSDictionary<NSString *,id> *localized = [mainBundle localizedInfoDictionary];
-	if (!localized) {
-		return string;
-	}
-	if (localizeDictionary != localized) {
-		localizeDictionary = localized;
-		reverseLocalizeDictionary = [NSDictionary dictionaryWithObjects:localized.allValues forKeys:localized.allKeys];
+	NSDictionary<NSString*, NSString*> *table = self.localizationTable;
+	if (reverseLocalizeDictionary == nil) {
+		NSMutableDictionary<NSString *,NSString *> *reverse = [NSMutableDictionary dictionaryWithCapacity:table.count];
+		[table enumerateKeysAndObjectsUsingBlock:^(NSString *key, id value, BOOL *stop) {
+			if ([value isKindOfClass:NSString.class]) {
+				reverse[(NSString *)value] = key;
+			}
+		}];
+		reverseLocalizeDictionary = reverse;
 	}
 	id element = reverseLocalizeDictionary[string];
-	if (element)
+	if ([element isKindOfClass:NSString.class]) {
 		return element;
+	}
 	return string;
 }
 

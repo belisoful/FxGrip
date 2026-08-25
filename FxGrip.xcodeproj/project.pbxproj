@@ -66,7 +66,6 @@
 		CE5573F32D1B715000A2B063 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		CE5573F52D1B715000A2B063 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		CE5573F72D1B715000A2B063 /* PluginManager.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PluginManager.framework; path = /Library/Developer/Frameworks/PluginManager.framework; sourceTree = "<absolute>"; };
-		CE5579AA2D1D69E000A2B063 /* Personal Notes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Personal Notes.md"; sourceTree = "<group>"; };
 		CE5D79DA2D2E639300C8515A /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
 		CE5D79F52D2E639300C8515A /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
 		CE5D7A142D2E639300C8515A /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
@@ -95,6 +94,34 @@
 		CE92727C2D33194A0040EB84 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		CEA524C92D221BEF00302F8F /* FxGrip.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FxGrip.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEA524D22D221BEF00302F8F /* FxGripTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FxGripTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEB399D6303BA48200156E47 /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CEB399F3303BA48200156E47 /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CEB39A14303BA48200156E47 /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CEB39A42303BA48200156E47 /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CEB39A63303BA48200156E47 /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CEB39A83303BA48200156E47 /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CEB39AA6303BA48200156E47 /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CEB39ACD303BA48200156E47 /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CEB39AED303BA48200156E47 /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CEB39B0E303BA48200156E47 /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CEB39B2B303BA48200156E47 /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CEB39B4C303BA48200156E47 /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CEB39B7A303BA48200156E47 /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CEB39B9B303BA48200156E47 /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CEB39BBB303BA48200156E47 /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CEB39BDE303BA48200156E47 /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CEB39C05303BA48200156E47 /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CEB39C25303BA48200156E47 /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CEB39C46303BA48200156E47 /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CEB39C63303BA48200156E47 /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CEB39C84303BA48200156E47 /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CEB39CB2303BA48200156E47 /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CEB39CD3303BA48200156E47 /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CEB39CF3303BA48200156E47 /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CEB39D16303BA48200156E47 /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CEB39D3D303BA48200156E47 /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CEB39D5D303BA48200156E47 /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CEB39D83303BA48200156E47 /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
 		CEBBF6042E53F200004E836C /* FxGrip.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FxGrip.xctestplan; sourceTree = "<group>"; };
 		CECDB025300E46520041B23D /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
 		CECDB026300E465C0041B23D /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
@@ -106,9 +133,6 @@
 		CEA524DA2D221BEF00302F8F /* Exceptions for "FxGrip" folder in "FxGrip" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Extensions/FxGripFactory.m,
-				Extensions/FxGripFactoryParameters.m,
-				Extensions/FxGripMeta.m,
 				Extensions/GuruFxExtension.old.h,
 				Extensions/GuruFxExtension.old.m,
 				"Extensions/GuruFxTileableEffect+Extensions.h",
@@ -140,34 +164,70 @@
 				"Utilities/Object Extensions/FxGripPrimeNumbers.m",
 			);
 			publicHeaders = (
+				CustomParameter/FxCustomDataClasses.h,
+				CustomParameter/FxGripCustomCommonDelegate.h,
+				CustomParameter/FxGripCustomViewData.h,
+				CustomParameter/FxGripCustomViewDataDelegate.h,
+				CustomParameter/FxGripDictionary.h,
+				CustomParameter/FxGripFrameData.h,
 				CustomParameter/FxGripInterpolatingDictionary.h,
+				CustomParameter/FxGripMetaManager.h,
+				CustomParameter/FxGripMutableParameter.h,
 				CustomParameter/FxGripOOBParameterAccess.h,
+				CustomParameter/FxGripPointListData.h,
 				Extensions/FxExtension.h,
 				Extensions/FxGripAboutMenu.h,
+				Extensions/FxGripAnalysis.h,
 				Extensions/FxGripDebugMenu.h,
-				Extensions/FxGripFactory.h,
-				Extensions/FxGripFactoryParameters.h,
+				Extensions/FxGripExtensionSystem.h,
 				Extensions/FxGripGoogleAnalytics.h,
 				Extensions/FxGripI18N.h,
 				Extensions/FxGripInstanceTracker.h,
 				Extensions/FxGripMeta.h,
+				Extensions/FxGripMLCache.h,
 				Extensions/FxGripParameterData.h,
 				Extensions/FxGripRegression.h,
+				Extensions/FxGripWindow.h,
+				Extensions/FxParameterExtensions/FxGripCustomExtension.h,
+				Extensions/FxParameterExtensions/FxGripToggleExtension.h,
+				Extensions/FxParameterExtensions/FxParameterExtension.h,
 				FxGrip.h,
 				FxGripAPIAccessing/FxAPINotifications.h,
 				FxGripAPIAccessing/FxGripAPIAccessing.h,
 				FxGripAPIAccessing/FxGripCommonAPI.h,
+				FxGripAPIAccessing/FxGripCustomCreationAPI_v1.h,
 				FxGripAPIAccessing/FxGripDynamicParameterAPI_v3.h,
 				FxGripAPIAccessing/FxGripDynamicParameterAPI_v4.h,
 				FxGripAPIAccessing/FxGripParameterCreationAPI_v5.h,
+				FxGripAPIAccessing/FxGripParameterCreationAPI_v6.h,
 				FxGripAPIAccessing/FxGripParameterGroupingAPI_v1.h,
 				FxGripAPIAccessing/FxGripParameterRetrievalAPI_v6.h,
+				FxGripAPIAccessing/FxGripParameterRetrievalAPI_v7.h,
 				FxGripAPIAccessing/FxGripParameterSettingAPI_v5.h,
 				FxGripAPIAccessing/FxGripParameterSettingAPI_v6.h,
+				FxGripAPIAccessing/FxGripParameterTagsAPI_v1.h,
+				FxGripAPIAccessing/FxGripPreset.h,
+				FxGripAPIAccessing/FxGripPresetsAPI_v1.h,
 				FxGripAPIAccessing/FxGripTimingAPI_v4.h,
 				FxGripAPIAccessing/FxParameterTagsAPI_v1.h,
 				FxGripErrors.h,
 				FxGripTypes.h,
+				Inference/FxGripInferenceBackend.h,
+				Inference/FxGripInferenceBridge.h,
+				Inference/FxGripInferenceRequest.h,
+				Inference/FxGripInferenceResult.h,
+				Inference/FxGripMLImageEffect.h,
+				Inference/FxGripMLImageGenerator.h,
+				Inference/FxGripMLVideoEffect.h,
+				Inference/FxGripMLVideoGenerator.h,
+				Inference/FxGripPassthroughBackend.h,
+				OnScreenControls/FxGripOSCPart.h,
+				OnScreenControls/FxGripOSCShaderTypes.h,
+				OnScreenControls/FxOnScreenControlBase.h,
+				Parameters/Banner/FxGripBanner.h,
+				Parameters/Banner/FxGripBannerParameter.h,
+				Parameters/Capsule/FxGripCapsule.h,
+				Parameters/Capsule/FxGripCapsuleParameter.h,
 				Parameters/Common/FxGripAllParameters.h,
 				Parameters/Common/FxGripAngleParameter.h,
 				Parameters/Common/FxGripColorParameter.h,
@@ -188,17 +248,45 @@
 				Parameters/Common/FxGripRGBParameter.h,
 				Parameters/Common/FxGripStringParameter.h,
 				Parameters/Common/FxGripToggleParameter.h,
+				Parameters/Curve/FxGripCurveData.h,
+				Parameters/Curve/FxGripCurveEditorView.h,
+				Parameters/Curve/FxGripCurveLUT.h,
+				Parameters/CurveSet/FxGripCurveSetData.h,
+				Parameters/CurveSet/FxGripCurveSetEditorView.h,
+				Parameters/Divider/FxGripDividerParameter.h,
 				Parameters/FxGripParameterFlags.h,
 				Parameters/FxParameter.h,
 				Parameters/FxParameterFlags.h,
 				"Parameters/NSView+FxGrip.h",
+				Parameters/Presets/FxGripPresetsParameter.h,
+				Parameters/Progress/FxGripProgressParameter.h,
+				Parameters/Random/FxGripRandom.h,
+				Parameters/Random/FxGripRandomParameter.h,
+				Parameters/Section/FxGripSection.h,
+				Parameters/Section/FxGripSectionParameter.h,
+				Parameters/Status/FxGripStatusParameter.h,
+				Parameters/Switch/FxGripSwitchParameter.h,
+				Parameters/Video/FxGripVideoView.h,
+				Parameters/Video/FxGripVideoViewParameter.h,
+				Parameters/WebView/FxGripWebView.h,
+				Parameters/WebView/FxGripWebViewParameter.h,
+				Utilities/FxGripColorGamut.h,
+				Utilities/FxGripEffectHost.h,
+				Utilities/FxGripEventModifiers.h,
+				Utilities/FxGripImageBuffer.h,
+				Utilities/FxGripImageCompression.h,
 				Utilities/FxGripMTLDeviceCache.h,
 				Utilities/FxGripParameterUtility.h,
+				Utilities/FxGripPluginHost.h,
 				Utilities/FxGripPluginInfo.h,
 				Utilities/FxGripPrincipalDelegate.h,
+				Utilities/FxGripRect.h,
+				Utilities/FxGripURLWhitelist.h,
 				"Utilities/FxMatrix+FxGrip.h",
 				Utilities/FxTileableEffectBase.h,
+				"Utilities/FxTileableEffectBase+Analyze.h",
 				"Utilities/FxTileableEffectBase+ColorGamut.h",
+				"Utilities/FxTileableEffectBase+CustomUI.h",
 				"Utilities/FxTileableEffectBase+Extensions.h",
 				"Utilities/FxTileableEffectBase+Notifications.h",
 				"Utilities/FxTileableEffectBase+OOBParameterAccess.h",
@@ -238,6 +326,16 @@
 			path = FxGripTests;
 			sourceTree = "<group>";
 		};
+		CEB39D98303BA48200156E47 /* Local */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Local;
+			sourceTree = "<group>";
+		};
+		CEB39E7B303D518500156E47 /* agents */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = agents;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -269,12 +367,13 @@
 		CE5573D92D1B715000A2B063 = {
 			isa = PBXGroup;
 			children = (
+				CEB39D98303BA48200156E47 /* Local */,
 				CECDB028300E46800041B23D /* .gitignore */,
+				CECDB027300E466C0041B23D /* LICENSE */,
+				CEB39E7B303D518500156E47 /* agents */,
 				CECDB025300E46520041B23D /* AGENTS.md */,
 				CECDB026300E465C0041B23D /* CLAUDE.md */,
 				CEBBF6042E53F200004E836C /* FxGrip.xctestplan */,
-				CECDB027300E466C0041B23D /* LICENSE */,
-				CE5579AA2D1D69E000A2B063 /* Personal Notes.md */,
 				CEA524CA2D221BEF00302F8F /* FxGrip */,
 				CEA524D62D221BEF00302F8F /* FxGripTests */,
 				CE5573E42D1B715000A2B063 /* Frameworks */,
@@ -478,6 +577,202 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		CEB39D99303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39D9B303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39D9D303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39D9F303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DA1303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DA3303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DA5303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DA7303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DA9303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DAB303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DAD303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DAF303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DB1303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DB3303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DB5303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DB7303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DB9303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DBB303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DBD303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DBF303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DC1303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DC3303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DC5303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DC7303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DC9303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DCB303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DCD303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEB39DCF303BA48200156E47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -570,6 +865,18 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = CEB39DA7303BA48200156E47 /* Products */;
+					ProjectRef = CEB39C46303BA48200156E47 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DB7303BA48200156E47 /* Products */;
+					ProjectRef = CEB399D6303BA48200156E47 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DA1303BA48200156E47 /* Products */;
+					ProjectRef = CEB39B0E303BA48200156E47 /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CE7ABACB2D229149001A7395 /* Products */;
 					ProjectRef = CE7AB9C52D229149001A7395 /* Fx3DBox.xcodeproj */;
 				},
@@ -590,8 +897,24 @@
 					ProjectRef = CE7AB9E02D229149001A7395 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CEB39DAB303BA48200156E47 /* Products */;
+					ProjectRef = CEB39C63303BA48200156E47 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DC9303BA48200156E47 /* Products */;
+					ProjectRef = CEB399F3303BA48200156E47 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DAD303BA48200156E47 /* Products */;
+					ProjectRef = CEB39B2B303BA48200156E47 /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D7AD92D2E639300C8515A /* Products */;
 					ProjectRef = CE5D79F52D2E639300C8515A /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DCB303BA48200156E47 /* Products */;
+					ProjectRef = CEB39C84303BA48200156E47 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CE5D7AD72D2E639300C8515A /* Products */;
@@ -602,8 +925,28 @@
 					ProjectRef = CE7AB9FF2D229149001A7395 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CEB39DB1303BA48200156E47 /* Products */;
+					ProjectRef = CEB39A14303BA48200156E47 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39D9D303BA48200156E47 /* Products */;
+					ProjectRef = CEB39B4C303BA48200156E47 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CE7AB5F72D224DC0001A7395 /* Products */;
 					ProjectRef = CE7AB5F42D224DC0001A7395 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39D99303BA48200156E47 /* Products */;
+					ProjectRef = CEB39CB2303BA48200156E47 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7ADF2D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7A482D2E639300C8515A /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DBB303BA48200156E47 /* Products */;
+					ProjectRef = CEB39A42303BA48200156E47 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CE7AB6C72D224DC1001A7395 /* Products */;
@@ -614,24 +957,44 @@
 					ProjectRef = CE7ABA332D229149001A7395 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
-					ProductGroup = CE5D7ADF2D2E639300C8515A /* Products */;
-					ProjectRef = CE5D7A482D2E639300C8515A /* FxDynamicRegistration.xcodeproj */;
-				},
-				{
-					ProductGroup = CE5D7ADB2D2E639300C8515A /* Products */;
-					ProjectRef = CE5D7A672D2E639300C8515A /* FxGradientCheckerboard.xcodeproj */;
+					ProductGroup = CEB39DCF303BA48200156E47 /* Products */;
+					ProjectRef = CEB39B7A303BA48200156E47 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CE7AB85C2D224DFB001A7395 /* Products */;
 					ProjectRef = CE7AB85A2D224DFB001A7395 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CEB39DC1303BA48200156E47 /* Products */;
+					ProjectRef = CEB39A63303BA48200156E47 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CE7ABACD2D229149001A7395 /* Products */;
 					ProjectRef = CE7ABA522D229149001A7395 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
-					ProductGroup = CE7ABAC72D229149001A7395 /* Products */;
-					ProjectRef = CE7ABA702D229149001A7395 /* FxPictureInPicture.xcodeproj */;
+					ProductGroup = CEB39DBD303BA48200156E47 /* Products */;
+					ProjectRef = CEB39B9B303BA48200156E47 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D7ADB2D2E639300C8515A /* Products */;
+					ProjectRef = CE5D7A672D2E639300C8515A /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DB9303BA48200156E47 /* Products */;
+					ProjectRef = CEB39CD3303BA48200156E47 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39D9B303BA48200156E47 /* Products */;
+					ProjectRef = CEB39A83303BA48200156E47 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DA3303BA48200156E47 /* Products */;
+					ProjectRef = CEB39CF3303BA48200156E47 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DA9303BA48200156E47 /* Products */;
+					ProjectRef = CEB39BBB303BA48200156E47 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CE7AB6E62D224DC1001A7395 /* Products */;
@@ -642,16 +1005,44 @@
 					ProjectRef = CE5D7A852D2E639300C8515A /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE7ABAC72D229149001A7395 /* Products */;
+					ProjectRef = CE7ABA702D229149001A7395 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DA5303BA48200156E47 /* Products */;
+					ProjectRef = CEB39BDE303BA48200156E47 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DBF303BA48200156E47 /* Products */;
+					ProjectRef = CEB39D16303BA48200156E47 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DC3303BA48200156E47 /* Products */;
+					ProjectRef = CEB39AA6303BA48200156E47 /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D7ADD2D2E639300C8515A /* Products */;
 					ProjectRef = CE5D7AAC2D2E639300C8515A /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DB3303BA48200156E47 /* Products */;
+					ProjectRef = CEB39ACD303BA48200156E47 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE7ABAC12D229149001A7395 /* Products */;
+					ProjectRef = CE7ABA972D229149001A7395 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CE7AB70E2D224DC1001A7395 /* Products */;
 					ProjectRef = CE7AB70D2D224DC1001A7395 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
-					ProductGroup = CE7ABAC12D229149001A7395 /* Products */;
-					ProjectRef = CE7ABA972D229149001A7395 /* FxSimpleColorCorrector.xcodeproj */;
+					ProductGroup = CEB39DC5303BA48200156E47 /* Products */;
+					ProjectRef = CEB39D3D303BA48200156E47 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39D9F303BA48200156E47 /* Products */;
+					ProjectRef = CEB39C05303BA48200156E47 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CE7ABAC32D229149001A7395 /* Products */;
@@ -662,8 +1053,24 @@
 					ProjectRef = CE7AB7DE2D224DC1001A7395 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CEB39DCD303BA48200156E47 /* Products */;
+					ProjectRef = CEB39D5D303BA48200156E47 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D7AD32D2E639300C8515A /* Products */;
 					ProjectRef = CE5D7ACA2D2E639300C8515A /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DB5303BA48200156E47 /* Products */;
+					ProjectRef = CEB39C25303BA48200156E47 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DC7303BA48200156E47 /* Products */;
+					ProjectRef = CEB39AED303BA48200156E47 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CEB39DAF303BA48200156E47 /* Products */;
+					ProjectRef = CEB39D83303BA48200156E47 /* FxTimeCodeGenerator.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -890,6 +1297,31 @@
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				OTHER_LDFLAGS = (
+					"-lcompression",
+					"-framework",
+					ImageIO,
+					"-framework",
+					CoreGraphics,
+					"-framework",
+					AVKit,
+					"-framework",
+					AVFoundation,
+					"-framework",
+					CoreImage,
+					"-framework",
+					MetalKit,
+					"-framework",
+					MetalPerformanceShaders,
+					"-framework",
+					CoreML,
+					"-framework",
+					CoreVideo,
+					"-framework",
+					IOSurface,
+					"-weak_framework",
+					FxFactory,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGrip;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -932,6 +1364,31 @@
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				OTHER_LDFLAGS = (
+					"-lcompression",
+					"-framework",
+					ImageIO,
+					"-framework",
+					CoreGraphics,
+					"-framework",
+					AVKit,
+					"-framework",
+					AVFoundation,
+					"-framework",
+					CoreImage,
+					"-framework",
+					MetalKit,
+					"-framework",
+					MetalPerformanceShaders,
+					"-framework",
+					CoreML,
+					"-framework",
+					CoreVideo,
+					"-framework",
+					IOSurface,
+					"-weak_framework",
+					FxFactory,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGrip;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

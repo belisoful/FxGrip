@@ -24,7 +24,7 @@
 }
 
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	double defaultValue = 0.0, minimumValue = 0, maximumValue = 360;
 	NSNumber *value = parameter.parameterDefaultValue;

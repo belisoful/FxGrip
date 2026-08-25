@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  @const         BEWindowDidLoadNotification
  @abstract      A notification posted after the window has loaded, the delegate has been notified, and super has been called.
- @discussion    This supplements the standard NSWindowDelegate methods, allowing for observers to react to the window's load. The `object` of the notification is the `NSWindow` instance that has loaded.
+ @discussion    This supplements the standard NSWindowDelegate methods, allowing for observers to react to the window's load. The `object` of the notification is the `NSWindow` instance that has loaded. It is also re-posted when a previously closed window is shown again (via `-showWindow:`), so observers such as `BEWindowControllerManager` can re-register the controller; the `BEWindowDelegate windowDidLoad:` callback is not repeated on a re-show.
 */
 APPKIT_EXTERN NSNotificationName const BEWindowDidLoadNotification;
 

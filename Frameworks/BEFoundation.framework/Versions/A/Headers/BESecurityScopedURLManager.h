@@ -167,7 +167,8 @@ typedef NS_ENUM(NSUInteger, BESecurityScopedURLBookmarkLifetime) {
  @method        securityScopedURLManager:willResolveContainedURL:withinDirectoryURL:
  @abstract      Called when a URL is resolved because it is contained within a bookmarked directory.
  @discussion    This notification allows clients to track when file URLs are being resolved through directory
-				containment matching rather than direct bookmark lookup. This method is invoked synchronously.
+				containment matching rather than direct bookmark lookup. This method is delivered asynchronously
+				on the main queue, so it arrives after the resolving call has returned.
  @param         manager The manager instance performing the resolution.
  @param         containedURL The file URL being resolved (e.g., a file inside a bookmarked folder).
  @param         directoryURL The resolved URL of the bookmarked directory that contains the file.
@@ -191,8 +192,13 @@ typedef NS_ENUM(NSUInteger, BESecurityScopedURLBookmarkLifetime) {
 				If the delegate locates an alternative URL, it MUST call the completionHandler with the new URL.
 				If the delegate cannot resolve the issue, call the completionHandler with nil.
 				
-				This method is invoked on the main thread. The completionHandler must be called exactly once,
-				either immediately or asynchronously. Failing to call the handler will prevent proper cleanup.
+				This method is invoked on the main thread. The completionHandler must be called exactly once.
+				When the originating call is already running on the main thread the manager cannot wait, so
+				the handler must be called before this method returns; a handler called later arrives after
+				the access attempt has finished and its relocation is discarded (an error is logged).
+				Callers that need to run a sheet or panel before answering should start the access from a
+				background thread, where the manager waits for the handler. Failing to call the handler at
+				all will prevent proper cleanup, and blocks a background caller indefinitely.
  @param         manager The manager instance that encountered the access failure.
  @param         url The original URL that could not be accessed.
  @param         entry The BESecurityScopedURLBookmarkEntry for the resource (may be nil if not in catalog).

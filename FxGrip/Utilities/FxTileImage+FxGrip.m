@@ -6,8 +6,35 @@
 //
 
 #import "FxTileImage+FxGrip.h"
+#import "FxGripRect.h"
 #import <objc/runtime.h>
 #import "FxGrip_ARC.h"
+
+CGRect FxGripImageRectForPixelBounds(FxRect pixelBounds, FxMatrix44 *inverseTransform)
+{
+	if (inverseTransform == nil) {
+		return CGRectZero;
+	}
+	CGPoint corners[4];
+	FxGripCGRectGetCorners(FxGripRectToCGRect(pixelBounds), corners);
+	for (NSUInteger index = 0; index < 4; index++) {
+		corners[index] = [inverseTransform transform2DPoint:corners[index]];
+	}
+	return FxGripCGRectBoundingPoints(corners, 4);
+}
+
+FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *transform)
+{
+	if (transform == nil) {
+		return FxGripRectZero();
+	}
+	CGPoint corners[4];
+	FxGripCGRectGetCorners(imageRect, corners);
+	for (NSUInteger index = 0; index < 4; index++) {
+		corners[index] = [transform transform2DPoint:corners[index]];
+	}
+	return FxGripRectFromCGRect(FxGripCGRectBoundingPoints(corners, 4));
+}
 
 @implementation FxImageTile (FxGrip)
 
@@ -88,6 +115,31 @@
 - (id<MTLTexture>)metalTexture
 {
 	return [self metalTextureForDevice:self.device];
+}
+
+- (CGPoint)imagePointFromPixelPoint:(CGPoint)pixelPoint
+{
+	return [self.inversePixelTransform transform2DPoint:pixelPoint];
+}
+
+- (CGPoint)pixelPointFromImagePoint:(CGPoint)imagePoint
+{
+	return [self.pixelTransform transform2DPoint:imagePoint];
+}
+
+- (CGRect)imageSpaceBounds
+{
+	return FxGripImageRectForPixelBounds(self.imagePixelBounds, self.inversePixelTransform);
+}
+
+- (FxRect)pixelBoundsForImageRect:(CGRect)imageRect
+{
+	return FxGripPixelBoundsForImageRect(imageRect, self.pixelTransform);
+}
+
+- (CGRect)imageRectForPixelBounds:(FxRect)pixelBounds
+{
+	return FxGripImageRectForPixelBounds(pixelBounds, self.inversePixelTransform);
 }
 
 @end

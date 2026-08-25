@@ -9,14 +9,14 @@
 #ifndef FxGripFontMenuParameter_h
 #define FxGripFontMenuParameter_h
 
-#import <FxGripStringParameter.h>
+#import "FxGripStringParameter.h"
 
 
 @interface FxGripFontMenuParameter : FxGripStringParameterBase
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 -(NSString*_Nullable) valueAtTime:(CMTime)renderTime;
 

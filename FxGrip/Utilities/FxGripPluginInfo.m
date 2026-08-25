@@ -254,8 +254,8 @@ static NSCharacterSet*		gSeparatorSet = nil;
 {
 	pluginClassName = pluginClassName.uppercaseString;
 	for(NSDictionary *pluginProperties in self.plugIns) {
-		NSString *pluginClassName = [pluginProperties objectForKey:kProPlugPlugIn_ClassNameProperty];
-		if (pluginClassName && [pluginClassName.lowercaseString isEqualToString:pluginClassName]) {
+		NSString *testPluginClassName = [pluginProperties objectForKey:kProPlugPlugIn_ClassNameProperty];
+		if ([testPluginClassName isKindOfClass:NSString.class] && [testPluginClassName.uppercaseString isEqualToString:pluginClassName]) {
 			return pluginProperties;
 		}
 	}

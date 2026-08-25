@@ -25,7 +25,7 @@
 
 	@property (assign, readonly) id<FxTimingAPI_v4> _Nonnull api;
 
-- (nullable instancetype)initWithAPI:(id<FxTimingAPI_v4> _Nullable)api effect:(nonnull id<FxTileableEffectBase>)effect;
+- (nullable instancetype)initWithAPI:(id<FxTimingAPI_v4> _Nullable)api effect:(nonnull id<FxGripEffectHost>)effect;
 
 - (void)frameDuration:(CMTime*_Nullable)duration;
 - (void)sampleDuration:(CMTime*_Nullable)duration;

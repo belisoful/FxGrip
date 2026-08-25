@@ -102,12 +102,15 @@ typedef UInt32	FxParameterId;
 //Default YES:
 #define kProPlugPlugInX_ManagedMetaProperty		@"manageMeta"
 //Default NO
+#define kProPlugPlugInX_ManagedParameterDataProperty	@"manageParameterData"
 #define kProPlugPlugInX_TrackInstancesProperty	@"trackInstances"
 #define kProPlugPlugInX_InternationalizeProperty	@"internationalize"
 #define kProPlugPlugInX_DelocalizeNamesProperty	@"delocalizenames"
 #define kProPlugPlugInX_DelocalizeValuesProperty	@"delocalizevalues"
 #define kProPlugPlugInX_DelocalizeMenusProperty	@"delocalizemenus"
 #define kProPlugPlugInX_GoogleAnalyticsProperty	@"googleanalytics"
+#define kProPlugPlugInX_RegressionProperty		@"regression"
+#define kProPlugPlugInX_FxFactoryProperty		@"fxFactory"
 
 // FxPlug ProtocolNames
 #define kProPlugPlugIn_ProtocolFxBaseEffect		@"FxBaseEffect"
@@ -142,6 +145,45 @@ typedef UInt32	FxParameterId;
 #define kFxParameterProperty_TargetPresetFlags	@"flags"
 #define kFxParameterProperty_TargetPresetTags	@"tags"
 #define kFxParameterProperty_TargetPresetValues	@"values"
+#define kFxParameterProperty_TargetPresetMeta	@"meta"
+
+// FxGripMetaManager archive keys. The root archive holds exactly two entries: the
+// tag reverse index and the per-parameter record store. Per-parameter records reuse
+// the kFxParameterProperty_* strings for their "tags" and "meta" containers.
+#define kFxMetaProperty_Tags		@"tags"
+#define kFxMetaProperty_Parameters	@"parameters"
+#define kFxMetaProperty_ParamId		kFxParameterProperty_Id
+#define kFxMetaProperty_ParamTags	kFxParameterProperty_Tags
+#define kFxMetaProperty_ParamMeta	kFxParameterProperty_Meta
+
+/*!
+	@typedef	FxGripPresetOptions
+	@abstract	Selects which aspects of a target preset apply.
+	@discussion Introduced in FxGrip 1.0. Replaces the legacy GuruFxPresetOptions with
+				prefixed members and identical values.
+*/
+typedef NS_OPTIONS(NSUInteger, FxGripPresetOptions) {
+	FxGripPresetAll		= NSUIntegerMax,
+	FxGripPresetNames	= 1 << 0,
+	FxGripPresetFlags	= 1 << 1,
+	FxGripPresetTags	= 1 << 2,
+	FxGripPresetValues	= 1 << 3,
+	FxGripPresetMeta	= 1 << 4
+};
+
+/*!
+	@typedef	FxGripPresetSource
+	@abstract	Where a preset definition came from, which determines whether the tag
+				boundary applies.
+	@discussion Introduced in FxGrip 1.0. Definitions that ship with the plugin name
+				parameter IDs that are current by construction, so the boundary adds
+				nothing and is bypassed. A definition loaded from a file may name IDs a
+				later plugin version reassigned, so every section is filtered by the tag.
+*/
+typedef NS_ENUM(NSUInteger, FxGripPresetSource) {
+	FxGripPresetSourcePlugin = 0,	// plist "presets" table or the instance record
+	FxGripPresetSourceFile			// loaded .fxpreset
+};
 #define kFxParameterProperty_Minimum	@"minimum"
 #define kFxParameterProperty_Maximum	@"maximum"
 #define kFxParameterProperty_SliderMinimum	@"slidermin"
@@ -158,6 +200,11 @@ typedef UInt32	FxParameterId;
 // "click*" methods need to use FxGripOOBParameterAccess to create a context within the FxPlug to access parameters and other objects.
 // "menu*" methods are called within an existing FxPlug context and can start using the FxPlug API 
 #define kFxParameterProperty_SelectorPrefix	@"click"
+// Selector name registered with the host for push/help buttons: the prefix followed by
+// the decimal parameter ID (zero-argument, per the FxPlug button contract). The method is
+// not implemented anywhere; FxTileableEffectBase resolves it at runtime, decodes the
+// parameter ID, and dispatches to the standardized -parameterClicked: path.
+#define kFxGripClickSelectorPrefix	@"clickFxGripParameterId"
 #define kFxParameterProperty_ManagePrefix	@"manage"
 #define kFxParameterProperty_X			@"x"
 #define kFxParameterProperty_Y			@"y"
@@ -684,7 +731,7 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 #define kFxAllParameters				-2
 
 
-// the Paramatere ID for None.  all other negative are invalid by the system.
+// the Parameter ID for None.  all other negative are invalid by the system.
 // -1 is invalid except in FxGrip.
 #define kFxParameterId_None					-1
 
@@ -693,6 +740,9 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 #define kFxParameterId_TopLevelGroup		0
 
 
+#define kFxParameterId_MLCache				(9993)
+#define kFxParameterId_AnalysisData			(9994)
+#define kFxParameterId_InstanceMeta			(9995)
 #define kFxParameterId_DebugActivator		(9996)
 #define kFxParameterId_DebugMenu			(9997)
 #define kFxParameterId_ParameterData		(9998)
@@ -747,6 +797,7 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 #define kFxParameterType_Switch		@"switch"
 #define kFxParameterType_Divider	@"divider"
 #define kFxParameterType_WebView	@"webview"
+#define kFxParameterType_VideoView	@"videoview"
 
 
 

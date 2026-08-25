@@ -16,11 +16,12 @@
  *
  * Per-entry disk layout
  * ─────────────────────
- *   Each cache entry produces two sibling files sharing the same base name
- *   (SHA-256 hex digest of the archived key bytes):
+ *   Each cache entry produces two sibling files sharing the same base name.
+ *   The default base name is the SHA-256 hex digest of the archived key bytes;
+ *   fileNameBlock substitutes a caller-computed base name:
  *
- *     <hash>.BE_FILE_CACHE_EXTENSION       – archived cached object only
- *     <hash>.BE_FILE_CACHE_META_EXTENSION  – archived BEFileCacheItem
+ *     <base>.BE_FILE_CACHE_EXTENSION       – archived cached object only
+ *     <base>.BE_FILE_CACHE_META_EXTENSION  – archived BEFileCacheItem
  *                                            (key + cost + retentionCost + dateStored only)
  *
  * Cache directory resolution  (initWithCacheDirectory:)
@@ -44,6 +45,10 @@
  *   After loading, a reconciliation pass cross-checks the directory: a
  *   .cache/.meta pair the index missed (e.g. written just before a crash) is
  *   adopted so it is counted and trimmable; stray lone files are deleted.
+ *   In both recovery paths, a recovered pair whose key is already tracked (a
+ *   fileNameBlock rename interrupted between writing the new pair and deleting
+ *   the old) resolves to the pair with the newer dateStored; the older pair's
+ *   files are deleted and the key is counted once.
  *
  * Disk trimming  (mirrors NSCache's cost-then-count order)
  * ────────────────────────────────────────────────────────
@@ -56,9 +61,10 @@
  *   where age is the time since the entry's last access.  evictionBalance (0…1,
  *   default 0.5) is the dial: 0 = least-recently-used, 1 = value density (evict
  *   large, cheap-to-replace entries first), 0.5 = geometric balance.  retentionCost
- *   defaults to cost, so the value-density term is inert (pure LRU) until a caller
- *   supplies a distinct retentionCost.  Last access updates on every memory or disk
- *   hit and is held in memory, so reads cause no payload I/O.
+ *   defaults to cost, so the value-density term is inert (pure LRU at every
+ *   balance; score ties break least-recently-used first) until a caller supplies
+ *   a distinct retentionCost.  Last access updates on every memory or disk hit
+ *   and is held in memory, so reads cause no payload I/O.
  *
  * Delegate
  * ────────
@@ -98,6 +104,39 @@ NS_ASSUME_NONNULL_BEGIN
 
 /** File extension for cached entry metadata sidecar files (key, cost, date). */
 #define BE_FILE_CACHE_META_EXTENSION (@"meta")
+
+/*!
+ @typedef    BEFileCacheFileNameBlock
+ @abstract   Computes the base file name for a cache entry's on-disk files.
+ @discussion Receives the entry's key and the default base name (the 64-character
+             lowercase SHA-256 hex digest of the archived key bytes).  Returns the
+             base name for the entry's files; the cache appends the
+             @c BE_FILE_CACHE_EXTENSION and @c BE_FILE_CACHE_META_EXTENSION
+             extensions.  The block receives no filesystem paths, so a name
+             cannot leak the cache location.
+
+             Requirements on the returned name:
+             - a single path component: no @c "/", and not @c "." or @c ".."
+             - no embedded NUL characters
+             - at most @c NAME_MAX (255) bytes of file-system representation
+               including the appended extension
+             - unique per key: embed @p hashName (or a prefix of it) to
+               guarantee this
+             - deterministic: return the same name for the same key on every call
+
+             Returning @c nil or a name that violates the size or component
+             rules stores the entry under @p hashName instead.  A name that
+             another entry already uses (compared case-insensitively, so
+             case-insensitive volumes cannot alias two entries onto one file)
+             also falls back to @p hashName.  Names are stored in decomposed
+             Unicode form, the form the file system reports.
+ @param      key       The entry's cache key.
+ @param      hashName  The default base name for @p key (SHA-256 hex digest).
+ @result     The base file name, without extension.
+ @since      1.1
+ */
+typedef NSString * _Nullable (^BEFileCacheFileNameBlock)(
+	id<NSCopying, NSSecureCoding> key, NSString *hashName);
 
 @class BEFileCache;
 
@@ -317,6 +356,31 @@ NS_ASSUME_NONNULL_BEGIN
  @since      1.1
  */
 @property (assign, nonatomic) BOOL excludedFromBackup;
+
+/*!
+ @property   fileNameBlock
+ @abstract   Optional block that names an entry's on-disk files.
+ @discussion When @c nil (the default) an entry's files use the SHA-256 hex
+             digest of the archived key bytes as their base name.  When set, the
+             block computes the base name instead and the cache appends the
+             @c .cache / @c .meta extensions.  See @c BEFileCacheFileNameBlock
+             for the requirements on returned names.
+
+             Entries already on disk keep their recorded file names: lookups and
+             removals resolve paths through the index, never by recomputing
+             names.  Overwriting a key whose stored name differs from the name
+             the block now returns deletes the old file pair, so changing the
+             block between launches leaves no orphaned files.  During that
+             renaming overwrite a concurrent read of the same key can return
+             @c nil once (the old payload is deleted while the read holds its
+             path); the miss is transient, like any cache miss.
+
+             Set the block before the first write and keep it constant for the
+             life of the directory.  The property is atomic; the block may be
+             invoked on any thread and must be safe to call concurrently.
+ @since      1.1
+ */
+@property (copy, nullable) BEFileCacheFileNameBlock fileNameBlock;
 
 /**
  * Designated initialiser.

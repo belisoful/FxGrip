@@ -25,7 +25,7 @@
 	@property (strong, readonly) id<FxDynamicParameterAPI_v4> _Nullable dynamicParamAPIv4;
 
 - (nullable instancetype)initWithAPI:(id<FxParameterRetrievalAPI_v6> _Nonnull)api
-				   dynamicParamAPIv4:(id<FxDynamicParameterAPI_v4>_Nullable)dynamicParamAPIv4 effect:(nonnull id<FxTileableEffectBase>)effect;
+				   dynamicParamAPIv4:(id<FxDynamicParameterAPI_v4>_Nullable)dynamicParamAPIv4 effect:(nonnull id<FxGripEffectHost>)effect;
 
 @end
 

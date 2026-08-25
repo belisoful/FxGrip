@@ -1,8 +1,7 @@
 //
-//  FxGripExtension.m
-//  PlugIn
+//  FxGripInstanceTracker.m
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -10,6 +9,7 @@
 #import "FxTileableEffectBase.h"
 #import "FxTileableEffectBase+Extensions.h"
 #import "FxTileableEffectBase+Timing.h"
+#import "NSDictionary+FxTileableEffect.h"
 #import "FxGripOOBParameterAccess.h"
 #import "FxGrip_ARC.h"
 
@@ -18,6 +18,13 @@ static NSMutableDictionary<NSString*, NSMutableArray<NSValue*>*>    *gEffectInst
 
 
 @implementation FxGripInstanceTracker
+{
+	// Identity captured when the effect is added, so the registry entry can be removed
+	// in dealloc: self.effect is weak and reads nil by then, and the teardown
+	// notification never arrives (the center's object filter is nil mid-dealloc).
+	NSString *_trackedInstanceUUID;
+	void *_trackedInstancePointer;
+}
 
 static dispatch_once_t gInstanceTrackerOnce = 0;
 
@@ -32,16 +39,29 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 	return self;
 }
 
-
--(void) dealloc
+/*! Removes an effect pointer from the registry under its UUID, pruning an emptied
+	bucket. Idempotent, so the dealloc sweep and an explicit removal never conflict. */
+static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 {
+	if (uuid == nil || pointer == NULL) {
+		return;
+	}
 	@synchronized (gEffectInstances) {
-		if (!gEffectInstances.count) {
-			gEffectInstances = nil;
-			gInstanceTrackerOnce = 0;
+		NSMutableArray<NSValue*> *bucket = gEffectInstances[uuid];
+		if (bucket == nil) {
+			return;
+		}
+		[bucket removeObject:[NSValue valueWithPointer:pointer]];
+		if (bucket.count == 0) {
+			[gEffectInstances removeObjectForKey:uuid];
 		}
 	}
-	
+}
+
+- (void)dealloc
+{
+	FxGripInstanceTrackerRemove(_trackedInstanceUUID, _trackedInstancePointer);
+	NARC_RELEASE(_trackedInstanceUUID);
 	SUPER_DEALLOC();
 }
 
@@ -53,17 +73,18 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 //	and would cause circular references in garbage collection.
 - (NSArray<id<FxTileableEffectBase>> *)instances
 {
-	if (!gEffectInstances[self.effect.pluginUUID]) {
+	NSString *uuid = self.effect.pluginUUID;
+	if (uuid == nil) {
 		return @[];
 	}
-	NSMutableArray *instances = [NSMutableArray.alloc initWithCapacity:gEffectInstances[self.effect.pluginUUID].count];
-	
-	for (NSValue* pluginValue in gEffectInstances[self.effect.pluginUUID])
-	{
-		id<FxTileableEffectBase> plugin  = (id<FxTileableEffectBase>)[pluginValue pointerValue];
-		[instances addObject:plugin];
+	NSMutableArray *instances = NSMutableArray.new;
+	@synchronized (gEffectInstances) {
+		for (NSValue* pluginValue in gEffectInstances[uuid])
+		{
+			id<FxTileableEffectBase> plugin  = (id<FxTileableEffectBase>)[pluginValue pointerValue];
+			[instances addObject:plugin];
+		}
 	}
-	
 	return instances.copy;
 }
 
@@ -78,13 +99,19 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 		if (!gEffectInstances[effect.pluginUUID]) {
 			gEffectInstances[effect.pluginUUID] = [NSMutableArray.alloc init];
 		}
-		
+
 		// We don't want to retain the effect, so we make a pointer value out of it.
 		NSValue *instancePtr = [NSValue valueWithPointer:(void*)effect];
 		if (![gEffectInstances[effect.pluginUUID]  containsObject:instancePtr]) {
 			[gEffectInstances[effect.pluginUUID]  addObject:instancePtr];
 		}
 	}
+
+	// Capture identity for the dealloc-time removal (self.effect is weak and the
+	// teardown notification will not arrive).
+	NARC_RELEASE(_trackedInstanceUUID);
+	_trackedInstanceUUID = NARC_RETAIN([effect.pluginUUID copy]);
+	_trackedInstancePointer = (__bridge void*)effect;
 }
 
 // Called in FxTileableEffect::dealloc - instanceRemovedFromDocument
@@ -94,19 +121,9 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 	if (![effect isKindOfClass:FxTileableEffectBase.class]) {
 		return;
 	}
-	@synchronized (gEffectInstances) {
-		if (!gEffectInstances[effect.pluginUUID]) {
-			return;
-		}
-		
-		// We don't want to retain the effect, so we make a pointer value out of it.
-		NSValue *instancePtr = [NSValue valueWithPointer:(void*)effect];
-		if ([gEffectInstances[effect.pluginUUID] containsObject:instancePtr]) {
-			[gEffectInstances[effect.pluginUUID] removeObject:instancePtr];
-		}
-		if (!gEffectInstances[effect.pluginUUID].count) {
-			[gEffectInstances removeObjectForKey:effect.pluginUUID];
-		}
+	FxGripInstanceTrackerRemove(effect.pluginUUID, (__bridge void*)effect);
+	if ((__bridge void*)effect == _trackedInstancePointer) {
+		_trackedInstancePointer = NULL;
 	}
 }
 
@@ -128,7 +145,7 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 			if (plugin != effect)
 			{
 				FxGripOOBParameterAccess *__attribute__((unused)) accessor = [plugin startContext];
-					
+
 				CMTime  pluginTimelineTime  = plugin.effectStartTimeInTimeline;
 				if (CMTimeCompare(timelineEffectTime, pluginTimelineTime) < 0) {
 					if (CMTimeCompare(pluginTimelineTime, nextTimelineTime) < 0) {
@@ -137,8 +154,10 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 				}
 			}
 		}
-		
-		startTime = nextTimelineTime;
+
+		if (CMTimeCompare(nextTimelineTime, kCMTimePositiveInfinity) != 0) {
+			startTime = nextTimelineTime;
+		}
 	}
 	
 	return startTime;
@@ -166,7 +185,9 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 				}
 			}
 		}
-		startTime = prevTimelineTime;
+		if (CMTimeCompare(prevTimelineTime, kCMTimeNegativeInfinity) != 0) {
+			startTime = prevTimelineTime;
+		}
 	}
 	
 	return startTime;
@@ -189,7 +210,7 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 
 - (BOOL)isTrackingInstances
 {
-	return NO;
+	return self.pluginProperties.pluginTrackInstances;
 }
 
 - (FxGripInstanceTracker*_Nullable)instanceTracker
@@ -200,22 +221,26 @@ static dispatch_once_t gInstanceTrackerOnce = 0;
 
 - (nonnull NSArray<id<FxTileableEffectBase>>*)instances
 {
-	return self.instanceTracker.instances;
+	return self.instanceTracker.instances ?: @[];
 }
 
 - (NSUInteger)instanceCount
 {
-	if (!gEffectInstances[self.pluginUUID])
-		return 0;
-	return gEffectInstances[self.pluginUUID].count;
+	@synchronized (gEffectInstances) {
+		return gEffectInstances[self.pluginUUID].count;
+	}
 }
 
 
 - (nullable id<FxTileableEffectBase>)instanceAtIndex:(int)index
 {
-	if (!gEffectInstances[self.pluginUUID])
-		return NULL;
-	return gEffectInstances[self.pluginUUID][index].pointerValue;
+	@synchronized (gEffectInstances) {
+		NSArray<NSValue*> *bucket = gEffectInstances[self.pluginUUID];
+		if (index < 0 || (NSUInteger)index >= bucket.count) {
+			return NULL;
+		}
+		return bucket[index].pointerValue;
+	}
 }
 
 @end

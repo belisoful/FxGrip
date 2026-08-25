@@ -39,6 +39,7 @@
 	@property (assign, getter=isLocked)  BOOL locked;
 
 - (instancetype)init;
+- (instancetype)initWithDictionary:(NSDictionary*)dictionary;
 
 //- (id)customInterpolateValue:(id)left rightValue:(id)right path:(NSString*)path withWeight:(float)weight;
 

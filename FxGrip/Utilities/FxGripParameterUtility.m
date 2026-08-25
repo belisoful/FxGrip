@@ -1,5 +1,5 @@
 //
-//  FxGripParameterConverter.m
+//  FxGripParameterUtility.m
 //  XPC Service
 //
 //  Created by ~ ~ on 2/29/24.
@@ -9,6 +9,8 @@
 #import "FxGripPluginInfo.h"
 #import "NSDictionary+FxTileableEffect.h"
 #import <BEFoundation/NSArray+BExtension.h>
+#import <BEFoundation/NSDictionary+BExtension.h>
+#import <BEFoundation/BEMutable.h>
 
 @implementation FxGripParameterUtility
 
@@ -47,7 +49,8 @@
 		kFxParameterType_Switch: @(FxParameterType_Switch),
 		kFxParameterType_Divider: @(FxParameterType_Divider),
 		kFxParameterType_WebView: @(FxParameterType_WebView),
-		
+		kFxParameterType_VideoView: @(FxParameterType_VideoView),
+
 	};
 	return typeMap;
 }
@@ -101,8 +104,9 @@
 		kParameterFlagString_DONT_REMAP_COLORS: @(kFxParameterFlag_DONT_REMAP_COLORS),
 		kParameterFlagString_FULL_VIEW_WIDTH: @(kFxParameterFlag_USE_FULL_VIEW_WIDTH),
 			
-		//kParameterFlagString_PRESETNOMETA: @(kFxParameterFlag_PRESETNOMETA),
-		//kParameterFlagString_PRESETNOTAGS: @(kFxParameterFlag_PRESETNOTAGS),
+		kParameterFlagString_PRESETNOMETA: @(kFxParameterFlag_PRESETNOMETA),
+		kParameterFlagString_PRESETNOTAGS: @(kFxParameterFlag_PRESETNOTAGS),
+		kParameterFlagString_PRESETNOVALUE: @(kFxParameterFlag_PRESETNOVALUE),
 		kParameterFlagString_NO_STATE: @(kFxParameterFlag_NOSTATE),
 			
 		kParameterFlagString_NO_DEBUG: @(kFxParameterFlag_NO_DEBUG),
@@ -214,6 +218,272 @@
 			}
 		}
 	}
+}
+
+
+#pragma mark Target Preset Defaults
+
+// Configurations carry the type as a name or a number.
+static FxParameterType FxGripConfigParameterType(NSDictionary *config)
+{
+	id value = config[kFxParameterProperty_Type];
+	if ([value isKindOfClass:NSNumber.class]) {
+		return ((NSNumber*)value).intValue;
+	}
+	if ([value isKindOfClass:NSString.class]) {
+		return [FxGripParameterUtility parameterTypeFromString:value];
+	}
+	return FxParameterType_None;
+}
+
+// Section dictionaries key by parameter ID as either a string or a number.
+static id FxGripPresetSectionEntry(NSDictionary *section, NSNumber *pid)
+{
+	id entry = section[pid];
+	if (!entry) {
+		entry = section[pid.stringValue];
+	}
+	return entry;
+}
+
+static NSArray<NSNumber*> *FxGripPresetSectionIDs(NSDictionary *section)
+{
+	NSMutableArray<NSNumber*> *ids = [NSMutableArray.alloc initWithCapacity:section.count];
+	for (id key in section) {
+		if ([key isKindOfClass:NSNumber.class]) {
+			[ids addObject:key];
+		} else if ([key isKindOfClass:NSString.class]) {
+			[ids addObject:@(((NSString*)key).intValue)];
+		}
+	}
+	return ids;
+}
+
+/*!
+	Applies `+`/`-` entries to a configuration's string array. Creation time works on the
+	declared names rather than flag bits, so the configuration stays readable.
+*/
+static void FxGripApplyStringSpec(NSMutableDictionary *config, NSString *key, id spec)
+{
+	NSArray *entries = nil;
+	if ([spec isKindOfClass:NSString.class]) {
+		entries = [(NSString*)spec splitByHumanDividers];
+	} else if ([spec isKindOfClass:NSArray.class]) {
+		entries = spec;
+	} else {
+		return;
+	}
+
+	id existing = config[key];
+	NSMutableArray<NSString*> *names = nil;
+	if ([existing isKindOfClass:NSArray.class]) {
+		names = [existing mutableCopy];
+	} else if ([existing isKindOfClass:NSString.class]) {
+		names = [[(NSString*)existing splitByHumanDividers] mutableCopy];
+	} else {
+		names = NSMutableArray.new;
+	}
+
+	for (NSString *entry in entries) {
+		if (![entry isKindOfClass:NSString.class] || !entry.length) {
+			continue;
+		}
+		BOOL remove = [entry hasPrefix:@"-"];
+		NSString *bare = (remove || [entry hasPrefix:@"+"]) ? [entry substringFromIndex:1] : entry;
+		if (!bare.length) {
+			continue;
+		}
+		[names removeObject:bare];
+		if (!remove) {
+			[names addObject:bare];
+		}
+	}
+	config[key] = names;
+}
+
+/*!
+	Writes one preset value into a target configuration's default, dispatching on the
+	target's own type.
+*/
+static void FxGripApplyDefaultValue(NSMutableDictionary *target, id value)
+{
+	NSDictionary *components = [value isKindOfClass:NSDictionary.class] ? value : nil;
+
+	switch (FxGripConfigParameterType(target)) {
+		case FxParameterType_RGBA:
+			if (components[kFxParameterProperty_Alpha]) {
+				target[kFxParameterProperty_Alpha] = components[kFxParameterProperty_Alpha];
+			}
+			// falls through to the color channels
+		case FxParameterType_RGB:
+			if (!components) {
+				return;
+			}
+			for (NSString *channel in @[kFxParameterProperty_Red, kFxParameterProperty_Green, kFxParameterProperty_Blue]) {
+				if (components[channel]) {
+					target[channel] = components[channel];
+				}
+			}
+			return;
+		case FxParameterType_Point:
+			if (!components) {
+				return;
+			}
+			for (NSString *axis in @[kFxParameterProperty_X, kFxParameterProperty_Y]) {
+				if (components[axis]) {
+					target[axis] = components[axis];
+				}
+			}
+			return;
+		case FxParameterType_Custom: {
+			id existing = target[kFxParameterProperty_Default];
+			if (components && [existing isKindOfClass:NSDictionary.class]) {
+				NSMutableDictionary *merged = [(NSDictionary*)existing mutableCopyRecursive];
+				// The preset wins over the declared default, as at runtime.
+				[merged addEntriesFromDictionaryRecursive:components];
+				target[kFxParameterProperty_Default] = merged;
+				return;
+			}
+			target[kFxParameterProperty_Default] = value;
+			return;
+		}
+		default:
+			target[kFxParameterProperty_Default] = value;
+			return;
+	}
+}
+
++ (void)applyTargetPresetDefaults:(nullable NSMutableArray<NSMutableDictionary*> *)parameters
+					pluginPresets:(nullable NSDictionary *)pluginPresets
+{
+	if (!parameters.count) {
+		return;
+	}
+
+	NSMutableDictionary<NSNumber*, NSMutableDictionary*> *dispatch =
+		[NSMutableDictionary.alloc initWithCapacity:parameters.count];
+	for (NSMutableDictionary *config in parameters) {
+		if (![config isKindOfClass:NSMutableDictionary.class]) {
+			continue;
+		}
+		NSNumber *pid = config[kFxParameterProperty_Id];
+		if ([pid isKindOfClass:NSNumber.class]) {
+			dispatch[pid] = config;
+		} else if ([pid isKindOfClass:NSString.class]) {
+			dispatch[@(((NSString*)pid).intValue)] = config;
+		}
+	}
+
+	for (NSMutableDictionary *config in parameters) {
+		if (![config isKindOfClass:NSMutableDictionary.class]) {
+			continue;
+		}
+		FxParameterType type = FxGripConfigParameterType(config);
+		if (type != FxParameterType_Menu && type != FxParameterType_Toggle) {
+			continue;
+		}
+
+		id definition = config[kFxParameterProperty_TargetPreset];
+		if ([definition isKindOfClass:NSString.class]) {
+			definition = pluginPresets[definition];
+		}
+		if (!definition) {
+			continue;
+		}
+
+		// The declared default selects the entry. This path has no "default" fallback.
+		int index = ((NSNumber*)config[kFxParameterProperty_Default]).intValue;
+		id preset = nil;
+		if ([definition isKindOfClass:NSArray.class]) {
+			NSArray *entries = definition;
+			if (index >= 0 && (NSUInteger)index < entries.count) {
+				preset = entries[index];
+			}
+		} else if ([definition isKindOfClass:NSDictionary.class]) {
+			preset = FxGripPresetSectionEntry(definition, @(index));
+		}
+		if (![preset isKindOfClass:NSDictionary.class]) {
+			continue;
+		}
+
+		[self applyPresetDefaults:preset toDispatch:dispatch];
+	}
+}
+
+// Callers hold the flattened dispatch table.
++ (void)applyPresetDefaults:(NSDictionary *)preset toDispatch:(NSDictionary<NSNumber*, NSMutableDictionary*> *)dispatch
+{
+	NSDictionary *sections = @{
+		kFxParameterProperty_TargetPresetNames: kFxParameterProperty_Name,
+		kFxParameterProperty_TargetPresetFlags: kFxParameterProperty_Flags,
+		kFxParameterProperty_TargetPresetTags: kFxParameterProperty_Tags
+	};
+
+	for (NSString *sectionKey in sections) {
+		NSDictionary *section = preset[sectionKey];
+		if (![section isKindOfClass:NSDictionary.class]) {
+			continue;
+		}
+		NSString *configKey = sections[sectionKey];
+		for (NSNumber *pid in FxGripPresetSectionIDs(section)) {
+			NSMutableDictionary *target = dispatch[pid];
+			if (!target) {
+				NSLog(@"%s Error: target preset names parameter %@, which does not exist.", __func__, pid);
+				continue;
+			}
+			id entry = FxGripPresetSectionEntry(section, pid);
+			if ([configKey isEqualToString:kFxParameterProperty_Name]) {
+				if ([entry isKindOfClass:NSString.class]) {
+					target[kFxParameterProperty_Name] = entry;
+				}
+			} else {
+				FxGripApplyStringSpec(target, configKey, entry);
+			}
+		}
+	}
+
+	NSDictionary *values = preset[kFxParameterProperty_TargetPresetValues];
+	if ([values isKindOfClass:NSDictionary.class]) {
+		for (NSNumber *pid in FxGripPresetSectionIDs(values)) {
+			NSMutableDictionary *target = dispatch[pid];
+			if (!target) {
+				NSLog(@"%s Error: target preset names parameter %@, which does not exist.", __func__, pid);
+				continue;
+			}
+			FxGripApplyDefaultValue(target, FxGripPresetSectionEntry(values, pid));
+		}
+	}
+}
+
+
+#pragma mark Click Selectors
+
++ (nonnull NSString *)clickSelectorNameForParameter:(FxParameterId)parameterID
+{
+	return [NSString stringWithFormat:@"%@%u", kFxGripClickSelectorPrefix, parameterID];
+}
+
++ (BOOL)getParameterID:(nonnull FxParameterId *)parameterID fromClickSelector:(nullable SEL)selector
+{
+	if (!selector || !parameterID) {
+		return NO;
+	}
+	NSString *name = NSStringFromSelector(selector);
+	if (![name hasPrefix:kFxGripClickSelectorPrefix] || name.length == kFxGripClickSelectorPrefix.length) {
+		return NO;
+	}
+	NSString *digits = [name substringFromIndex:kFxGripClickSelectorPrefix.length];
+	// Strict form: decimal digits only, within FxParameterId range. Anything else is a
+	// plugin's own selector and must not resolve through the trampoline.
+	if ([digits rangeOfCharacterFromSet:NSCharacterSet.decimalDigitCharacterSet.invertedSet].location != NSNotFound) {
+		return NO;
+	}
+	unsigned long long value = strtoull(digits.UTF8String, NULL, 10);
+	if (value > UINT32_MAX) {
+		return NO;
+	}
+	*parameterID = (FxParameterId)value;
+	return YES;
 }
 
 

@@ -20,7 +20,7 @@
 			NSLog(@"Error: %@::%s no groups found.", self.className, __func__);
 #endif
 		if (error) {
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxGripError_NoConfigGroups
 									 userInfo:nil];
 		}
@@ -41,7 +41,7 @@
 			NSLog(@"Error: %@::%s no plugins found.", self.className, __func__);
 #endif
 		if (error) {
-			*error = [NSError errorWithDomain:FxPlugErrorDomain
+			*error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxGripError_NoConfigPlugins
 									 userInfo:nil];
 		}

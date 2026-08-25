@@ -12,11 +12,9 @@
 #import <FxPlug/FxPlugSDK.h>
 //#import "FxGripParameterFlags.h"
 #import <FxGrip/FxGripTypes.h>
+#import "FxGripEffectHost.h"
+#import <BEFoundation/NSPriorityNotificationCenter.h>
 //#import "NSCoder+FxPlug.h"
-
-
-
-#define kFxParameterInnerNotificationCount  (3)
 
 // Forward declaration
 @protocol FxTileableEffectBase;
@@ -42,7 +40,7 @@
 @property (readonly) BOOL addedToEffect;
 
 @property (readonly, retain) NSError *_Nullable error;
-@property (readonly, nonnull) id<FxTileableEffectBase> effect;
+@property (readonly, nonnull) id<FxGripEffectHost> effect;
 @property (readonly) FxParameterId parameterID;
 @property (readonly) FxParameterType parameterType;
 @property (readonly, class) FxParameterType parameterType;
@@ -61,7 +59,7 @@
 - (void)setParameterFlags:(FxParameterFlags)flags;
 
 //Tells the Parameter to add itself to the plugin
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 - (void)parameterFlush;
 
 // When the parameter is created
@@ -110,6 +108,7 @@
 
 @property (readonly, nonatomic, nullable) NSView* customView;
 
+
 @optional
 - (BOOL)startChangedTime:(CMTime)time
 				   error:(NSError * _Nullable * _Nullable)error;
@@ -139,6 +138,15 @@
 @property (readonly, nonatomic, nullable) SEL		selector;
 @property (readonly, nonatomic, nullable) NSString*	selectorString;
 //@property (readonly, nonatomic) NSObject* _Nullable parameterSelectorObject;
+
+/*!
+	@method     defaultParameterAction
+	@abstract   The parameter's built-in click behavior.
+	@discussion Introduced in FxGrip 1.0. `FxTileableEffectBase parameterClicked:` performs
+				this when the effect subclass implements no configuration-declared click
+				selector for the parameter.
+*/
+- (void)defaultParameterAction;
 
 @end
 
@@ -179,7 +187,7 @@
 #define kFxGripPluginStateParameterTypeString @"-_-type"
 
 //This is to differentiate the Group Parameter
-@interface FxParameterBase : NSObject <FxParameterBase> //NSCopying
+@interface FxParameterBase : NSObject <FxParameterBase, NSNotificationObjectPriorityItem> //NSCopying
 {
 @protected
 	NSError				*_error;
@@ -190,10 +198,21 @@
 @property (readonly) uint loadIndex;
 
 
--(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(nonnull id<FxTileableEffectBase>)effect;
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(nonnull id<FxGripEffectHost>)effect;
+
+/*!
+	@method     installNotifications
+	@abstract   Registers the parameter's observers on the effect's notifier.
+	@discussion Introduced in FxGrip 1.0. The designated initializer calls this; a
+				subclass overrides it to register additional observers and calls super.
+				The notifier holds selector observers weakly; removeObservers (called
+				from dealloc) unregisters them.
+*/
+- (void)installNotifications;
+- (void)removeObservers;
 
 - (FxParameterType)parameterType NS_UNAVAILABLE;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect NS_UNAVAILABLE;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect NS_UNAVAILABLE;
 
 //description?
 // targetPrefix - target
@@ -219,6 +238,34 @@
 
 
 @interface FxParameter : FxParameterBase <FxParameter> //NSCopying
+/*!
+	@method     newParameterView
+	@abstract   Creates the parameter's custom inspector view.
+	@discussion Introduced in FxGrip 1.0. The view host
+				(createViewForParameterID:) calls this for a parameter whose class
+				provides a view and hands the result to the host application. The base
+				returns nil; a parameter class with custom UI overrides. The returned
+				view is retained per the FxCustomParameterViewHost_v2 contract.
+*/
+- (NSView *_Nullable)newParameterView;
+
+/*!
+	@method     attachCustomView:
+	@abstract   Records the view backing this parameter.
+	@discussion Introduced in FxGrip 1.0. The view host attaches the created view (or
+				its retained root, when the returned view wraps it) so the parameter can
+				reach its view for data pushes; nil detaches.
+*/
+- (void)attachCustomView:(NSView *_Nullable)view;
+
+/*!
+	@method     customValueClasses
+	@abstract   The secure-coding allow-list for this parameter class's custom value.
+	@discussion Introduced in FxGrip 1.0. classesForCustomParameterID: consults the
+				parameter class registered for the configured type; a class whose custom
+				value is its own model type overrides. The base returns nil.
+*/
++ (NSSet<Class> *_Nullable)customValueClasses;
 
 //@property (readwrite, retain, nonnull) NSString *name;
 @property (readwrite, retain, nullable) NSString *paramDescription;

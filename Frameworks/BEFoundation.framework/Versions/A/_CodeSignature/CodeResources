@@ -22,6 +22,13 @@
 			+amwq+trfojUF7axv0EiZdiSTb4/qXSndlIkSBjlLB0=
 			</data>
 		</dict>
+		<key>Headers/BEColor+BEWebColor.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KcEdZv6uIFDrtoSiYVvmpXIssPxTpuaLn/Kay1D7Foc=
+			</data>
+		</dict>
 		<key>Headers/BEColor+BExtension.h</key>
 		<dict>
 			<key>hash2</key>
@@ -29,18 +36,25 @@
 			s2wq0wuvnHD58cVzixewhE6xPts9T5u+qS7f3P19z/M=
 			</data>
 		</dict>
+		<key>Headers/BEDotView.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			82WtPWIF+B17Add/LU47E7pImZKrIH0o/8iEqzRjuq4=
+			</data>
+		</dict>
 		<key>Headers/BEFileCache.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			uS4QziXP8ir7+M6v3GwF4lEfvhzJEi4whpiBCThJcrE=
+			ifrOb3XiA0ARXUuNuuNp/9oVOOzHdYeL5/+4ixbSuGk=
 			</data>
 		</dict>
 		<key>Headers/BEFoundation.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			lSF6jwY+RoB4lQewzNZDaFwgzz1Lq4AcihCwtikv3l8=
+			PMFSCPK0nyb3S27ZCQ0MN5ezQc5+hbhOk+BPzoQPr4E=
 			</data>
 		</dict>
 		<key>Headers/BEImage+BExtension.h</key>
@@ -61,7 +75,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Cl7u+5x/dAOf2tAGPSXvKO/Od3YuJ7JpzvTd9dD8YMQ=
+			hVme8Xcn6JDAbGL+y8IIyVqluSbNJAbbprpepdxB6F4=
 			</data>
 		</dict>
 		<key>Headers/BEObjectRegistry.h</key>
@@ -117,7 +131,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			bfoMo/iy27JITCKe2LW95weO19SGwQFIbE4x1256Ca4=
+			pLFPPNJxomufsUBhpuYMEWIdV9GBbFRzdsAdNnfHfzE=
 			</data>
 		</dict>
 		<key>Headers/BESingleton.h</key>
@@ -131,7 +145,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			lD+ktDvwFkveYPvUlPefm6B67Wi87e1W3Jw+FzlFiTQ=
+			YDcL4Mi3abjmWCJKylMNxKKvOh2sPEAYddByC5E3CLI=
 			</data>
 		</dict>
 		<key>Headers/BETabView.h</key>
@@ -159,7 +173,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			syzahkkN4JeuppMjPUcgWir3nb3MRaAjK5AoZKJz9Xc=
+			WYzhfsUOMf+XfD1/cKLeB75lg88/dEAIq0TPQEpLD4w=
 			</data>
 		</dict>
 		<key>Headers/BEWindowControllerManager.h</key>
@@ -187,7 +201,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Zxyuw+UlglPSyDgS/Ey/KeaxlUbPfT+TVhb6v4tqNEw=
+			2OpDzxIhZ9+EIkW0zFt/XixZuTisj0WnCD1EmN8NtK0=
 			</data>
 		</dict>
 		<key>Headers/NSCoder+AtIndex.h</key>
@@ -243,7 +257,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			eDKvo3ukKgdwWuVwQ8CW46zqsb9XFSVrQJSxw0Q3JAI=
+			lo5kV/0ZGf1VYbdzJ6WVMD4ZK0G3iYc1Cs1v6mBAYmM=
 			</data>
 		</dict>
 		<key>Headers/NSNotification+ExtraProperties.h</key>
@@ -306,7 +320,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			zfu9LIBx6U/RIe/3ncTCk9qOtiZK+uKduwbFSdtmGkY=
+			2bKO4ePWsOCWSVoAAen5WJGSMAX30GcOlH1gymLSFSg=
 			</data>
 		</dict>
 		<key>Headers/NSPasteboard+BExtension.h</key>

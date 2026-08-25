@@ -19,7 +19,7 @@
 // chooses not to be accessible for some reason.
 //---------------------------------------------------------
 
-- (nullable instancetype)initWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	self = [super init];
 	

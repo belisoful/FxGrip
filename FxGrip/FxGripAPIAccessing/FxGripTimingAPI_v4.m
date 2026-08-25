@@ -10,7 +10,7 @@
 
 @implementation FxGripTimingAPI_v4
 
-#define hasMeta(returnValue) { if (!_effect.hasMeta) return (returnValue); }
+#define hasMeta(returnValue) { if (!FxGripHostHasMeta(_effect)) return (returnValue); }
 
 //---------------------------------------------------------
 // initWithAPIManager:
@@ -22,7 +22,7 @@
 //---------------------------------------------------------
 
 - (nullable instancetype)initWithAPI:(id<FxTimingAPI_v4> _Nullable)api
-							  effect:(id<FxTileableEffectBase>)effect
+							  effect:(id<FxGripEffectHost>)effect
 {
 	self = [super initWithEffect:effect];
 	

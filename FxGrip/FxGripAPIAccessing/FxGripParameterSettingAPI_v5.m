@@ -10,7 +10,7 @@
 #import "FxGripDynamicParameterAPI_v4.h"
 #import "FxGripInterpolatingDictionary.h"
 #import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEFfect.h"
+#import "NSDictionary+FxTileableEffect.h"
 #import "FxAPINotifications.h"
 #import <BEFoundation/FxTime.h>
 //#import "GuruFxTileableEffect+Extensions.h"
@@ -30,7 +30,7 @@
 - (nullable instancetype)initWithAPI:(id<FxParameterSettingAPI_v6>)api
 					   paramGetAPIv6:(id<FxParameterRetrievalAPI_v6>)paramGetAPIv6
 				   dynamicParamAPIv4:(id<FxDynamicParameterAPI_v4>)dynamicParamAPIv4
-							  effect:(id<FxTileableEffectBase>)effect
+							  effect:(id<FxGripEffectHost>)effect
 {
 	self = [super initWithEffect:effect];
 	
@@ -79,7 +79,7 @@
 
 - (BOOL)setCustomParameterValue:(nonnull NSObject<NSSecureCoding,NSCopying> *)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	BOOL success = [self setCustomParameterValue:value toParameter:parameterID atTime:time];
+	BOOL success = [_api setCustomParameterValue:value toParameter:parameterID atTime:time];
 	
 	if (success) {
 		NSDictionary *userInfo = @{
@@ -202,7 +202,7 @@
 	if (userInfo.fxResult) {
 		return [userInfo.fxResult boolValue];
 	}
-	flags = userInfo.fxParameter.parameterFlags;
+	flags = ((NSNumber*)userInfo.fxParameter[kFxParameterProperty_Flags]).unsignedIntValue;
 	userInfo.parameterID = parameterID;
 	userInfo.mutableFxParameter.parameterID = parameterID;
 	
@@ -327,7 +327,7 @@
 	userInfo.parameterID = parameterID;
 	userInfo.mutableFxParameter.parameterID = parameterID;
 	
-	string = userInfo.fxParameter.parameterDefaultValue;
+	string = userInfo.fxParameter[kFxParameterProperty_Default];
 	userInfo.fxParameter = userInfo.fxParameter.copy;
 	
 	if (_dynamicParamAPIv4 && [_dynamicParamAPIv4 parameterType:parameterID] == FxParameterType_Custom) {
@@ -359,6 +359,7 @@
 				return YES;
 			}
 		}
+		return NO;
 	}
 	BOOL success = [_api setXValue:x YValue:y toParameter:parameterID atTime:time];
 	

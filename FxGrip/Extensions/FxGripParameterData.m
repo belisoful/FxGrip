@@ -1,8 +1,7 @@
 //
-//  FxGripDebugMenu.m
-//  PlugIn
+//  FxGripParameterData.m
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
@@ -14,6 +13,12 @@
 #import "FxGripParameterFlags.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 #import "FxGrip_ARC.h"
+
+@interface FxGripParameterData ()
+{
+	BOOL _documentAdded;   // tracked from the AddedToDocument notification
+}
+@end
 
 @implementation FxGripParameterData
 
@@ -113,12 +118,12 @@
 
 - (void)setObject:(nonnull id)object forKey:(nonnull NSString *)key toParameter:(FxParameterId)parameterID
 {
-	NSNumber *pid = @(parameterID);
-	
-	if ([_pData [pid][key] isEqualTo:object]) {
+	NSMutableDictionary *record = _pData[@(parameterID)];
+
+	if (!record || [record[key] isEqualTo:object]) {
 		return;
 	}
-	_pData[pid][key] = object;
+	record[key] = object;
 	_isCacheDirty = YES;
 }
 
@@ -128,20 +133,23 @@
 }
 
 
-// extProcessParameters gets lowest priority, we want it to be last.
+// Lower numbers run first. ParameterData seeds the store from the add config before the
+// parameters are constructed (−20, ahead of the base's −18 capture), and persists on
+// flush AFTER the base's −14 flag flush, which re-writes flag words the store must
+// capture in the same cycle.
 - (NSInteger)ncPriority:(nullable NSNotificationName)aName
 {
 	NSInteger priority = [super ncPriority:aName];
-	
+
 	if ([FxNotifyAPI_ParameterAddName isEqualToString:aName]) {
 		return -20;
 	} else if ([FxTileableEffectAddedToDocumentName isEqualToString:aName]) {
 		return -18;
 	} else if ([FxTileableEffectFlushName isEqualToString:aName]) {
-		
-		return -15;
+		// After the base flag flush (−14) so flag words it writes are persisted this cycle.
+		return -13;
 	}
-	
+
 	return priority;
 }
 
@@ -163,6 +171,7 @@
 
 - (void)extAddedToDocument:(nonnull NSNotification*)notification
 {
+	_documentAdded = YES;
 	if (!_pData) {
 		//_pData = (NSMutableDictionary*)self.value;
 		id <NSCopying, NSSecureCoding> object = nil;
@@ -175,21 +184,26 @@
 
 
 
+// The parameter id and properties are read directly from the nested parameter dictionary:
+// the guarded accessors require id+type+name together, which the API payloads do not
+// always carry, and the outer dictionary holds only the id and the nested parameter.
 - (void)extAPIParameterAdd:(nonnull NSNotification*)notification
 {
-	NSDictionary *parameter = notification.userInfo;
-	
-	NSNumber *pid = @(parameter.parameterID);
-	
+	NSDictionary *parameter = notification.userInfo.fxParameter;
+	NSNumber *pid = parameter[kFxParameterProperty_Id] ?: notification.userInfo[kFxParameterProperty_Id];
+	if (!pid) {
+		return;
+	}
+
 	@synchronized (self) {
 		if (!_pData) {
 			[self initData];
 		}
 		_pData[pid] = parameter.mutableCopy;
-	
+
 		_isCacheDirty = YES;
 		
-		if (!flagCache(_parameterFlags) && self.addedToEffect && self.effect.addedToDocument) {
+		if (!flagCache(_parameterFlags) && self.addedToEffect && _documentAdded) {
 			[self extFlush:notification];
 		}
 	}
@@ -199,39 +213,43 @@
 
 - (void)extAPIParameterGetFlags:(nonnull NSNotification*)notification
 {
-	NSMutableDictionary *parameter = notification.mutableUserInfo;
-	
-	NSNumber *pid = @(parameter.parameterID);
-	if (!_pData || !_pData[pid] || !_pData[pid][kFxParameterProperty_Flags]) {
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	NSNumber *pid = parameter[kFxParameterProperty_Id];
+
+	if (!pid || !_pData || !_pData[pid] || !_pData[pid][kFxParameterProperty_Flags]) {
 		return;
 	}
-	parameter[kFxParameterProperty_Flags] = @(parameter.parameterFlags | (_pData[pid].parameterFlags & kFxParameterFlag_APP_MASK));
+	FxParameterFlags notified = ((NSNumber*)parameter[kFxParameterProperty_Flags]).unsignedIntValue;
+	FxParameterFlags stored = ((NSNumber*)_pData[pid][kFxParameterProperty_Flags]).unsignedIntValue;
+	parameter[kFxParameterProperty_Flags] = @(notified | (stored & kFxParameterFlag_APP_MASK));
 }
 
 
 - (void)extAPIParameterSetFlags:(nonnull NSNotification*)notification
 {
-	NSMutableDictionary *parameter = notification.mutableUserInfo;
-	
-	NSNumber *pid = @(parameter.parameterID);
-	
-	if (!_pData || !_pData[pid]) {
+	NSDictionary *parameter = notification.userInfo.fxParameter;
+	NSNumber *pid = parameter[kFxParameterProperty_Id];
+
+	if (!pid || !_pData || !_pData[pid]) {
 		return;
 	}
-	
-	_pData[pid][kFxParameterProperty_Flags] = @(RemoveTempFlags(parameter.parameterFlags) & kFxParameterFlag_APP_MASK);
+	FxParameterFlags notified = ((NSNumber*)parameter[kFxParameterProperty_Flags]).unsignedIntValue;
+	_pData[pid][kFxParameterProperty_Flags] = @(RemoveTempFlags(notified) & kFxParameterFlag_APP_MASK);
+	_isCacheDirty = YES;
 }
 
 
 - (void)extAPIParameterSetMenu:(nonnull NSNotification*)notification
 {
-	NSNumber *pid = notification.userInfo.fxParameter[kFxParameterProperty_Id];
-	
-	if (!_pData || !_pData[pid]) {
+	NSDictionary *parameter = notification.userInfo.fxParameter;
+	NSNumber *pid = parameter[kFxParameterProperty_Id];
+
+	if (!pid || !_pData || !_pData[pid]) {
 		return;
 	}
-	
-	_pData[pid][kFxParameterProperty_MenuItems] = notification.userInfo.fxParameter.parameterMenuItems;
+
+	_pData[pid][kFxParameterProperty_MenuItems] = parameter[kFxParameterProperty_MenuItems];
+	_isCacheDirty = YES;
 }
 
 
@@ -252,7 +270,7 @@
 	
 		_isCacheDirty = YES;
 		
-		if (!flagCache(_parameterFlags) && self.addedToEffect && self.effect.addedToDocument) {
+		if (!flagCache(_parameterFlags) && self.addedToEffect && _documentAdded) {
 			[self extFlush:notification];
 		}
 	}

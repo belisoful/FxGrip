@@ -90,7 +90,7 @@
 	NSArray<NSDictionary<NSString*, id>*> *plugInGroupsArray = self.registeredPlugInGroups;
 	
 	if (!plugInGroupsArray) {
-		//Call the primary method to retreive PlugIns
+		//Call the primary method to retrieve PlugIns
 		if (![self registeredPlugInsWithError:error]) {
 			return nil;
 		}
@@ -219,7 +219,7 @@
 			}];
 		}
 		
-		//Make the plugins immmutable
+		//Make the plugins immutable
 		[__registeredPlugIns enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull plugin, BOOL * _Nonnull stop) {
 			if ([__registeredPlugIns[key] isKindOfClass:NSMutableDictionary.class]) {
 				__registeredPlugIns[key] = [__registeredPlugIns[key] copy];
@@ -368,8 +368,12 @@
 	}
 	BOOL success = NO;
 	if (__registeredPlugIns) {
+		// The class must be loadable: the host instantiates plugins by this name, so a
+		// name that resolves to nothing would register a plugin that cannot run.
+		BOOL classExists = NSClassFromString(plugin[kProPlugPlugIn_ClassNameProperty]) != Nil;
 		if (plugin[kProPlugPlugIn_UuidProperty]
 			&& plugin[kProPlugPlugIn_ClassNameProperty]
+			&& classExists
 			&& plugin[kProPlugPlugIn_DisplayNameProperty]
 			&& plugin[kProPlugPlugIn_GroupUUIDProperty]
 			&& plugin[kProPlugPlugIn_ProtocolNamesProperty]
@@ -379,6 +383,10 @@
 			}
 			[__registeredPlugIns setObject:mutablePlugin.copy forKey:plugin[kProPlugPlugIn_UuidProperty]];
 			success = YES;
+		} else if (plugin[kProPlugPlugIn_ClassNameProperty] && !classExists) {
+#if DEBUG
+			NSLog(@"Error: Plugin class \"%@\" (%@) is not loaded.", plugin[kProPlugPlugIn_ClassNameProperty], plugin[kProPlugPlugIn_UuidProperty]);
+#endif
 		} else {
 #if DEBUG
 			NSString *uuid = plugin[kProPlugPlugIn_UuidProperty] ? @"" : @" uuid";

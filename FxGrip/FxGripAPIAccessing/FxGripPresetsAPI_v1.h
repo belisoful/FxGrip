@@ -1,8 +1,6 @@
 //
 //  FxGripPresetsAPI_v1.h
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/29/24.
+//  FxGrip
 //
 
 #ifndef FxGripPresetsAPI_v1_h
@@ -12,15 +10,17 @@
 #import "FxGripPreset.h"
 #import "FxGripCommonAPI.h"
 
+@class BEPathWatcher;
+
 typedef enum FxParameterPresetFlagOptions {
 	kFxParameterPreset_Default				= (0 << 0),
-	
+
 	// ignores check for compatibility with the preset plugin Uuid agains the current Uuid and uuid alternatives
 	kFxParameterPreset_IgnoreCompatibility	= (1 << 0),
-	
+
 	// ignores if a parameter doesn't need the preset tag to set its value.
 	kFxParameterPreset_IgnoreTagBoundary	= (1 << 1),
-	
+
 	// ignores preset meta data.
 	kFxParameterPreset_IgnoreMetaData		= (1 << 2)
 } FxParameterPresetFlagOptions;
@@ -30,76 +30,143 @@ typedef enum FxParameterPresetFlagOptions {
 @end
 
 
-/*!
-	@interface  FxGripDynamicParameterAPI_v4:
-	@abstract   Initializes the API manager for your plug-in.
-	@discussion Accesses the apis with error checking.
-
- */
-
 #define kFxPresetProperty_ColorSpace	@"colorSpace"
 #define kFxPresetProperty_RemapValues	@"remapValues"
 #define kFxPresetProperty_Extension		@"extension"
-#define kFxPreset_Extension				@"fxpreset"
 
 #define kFxFactorPresetColorSpace_sRGB_Color 1
 
+/*! The canonical system-key → FxFactory-file-key mapping, with the value-remap and
+	extension metadata entries. presetDictionary already writes these file keys, so
+	passing this map to savePreset:remap: is the identity mapping. */
 #define kFxFactoryPresetKeyMap (@{ \
-	kFxPresetProperty_CreatedByParameterId : @"FxFactoryPresetCreatedByParameterID", \
-	kFxPresetProperty_ParameterValues : @"FxFactoryPresetParameterValues", \
-	kFxPresetProperty_PluginAuthor : @"FxFactoryPresetPlugInAuthor" \
-	kFxPresetProperty_LocalizedName : @"FxFactoryPresetPlugInLocalizedName" \
-	kFxPresetProperty_PluginUuid : @"FxFactoryPresetPlugInUUID" \
-	kFxPresetProperty_PluginVersion : @"FxFactoryPresetPlugInVersion" \
-	kFxPresetProperty_ProductId : @"FxFactoryPresetProductID" \
-	kFxPresetProperty_RemapValues : @{kFxPresetProperty_ColorSpace : @{kFxImageColorInfo_RGB_GAMMA_VIDEO: @kFxFactorPresetColorSpace_sRGB_Color}} \
-	kFxPresetProperty_Extension : @"fxpreset"} \
+	kFxPresetProperty_CreatedByParameterId : kFxFactoryPresetKey_CreatedByParameterId, \
+	kFxPresetProperty_ParameterValues : kFxFactoryPresetKey_ParameterValues, \
+	kFxPresetProperty_PluginAuthor : kFxFactoryPresetKey_PluginAuthor, \
+	kFxPresetProperty_LocalizedName : kFxFactoryPresetKey_LocalizedName, \
+	kFxPresetProperty_PluginUuid : kFxFactoryPresetKey_PluginUuid, \
+	kFxPresetProperty_PluginVersion : kFxFactoryPresetKey_PluginVersion, \
+	kFxPresetProperty_ProductId : kFxFactoryPresetKey_ProductId, \
+	kFxPresetProperty_RemapValues : @{kFxPresetProperty_ColorSpace : @{@(kFxImageColorInfo_RGB_GAMMA_VIDEO) : @(kFxFactorPresetColorSpace_sRGB_Color)}}, \
+	kFxPresetProperty_Extension : kFxPreset_Extension \
 	})
 
+/*!
+	@interface  FxGripPresetsAPI_v1
+	@abstract   The preset file and discovery layer.
+	@discussion Introduced in FxGrip 1.0. FxGrip implements this API itself; no host
+				vends it, so the wrapper is constructed without a host API. Preset
+				application funnels into the tag API core
+				(applyPreset:atTime:options:presetFlags:source:tag:), which owns the tag
+				boundary and section ordering.
+
+				Two preset sources feed the merged listing:
+				- premade, shipped with the plugin: the Info.plist `presets` table and
+				  `.fxpreset` files bundled under the plugin's `Presets` resource folder;
+				- user presets in the managed folder
+				  `~/Library/Application Support/<company>/<plugin name>/<tag>/`, plus
+				  arbitrary files through the save and open panels.
+
+				Plist-table presets carry their values, tags, and meta sections in the
+				listing; their flags and names sections apply through automatic rigging
+				only.
+ */
 @interface FxGripPresetsAPI_v1 : FxGripCommonAPI <FxPresetsAPI_v1>
 
-@property (assign, readonly) id<FxPresetsAPI_v1> _Nonnull api;
+@property (assign, readonly) id<FxPresetsAPI_v1> _Nullable api;
 
-- (nullable instancetype)initWithAPI:(id<FxPresetsAPI_v1>_Nonnull)api
-							  effect:(id<FxTileableEffectBase>_Nonnull)effect;
-// NSDictionary
-// -uuid of plugin
-// -uuid of preset
-// -preset name
-// -preset tag
-// -preset time
-// -parameters: key is ID
-//	-value
-//	-meta (optional)
+- (nullable instancetype)initWithAPI:(id<FxPresetsAPI_v1>_Nullable)api
+							  effect:(id<FxGripEffectHost>_Nonnull)effect;
+
+/*!
+	@method     generatePreset:fromLabel:
+	@abstract   Captures the effect's current parameter state as a preset.
+	@discussion Introduced in FxGrip 1.0. Captures every runtime parameter's value at
+				time zero, plus its tags and meta. Parameters flagged PRESETNOTAGS or
+				PRESETNOMETA opt out of the tags and meta capture. The plugin identity
+				fields are filled from the effect.
+*/
 - (NSError* _Nullable)generatePreset:(FxGripPreset*_Nullable*_Nonnull)preset fromLabel:(NSString*_Nonnull)label;
+
+/*!
+	@method     setPreset:options:atTime:
+	@abstract   Applies a preset through the tag API core.
+	@discussion Introduced in FxGrip 1.0. Verifies compatibility unless
+				kFxParameterPreset_IgnoreCompatibility, then applies the preset's
+				values, tags, and meta sections (meta withheld under
+				kFxParameterPreset_IgnoreMetaData) with FxGripPresetSourceFile and the
+				preset's tag, so the tag boundary governs which parameters change.
+*/
+- (NSError* _Nullable)setPreset:(FxGripPreset*_Nonnull)preset options:(FxParameterPresetFlags)flags atTime:(CMTime)time;
+
+/*! Applies at time zero. */
 - (NSError* _Nullable)setPreset:(FxGripPreset*_Nonnull)preset options:(FxParameterPresetFlags)flags;
 
-- (BOOL)savePreset:(FxGripPreset*_Nonnull)preset remap:(NSDictionary* _Nullable)keyMap; // remap- key is system keys, value is file keys
+/*!
+	@method     savePreset:remap:
+	@abstract   Saves a preset to a user-chosen file through the save panel.
+	@discussion Introduced in FxGrip 1.0. The panel starts in the managed user preset
+				folder (created on demand). `keyMap` maps system keys to file keys;
+				presetDictionary already writes the FxFactory file keys, so
+				kFxFactoryPresetKeyMap and nil are equivalent.
+	@result     YES when the user confirms and the file is written.
+*/
+- (BOOL)savePreset:(FxGripPreset*_Nonnull)preset remap:(NSDictionary* _Nullable)keyMap;
+
+/*!
+	@method     loadPreset:remap:
+	@abstract   Loads a preset from a user-chosen file through the open panel.
+	@result     YES when the user confirms and the file parses.
+*/
 - (BOOL)loadPreset:(FxGripPreset*_Nullable*_Nonnull)preset  remap:(NSDictionary* _Nullable)keyMap;
 
+/*! The plugin bundle's `Presets` resource folder; nil when the bundle has none. */
 - (NSURL*_Nullable)pluginPresetURL;
-- (NSURL*_Nullable)pluginPresetURL:(NSString*_Nonnull)tag; // the tag preset folder inside the preset folder.
+/*! The per-tag subfolder of the bundled preset folder. */
+- (NSURL*_Nullable)pluginPresetURL:(NSString*_Nonnull)tag;
 
+/*!
+	@method     userPresetURL
+	@abstract   The managed user preset folder:
+				`~/Library/Application Support/<company>/<plugin name>`.
+	@discussion Introduced in FxGrip 1.0. `<company>` is the plugin group's display name
+				and `<plugin name>` the plugin's display name; both are version
+				agnostic, so presets survive plugin updates. The folder is not created
+				by this accessor.
+*/
+- (NSURL*_Nullable)userPresetURL;
+/*! The per-tag subfolder of the managed user preset folder. */
+- (NSURL*_Nullable)userPresetURL:(NSString*_Nonnull)tag;
 
-+ (BOOL)openMediaPresetFolder;
-+ (BOOL)openMediaPresetFolder:(NSString* _Nonnull)tag;
+/*! The merged listing: pluginPresetsForTag: then userPresetsForTag:. */
+- (NSArray<FxGripPreset*>*_Nonnull)presetsForTag:(NSString*_Nonnull)tag;
 
-// get plist presets and user presets
-+ (NSArray*_Nonnull)presetsForTag:(NSString*_Nonnull)tag;
+/*! Premade presets: the plist `presets` table entries for the tag, then bundled
+	`.fxpreset` files from the per-tag bundle subfolder. */
+- (NSArray<FxGripPreset*>*_Nonnull)pluginPresetsForTag:(NSString*_Nonnull)tag;
 
-// get plist presets
-+ (NSArray*_Nonnull)pluginPresetsForTag:(NSString*_Nonnull)tag;
+/*! User presets: `.fxpreset` files in the managed per-tag folder. A file that names no
+	tag applies under the folder's tag. */
+- (NSArray<FxGripPreset*>*_Nonnull)userPresetsForTag:(NSString*_Nonnull)tag;
 
-// get user presets
-+ (NSArray*_Nonnull)userPresetsForTag:(NSString*_Nonnull)tag;
+/*!
+	@method     observeTag:observer:
+	@abstract   Watches the managed per-tag user preset folder.
+	@discussion Introduced in FxGrip 1.0. The handler runs on each change to the folder.
+				The caller keeps the returned watcher alive; deallocating it ends the
+				watch. Returns nil when the folder does not exist.
+*/
+- (BEPathWatcher*_Nullable)observeTag:(NSString*_Nonnull)tag observer:(void(^_Nonnull)(void))handler;
 
-// observes a specific tag preset folder
-+ (DirectoryWatcher*_Nullable)observeTag:(NSString*_Nonnull)tag observer:(void(^_Nonnull)(void))handler;
-
+/*!
+	@method     compatiblePreset:
+	@abstract   Answers whether a preset's plugin identity matches this effect.
+	@discussion Introduced in FxGrip 1.0. The preset's plugin UUID must equal the
+				effect's, or appear in the plugin's `supportedPlugins` alternatives.
+*/
 - (BOOL)compatiblePreset:(FxGripPreset*_Nullable)preset;
 
 @end
 
 
 #endif /* FxGripPresetsAPI_v1_h */
-

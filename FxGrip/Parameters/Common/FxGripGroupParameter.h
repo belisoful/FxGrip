@@ -9,7 +9,7 @@
 #ifndef FxGripGroupParameter_h
 #define FxGripGroupParameter_h
 
-#import <FxParameter.h>
+#import "FxParameter.h"
 
 
 @interface FxGripGroupParameter : FxParameter <FxSubParameters>
@@ -22,7 +22,7 @@
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 
 // ***  FxGripSubParameters Implementation  ***

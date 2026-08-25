@@ -1,16 +1,19 @@
 //
 //  FxGripDebugMenu.m
-//  PlugIn
+//  FxGrip
 //
-//  Created by Apple on 2/12/20.
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
 #import "FxGripDebugMenu.h"
 #import "FxTileableEffectBase.h"
 #import "FxTileableEffectBase+Extensions.h"
+#import "FxTileableEffectBase+Notifications.h"
+#import "FxAPINotifications.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripPluginInfo.h"
 #import "NSDictionary+FxTileableEffect.h"
+#import <BEFoundation/NSNotification+MutableUserInfo.h>
 
 typedef NS_ENUM(NSUInteger, FxGripDebugMenuItem) {
 	DebugItem_Main = 0,
@@ -38,6 +41,16 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 	return 19;
 }
 
+// The debug-mode flags transform reads the HIDDEN_PROXY / IN_DEBUG_MODE bits that
+// FxGripParameterData restores at the default priority on a flags read, so it runs after.
+- (NSInteger)ncPriority:(nullable NSNotificationName)aName
+{
+	if ([FxNotifyAPI_ParameterGetFlagsName isEqualToString:aName]) {
+		return FxExtensionDefaultPriority + 2;
+	}
+	return [super ncPriority:aName];
+}
+
 // Default NO, Looks at the plugin class Info.plist for @"debugMenu" BOOL equals @YES
 - (BOOL)hasDebugMenu
 {
@@ -55,38 +68,40 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
  *
  *
  */
--(void) processParameters:(NSMutableArray*)parameters
+- (void)extAddParameters:(nonnull NSNotification*)notification
 {
-	if (self.hasDebugMenu) {
-		if (self.hasDebugActivator) {
-			NSDictionary *debugActivatorParameter = @{
-				kFxParameterProperty_Id: @(kFxParameterId_DebugActivator),
-				kFxParameterProperty_Type: kFxParameterType_Toggle,
-				kFxParameterProperty_Name: @"FxGrip::DebugMenu::DebugMenuVisibilityToggle",
-				kFxParameterProperty_Default: @(NO),
-				kFxParameterProperty_Flags: @[kParameterFlagString_NOT_ANIMATABLE], //kParameterFlagString_HIDDEN,
-				kFxParameterProperty_TargetPreset: @[
-					@{kFxParameterProperty_TargetPresetFlags: @{@kFxParameterId_DebugMenu: @"+hidden"}},
-					@{kFxParameterProperty_TargetPresetFlags: @{@kFxParameterId_DebugMenu: @"-hidden"}},
-				]
-				
-			};
-			[parameters addObject:debugActivatorParameter];
-		}
-		NSDictionary *debugMenuParameter = @{
-			kFxParameterProperty_Factory: self,
-			kFxParameterProperty_Id: @(kFxParameterId_DebugMenu),
-			kFxParameterProperty_Type: kFxParameterType_Menu,
-			kFxParameterProperty_Name: @"FxGrip::DebugMenu::Name",
-			kFxParameterProperty_ResetValue: @0,
-			kFxParameterProperty_MenuItems: [self debugMenuItems:false],
-			kFxParameterProperty_Selector: @"manageDebuggerController",//:atTime:error:",
-			kFxParameterProperty_Flags: @[kParameterFlagString_NOT_ANIMATABLE,
-										  (self.hasDebugActivator) ? kParameterFlagString_HIDDEN : @"",
-										  kParameterFlagString_DONT_DISPLAY]
-		};
-		[parameters addObject:debugMenuParameter];
+	if (!self.hasDebugMenu) {
+		return;
 	}
+	NSMutableArray<NSMutableDictionary *> *parameters = notification.userInfo.fxEffectParameters;
+	if (self.hasDebugActivator) {
+		NSDictionary *debugActivatorParameter = @{
+			kFxParameterProperty_Id: @(kFxParameterId_DebugActivator),
+			kFxParameterProperty_Type: kFxParameterType_Toggle,
+			kFxParameterProperty_Name: @"FxGrip::DebugMenu::DebugMenuVisibilityToggle",
+			kFxParameterProperty_Default: @(NO),
+			kFxParameterProperty_Flags: @[kParameterFlagString_NOT_ANIMATABLE], //kParameterFlagString_HIDDEN,
+			kFxParameterProperty_TargetPreset: @[
+				@{kFxParameterProperty_TargetPresetFlags: @{@kFxParameterId_DebugMenu: @"+hidden"}},
+				@{kFxParameterProperty_TargetPresetFlags: @{@kFxParameterId_DebugMenu: @"-hidden"}},
+			]
+
+		};
+		[parameters addObject:[debugActivatorParameter mutableCopy]];
+	}
+	NSDictionary *debugMenuParameter = @{
+		kFxParameterProperty_Factory: self,
+		kFxParameterProperty_Id: @(kFxParameterId_DebugMenu),
+		kFxParameterProperty_Type: kFxParameterType_Menu,
+		kFxParameterProperty_Name: @"FxGrip::DebugMenu::Name",
+		kFxParameterProperty_ResetValue: @0,
+		kFxParameterProperty_MenuItems: [self debugMenuItems:false],
+		kFxParameterProperty_Selector: @"manageDebuggerController",//:atTime:error:",
+		kFxParameterProperty_Flags: @[kParameterFlagString_NOT_ANIMATABLE,
+									  (self.hasDebugActivator) ? kParameterFlagString_HIDDEN : @"",
+									  kParameterFlagString_DONT_DISPLAY]
+	};
+	[parameters addObject:[debugMenuParameter mutableCopy]];
 }
 
 
@@ -94,26 +109,32 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 
 // In debug mode, hidden parameters remain shown but the hidden bit is transferred from hidden proxy
 // In debug mode, transfer hidden proxy to hidden.
-- (BOOL)extGetParameterFlags:(FxParameterFlags*_Nonnull)flags fromParameter:(UInt32)parameterID
+- (void)extAPIParameterGetFlags:(nonnull NSNotification*)notification
 {
-	FxParameterFlags f = *flags;
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	if (![parameter[kFxParameterProperty_Flags] isKindOfClass:NSNumber.class]) {
+		return;
+	}
+	FxParameterFlags f = ((NSNumber*)parameter[kFxParameterProperty_Flags]).unsignedIntValue;
 	if (f & kFxParameterFlag_IN_DEBUG_MODE) {
-		   f &= ~kFxParameterFlag_HIDDEN;
-		   if (f & kFxParameterFlag_HIDDEN_PROXY) {
-			   f |= kFxParameterFlag_HIDDEN;
-			   f &= ~kFxParameterFlag_HIDDEN_PROXY;
-		   }
-	   }
-	*flags = f;
-	return YES;
+		f &= ~kFxParameterFlag_HIDDEN;
+		if (f & kFxParameterFlag_HIDDEN_PROXY) {
+			f |= kFxParameterFlag_HIDDEN;
+			f &= ~kFxParameterFlag_HIDDEN_PROXY;
+		}
+	}
+	parameter[kFxParameterProperty_Flags] = @(f);
 }
 
 // In debug mode, hidden parameters remain shown but the bit is retained as hidden proxy
 // In debug mode, transfer hidden to hidden proxy.
-- (void)extSetParameterFlagsPre:(FxParameterFlags*_Nonnull)flags toParameter:(UInt32)parameterID
+- (void)extAPIParameterSetFlagsPre:(nonnull NSNotification*)notification
 {
-	FxParameterFlags f = *flags;
-	
+	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
+	if (![parameter[kFxParameterProperty_Flags] isKindOfClass:NSNumber.class]) {
+		return;
+	}
+	FxParameterFlags f = ((NSNumber*)parameter[kFxParameterProperty_Flags]).unsignedIntValue;
 	//When saving, if in debug mode,
 	if (f & kFxParameterFlag_IN_DEBUG_MODE) {
 		f &= ~kFxParameterFlag_HIDDEN_PROXY;
@@ -122,7 +143,7 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 			f |= kFxParameterFlag_HIDDEN_PROXY;
 		}
 	}
-	*flags = f;
+	parameter[kFxParameterProperty_Flags] = @(f);
 }
 
 
@@ -297,6 +318,16 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 - (FxGripDebugMenu *)debugMenu
 {
 	return [self extensionForClass:FxGripDebugMenu.class];
+}
+
+- (BOOL)hasDebugMenu
+{
+	return self.pluginProperties.pluginDebugMenu || self.pluginProperties.pluginDebugActivator;
+}
+
+- (nonnull FxGripDebugMenu *)newDebugMenuExtension
+{
+	return [FxGripDebugMenu.alloc init];
 }
 
 @end

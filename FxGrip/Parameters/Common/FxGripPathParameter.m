@@ -23,7 +23,7 @@
 	return FxParameterType_PathID;
 }
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	return [effect.apiManager.paramCreateAPIv5 addPathPickerWithName: parameter.parameterName
 														 parameterID: parameter.parameterID
@@ -34,7 +34,7 @@
 {
 	FxPathID pathValue = nil;
 	if(![self.effect.apiManager.paramGetAPIv6 getPathID:&pathValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxPlugErrorDomain
+		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

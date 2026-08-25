@@ -35,7 +35,13 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 	}
 	
 	[extensions sortUsingComparator:^NSComparisonResult(id<FxExtension> a, id<FxExtension> b) {
-		return [a ncPriority:FxTileableEffectLoadName] - [b ncPriority:FxTileableEffectLoadName];
+		// Compare, not subtract: a difference of two NSIntegers can overflow and flip the
+		// ordering sign.
+		NSInteger pa = [a ncPriority:FxTileableEffectLoadName];
+		NSInteger pb = [b ncPriority:FxTileableEffectLoadName];
+		if (pa < pb) { return NSOrderedAscending; }
+		if (pa > pb) { return NSOrderedDescending; }
+		return NSOrderedSame;
 	}];
 	
 	NSMutableDictionary <NSString*, NSNumber*> *indices = NSMutableDictionary.new;
@@ -63,13 +69,13 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 		}
 		return object.extActive && object.extIncludeWhenDisabled;
 	}]];
-	NSMutableDictionary *extentsionDict = [NSMutableDictionary.alloc initWithCapacity:extensions.count];
+	NSMutableDictionary *extensionDict = [NSMutableDictionary.alloc initWithCapacity:extensions.count];
 	for(id<FxExtension> ext in extensions) {
-		extentsionDict[ext.extKey] = ext;
+		extensionDict[ext.extKey] = ext;
 	}
 	NARC_RELEASE(extensions);
 	
-	return [extentsionDict copy];
+	return [extensionDict copy];
 }
 
 
@@ -89,7 +95,7 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 
 - (BOOL)hasExtensionProtocol:(nullable Protocol *)extensionProtocol
 {
-	for (id element in self.extensions) {
+	for (id element in self.extensions.allValues) {
 		if ([element conformsToProtocol:extensionProtocol]) {
 			return YES;
 		}
@@ -99,7 +105,7 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 
 - (BOOL)hasExtensionClass:(Class _Nullable)extensionClass
 {
-	for (id element in self.extensions) {
+	for (id element in self.extensions.allValues) {
 		if ([element isKindOfClass:extensionClass]) {
 			return YES;
 		}
@@ -109,12 +115,10 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 
 - (BOOL)hasExtensionKey:(NSString*_Nullable)extensionKey
 {
-	for (id<FxExtension> element in self.extensions) {
-		if ([element.extKey isEqualToString:extensionKey]) {
-			return YES;
-		}
+	if (!extensionKey) {
+		return NO;
 	}
-	return NO;
+	return self.extensions[extensionKey] != nil;
 }
 
 
@@ -124,8 +128,8 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 {
 	if (!extensionProtocol)
 		return nil;
-	
-	for (id element in self.extensions) {
+
+	for (id element in self.extensions.allValues) {
 		if ([element conformsToProtocol:extensionProtocol]) {
 			return element;
 		}
@@ -137,8 +141,8 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 {
 	if (!extensionClass)
 		return nil;
-	
-	for (id element in self.extensions) {
+
+	for (id element in self.extensions.allValues) {
 		if ([element isKindOfClass:extensionClass]) {
 			return element;
 		}
@@ -150,13 +154,8 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 {
 	if (!extensionKey)
 		return nil;
-	
-	for (id<FxExtension> element in self.extensions) {
-		if ([element.extKey compare:extensionKey] == NSOrderedSame) {
-			return element;
-		}
-	}
-	return nil;
+
+	return self.extensions[extensionKey];
 }
 
 
@@ -169,7 +168,7 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 		return nil;
 	
 	NSMutableArray *results = [NSMutableArray.alloc init];
-	for (id element in self.extensions) {
+	for (id element in self.extensions.allValues) {
 		if ([element conformsToProtocol:extensionProtocol]) {
 			[results addObject:element];
 		}
@@ -183,7 +182,7 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 		return nil;
 	
 	NSMutableArray *results = [NSMutableArray.alloc init];
-	for (id element in self.extensions) {
+	for (id element in self.extensions.allValues) {
 		if ([element isKindOfClass:extensionClass]) {
 			[results addObject:element];
 		}
@@ -197,7 +196,7 @@ NSString * _Nonnull const FxTileableEffectExtKey = @"FxTileableEffect";
 		return nil;
 	
 	NSMutableArray *results = [NSMutableArray.alloc init];
-	for (id<FxExtension> element in self.extensions) {
+	for (id<FxExtension> element in self.extensions.allValues) {
 		if ([element.extKey compare:extensionKey] == NSOrderedSame) {
 			[results addObject:element];
 		}

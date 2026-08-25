@@ -9,7 +9,7 @@
 #ifndef FxGripRGBParameter_h
 #define FxGripRGBParameter_h
 
-#import <FxGripColorParameter.h>
+#import "FxGripColorParameter.h"
 
 
 
@@ -20,7 +20,7 @@
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 - (FxGripColor)valueAtTime:(CMTime)renderTime;
 - (void)setValue:(FxGripColor*_Nullable)color atTime:(CMTime)time;

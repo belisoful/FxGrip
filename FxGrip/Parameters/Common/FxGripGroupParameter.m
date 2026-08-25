@@ -7,6 +7,9 @@
 //
 
 #import "FxGripGroupParameter.h"
+#import "FxTileableEffectBase+Notifications.h"
+#import "FxAPINotifications.h"
+#import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxTileableEffectBase.h"
 #import "NSDictionary+FxTileableEffect.h"
 //#import "GuruFxTileableEffect+Parameters.h"
@@ -24,27 +27,36 @@
 	return FxParameterType_Group;
 }
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
-	__block BOOL success = [effect.apiManager.paramCreateAPIv5
-							startParameterSubGroup: parameter.parameterName
-									   parameterID: parameter.parameterID
-									parameterFlags: parameter.parameterFlags];
+	BOOL success = [effect.apiManager.paramCreateAPIv5
+					startParameterSubGroup: parameter.parameterName
+							   parameterID: parameter.parameterID
+							parameterFlags: parameter.parameterFlags];
 	if (!success) {
 		return NO;
 	}
-	
-	NSError *error = nil;
-	
-	[effect addParametersWithGroupID:parameter.parameterID error:&error];
-	
+
+	// The group's children belong to whichever observer owns the configuration (the effect base's
+	// plist walk, or a plain host's own registration).
+	NSMutableDictionary *userInfo = @{FxTileableEffectGroupIDKey: @(parameter.parameterID)}.mutableCopy;
+	[effect.notifier postNotificationName:FxTileableEffectAddGroupParametersName
+								   object:effect
+								 userInfo:userInfo];
+	NSError *error = userInfo.fxError;
+	if (error != nil) {
+		NSLog(@"Error: could not add the child parameters of group #%d: %@", parameter.parameterID, error);
+		success = NO;
+	}
+
+	// The group is closed even when a child fails, so the parameter tree stays balanced.
 	success = [effect.apiManager.paramCreateAPIv5 endParameterSubGroup] && success;
 	return success;
 }
 
-- (instancetype)initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxTileableEffectBase>)effect;
+- (instancetype)initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect;
 {
-	self = [super init];
+	self = [super initWithDictionary:dictionary effect:effect];
 	if(self) {
 		_children = [NSMutableArray.alloc init];
 		
@@ -153,7 +165,7 @@
 	NSUInteger count = self.count;
 	for(id<FxParameter> child in self.children) {
 		if ([child conformsToProtocol:@protocol(FxSubParameters)]) {
-			count += ((id<FxSubParameters>)child).count;
+			count += ((id<FxSubParameters>)child).allCount;
 		}
 	}
 	return count;

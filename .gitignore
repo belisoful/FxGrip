@@ -54,8 +54,7 @@ fastlane/test_output
 .DS_Store
 
 # Personal files
-Personal Notes.md
-FxGrip Todo
+Local/
 
 # Session temp
 _to_delete/

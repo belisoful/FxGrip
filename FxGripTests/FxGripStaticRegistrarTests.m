@@ -150,12 +150,86 @@
 	XCTAssertEqualObjects(propertyRegistrar.registeredPlugInGroups, reference);
 }
 
+// The registeredPlugIns property is the processed result, not raw input: a subclass that
+// supplies it is declaring the finished set, so it is returned as-is. Subclasses feeding
+// unprocessed plugins use the plugInReferences / plugInsWithError: hooks, which run the
+// registration pipeline (see testRegisterPlugin_* below).
 - (void)testRegisteredPlugIns_Property {
 	FxGripStaticRegistrar *staticRegistrar = [StaticRegistrarPropertiesClass.alloc init];
-	
+
 	NSError *error = nil;
-	XCTAssertNil([staticRegistrar registeredPlugInsWithError:&error]);
-	XCTAssertNotNil(error);
+	NSArray *plugIns = [staticRegistrar registeredPlugInsWithError:&error];
+
+	XCTAssertEqualObjects(plugIns, staticRegistrar.registeredPlugIns);
+	XCTAssertNil(error);
+}
+
+#pragma mark registerPlugin: validation
+
+- (void)testRegisterPlugin_CompleteInformationWithLoadedClass_Registers {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	NSString *uuid = NSUUID.UUID.UUIDString;
+
+	BOOL success = [registrar registerPlugin:@{
+		kProPlugPlugIn_UuidProperty: uuid,
+		kProPlugPlugIn_ClassNameProperty: NSStringFromClass(StaticRegistrarTestClass.class),
+		kProPlugPlugIn_DisplayNameProperty: @"Loaded Plugin",
+		kProPlugPlugIn_GroupUUIDProperty: kGroup1UUID,
+		kProPlugPlugIn_ProtocolNamesProperty: @[],
+		kProPlugPlugIn_InfoStringProperty: @"",
+		kProPlugPlugIn_VersionProperty: @1000
+	}];
+
+	XCTAssertTrue(success);
+	XCTAssertTrue([registrar containsPluginUUID:uuid]);
+}
+
+- (void)testRegisterPlugin_UnloadedClassName_IsRejected {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	NSString *uuid = NSUUID.UUID.UUIDString;
+
+	// Every required field is present; only the class does not exist in the process.
+	BOOL success = [registrar registerPlugin:@{
+		kProPlugPlugIn_UuidProperty: uuid,
+		kProPlugPlugIn_ClassNameProperty: @"FxGripNoSuchPluginClassExists",
+		kProPlugPlugIn_DisplayNameProperty: @"Missing Class Plugin",
+		kProPlugPlugIn_GroupUUIDProperty: kGroup1UUID,
+		kProPlugPlugIn_ProtocolNamesProperty: @[],
+		kProPlugPlugIn_InfoStringProperty: @"",
+		kProPlugPlugIn_VersionProperty: @1000
+	}];
+
+	XCTAssertFalse(success);
+	XCTAssertFalse([registrar containsPluginUUID:uuid]);
+}
+
+- (void)testRegisterPlugin_MissingRequiredField_IsRejected {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	NSString *uuid = NSUUID.UUID.UUIDString;
+
+	BOOL success = [registrar registerPlugin:@{
+		kProPlugPlugIn_UuidProperty: uuid,
+		kProPlugPlugIn_ClassNameProperty: NSStringFromClass(StaticRegistrarTestClass.class),
+		kProPlugPlugIn_DisplayNameProperty: @"No Version Plugin",
+		kProPlugPlugIn_GroupUUIDProperty: kGroup1UUID,
+		kProPlugPlugIn_ProtocolNamesProperty: @[]
+	}];
+
+	XCTAssertFalse(success);
+	XCTAssertFalse([registrar containsPluginUUID:uuid]);
+}
+
+// The dictionaries the properties subclass supplies are exactly the kind of unvalidated
+// input the pipeline rejects: plugin 1 names an unloaded class, plugin 2 carries no
+// plugin uuid.
+- (void)testRegisterPlugins_PropertyClassDictionaries_AreAllRejected {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	StaticRegistrarPropertiesClass *properties = [StaticRegistrarPropertiesClass.alloc init];
+
+	[registrar registerPlugins:properties.registeredPlugIns];
+
+	XCTAssertFalse([registrar containsPluginUUID:kPlugin1UUID]);
+	XCTAssertFalse([registrar containsPluginUUID:kPlugin2UUID]);
 }
 
 

@@ -11,11 +11,11 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import <FxParameter.h>
+#import "FxParameter.h"
 #import "FxExtension.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 
-#import <FxTileableEffectBase.h>
+#import "FxTileableEffectBase.h"
 
 // This is the extension key for the main FxTileableEffect class if it were to implement the FxExtension Protocol
 
