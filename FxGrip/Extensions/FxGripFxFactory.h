@@ -10,7 +10,7 @@
 
 #import <FxFactory/FxFactory.h>
 #import "FxGripToggleExtension.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 
 #define kPropertiesFxFactoryDebugSetLicensed @"FxFactoryDebugSetLicensed"
 
@@ -126,7 +126,7 @@
 - (BOOL)showContactForm:(NSString * _Nullable)recipient subject:(NSString * _Nullable)subject message:(NSString * _Nullable) message;
 
 
-- (BOOL)extLoadWithEffect:(id<FxTileableEffectBase>_Nonnull)effect;
+- (BOOL)extLoadWithEffect:(id<FxGripTileableEffect>_Nonnull)effect;
 - (FxParameterType)extParameterTypeForString:(nullable NSString *)typeString;
 - (nullable Class)extParameterClassForType:(FxParameterType)type;
 
@@ -159,7 +159,7 @@
 
 
 
-@interface FxTileableEffectBase (FxFactory)
+@interface FxGripTileableEffect (FxFactory)
 
 // change plugin parameter UI
 - (void)setFxFactoryLicenseState:(BOOL)licensed;

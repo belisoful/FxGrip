@@ -81,7 +81,7 @@
 	@abstract   Returns the selector name registered with the host for a button parameter.
 	@discussion Introduced in FxGrip 1.0. The name is `kFxGripClickSelectorPrefix` followed
 				by the decimal parameter ID and takes no arguments. The selector is not
-				implemented; `FxTileableEffectBase` resolves it at runtime and dispatches
+				implemented; `FxGripTileableEffect` resolves it at runtime and dispatches
 				the click to `-parameterClicked:` with the decoded parameter ID.
 */
 + (nonnull NSString *)clickSelectorNameForParameter:(FxParameterId)parameterID;

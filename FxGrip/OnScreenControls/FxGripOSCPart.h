@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <Metal/Metal.h>
-#import "FxOnScreenControlBase.h"
+#import "FxGripOnScreenControl.h"
 
 /*!
 	@enum       FxGripOSCShapeOptions
@@ -35,7 +35,7 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCShapeOptions) {
 	@class      FxGripOSCPart
 	@abstract   One interactive piece of an on-screen control.
 	@discussion Introduced in FxGrip 1.0. A part owns a nonzero part number, answers
-				hit tests, draws itself, and applies drags. FxOnScreenControlBase
+				hit tests, draws itself, and applies drags. FxGripOnScreenControl
 				hit-tests parts last-added first (the part drawn on top wins), draws
 				them in order, and routes a drag to the active part. The base class
 				answers no hit, ignores drags, and draws nothing.
@@ -45,7 +45,7 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCShapeOptions) {
 @property (nonatomic, assign) NSInteger partID;
 
 /*! The owning control; set by addPart:. */
-@property (nonatomic, assign, nullable) FxOnScreenControlBase *control;
+@property (nonatomic, assign, nullable) FxGripOnScreenControl *control;
 
 /*! The cursor shown while the pointer hovers this part. A nil cursor uses the arrow. The
 	base applies it through the host's OSC API on mouse-moved. */
@@ -99,6 +99,30 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCShapeOptions) {
 				part returns NO.
 */
 - (BOOL)handlesOptionDrag;
+
+/*!
+	@method     handlesConstrainDrag
+	@abstract   YES when the part gives the Shift modifier its own meaning during a drag.
+	@discussion Introduced in FxGrip 1.0. The control constrains a Shift drag to the horizontal or
+				vertical axis at the base level for every part. A part that reads Shift itself while
+				dragging (a Bézier tangent snapping its angle to 45° increments) returns YES so the
+				base leaves Shift to it. The base part returns NO.
+*/
+- (BOOL)handlesConstrainDrag;
+
+/*!
+	@method     mouseDoubleClickAtObjectPoint:canvasPoint:modifiers:atTime:
+	@abstract   Handles a double-click on this part; returns YES when it acted and must re-render.
+	@discussion Introduced in FxGrip 1.0. FxPlug delivers no click count, so the control synthesizes
+				a double-click from two clicks on the same part within the system double-click
+				interval and a small canvas-pixel radius, then forwards it to the active part. A part
+				that returns NO leaves the second click to run as an ordinary mouse-down. The base
+				part does nothing and returns NO; a Bézier vertex handle toggles smooth and corner.
+*/
+- (BOOL)mouseDoubleClickAtObjectPoint:(CGPoint)objectPoint
+						  canvasPoint:(CGPoint)canvasPoint
+							modifiers:(FxModifierKeys)modifiers
+							   atTime:(CMTime)time;
 
 @end
 
@@ -171,7 +195,8 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	@abstract   A rotation spoke for the two-corner rectangle's angle overlay.
 	@discussion The spoke runs from the corners' midpoint to a tip handle at a fixed
 				canvas radius, aimed by the angle parameter; dragging writes the
-				pointer's canvas-space angle around the midpoint.
+				pointer's canvas-space angle around the midpoint. Holding Shift snaps
+				the written angle to 45° increments, the Final Cut Pro convention.
 */
 @interface FxGripOSCRectRotationHandlePart : FxGripOSCPart
 
@@ -254,10 +279,18 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 /*!
 	@class      FxGripOSCBoxCornerPart
 	@abstract   A resize handle on one corner of an FxGripOSCBoxPart-model box.
-	@discussion The handle sits on the rotated corner. Dragging resizes the box
-				about its fixed center: the pointer's position in the box's local
-				frame writes twice its absolute local x as the width and twice its
-				absolute local y as the height. The center and angle do not change.
+	@discussion The handle sits on the rotated corner. Dragging resizes the box in
+				its local frame, writing the width and height parameters. Modifiers
+				follow Final Cut Pro:
+
+				- The default anchors the diagonally opposite corner: it stays put
+				  while the center parameter shifts to follow the resize.
+				- Holding Option anchors the fixed center instead, resizing
+				  symmetrically; the center and angle do not change.
+				- Holding Shift locks the resize to the box's aspect ratio, scaling
+				  both dimensions by the dominant axis.
+
+				The angle never changes.
 */
 @interface FxGripOSCBoxCornerPart : FxGripOSCPart
 
@@ -327,9 +360,11 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 				parameter.
 	@discussion The spoke runs from the center to a tip handle at a fixed canvas
 				radius; dragging the tip writes the angle of the pointer around the
-				center, measured counterclockwise from +x in canvas space. The
-				parameter's unit is set by radiansPerUnit: 1 for a radian parameter
-				(the FxPlug angle-slider convention), M_PI / 180 for degrees.
+				center, measured counterclockwise from +x in canvas space. Holding
+				Shift snaps the written angle to 45° increments, the Final Cut Pro
+				convention. The parameter's unit is set by radiansPerUnit: 1 for a
+				radian parameter (the FxPlug angle-slider convention), M_PI / 180 for
+				degrees.
 */
 @interface FxGripOSCAngleDialPart : FxGripOSCPart
 
@@ -362,7 +397,11 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 				components: the lower-right corner, for example, writes x to the
 				upper-right parameter and y to the lower-left parameter. The corners
 				are not normalized; a corner dragged past its opposite inverts the
-				rectangle, matching the host's parameter behavior.
+				rectangle, matching the host's parameter behavior. Modifiers follow
+				Final Cut Pro: holding Shift locks the resize to the rectangle's aspect
+				ratio, and holding Option anchors the center, resizing symmetrically so
+				the opposite corner mirrors the dragged one, in place of the default
+				fixed opposite corner.
 */
 @interface FxGripOSCRectCornerPart : FxGripOSCPart
 
@@ -472,8 +511,10 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	@discussion The handle sits on the rim at the angle parameter's direction, with
 				a spoke drawn from the center. Dragging writes the pointer's angle
 				around the center, measured counterclockwise from +x in canvas
-				space; the radius parameter only positions the handle. With
-				FxGripOSCCirclePart and FxGripOSCCircleRadiusHandlePart it forms
+				space; the radius parameter only positions the handle. Holding Shift
+				snaps the written angle to 45° increments, the Final Cut Pro
+				convention. With FxGripOSCCirclePart and
+				FxGripOSCCircleRadiusHandlePart it forms
 				the movable, resizable, rotatable circle
 				(circlePartsWithBodyID:radiusHandleID:rotationHandleID:... composes
 				all three). radiansPerUnit follows the dial's convention: 1 for a
@@ -580,12 +621,26 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 				moves both tangent parameters by the same delta, so the curve's
 				shape at the vertex is preserved, the Final Cut Pro behavior. A
 				tangent parameter ID of 0 skips that side.
+
+				A double-click toggles the vertex between smooth and corner, the
+				Final Cut Pro convention. A corner vertex has both tangents on it,
+				so its segments run straight. Toggling to corner retracts both
+				tangents onto the vertex. Toggling back to smooth regenerates them
+				along the axis through the neighbor vertices at a sixth of that
+				span, so the neighbor parameter IDs must be set for the smooth
+				direction to be known. An endpoint uses its one neighbor.
 */
 @interface FxGripOSCBezierVertexHandlePart : FxGripOSCPart
 
 @property (nonatomic, assign) FxParameterId vertexParameterID;
 @property (nonatomic, assign) FxParameterId inTangentParameterID;
 @property (nonatomic, assign) FxParameterId outTangentParameterID;
+
+/*! The previous vertex in the chain, for regenerating a smooth tangent; 0 (the default) is none. */
+@property (nonatomic, assign) FxParameterId previousVertexParameterID;
+
+/*! The next vertex in the chain, for regenerating a smooth tangent; 0 (the default) is none. */
+@property (nonatomic, assign) FxParameterId nextVertexParameterID;
 
 /*! The hit radius around the handle, in canvas pixels. Defaults to 10. */
 @property (nonatomic, assign) double hitRadius;
@@ -601,22 +656,45 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 @end
 
 /*!
+	@enum       FxGripOSCTangentMirroring
+	@abstract   How a tangent handle drives the vertex's opposite tangent.
+	@constant   FxGripOSCTangentMirroringAligned    Collinear, the opposite keeps its own length.
+	@constant   FxGripOSCTangentMirroringSymmetric  Collinear, the opposite matches the dragged length.
+*/
+typedef NS_ENUM(NSInteger, FxGripOSCTangentMirroring) {
+	FxGripOSCTangentMirroringAligned	= 0,
+	FxGripOSCTangentMirroringSymmetric	= 1,
+};
+
+/*!
 	@class      FxGripOSCTangentHandlePart
 	@abstract   A Bézier tangent handle drawn with a stem from its vertex.
 	@discussion Dragging writes the pointer's object position to the tangent. When
 				oppositeTangentParameterID names the vertex's other tangent, the
-				opposite rotates to stay collinear through the vertex, keeping its
-				own length, so the vertex stays smooth; holding Option breaks the
-				pair and moves only the dragged tangent, the Final Cut Pro
-				convention. Collinearity is measured in the input-pixel frame.
+				opposite rotates to stay collinear through the vertex so the vertex
+				stays smooth. The mirroring property sets whether the opposite keeps
+				its own length (aligned, the default) or matches the dragged length
+				(symmetric, Motion's linked handles). The Final Cut Pro modifiers
+				apply:
+
+				- Option drag breaks the pair and moves only the dragged tangent.
+				- Shift drag snaps the handle's angle about the vertex to 45°
+				  increments, keeping the dragged length.
+				- Command click retracts the tangent onto the vertex, making that
+				  side of the vertex linear.
+
+				Angles, lengths, and collinearity are measured in the input-pixel frame.
 */
 @interface FxGripOSCTangentHandlePart : FxGripOSCPart
 
 @property (nonatomic, assign) FxParameterId vertexParameterID;
 @property (nonatomic, assign) FxParameterId tangentParameterID;
 
-/*! The vertex's other tangent for aligned mirroring; 0 (the default) is none. */
+/*! The vertex's other tangent for mirroring; 0 (the default) is none. */
 @property (nonatomic, assign) FxParameterId oppositeTangentParameterID;
+
+/*! How the opposite tangent follows this one. Defaults to aligned. */
+@property (nonatomic, assign) FxGripOSCTangentMirroring mirroring;
 
 /*! The hit radius around the handle, in canvas pixels. Defaults to 8. */
 @property (nonatomic, assign) double hitRadius;

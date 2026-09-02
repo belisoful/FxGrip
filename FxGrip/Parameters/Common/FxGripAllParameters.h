@@ -33,3 +33,6 @@
 #import "FxGripProgressParameter.h"
 #import "FxGripWebViewParameter.h"
 #import "FxGripVideoViewParameter.h"
+#import "FxGripLiveImageParameter.h"
+#import "FxGripTrackingOpacityParameter.h"
+#import "FxGripAnalyzerParameter.h"

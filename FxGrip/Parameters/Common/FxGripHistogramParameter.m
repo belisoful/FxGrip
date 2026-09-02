@@ -7,8 +7,8 @@
 //
 
 #import "FxGripHistogramParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"
 
 @implementation FxGripHistogramParameter

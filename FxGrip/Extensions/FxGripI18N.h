@@ -8,11 +8,11 @@
 #ifndef FxGripI18N_h
 #define FxGripI18N_h
 
-#import "FxExtension.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripExtension.h"
+#import "FxGripTileableEffect.h"
 
 
-@interface FxGripI18N : FxExtension
+@interface FxGripI18N : FxGripExtension
 {
 	NSDictionary*	localizeDictionary;
 	NSDictionary*	reverseLocalizeDictionary;
@@ -51,7 +51,7 @@
 
 
 
-@interface FxTileableEffectBase (I18N)
+@interface FxGripTileableEffect (I18N)
 
 @property (readonly, nullable, nonatomic) FxGripI18N* i18n;
 

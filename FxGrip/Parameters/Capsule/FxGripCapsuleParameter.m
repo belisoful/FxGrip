@@ -5,8 +5,8 @@
 
 #import "FxGripCapsuleParameter.h"
 #import "FxGripCapsule.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripDictionary.h"
 #import "FxGrip_ARC.h"
 

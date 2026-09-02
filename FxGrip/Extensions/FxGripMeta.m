@@ -6,9 +6,9 @@
 //
 
 #import "FxGripMeta.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "FxTileableEffectBase+Extensions.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "FxGripTileableEffect+Extensions.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTypes.h"
 #import "FxParameterFlags.h"
 #import "FxGripAPIAccessing.h"
@@ -21,6 +21,7 @@
 @interface FxGripMeta ()
 {
 	BOOL _documentAdded;   // tracked from the AddedToDocument notification
+	id _resolveObserver;
 }
 @end
 
@@ -41,9 +42,31 @@
 
 - (void)dealloc
 {
+	if (_resolveObserver != nil) {
+		[self.effect.notifier removeObserver:_resolveObserver];
+		NARC_RELEASE(_resolveObserver);
+	}
 	NARC_RELEASE(_manager);
 
 	SUPER_DEALLOC();
+}
+
+/*! Answers the host's meta-resolve notification with this extension's manager, so the meta
+	bridge works on a plain host that loads this extension. */
+- (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect
+{
+	BOOL loaded = [super extLoadWithEffect:effect];
+	if (loaded && _resolveObserver == nil) {
+		__weak typeof(self) weakSelf = self;
+		_resolveObserver = NARC_RETAIN([self.effect.notifier
+			addObserverForName:FxGripTileableEffectResolveMetaName
+						object:effect
+						 queue:nil
+					usingBlock:^(NSNotification *note) {
+			((NSMutableDictionary *)note.userInfo)[FxGripTileableEffectResolvedObjectKey] = weakSelf.manager;
+		}]);
+	}
+	return loaded;
 }
 
 - (nullable FxGripMetaManager *)manager
@@ -71,14 +94,14 @@
 {
 	NSInteger priority = [super ncPriority:aName];
 
-	if ([FxNotifyAPI_ParameterAddName isEqualToString:aName]) {
+	if ([FxGripNotifyAPI_ParameterAddName isEqualToString:aName]) {
 		return -20;
-	} else if ([FxTileableEffectAddedToDocumentName isEqualToString:aName]) {
+	} else if ([FxGripTileableEffectAddedToDocumentName isEqualToString:aName]) {
 		return -18;
-	} else if ([FxTileableEffectParameterChangedName isEqualToString:aName]) {
+	} else if ([FxGripTileableEffectParameterChangedName isEqualToString:aName]) {
 		// After the per-parameter startChangedTime: handlers have run.
 		return -10;
-	} else if ([FxTileableEffectFlushName isEqualToString:aName]) {
+	} else if ([FxGripTileableEffectFlushName isEqualToString:aName]) {
 		return -14;
 	}
 
@@ -267,19 +290,19 @@
 */
 - (void)extParameterChanged:(nonnull NSNotification*)notification
 {
-	NSNumber *pidNumber = notification.userInfo[FxTileableEffectParameterChangedIDKey];
+	NSNumber *pidNumber = notification.userInfo[FxGripTileableEffectParameterChangedIDKey];
 	if (!pidNumber) {
 		return;
 	}
 	FxParameterId pid = pidNumber.unsignedIntValue;
 
 	CMTime time = kCMTimeZero;
-	NSDictionary *timeDict = notification.userInfo[FxTileableEffectParameterChangedAtTimeKey];
+	NSDictionary *timeDict = notification.userInfo[FxGripTileableEffectParameterChangedAtTimeKey];
 	if ([timeDict isKindOfClass:NSDictionary.class]) {
 		time = CMTimeMakeFromDictionary((__bridge CFDictionaryRef)timeDict);
 	}
 
-	FxTileableEffectBase *effect = self.effect.effectBase;
+	FxGripTileableEffect *effect = self.effect.effectBase;
 	id<FxParameterTagsAPI_v1> tagsAPI = effect.apiManager.paramTagsAPIv1;
 	if (![tagsAPI respondsToSelector:@selector(applyTargetPresetForParameter:atTime:options:)]) {
 		return;
@@ -315,7 +338,7 @@
 @end
 
 
-@implementation FxTileableEffectBase (Meta)
+@implementation FxGripTileableEffect (Meta)
 
 - (nullable FxGripMetaManager *)meta
 {

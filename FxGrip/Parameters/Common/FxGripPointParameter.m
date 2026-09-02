@@ -7,11 +7,22 @@
 //
 
 #import "FxGripPointParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"
 
 @implementation FxGripPointParameter
+
+@synthesize options = _options;
+
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect
+{
+	self = [super initWithDictionary:dictionary effect:effect];
+	if (self != nil) {
+		_options = [FxGripPointOptions.alloc initWithConfiguration:dictionary];
+	}
+	return self;
+}
 
 + (nullable NSString*)parameterTypeString
 {

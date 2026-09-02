@@ -7,11 +7,11 @@
 //
 
 #import "FxGripFontMenuParameter.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "FxAPINotifications.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "FxGripAPINotifications.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 
 /*! The declared configuration with a mutable default, run through the host's parameter-policy
 	observers. */
@@ -23,9 +23,9 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	if ([declared isKindOfClass:NSDictionary.class]) {
 		config[kFxParameterProperty_Default] = [declared mutableCopy];
 	}
-	[effect.notifier postNotificationName:FxTileableEffectParameterPolicyName
+	[effect.notifier postNotificationName:FxGripTileableEffectParameterPolicyName
 								   object:effect
-								 userInfo:@{FxNotifyAPI_ParameterKey: config}];
+								 userInfo:@{FxGripNotifyAPI_ParameterKey: config}];
 	return config;
 }
 

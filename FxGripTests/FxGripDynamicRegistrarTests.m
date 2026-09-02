@@ -6,8 +6,8 @@
 #import <XCTest/XCTest.h>
 #import "FxGrip/FxGripStaticRegistrar.h"
 #import "FxGrip/FxGripDynamicRegistrar.h"
-#import "FxGrip/FxPluginGroupData.h"
-#import "FxGrip/FxRegisteredPlugin.h"
+#import "FxGrip/FxGripPluginGroupData.h"
+#import "FxGrip/FxGripRegisteredPlugin.h"
 #import <FxPlug/FxTypes.h>
 #import <FxGrip/FxGripTypes.h>
 
@@ -19,10 +19,10 @@
 
 #pragma mark - Test Plugin Classes
 
-@interface FxGripDynamicRegistrarValidTestPlugin : NSObject <FxRegisteredPlugin>
+@interface FxGripDynamicRegistrarValidTestPlugin : NSObject <FxGripRegisteredPlugin>
 @end
 @implementation FxGripDynamicRegistrarValidTestPlugin
-+ (nonnull id)registeredPlugInInformation:(nonnull id<FxRegisteringGroups>)groupRegistrar
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
 {
 	return @{
 		kProPlugPlugIn_UuidProperty: kDynPlugin1UUID,
@@ -37,10 +37,10 @@
 @end
 
 
-@interface FxGripDynamicRegistrarIncompleteTestPlugin : NSObject <FxRegisteredPlugin>
+@interface FxGripDynamicRegistrarIncompleteTestPlugin : NSObject <FxGripRegisteredPlugin>
 @end
 @implementation FxGripDynamicRegistrarIncompleteTestPlugin
-+ (nonnull id)registeredPlugInInformation:(nonnull id<FxRegisteringGroups>)groupRegistrar
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
 {
 	// Missing kProPlugPlugIn_VersionProperty, so -registerPlugin: cannot store it even
 	// though this method itself returns non-nil information.
@@ -55,14 +55,14 @@
 @end
 
 
-@interface FxGripDynamicRegistrarDisabledTestPlugin : NSObject <FxRegisteredPlugin>
+@interface FxGripDynamicRegistrarDisabledTestPlugin : NSObject <FxGripRegisteredPlugin>
 @end
 @implementation FxGripDynamicRegistrarDisabledTestPlugin
 + (BOOL)isRegisteredPlugIn
 {
 	return NO;
 }
-+ (nonnull id)registeredPlugInInformation:(nonnull id<FxRegisteringGroups>)groupRegistrar
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
 {
 	return @{};
 }
@@ -125,7 +125,7 @@
 - (void)testRegisterGroup_FxPluginGroupDataInstance_RegistersGroup {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 	NSString *uuid = NSUUID.UUID.UUIDString;
-	FxPluginGroupData *groupData = [FxPluginGroupData.alloc initWithGroupUUID:uuid groupName:@"Object Group"];
+	FxGripPluginGroupData *groupData = [FxGripPluginGroupData.alloc initWithGroupUUID:uuid groupName:@"Object Group"];
 
 	[registrar registerGroup:groupData];
 

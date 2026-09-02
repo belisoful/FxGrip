@@ -26,7 +26,7 @@
 static const FxParameterId kStructuredTestParameter = 51;
 
 @interface FxGripStructuredParameterTests : XCTestCase
-@property (nonatomic, strong) FxParamClassTestEffect *effect;
+@property (nonatomic, strong) FxGripParamClassTestEffect *effect;
 @end
 
 @implementation FxGripStructuredParameterTests
@@ -34,7 +34,7 @@ static const FxParameterId kStructuredTestParameter = 51;
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxParamClassTestEffect.alloc init];
+	self.effect = [FxGripParamClassTestEffect.alloc init];
 }
 
 - (void)tearDown
@@ -52,13 +52,13 @@ static const FxParameterId kStructuredTestParameter = 51;
 
 - (BOOL)add:(Class)parameterClass type:(NSString *)type extra:(NSDictionary *)extra
 {
-	NSDictionary *config = FxParamClassTestConfig(kStructuredTestParameter, type, @"Levels", extra);
+	NSDictionary *config = FxGripParamClassTestConfig(kStructuredTestParameter, type, @"Levels", extra);
 	return [parameterClass addParameter:config toEffect:(id)self.effect];
 }
 
 - (id)makeParameter:(Class)parameterClass type:(NSString *)type
 {
-	NSDictionary *config = FxParamClassTestConfig(kStructuredTestParameter, type, @"Levels", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kStructuredTestParameter, type, @"Levels", nil);
 	return [[parameterClass alloc] initWithDictionary:config effect:(id)self.effect];
 }
 
@@ -179,7 +179,7 @@ static const FxParameterId kStructuredTestParameter = 51;
 	parameter.byteDepth = 4;
 	parameter.fxDepth = kFxDepth_FLOAT32;
 
-	FxGripGradient *gradient = [parameter valueAtTime:FxParamClassTestTime(2, 30)];
+	FxGripGradient *gradient = [parameter valueAtTime:FxGripParamClassTestTime(2, 30)];
 
 	XCTAssertTrue(gradient != NULL);
 	XCTAssertEqual(gradient->count, (NSUInteger)8);
@@ -197,7 +197,7 @@ static const FxParameterId kStructuredTestParameter = 51;
 	parameter.fxDepth = kFxDepth_FLOAT32;
 	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
 
-	XCTAssertTrue([parameter valueAtTime:FxParamClassTestTime(0, 1)] == NULL);
+	XCTAssertTrue([parameter valueAtTime:FxGripParamClassTestTime(0, 1)] == NULL);
 }
 
 - (void)testRepeatedGradientReadsReplaceTheBuffer
@@ -207,8 +207,8 @@ static const FxParameterId kStructuredTestParameter = 51;
 	parameter.byteDepth = 1;
 	parameter.fxDepth = kFxDepth_UINT8;
 
-	[parameter valueAtTime:FxParamClassTestTime(0, 1)];
-	FxGripGradient *second = [parameter valueAtTime:FxParamClassTestTime(1, 30)];
+	[parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
+	FxGripGradient *second = [parameter valueAtTime:FxGripParamClassTestTime(1, 30)];
 
 	XCTAssertTrue(second != NULL);
 	XCTAssertEqual(self.effect.apiManager.paramGetAPIv6.reads.count, (NSUInteger)2);
@@ -224,14 +224,14 @@ static const FxParameterId kStructuredTestParameter = 51;
 - (void)testHistogramValueAtTimeReadsEveryChannel
 {
 	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
-	FxParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
+	FxGripParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
 	retrieval.blackIn = 0.05;
 	retrieval.blackOut = 0.1;
 	retrieval.whiteIn = 0.8;
 	retrieval.whiteOut = 0.9;
 	retrieval.gamma = 1.5;
 
-	FxGripHistogram *histogram = [parameter valueAtTime:FxParamClassTestTime(11, 30)];
+	FxGripHistogram *histogram = [parameter valueAtTime:FxGripParamClassTestTime(11, 30)];
 
 	XCTAssertTrue(histogram != NULL);
 	XCTAssertEqual(retrieval.reads.count, (NSUInteger)5);
@@ -247,12 +247,12 @@ static const FxParameterId kStructuredTestParameter = 51;
 - (void)testAChannelTheHostRefusesKeepsItsZeroHistogramValues
 {
 	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
-	FxParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
+	FxGripParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
 	retrieval.blackIn = 0.05;
 	retrieval.gamma = 1.5;
 	[retrieval.refusedHistogramChannels addObject:@2];
 
-	FxGripHistogram *histogram = [parameter valueAtTime:FxParamClassTestTime(0, 1)];
+	FxGripHistogram *histogram = [parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(histogram->component[1].blackIn, 0.05);
 	XCTAssertEqual(histogram->component[2].blackIn, 0.0);
@@ -274,7 +274,7 @@ static const FxParameterId kStructuredTestParameter = 51;
 - (void)testImageReferenceStartTimeComesFromTheTimingAPI
 {
 	FxGripImageRefParameter *parameter = [self makeImageRefParameter];
-	self.effect.apiManager.timingAPIv4.startTime = FxParamClassTestTime(15, 30);
+	self.effect.apiManager.timingAPIv4.startTime = FxGripParamClassTestTime(15, 30);
 
 	CMTime start = parameter.startTime;
 
@@ -287,7 +287,7 @@ static const FxParameterId kStructuredTestParameter = 51;
 - (void)testImageReferenceDurationComesFromTheTimingAPI
 {
 	FxGripImageRefParameter *parameter = [self makeImageRefParameter];
-	self.effect.apiManager.timingAPIv4.durationTime = FxParamClassTestTime(90, 30);
+	self.effect.apiManager.timingAPIv4.durationTime = FxGripParamClassTestTime(90, 30);
 
 	CMTime duration = parameter.durationTime;
 
@@ -301,7 +301,7 @@ static const FxParameterId kStructuredTestParameter = 51;
 {
 	FxGripPathParameter *parameter = [self makeParameter:FxGripPathParameter.class type:kFxParameterType_PathID];
 
-	[parameter valueAtTime:FxParamClassTestTime(8, 30)];
+	[parameter valueAtTime:FxGripParamClassTestTime(8, 30)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"path");
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"id"], @(kStructuredTestParameter));
@@ -333,7 +333,7 @@ static const FxParameterId kStructuredTestParameter = 51;
 	NSDictionary *stored = @{@"seed": @7};
 	self.effect.apiManager.paramGetAPIv6.customValue = stored;
 
-	XCTAssertEqualObjects([parameter valueAtTime:FxParamClassTestTime(3, 30)], stored);
+	XCTAssertEqualObjects([parameter valueAtTime:FxGripParamClassTestTime(3, 30)], stored);
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"custom");
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @3);
 }
@@ -353,14 +353,14 @@ static const FxParameterId kStructuredTestParameter = 51;
 	self.effect.apiManager.paramGetAPIv6.customValue = @"stored";
 	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
 
-	XCTAssertNil([parameter valueAtTime:FxParamClassTestTime(0, 1)]);
+	XCTAssertNil([parameter valueAtTime:FxGripParamClassTestTime(0, 1)]);
 }
 
 - (void)testSettingTheCustomValueWritesThroughTheVersionSixSettingAPI
 {
 	FxGripCustomParameter *parameter = [self makeCustomParameter];
 
-	[parameter setValue:@"stored" atTime:FxParamClassTestTime(5, 30)];
+	[parameter setValue:@"stored" atTime:FxGripParamClassTestTime(5, 30)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv6.lastWrite,
 						  (@{@"accessor": @"custom",

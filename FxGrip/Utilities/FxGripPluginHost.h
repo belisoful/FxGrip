@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 				while keeping its own FxTileableEffect implementation.
 
 				This is the smallest adoption step. The next steps up are composing an
-				FxTileableEffectBase inside the plug-in, and subclassing it. See the Adoption
+				FxGripTileableEffect inside the plug-in, and subclassing it. See the Adoption
 				article.
 */
 @interface FxGripPluginHost : NSObject <FxGripEffectHost>

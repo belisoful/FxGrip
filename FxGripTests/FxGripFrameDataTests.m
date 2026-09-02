@@ -45,11 +45,11 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 @end
 
 /*! Stands in for an effect whose project may or may not have a media folder. */
-@interface FxFrameDataTestMediaEffect : NSObject
+@interface FxGripFrameDataTestMediaEffect : NSObject
 @property (nonatomic, strong, nullable) NSURL *projectMediaFolder;
 @end
 
-@implementation FxFrameDataTestMediaEffect
+@implementation FxGripFrameDataTestMediaEffect
 
 - (id)effectBase
 {
@@ -409,7 +409,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 - (void)testAttachingAnEffectWithAMediaFolderActivatesSpilling
 {
-	FxFrameDataTestMediaEffect *effect = FxFrameDataTestMediaEffect.new;
+	FxGripFrameDataTestMediaEffect *effect = FxGripFrameDataTestMediaEffect.new;
 	effect.projectMediaFolder = self.sandboxURL;
 	self.store.spillThreshold = 0;
 
@@ -424,7 +424,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 - (void)testAttachingAnEffectWithoutAMediaFolderClearsTheCacheAndKeepsRecordsInline
 {
 	[self enableSpillWithThreshold:0];
-	FxFrameDataTestMediaEffect *effect = FxFrameDataTestMediaEffect.new;
+	FxGripFrameDataTestMediaEffect *effect = FxGripFrameDataTestMediaEffect.new;
 
 	XCTAssertFalse([self.store attachProjectMediaCacheForEffect:effect]);
 	[self.store setRecord:@"tiny" atIndex:3];

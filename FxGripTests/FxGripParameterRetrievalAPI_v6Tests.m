@@ -13,26 +13,26 @@
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxParameterFlags.h>
-#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripParameterRetrievalAPI_v6.h>
 
 static const FxParameterId kRetrievalTestParameter = 31;
 
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxRetrievalTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripRetrievalTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
 }
 
 // CoreMedia is not linked, so CMTime values are built without its symbols.
-static CMTime FxRetrievalTestTime(void)
+static CMTime FxGripRetrievalTestTime(void)
 {
 	return (CMTime){.value = 3, .timescale = 30, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
+static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
@@ -44,7 +44,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	Stands in for the host's FxParameterRetrievalAPI_v6. Every getter reports the value
 	configured on the stub and records that it ran.
 */
-@interface FxRetrievalTestStubAPI : NSObject
+@interface FxGripRetrievalTestStubAPI : NSObject
 @property (nonatomic, strong) NSMutableArray<NSString *> *calls;
 @property (nonatomic, assign) BOOL succeeds;
 @property (nonatomic, strong) id customValue;
@@ -58,7 +58,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 @property (nonatomic, assign) CMTime lastTime;
 @end
 
-@implementation FxRetrievalTestStubAPI
+@implementation FxGripRetrievalTestStubAPI
 
 - (instancetype)init
 {
@@ -202,11 +202,11 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 /*! Answers the parameter type the getters branch on. */
-@interface FxRetrievalTestDynamicAPI : NSObject
+@interface FxGripRetrievalTestDynamicAPI : NSObject
 @property (nonatomic, assign) FxParameterType type;
 @end
 
-@implementation FxRetrievalTestDynamicAPI
+@implementation FxGripRetrievalTestDynamicAPI
 
 - (FxParameterType)parameterType:(FxParameterId)parameterID
 {
@@ -220,13 +220,13 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	conformance to FxGripMutableParameter through -conformsToProtocol: so the protocol,
 	which is not a public framework header, needs no local redeclaration.
 */
-@interface FxRetrievalTestCustomValue : NSObject
+@interface FxGripRetrievalTestCustomValue : NSObject
 @property (nonatomic, strong) NSMutableArray<NSString *> *receivedGetters;
 @property (nonatomic, assign) BOOL conforms;
 @property (nonatomic, assign) BOOL getterSucceeds;
 @end
 
-@implementation FxRetrievalTestCustomValue
+@implementation FxGripRetrievalTestCustomValue
 
 - (instancetype)init
 {
@@ -337,10 +337,10 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 /*! Conforms to FxGripMutableParameter but implements none of its getters. */
-@interface FxRetrievalTestOpaqueValue : NSObject
+@interface FxGripRetrievalTestOpaqueValue : NSObject
 @end
 
-@implementation FxRetrievalTestOpaqueValue
+@implementation FxGripRetrievalTestOpaqueValue
 
 - (BOOL)conformsToProtocol:(Protocol *)aProtocol
 {
@@ -356,11 +356,11 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	A value that adopts FxGripCustomViewData. getCustomParameterValue: installs the effect
 	back-reference on such a value before handing back a successful read.
 */
-@interface FxRetrievalTestViewDataValue : NSObject
+@interface FxGripRetrievalTestViewDataValue : NSObject
 @property (nonatomic, weak) id parameterEffect;
 @end
 
-@implementation FxRetrievalTestViewDataValue
+@implementation FxGripRetrievalTestViewDataValue
 
 - (BOOL)conformsToProtocol:(Protocol *)aProtocol
 {
@@ -373,15 +373,15 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 /*!
-	FxTileableEffectBase's designated initializer registers into the process-wide
+	FxGripTileableEffect's designated initializer registers into the process-wide
 	notification center, so the wrapper is exercised against a stub carrying an isolated
 	notifier.
 */
-@interface FxRetrievalTestStubEffect : NSObject
+@interface FxGripRetrievalTestStubEffect : NSObject
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @end
 
-@implementation FxRetrievalTestStubEffect
+@implementation FxGripRetrievalTestStubEffect
 
 - (id)effectBase
 {
@@ -394,7 +394,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxRetrievalTestMakePriorityCenter();
+		_notifier = FxGripRetrievalTestMakePriorityCenter();
 	}
 	return self;
 }
@@ -404,10 +404,10 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 #pragma mark - Tests
 
 @interface FxGripParameterRetrievalAPI_v6Tests : XCTestCase
-@property (nonatomic, strong) FxRetrievalTestStubEffect *effect;
-@property (nonatomic, strong) FxRetrievalTestStubAPI *hostAPI;
-@property (nonatomic, strong) FxRetrievalTestDynamicAPI *dynamicAPI;
-@property (nonatomic, strong) FxRetrievalTestCustomValue *customValue;
+@property (nonatomic, strong) FxGripRetrievalTestStubEffect *effect;
+@property (nonatomic, strong) FxGripRetrievalTestStubAPI *hostAPI;
+@property (nonatomic, strong) FxGripRetrievalTestDynamicAPI *dynamicAPI;
+@property (nonatomic, strong) FxGripRetrievalTestCustomValue *customValue;
 @property (nonatomic, strong) NSMutableArray<NSNotification *> *posted;
 // The notifier holds its observers weakly, so every token is retained for the test.
 @property (nonatomic, strong) NSMutableArray *observerTokens;
@@ -418,18 +418,18 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxRetrievalTestStubEffect.alloc init];
-	self.hostAPI = [FxRetrievalTestStubAPI.alloc init];
-	self.dynamicAPI = [FxRetrievalTestDynamicAPI.alloc init];
+	self.effect = [FxGripRetrievalTestStubEffect.alloc init];
+	self.hostAPI = [FxGripRetrievalTestStubAPI.alloc init];
+	self.dynamicAPI = [FxGripRetrievalTestDynamicAPI.alloc init];
 	self.dynamicAPI.type = FxParameterType_Float;
-	self.customValue = [FxRetrievalTestCustomValue.alloc init];
+	self.customValue = [FxGripRetrievalTestCustomValue.alloc init];
 	self.hostAPI.customValue = self.customValue;
 
 	self.posted = NSMutableArray.new;
 	self.observerTokens = NSMutableArray.new;
-	for (NSNotificationName name in @[FxNotifyAPI_ParameterGetFlagsPreName,
-									  FxNotifyAPI_ParameterGetFlagsName,
-									  FxNotifyAPI_ParameterGetStringValueName]) {
+	for (NSNotificationName name in @[FxGripNotifyAPI_ParameterGetFlagsPreName,
+									  FxGripNotifyAPI_ParameterGetFlagsName,
+									  FxGripNotifyAPI_ParameterGetStringValueName]) {
 		[self observeName:name usingBlock:^(NSNotification *notification) {
 			[self.posted addObject:notification];
 		}];
@@ -470,14 +470,14 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 - (FxGripParameterRetrievalAPI_v6 *)retrievalAPI
 {
 	return [FxGripParameterRetrievalAPI_v6.alloc initWithAPI:(id)self.hostAPI
-										   dynamicParamAPIv4:(id)self.dynamicAPI
+										   parameterInfoAPIv1:(id)self.dynamicAPI
 													  effect:(id)self.effect];
 }
 
 - (FxGripParameterRetrievalAPI_v6 *)retrievalAPIWithoutDynamicAPI
 {
 	return [FxGripParameterRetrievalAPI_v6.alloc initWithAPI:(id)self.hostAPI
-										   dynamicParamAPIv4:nil
+										   parameterInfoAPIv1:nil
 													  effect:(id)self.effect];
 }
 
@@ -495,11 +495,11 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getBoolValue:&value
 									fromParameter:kRetrievalTestParameter
-										   atTime:FxRetrievalTestTime()]);
+										   atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertTrue(value);
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"bool"]);
-	XCTAssertTrue(FxRetrievalTestTimesEqual(self.hostAPI.lastTime, FxRetrievalTestTime()));
+	XCTAssertTrue(FxGripRetrievalTestTimesEqual(self.hostAPI.lastTime, FxGripRetrievalTestTime()));
 }
 
 - (void)testGetFloatValueReadsTheHostValue
@@ -509,7 +509,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getFloatValue:&value
 									 fromParameter:kRetrievalTestParameter
-											atTime:FxRetrievalTestTime()]);
+											atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(value, 0.75);
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"float"]);
@@ -522,7 +522,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getIntValue:&value
 								   fromParameter:kRetrievalTestParameter
-										  atTime:FxRetrievalTestTime()]);
+										  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(value, 12);
 }
@@ -534,7 +534,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getFontName:&fontName
 								   fromParameter:kRetrievalTestParameter
-										  atTime:FxRetrievalTestTime()]);
+										  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqualObjects(fontName, @"Helvetica");
 }
@@ -547,7 +547,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 											 numSamples:4
 												  depth:kFxDepth_FLOAT32
 										  fromParameter:kRetrievalTestParameter
-												 atTime:FxRetrievalTestTime()]);
+												 atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(samples[0], 1);
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"gradient"]);
@@ -564,7 +564,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 												   Gamma:&gamma
 											  forChannel:kFxHistogramChannel_RGB
 										   fromParameter:kRetrievalTestParameter
-												  atTime:FxRetrievalTestTime()]);
+												  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(blackIn, 1);
 	XCTAssertEqual(gamma, 5);
@@ -578,7 +578,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getPathID:&pathID
 								 fromParameter:kRetrievalTestParameter
-										atTime:FxRetrievalTestTime()]);
+										atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(pathID, (FxPathID)&storage);
 }
@@ -592,7 +592,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 									   blueValue:&blue
 									  alphaValue:&alpha
 								   fromParameter:kRetrievalTestParameter
-										  atTime:FxRetrievalTestTime()]);
+										  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(red, 0.1);
 	XCTAssertEqual(alpha, 0.4);
@@ -606,7 +606,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 									  greenValue:&green
 									   blueValue:&blue
 								   fromParameter:kRetrievalTestParameter
-										  atTime:FxRetrievalTestTime()]);
+										  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(blue, 0.3);
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"rgb"]);
@@ -619,7 +619,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue([self.retrievalAPI getXValue:&x
 										YValue:&y
 								 fromParameter:kRetrievalTestParameter
-										atTime:FxRetrievalTestTime()]);
+										atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(x, 0.25);
 	XCTAssertEqual(y, 0.75);
@@ -632,9 +632,9 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	double floatValue = 0;
 	int intValue = 0;
 
-	XCTAssertFalse([self.retrievalAPI getBoolValue:&boolValue fromParameter:kRetrievalTestParameter atTime:FxRetrievalTestTime()]);
-	XCTAssertFalse([self.retrievalAPI getFloatValue:&floatValue fromParameter:kRetrievalTestParameter atTime:FxRetrievalTestTime()]);
-	XCTAssertFalse([self.retrievalAPI getIntValue:&intValue fromParameter:kRetrievalTestParameter atTime:FxRetrievalTestTime()]);
+	XCTAssertFalse([self.retrievalAPI getBoolValue:&boolValue fromParameter:kRetrievalTestParameter atTime:FxGripRetrievalTestTime()]);
+	XCTAssertFalse([self.retrievalAPI getFloatValue:&floatValue fromParameter:kRetrievalTestParameter atTime:FxGripRetrievalTestTime()]);
+	XCTAssertFalse([self.retrievalAPI getIntValue:&intValue fromParameter:kRetrievalTestParameter atTime:FxGripRetrievalTestTime()]);
 }
 
 #pragma mark Custom parameter interception
@@ -643,7 +643,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	[self markParameterCustom];
 	FxGripParameterRetrievalAPI_v6 *api = self.retrievalAPI;
-	CMTime time = FxRetrievalTestTime();
+	CMTime time = FxGripRetrievalTestTime();
 	BOOL boolValue = NO;
 	double floatValue = 0, red = 0, green = 0, blue = 0, alpha = 0, x = 0, y = 0;
 	double blackIn = 0, blackOut = 0, whiteIn = 0, whiteOut = 0, gamma = 0;
@@ -689,7 +689,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertFalse([self.retrievalAPI getFloatValue:&value
 									  fromParameter:kRetrievalTestParameter
-											 atTime:FxRetrievalTestTime()]);
+											 atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqualObjects(self.hostAPI.calls, (@[@"custom", @"float"]),
 						  @"a failed custom read leaves the plain host getter in charge");
@@ -705,7 +705,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getFloatValue:&value
 									 fromParameter:kRetrievalTestParameter
-											atTime:FxRetrievalTestTime()]);
+											atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(value, 0.5);
 	XCTAssertEqualObjects(self.hostAPI.calls, (@[@"custom", @"float"]));
@@ -714,13 +714,13 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)testACustomValueThatDoesNotImplementTheGetterFallsBackToTheHostGetter
 {
 	[self markParameterCustom];
-	self.hostAPI.customValue = [FxRetrievalTestOpaqueValue.alloc init];
+	self.hostAPI.customValue = [FxGripRetrievalTestOpaqueValue.alloc init];
 	self.hostAPI.floatValue = 0.5;
 	double value = 0;
 
 	XCTAssertTrue([self.retrievalAPI getFloatValue:&value
 									 fromParameter:kRetrievalTestParameter
-											atTime:FxRetrievalTestTime()]);
+											atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqual(value, 0.5);
 }
@@ -733,7 +733,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertFalse([self.retrievalAPI getFloatValue:&value
 									  fromParameter:kRetrievalTestParameter
-											 atTime:FxRetrievalTestTime()]);
+											 atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"custom"]);
 }
@@ -746,7 +746,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPIWithoutDynamicAPI getFloatValue:&value
 													 fromParameter:kRetrievalTestParameter
-															atTime:FxRetrievalTestTime()]);
+															atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"float"]);
 	XCTAssertEqualObjects(self.customValue.receivedGetters, @[]);
@@ -760,7 +760,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getCustomParameterValue:&value
 											   fromParameter:kRetrievalTestParameter
-													  atTime:FxRetrievalTestTime()]);
+													  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertTrue((id)value == (id)self.customValue);
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"custom"]);
@@ -768,13 +768,13 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testGetCustomParameterValueInstallsTheEffectOnACustomViewDataValue
 {
-	FxRetrievalTestViewDataValue *viewData = [FxRetrievalTestViewDataValue.alloc init];
+	FxGripRetrievalTestViewDataValue *viewData = [FxGripRetrievalTestViewDataValue.alloc init];
 	self.hostAPI.customValue = viewData;
 	NSObject<NSSecureCoding, NSCopying> *value = nil;
 
 	XCTAssertTrue([self.retrievalAPI getCustomParameterValue:&value
 											   fromParameter:kRetrievalTestParameter
-													  atTime:FxRetrievalTestTime()]);
+													  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertTrue(viewData.parameterEffect == (id)self.effect);
 }
@@ -786,21 +786,21 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertTrue([self.retrievalAPI getCustomParameterValue:&value
 											   fromParameter:kRetrievalTestParameter
-													  atTime:FxRetrievalTestTime()]);
+													  atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertNil(value);
 }
 
 - (void)testGetCustomParameterValueLeavesTheEffectUninstalledWhenTheHostReportsFailure
 {
-	FxRetrievalTestViewDataValue *viewData = [FxRetrievalTestViewDataValue.alloc init];
+	FxGripRetrievalTestViewDataValue *viewData = [FxGripRetrievalTestViewDataValue.alloc init];
 	self.hostAPI.customValue = viewData;
 	self.hostAPI.succeeds = NO;
 	NSObject<NSSecureCoding, NSCopying> *value = nil;
 
 	XCTAssertFalse([self.retrievalAPI getCustomParameterValue:&value
 												fromParameter:kRetrievalTestParameter
-													   atTime:FxRetrievalTestTime()]);
+													   atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertNil(viewData.parameterEffect,
 				 @"a failed read hands back no value the effect can own");
@@ -816,8 +816,8 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue([self.retrievalAPI getParameterFlags:&flags fromParameter:kRetrievalTestParameter]);
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"flags"]);
-	XCTAssertEqualObjects(self.postedNames, (@[FxNotifyAPI_ParameterGetFlagsPreName,
-											   FxNotifyAPI_ParameterGetFlagsName]));
+	XCTAssertEqualObjects(self.postedNames, (@[FxGripNotifyAPI_ParameterGetFlagsPreName,
+											   FxGripNotifyAPI_ParameterGetFlagsName]));
 }
 
 /*!
@@ -842,7 +842,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	self.hostAPI.flags = kFxParameterFlag_HIDDEN;
 	__block NSDictionary *seen = nil;
-	[self observeName:FxNotifyAPI_ParameterGetFlagsName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetFlagsName usingBlock:^(NSNotification *notification) {
 		seen = notification.userInfo.fxParameter.copy;
 	}];
 	FxParameterFlags flags = 0;
@@ -856,7 +856,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)testTheFlagsPreNotificationRunsBeforeTheHostIsAsked
 {
 	__block NSUInteger callsAtPre = NSUIntegerMax;
-	[self observeName:FxNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
 		callsAtPre = self.hostAPI.calls.count;
 	}];
 	FxParameterFlags flags = 0;
@@ -868,7 +868,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testAnObserverAnsweringThePreNotificationSuppliesTheFlagsWithoutTheHost
 {
-	[self observeName:FxNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
 		notification.userInfo.mutableFxParameter[kFxParameterProperty_Flags] =
 			@(kFxParameterFlag_COLLAPSED);
 		((NSMutableDictionary *)notification.userInfo).fxResult = @YES;
@@ -879,12 +879,12 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertEqual(flags, (FxParameterFlags)kFxParameterFlag_COLLAPSED);
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterGetFlagsPreName]);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterGetFlagsPreName]);
 }
 
 - (void)testAnObserverAnsweringThePreNotificationWithNOReportsFailure
 {
-	[self observeName:FxNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
 		((NSMutableDictionary *)notification.userInfo).fxResult = @NO;
 	}];
 	FxParameterFlags flags = 0xFFFF;
@@ -898,7 +898,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)testAnObserverRewritingTheReadFlagsChangesWhatTheCallerSees
 {
 	self.hostAPI.flags = kFxParameterFlag_HIDDEN;
-	[self observeName:FxNotifyAPI_ParameterGetFlagsName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetFlagsName usingBlock:^(NSNotification *notification) {
 		notification.userInfo.mutableFxParameter[kFxParameterProperty_Flags] =
 			@(kFxParameterFlag_DISABLED);
 	}];
@@ -911,9 +911,9 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testAnObserverSettingAnErrorOnTheReadFlagsReportsFailure
 {
-	[self observeName:FxNotifyAPI_ParameterGetFlagsName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetFlagsName usingBlock:^(NSNotification *notification) {
 		((NSMutableDictionary *)notification.userInfo).fxError =
-			[NSError errorWithDomain:@"FxRetrievalTest" code:1 userInfo:nil];
+			[NSError errorWithDomain:@"FxGripRetrievalTest" code:1 userInfo:nil];
 	}];
 	FxParameterFlags flags = 0;
 
@@ -927,7 +927,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertFalse([self.retrievalAPI getParameterFlags:&flags fromParameter:kRetrievalTestParameter]);
 
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterGetFlagsPreName]);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterGetFlagsPreName]);
 }
 
 #pragma mark getStringParameterValue:
@@ -936,7 +936,7 @@ static BOOL FxRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	self.hostAPI.stringValue = @"HostValue";
 	__block NSString *seen = nil;
-	[self observeName:FxNotifyAPI_ParameterGetStringValueName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetStringValueName usingBlock:^(NSNotification *notification) {
 		seen = notification.userInfo.fxParameter[kFxParameterProperty_Default];
 	}];
 	NSString *value = nil;

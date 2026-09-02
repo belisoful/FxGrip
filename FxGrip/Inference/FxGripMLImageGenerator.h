@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 				default leaves the destination as the host provided it; override it to clear or
 				draw a placeholder.
 
-				The generator tile geometry is inherited from FxTileableGeneratorBase's convention:
+				The generator tile geometry is inherited from FxGripTileableGenerator's convention:
 				the destination rect is the output's pixel bounds and there is no source tile.
 */
 @interface FxGripMLImageGenerator : FxGripMLImageEffect

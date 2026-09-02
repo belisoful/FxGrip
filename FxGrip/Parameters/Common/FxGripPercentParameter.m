@@ -7,8 +7,8 @@
 //
 
 #import "FxGripPercentParameter.h"
-#import "NSDictionary+FxTileableEffect.h"
-#import "FxTileableEffectBase.h"
+#import "NSDictionary+FxGripTileableEffect.h"
+#import "FxGripTileableEffect.h"
 
 @implementation FxGripPercentParameter
 

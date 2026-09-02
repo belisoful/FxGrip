@@ -12,8 +12,8 @@
 #import <CoreMedia/CoreMedia.h>
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripParameterFlags.h>
-#import <FxGrip/FxAPINotifications.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
 #import <FxGrip/FxGripParameterData.h>
 
 static const FxParameterId kPDataTestParamA = 21;
@@ -21,7 +21,7 @@ static const FxParameterId kPDataTestParamB = 22;
 
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxPDataTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripPDataTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
@@ -29,14 +29,14 @@ static NSNotificationCenter *FxPDataTestMakePriorityCenter(void)
 
 /*!
 	The payload the creation API posts: the parameter dictionary sits under
-	FxNotifyAPI_ParameterKey and the top level repeats the ID. The nested dictionary is
+	FxGripNotifyAPI_ParameterKey and the top level repeats the ID. The nested dictionary is
 	mutable, matching FxGripParameterCreationAPI_v5.
 */
-static NSMutableDictionary *FxPDataTestAddUserInfo(FxParameterId parameterID)
+static NSMutableDictionary *FxGripPDataTestAddUserInfo(FxParameterId parameterID)
 {
 	return @{
 		kFxParameterProperty_Id: @(parameterID),
-		FxNotifyAPI_ParameterKey: @{
+		FxGripNotifyAPI_ParameterKey: @{
 			kFxParameterProperty_Id: @(parameterID),
 			kFxParameterProperty_Type: @(FxParameterType_Float),
 			kFxParameterProperty_Name: @"Test Parameter",
@@ -47,31 +47,31 @@ static NSMutableDictionary *FxPDataTestAddUserInfo(FxParameterId parameterID)
 	}.mutableCopy;
 }
 
-static NSNotification *FxPDataTestNotification(NSNotificationName name, id object, NSDictionary *userInfo)
+static NSNotification *FxGripPDataTestNotification(NSNotificationName name, id object, NSDictionary *userInfo)
 {
 	return [NSNotification notificationWithName:name object:object userInfo:userInfo];
 }
 
 /*! Builds the userInfo shape the flag and menu handlers read. */
-static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameterID, NSDictionary *entries)
+static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId parameterID, NSDictionary *entries)
 {
 	NSMutableDictionary *parameter = @{kFxParameterProperty_Id: @(parameterID)}.mutableCopy;
 	[parameter addEntriesFromDictionary:entries];
 	return @{
 		kFxParameterProperty_Id: @(parameterID),
-		FxNotifyAPI_ParameterKey: parameter
+		FxGripNotifyAPI_ParameterKey: parameter
 	}.mutableCopy;
 }
 
 #pragma mark - Test doubles
 
 // Records every custom-value write the flush performs.
-@interface FxPDataTestStubSetAPI : NSObject
+@interface FxGripPDataTestStubSetAPI : NSObject
 @property (nonatomic, strong) NSMutableArray *values;
 @property (nonatomic, strong) NSMutableArray<NSNumber *> *parameterIDs;
 @end
 
-@implementation FxPDataTestStubSetAPI
+@implementation FxGripPDataTestStubSetAPI
 
 - (instancetype)init
 {
@@ -95,13 +95,13 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 @end
 
 // Hands the extension the dictionary stored in the document.
-@interface FxPDataTestStubGetAPI : NSObject
+@interface FxGripPDataTestStubGetAPI : NSObject
 @property (nonatomic, strong) NSObject<NSSecureCoding, NSCopying> *storedValue;
 @property (nonatomic, assign) FxParameterId lastRequestedParameter;
 @property (nonatomic, assign) NSUInteger requestCount;
 @end
 
-@implementation FxPDataTestStubGetAPI
+@implementation FxGripPDataTestStubGetAPI
 
 - (BOOL)getCustomParameterValue:(NSObject<NSSecureCoding, NSCopying> * _Nullable * _Nonnull)value
 				  fromParameter:(UInt32)parameterID
@@ -118,25 +118,25 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 @end
 
-@interface FxPDataTestStubAPIManager : NSObject
-@property (nonatomic, strong) FxPDataTestStubGetAPI *paramGetAPIv6;
-@property (nonatomic, strong) FxPDataTestStubSetAPI *paramSetAPIv5;
+@interface FxGripPDataTestStubAPIManager : NSObject
+@property (nonatomic, strong) FxGripPDataTestStubGetAPI *paramGetAPIv6;
+@property (nonatomic, strong) FxGripPDataTestStubSetAPI *paramSetAPIv5;
 @end
 
-@implementation FxPDataTestStubAPIManager
+@implementation FxGripPDataTestStubAPIManager
 @end
 
-// FxTileableEffectBase's designated initializer registers into the process-wide
+// FxGripTileableEffect's designated initializer registers into the process-wide
 // notification center, so the extension is exercised against a stub exposing the
 // members FxGripParameterData reads.
-@interface FxPDataTestStubEffect : NSObject
+@interface FxGripPDataTestStubEffect : NSObject
 @property (nonatomic, assign) BOOL addedToDocument;
 @property (nonatomic, assign) BOOL addedParameters;
 @property (nonatomic, strong) NSNotificationCenter *notifier;
-@property (nonatomic, strong) FxPDataTestStubAPIManager *apiManager;
+@property (nonatomic, strong) FxGripPDataTestStubAPIManager *apiManager;
 @end
 
-@implementation FxPDataTestStubEffect
+@implementation FxGripPDataTestStubEffect
 
 - (id)effectBase
 {
@@ -149,10 +149,10 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxPDataTestMakePriorityCenter();
-		_apiManager = FxPDataTestStubAPIManager.new;
-		_apiManager.paramGetAPIv6 = FxPDataTestStubGetAPI.new;
-		_apiManager.paramSetAPIv5 = FxPDataTestStubSetAPI.new;
+		_notifier = FxGripPDataTestMakePriorityCenter();
+		_apiManager = FxGripPDataTestStubAPIManager.new;
+		_apiManager.paramGetAPIv6 = FxGripPDataTestStubGetAPI.new;
+		_apiManager.paramSetAPIv5 = FxGripPDataTestStubSetAPI.new;
 	}
 	return self;
 }
@@ -163,7 +163,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 @interface FxGripParameterDataTests : XCTestCase
 @property (nonatomic, strong) FxGripParameterData *extension;
-@property (nonatomic, strong) FxPDataTestStubEffect *effect;
+@property (nonatomic, strong) FxGripPDataTestStubEffect *effect;
 @end
 
 @implementation FxGripParameterDataTests
@@ -172,7 +172,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 {
 	[super setUp];
 	self.extension = [FxGripParameterData.alloc init];
-	self.effect = [FxPDataTestStubEffect.alloc init];
+	self.effect = [FxGripPDataTestStubEffect.alloc init];
 	[self.extension extLoadWithEffect:(id)self.effect];
 }
 
@@ -183,12 +183,12 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 	[super tearDown];
 }
 
-- (FxPDataTestStubSetAPI *)setAPI
+- (FxGripPDataTestStubSetAPI *)setAPI
 {
 	return self.effect.apiManager.paramSetAPIv5;
 }
 
-- (FxPDataTestStubGetAPI *)getAPI
+- (FxGripPDataTestStubGetAPI *)getAPI
 {
 	return self.effect.apiManager.paramGetAPIv6;
 }
@@ -196,8 +196,8 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 /*! Drives one creation-API notification, returning the payload that was posted. */
 - (NSMutableDictionary *)seedParameter:(FxParameterId)parameterID
 {
-	NSMutableDictionary *userInfo = FxPDataTestAddUserInfo(parameterID);
-	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName,
+	NSMutableDictionary *userInfo = FxGripPDataTestAddUserInfo(parameterID);
+	[self.extension extAPIParameterAdd:FxGripPDataTestNotification(FxGripNotifyAPI_ParameterAddName,
 															   self.effect,
 															   userInfo)];
 	return userInfo;
@@ -212,7 +212,8 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 		kFxParameterProperty_Name: @"Plugin Parameter Data",
 		kFxParameterProperty_Flags: @(0)
 	}];
-	self.effect.addedToDocument = YES;
+	// The extension tracks document entry from the notification, as it does under the base.
+	[self.effect.notifier postNotificationName:FxGripTileableEffectAddedToDocumentName object:self.effect];
 }
 
 #pragma mark Registration
@@ -231,22 +232,22 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 - (void)testHandlerPriorityOrdersTheRecordPassesAroundTheEffect
 {
-	XCTAssertEqual([self.extension ncPriority:FxNotifyAPI_ParameterAddName], (NSInteger)-20);
-	XCTAssertEqual([self.extension ncPriority:FxTileableEffectAddedToDocumentName], (NSInteger)-18);
+	XCTAssertEqual([self.extension ncPriority:FxGripNotifyAPI_ParameterAddName], (NSInteger)-20);
+	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectAddedToDocumentName], (NSInteger)-18);
 	// Flush persists AFTER the base's −14 flag flush so it captures the flag words that
 	// pass writes; a value at or before −14 would flush a store re-dirtied moments later.
-	XCTAssertEqual([self.extension ncPriority:FxTileableEffectFlushName], (NSInteger)-13);
-	XCTAssertEqual([self.extension ncPriority:FxTileableEffectInitName], FxExtensionDefaultPriority);
-	XCTAssertEqual([self.extension ncPriority:nil], FxExtensionDefaultPriority);
+	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectFlushName], (NSInteger)-13);
+	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectInitName], FxGripExtensionDefaultPriority);
+	XCTAssertEqual([self.extension ncPriority:nil], FxGripExtensionDefaultPriority);
 }
 
 - (void)testExtAddParametersRegistersTheHiddenParameterDataParameter
 {
 	NSMutableArray *parameters = NSMutableArray.new;
 
-	[self.extension extAddParameters:FxPDataTestNotification(FxTileableEffectAddParametersName,
+	[self.extension extAddParameters:FxGripPDataTestNotification(FxGripTileableEffectAddParametersName,
 															 self.effect,
-															 @{FxTileableEffectParametersKey: parameters})];
+															 @{FxGripTileableEffectParametersKey: parameters})];
 
 	XCTAssertEqual(parameters.count, (NSUInteger)1);
 
@@ -285,10 +286,10 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 {
 	NSMutableDictionary *userInfo = @{
 		kFxParameterProperty_Id: @(kPDataTestParamA),
-		FxNotifyAPI_ParameterKey: @{kFxParameterProperty_Name: @"No Nested Id"}.mutableCopy
+		FxGripNotifyAPI_ParameterKey: @{kFxParameterProperty_Name: @"No Nested Id"}.mutableCopy
 	}.mutableCopy;
 
-	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName,
+	[self.extension extAPIParameterAdd:FxGripPDataTestNotification(FxGripNotifyAPI_ParameterAddName,
 															   self.effect,
 															   userInfo)];
 
@@ -298,9 +299,9 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 - (void)testParameterAddWithoutAnyIdSeedsNothing
 {
-	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName,
+	[self.extension extAPIParameterAdd:FxGripPDataTestNotification(FxGripNotifyAPI_ParameterAddName,
 															   self.effect,
-															   @{FxNotifyAPI_ParameterKey: @{}.mutableCopy})];
+															   @{FxGripNotifyAPI_ParameterKey: @{}.mutableCopy})];
 
 	XCTAssertFalse(self.extension.isLoaded);
 	XCTAssertFalse(self.extension.isCacheDirty);
@@ -310,7 +311,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 {
 	NSMutableDictionary *userInfo = [self seedParameter:kPDataTestParamA];
 
-	NSMutableDictionary *posted = userInfo[FxNotifyAPI_ParameterKey];
+	NSMutableDictionary *posted = userInfo[FxGripNotifyAPI_ParameterKey];
 	posted[kFxParameterProperty_Name] = @"Renamed After The Post";
 
 	XCTAssertEqualObjects(self.extension.data[@(kPDataTestParamA)][kFxParameterProperty_Name],
@@ -397,14 +398,14 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 {
 	[self seedParameter:kPDataTestParamA];
 	[self.extension extAPIParameterSetFlags:
-		FxPDataTestNotification(FxNotifyAPI_ParameterSetFlagsName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamA,
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterSetFlagsName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamA,
 				@{kFxParameterProperty_Flags: @(kFxParameterFlag_NO_DEBUG | kFxParameterFlag_HIDDEN_PROXY)}))];
 
-	NSMutableDictionary *userInfo = FxPDataTestParameterUserInfo(kPDataTestParamA,
+	NSMutableDictionary *userInfo = FxGripPDataTestParameterUserInfo(kPDataTestParamA,
 		@{kFxParameterProperty_Flags: @(kFxParameterFlag_DISABLED)});
 	[self.extension extAPIParameterGetFlags:
-		FxPDataTestNotification(FxNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
 
 	FxParameterFlags merged = ((NSNumber *)userInfo.fxParameter[kFxParameterProperty_Flags]).unsignedIntValue;
 	XCTAssertEqual(merged, (FxParameterFlags)(kFxParameterFlag_DISABLED
@@ -414,16 +415,16 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 - (void)testGetFlagsLeavesTheHostBitsAloneWhenTheRecordCarriesNoFlags
 {
-	[self.extension extAPIParameterAdd:FxPDataTestNotification(FxNotifyAPI_ParameterAddName, self.effect,
+	[self.extension extAPIParameterAdd:FxGripPDataTestNotification(FxGripNotifyAPI_ParameterAddName, self.effect,
 		@{
 			kFxParameterProperty_Id: @(kPDataTestParamA),
-			FxNotifyAPI_ParameterKey: @{kFxParameterProperty_Id: @(kPDataTestParamA)}.mutableCopy
+			FxGripNotifyAPI_ParameterKey: @{kFxParameterProperty_Id: @(kPDataTestParamA)}.mutableCopy
 		})];
 
-	NSMutableDictionary *userInfo = FxPDataTestParameterUserInfo(kPDataTestParamA,
+	NSMutableDictionary *userInfo = FxGripPDataTestParameterUserInfo(kPDataTestParamA,
 		@{kFxParameterProperty_Flags: @(kFxParameterFlag_DISABLED)});
 	[self.extension extAPIParameterGetFlags:
-		FxPDataTestNotification(FxNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
 
 	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DISABLED));
 }
@@ -432,10 +433,10 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 {
 	[self seedParameter:kPDataTestParamA];
 
-	NSMutableDictionary *userInfo = FxPDataTestParameterUserInfo(kPDataTestParamB,
+	NSMutableDictionary *userInfo = FxGripPDataTestParameterUserInfo(kPDataTestParamB,
 		@{kFxParameterProperty_Flags: @(kFxParameterFlag_DISABLED)});
 	[self.extension extAPIParameterGetFlags:
-		FxPDataTestNotification(FxNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterGetFlagsName, self.effect, userInfo)];
 
 	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DISABLED));
 }
@@ -443,7 +444,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 - (void)testSetFlagsStoresOnlyTheApplicationBits
 {
 	[self seedParameter:kPDataTestParamA];
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	FxParameterFlags notified = kFxParameterFlag_DISABLED			// host bit, dropped
 							  | kFxParameterFlag_CACHE				// temp bit, dropped
@@ -452,8 +453,8 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 							  | kFxParameterFlag_NO_DEBUG			// application bit, kept
 							  | kFxParameterFlag_PRESETNOMETA;		// application bit, kept
 	[self.extension extAPIParameterSetFlags:
-		FxPDataTestNotification(FxNotifyAPI_ParameterSetFlagsName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamA, @{kFxParameterProperty_Flags: @(notified)}))];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterSetFlagsName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamA, @{kFxParameterProperty_Flags: @(notified)}))];
 
 	XCTAssertEqual([self.extension storedFlags:kPDataTestParamA],
 				   (FxParameterFlags)(kFxParameterFlag_NO_DEBUG | kFxParameterFlag_PRESETNOMETA));
@@ -463,11 +464,11 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 - (void)testSetFlagsIgnoresAParameterWithNoRecord
 {
 	[self seedParameter:kPDataTestParamA];
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	[self.extension extAPIParameterSetFlags:
-		FxPDataTestNotification(FxNotifyAPI_ParameterSetFlagsName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamB, @{kFxParameterProperty_Flags: @(kFxParameterFlag_NO_DEBUG)}))];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterSetFlagsName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamB, @{kFxParameterProperty_Flags: @(kFxParameterFlag_NO_DEBUG)}))];
 
 	XCTAssertNil(self.extension.data[@(kPDataTestParamB)]);
 	XCTAssertFalse(self.extension.isCacheDirty);
@@ -478,12 +479,12 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 - (void)testSetMenuStoresTheItemsUnderTheKeyTheAccessorReads
 {
 	[self seedParameter:kPDataTestParamA];
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	NSArray *items = @[@"First", @"-", @"Second"];
 	[self.extension extAPIParameterSetMenu:
-		FxPDataTestNotification(FxNotifyAPI_ParameterSetMenuName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamA, @{kFxParameterProperty_MenuItems: items}))];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterSetMenuName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamA, @{kFxParameterProperty_MenuItems: items}))];
 
 	XCTAssertEqualObjects([self.extension storedMenus:kPDataTestParamA], items);
 	XCTAssertEqualObjects(self.extension.data[@(kPDataTestParamA)][kExtParameterData_MenuItems], items);
@@ -493,11 +494,11 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 - (void)testSetMenuIgnoresAParameterWithNoRecord
 {
 	[self seedParameter:kPDataTestParamA];
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	[self.extension extAPIParameterSetMenu:
-		FxPDataTestNotification(FxNotifyAPI_ParameterSetMenuName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamB, @{kFxParameterProperty_MenuItems: @[@"x"]}))];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterSetMenuName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamB, @{kFxParameterProperty_MenuItems: @[@"x"]}))];
 
 	XCTAssertNil([self.extension storedMenus:kPDataTestParamB]);
 	XCTAssertFalse(self.extension.isCacheDirty);
@@ -511,8 +512,8 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 	[self seedParameter:kPDataTestParamB];
 
 	[self.extension extAPIParameterRemove:
-		FxPDataTestNotification(FxNotifyAPI_ParameterRemoveName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterRemoveName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
 
 	XCTAssertNil(self.extension.data[@(kPDataTestParamA)]);
 	XCTAssertNotNil(self.extension.data[@(kPDataTestParamB)]);
@@ -522,8 +523,8 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 - (void)testParameterRemoveBeforeAnythingIsLoadedDoesNothing
 {
 	[self.extension extAPIParameterRemove:
-		FxPDataTestNotification(FxNotifyAPI_ParameterRemoveName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterRemoveName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
 
 	XCTAssertFalse(self.extension.isLoaded);
 	XCTAssertFalse(self.extension.isCacheDirty);
@@ -535,8 +536,8 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 	[self attachToLiveParameter];
 
 	[self.extension extAPIParameterRemove:
-		FxPDataTestNotification(FxNotifyAPI_ParameterRemoveName, self.effect,
-			FxPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
+		FxGripPDataTestNotification(FxGripNotifyAPI_ParameterRemoveName, self.effect,
+			FxGripPDataTestParameterUserInfo(kPDataTestParamA, @{}))];
 
 	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)1);
 	XCTAssertFalse(self.extension.isCacheDirty);
@@ -549,7 +550,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 	[self seedParameter:kPDataTestParamA];
 	XCTAssertTrue(self.extension.isCacheDirty);
 
-	NSNotification *flush = FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil);
+	NSNotification *flush = FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil);
 	[self.extension extFlush:flush];
 
 	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)1);
@@ -567,7 +568,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 - (void)testFlushWritesNothingBeforeAnythingIsLoaded
 {
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)0);
 }
@@ -581,7 +582,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 	}.mutableCopy;
 	self.getAPI.storedValue = stored;
 
-	[self.extension extAddedToDocument:FxPDataTestNotification(FxTileableEffectAddedToDocumentName,
+	[self.extension extAddedToDocument:FxGripPDataTestNotification(FxGripTileableEffectAddedToDocumentName,
 															   self.effect, nil)];
 
 	XCTAssertTrue(self.extension.isLoaded);
@@ -595,7 +596,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 	[self seedParameter:kPDataTestParamA];
 	self.getAPI.storedValue = @{@(kPDataTestParamB): @{}.mutableCopy}.mutableCopy;
 
-	[self.extension extAddedToDocument:FxPDataTestNotification(FxTileableEffectAddedToDocumentName,
+	[self.extension extAddedToDocument:FxGripPDataTestNotification(FxGripTileableEffectAddedToDocumentName,
 															   self.effect, nil)];
 
 	XCTAssertNotNil(self.extension.data[@(kPDataTestParamA)]);
@@ -605,7 +606,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 - (void)testAddedToDocumentLeavesTheCacheUnloadedWhenTheDocumentHoldsNothing
 {
-	[self.extension extAddedToDocument:FxPDataTestNotification(FxTileableEffectAddedToDocumentName,
+	[self.extension extAddedToDocument:FxGripPDataTestNotification(FxGripTileableEffectAddedToDocumentName,
 															   self.effect, nil)];
 
 	XCTAssertFalse(self.extension.isLoaded);
@@ -617,7 +618,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 - (void)testSetObjectAndObjectForKeyRoundTripOnASeededRecord
 {
 	[self seedParameter:kPDataTestParamA];
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamA];
 
@@ -629,7 +630,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 {
 	[self seedParameter:kPDataTestParamA];
 	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamA];
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamA];
 
@@ -652,7 +653,7 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 - (void)testSetObjectForAParameterWithNoRecordStoresNothing
 {
 	[self seedParameter:kPDataTestParamA];
-	[self.extension extFlush:FxPDataTestNotification(FxTileableEffectFlushName, self.effect, nil)];
+	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
 
 	[self.extension setObject:@"value" forKey:@"custom" toParameter:kPDataTestParamB];
 
@@ -665,8 +666,8 @@ static NSMutableDictionary *FxPDataTestParameterUserInfo(FxParameterId parameter
 
 - (void)testTheEffectCategoryBuildsAParameterDataExtension
 {
-	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:@selector(parameterData)]);
-	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:@selector(newParameterDataExtension)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(parameterData)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(newParameterDataExtension)]);
 }
 
 @end

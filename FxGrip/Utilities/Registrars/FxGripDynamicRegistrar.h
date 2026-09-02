@@ -10,14 +10,14 @@
 #define FxGripDynamicRegistrar_h
 
 #import "FxGripStaticRegistrar.h"
-#import "FxRegisteredPlugin.h"
+#import "FxGripRegisteredPlugin.h"
 
 
 @interface FxGripDynamicRegistrar : FxGripStaticRegistrar
 
 /*!
 	@method     globalRegisteredPluginClasses
-	@abstract   Returns every loaded class that conforms to FxRegisteredPlugin.
+	@abstract   Returns every loaded class that conforms to FxGripRegisteredPlugin.
 	@discussion Scans the Objective-C runtime's full class list, including superclass
 				conformance. Uses runtime introspection functions rather than message
 				sends, so classes that cannot receive messages are skipped safely.

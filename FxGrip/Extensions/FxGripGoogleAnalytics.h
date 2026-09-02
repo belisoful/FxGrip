@@ -8,13 +8,13 @@
 #ifndef FxGripGoogleAnalytics_h
 #define FxGripGoogleAnalytics_h
 
-#import "FxExtension.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripExtension.h"
+#import "FxGripTileableEffect.h"
 
 #define kFxGripGoogleAnalyticsNotificationPrefix 		(@"GA")
 #define kFxGripGoogleAnalyticsSelfRemovePredicate 		(@"-GA*")
 
-@interface FxGripGoogleAnalytics : FxExtension
+@interface FxGripGoogleAnalytics : FxGripExtension
 {
 	NSMutableArray *_captureEvents;
 }
@@ -31,7 +31,7 @@
 
 
 
-@interface FxTileableEffectBase (GoogleAnalytics)
+@interface FxGripTileableEffect (GoogleAnalytics)
 
 @property (readonly, nullable, nonatomic) FxGripGoogleAnalytics* googleAnalytics;
 

@@ -15,7 +15,7 @@
 @class FxGripMetaManager;
 @class FxGripParameterData;
 @class FxGripOOBParameterAccess;
-@class FxTileableEffectBase;
+@class FxGripTileableEffect;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 	@abstract   The narrow contract FxGrip's parameter subsystem requires of its owner.
 	@discussion Introduced in FxGrip 1.0. The parameter classes, the custom controls, and the
 				out-of-band access context reach their owner only through this protocol: the
-				wrapped API manager and the notification center. FxTileableEffectBase conforms, so
+				wrapped API manager and the notification center. FxGripTileableEffect conforms, so
 				a subclassed effect passes itself. An existing FxPlug plug-in that does not use the
 				effect base conforms directly, or uses FxGripPluginHost, and gains plist parameter
 				registration and the custom controls without adopting the rest of FxGrip.
@@ -46,12 +46,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*!
 	@abstract   The full effect base behind this host, or nil when there is none.
-	@discussion FxTileableEffectBase returns itself; FxGripPluginHost and a plug-in's own host
+	@discussion FxGripTileableEffect returns itself; FxGripPluginHost and a plug-in's own host
 				return nil. Code that needs the full base reads it through here and degrades on
 				nil, which Objective-C nil messaging makes safe: `host.effectBase.pluginProperties`
 				is nil without a base. The subsystems never cast a host to the base class.
 */
-@property (readonly, nullable, nonatomic) FxTileableEffectBase *effectBase;
+@property (readonly, nullable, nonatomic) FxGripTileableEffect *effectBase;
 
 @optional
 

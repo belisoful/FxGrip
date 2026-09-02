@@ -20,9 +20,9 @@
 // the parameter alive, and dealloc removes the registrations.
 - (void)installNotifications
 {
-	[self.effect.notifier addObserver:self selector:@selector(notifyGetFlagsPre:) name:FxNotifyAPI_ParameterGetFlagsPreName object:self.effect];
-	[self.effect.notifier addObserver:self selector:@selector(notifySetFlagsPre:) name:FxNotifyAPI_ParameterSetFlagsPreName object:self.effect];
-	[self.effect.notifier addObserver:self selector:@selector(notifySetFlags:) name:FxNotifyAPI_ParameterSetFlagsName object:self.effect];
+	[self.effect.notifier addObserver:self selector:@selector(notifyGetFlagsPre:) name:FxGripNotifyAPI_ParameterGetFlagsPreName object:self.effect];
+	[self.effect.notifier addObserver:self selector:@selector(notifySetFlagsPre:) name:FxGripNotifyAPI_ParameterSetFlagsPreName object:self.effect];
+	[self.effect.notifier addObserver:self selector:@selector(notifySetFlags:) name:FxGripNotifyAPI_ParameterSetFlagsName object:self.effect];
 }
 
 - (void)removeObservers
@@ -31,7 +31,7 @@
 }
 
 // ncPriority: is NOT defined here: FxParameterExtension includes this fragment and must
-// keep FxExtension's implementation. FxParameterBase defines its own in FxParameter.m.
+// keep FxGripExtension's implementation. FxParameterBase defines its own in FxParameter.m.
 
 // Direct key: thin payloads cannot satisfy the guarded parameterID accessor.
 - (BOOL)notificationTargetsReceiver:(nonnull NSNotification *)notification

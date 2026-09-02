@@ -7,8 +7,8 @@
 //
 
 #import "FxGripCustomParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripInterpolatingDictionary.h"
 #import <BEFoundation/NSDictionary+BExtension.h>
 #import "NSCoder+FxPlug.h"

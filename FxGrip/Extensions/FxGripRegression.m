@@ -6,9 +6,9 @@
 //
 
 #import "FxGripRegression.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Extensions.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Extensions.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 
 #import <BEFoundation/NSString+BExtension.h>
 
@@ -21,7 +21,7 @@
 @implementation FxGripRegression
 
 
-- (BOOL)extLoadWithEffect:(id<FxTileableEffectBase>)effect
+- (BOOL)extLoadWithEffect:(id<FxGripTileableEffect>)effect
 {
 	if(![super extLoadWithEffect:effect]) {
 		return NO;
@@ -51,7 +51,7 @@
 
 
 
-@implementation FxTileableEffectBase (Regression)
+@implementation FxGripTileableEffect (Regression)
 
 - (FxGripRegression*)regression
 {

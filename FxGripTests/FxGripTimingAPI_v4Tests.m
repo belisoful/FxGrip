@@ -15,19 +15,19 @@ static const FxParameterId kTimingTestParameter = 51;
 
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxTimingTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripTimingTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
 }
 
 // CoreMedia is not linked, so CMTime values are built without its symbols.
-static CMTime FxTimingTestMakeTime(int64_t value)
+static CMTime FxGripTimingTestMakeTime(int64_t value)
 {
 	return (CMTime){.value = value, .timescale = 600, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
+static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
@@ -40,7 +40,7 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	value derived from the query's position in -answers, so the wrapper's routing of each
 	out-parameter is observable.
 */
-@interface FxTimingTestStubAPI : NSObject
+@interface FxGripTimingTestStubAPI : NSObject
 @property (nonatomic, strong) NSMutableArray<NSString *> *calls;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *inputValues;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *parameterIDs;
@@ -50,7 +50,7 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 @property (nonatomic, strong) id lastFilter;
 @end
 
-@implementation FxTimingTestStubAPI
+@implementation FxGripTimingTestStubAPI
 
 - (instancetype)init
 {
@@ -67,7 +67,7 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 - (CMTime)answerFor:(NSString *)method
 {
 	[self.calls addObject:method];
-	return FxTimingTestMakeTime((int64_t)self.calls.count);
+	return FxGripTimingTestMakeTime((int64_t)self.calls.count);
 }
 
 - (void)frameDuration:(CMTime *)duration
@@ -172,16 +172,16 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 /*!
-	FxTileableEffectBase's designated initializer registers into the process-wide
+	FxGripTileableEffect's designated initializer registers into the process-wide
 	notification center, so the wrapper is exercised against a stub carrying an isolated
 	notifier.
 */
-@interface FxTimingTestStubEffect : NSObject
+@interface FxGripTimingTestStubEffect : NSObject
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @property (nonatomic, assign) BOOL hasMeta;
 @end
 
-@implementation FxTimingTestStubEffect
+@implementation FxGripTimingTestStubEffect
 
 - (id)effectBase
 {
@@ -194,7 +194,7 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxTimingTestMakePriorityCenter();
+		_notifier = FxGripTimingTestMakePriorityCenter();
 	}
 	return self;
 }
@@ -204,8 +204,8 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 #pragma mark - Tests
 
 @interface FxGripTimingAPI_v4Tests : XCTestCase
-@property (nonatomic, strong) FxTimingTestStubEffect *effect;
-@property (nonatomic, strong) FxTimingTestStubAPI *hostAPI;
+@property (nonatomic, strong) FxGripTimingTestStubEffect *effect;
+@property (nonatomic, strong) FxGripTimingTestStubAPI *hostAPI;
 @property (nonatomic, strong) FxGripTimingAPI_v4 *api;
 @end
 
@@ -214,8 +214,8 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxTimingTestStubEffect.alloc init];
-	self.hostAPI = [FxTimingTestStubAPI.alloc init];
+	self.effect = [FxGripTimingTestStubEffect.alloc init];
+	self.hostAPI = [FxGripTimingTestStubAPI.alloc init];
 	self.api = [FxGripTimingAPI_v4.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
 }
 
@@ -232,88 +232,88 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 /*! The value the stub writes for the first query it answers. */
 - (CMTime)firstAnswer
 {
-	return FxTimingTestMakeTime(1);
+	return FxGripTimingTestMakeTime(1);
 }
 
 #pragma mark Effect and input timing
 
 - (void)testFrameDurationFillsTheHostValue
 {
-	CMTime duration = FxTimingTestMakeTime(0);
+	CMTime duration = FxGripTimingTestMakeTime(0);
 
 	[self.api frameDuration:&duration];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(duration, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(duration, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"frameDuration"]);
 }
 
 - (void)testSampleDurationFillsTheHostValue
 {
-	CMTime duration = FxTimingTestMakeTime(0);
+	CMTime duration = FxGripTimingTestMakeTime(0);
 
 	[self.api sampleDuration:&duration];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(duration, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(duration, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"sampleDuration"]);
 }
 
 - (void)testStartTimeForEffectFillsTheHostValue
 {
-	CMTime startTime = FxTimingTestMakeTime(0);
+	CMTime startTime = FxGripTimingTestMakeTime(0);
 
 	[self.api startTimeForEffect:&startTime];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(startTime, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(startTime, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"startTimeForEffect"]);
 }
 
 - (void)testDurationTimeForEffectFillsTheHostValue
 {
-	CMTime duration = FxTimingTestMakeTime(0);
+	CMTime duration = FxGripTimingTestMakeTime(0);
 
 	[self.api durationTimeForEffect:&duration];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(duration, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(duration, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"durationTimeForEffect"]);
 }
 
 - (void)testStartTimeOfInputToFilterFillsTheHostValue
 {
-	CMTime startTime = FxTimingTestMakeTime(0);
+	CMTime startTime = FxGripTimingTestMakeTime(0);
 
 	[self.api startTimeOfInputToFilter:&startTime];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(startTime, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(startTime, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"startTimeOfInputToFilter"]);
 }
 
 - (void)testDurationTimeOfInputToFilterFillsTheHostValue
 {
-	CMTime duration = FxTimingTestMakeTime(0);
+	CMTime duration = FxGripTimingTestMakeTime(0);
 
 	[self.api durationTimeOfInputToFilter:&duration];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(duration, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(duration, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"durationTimeOfInputToFilter"]);
 }
 
 - (void)testInPointTimeOfTimelineFillsTheHostValue
 {
-	CMTime inPoint = FxTimingTestMakeTime(0);
+	CMTime inPoint = FxGripTimingTestMakeTime(0);
 
 	[self.api inPointTimeOfTimelineForEffect:&inPoint];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(inPoint, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(inPoint, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"inPointTimeOfTimelineForEffect"]);
 }
 
 - (void)testOutPointTimeOfTimelineFillsTheHostValue
 {
-	CMTime outPoint = FxTimingTestMakeTime(0);
+	CMTime outPoint = FxGripTimingTestMakeTime(0);
 
 	[self.api outPointTimeOfTimelineForEffect:&outPoint];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(outPoint, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(outPoint, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"outPointTimeOfTimelineForEffect"]);
 }
 
@@ -321,22 +321,22 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testStartTimeOfImageParameterForwardsTheParameterID
 {
-	CMTime startTime = FxTimingTestMakeTime(0);
+	CMTime startTime = FxGripTimingTestMakeTime(0);
 
 	[self.api startTime:&startTime ofImageParameter:kTimingTestParameter];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(startTime, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(startTime, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.parameterIDs[@"startTimeOfImageParameter"],
 						  @(kTimingTestParameter));
 }
 
 - (void)testDurationTimeOfImageParameterForwardsTheParameterID
 {
-	CMTime duration = FxTimingTestMakeTime(0);
+	CMTime duration = FxGripTimingTestMakeTime(0);
 
 	[self.api durationTime:&duration ofImageParameter:kTimingTestParameter];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(duration, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(duration, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.parameterIDs[@"durationTimeOfImageParameter"],
 						  @(kTimingTestParameter));
 }
@@ -345,23 +345,23 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testTimelineTimeFromInputTimeForwardsTheSourceTime
 {
-	CMTime timelineTime = FxTimingTestMakeTime(0);
+	CMTime timelineTime = FxGripTimingTestMakeTime(0);
 
-	[self.api timelineTime:&timelineTime fromInputTime:FxTimingTestMakeTime(300)];
+	[self.api timelineTime:&timelineTime fromInputTime:FxGripTimingTestMakeTime(300)];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(timelineTime, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(timelineTime, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.inputValues[@"timelineTimeFromInputTime"], @300);
 }
 
 - (void)testTimelineTimeFromImageTimeForwardsTheSourceTimeAndTheParameterID
 {
-	CMTime timelineTime = FxTimingTestMakeTime(0);
+	CMTime timelineTime = FxGripTimingTestMakeTime(0);
 
 	[self.api timelineTime:&timelineTime
-			 fromImageTime:FxTimingTestMakeTime(450)
+			 fromImageTime:FxGripTimingTestMakeTime(450)
 			forParameterID:kTimingTestParameter];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(timelineTime, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(timelineTime, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.inputValues[@"timelineTimeFromImageTime"], @450);
 	XCTAssertEqualObjects(self.hostAPI.parameterIDs[@"timelineTimeFromImageTime"],
 						  @(kTimingTestParameter));
@@ -369,23 +369,23 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testInputTimeFromTimelineTimeForwardsTheSourceTime
 {
-	CMTime inputTime = FxTimingTestMakeTime(0);
+	CMTime inputTime = FxGripTimingTestMakeTime(0);
 
-	[self.api inputTime:&inputTime fromTimelineTime:FxTimingTestMakeTime(120)];
+	[self.api inputTime:&inputTime fromTimelineTime:FxGripTimingTestMakeTime(120)];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(inputTime, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(inputTime, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.inputValues[@"inputTimeFromTimelineTime"], @120);
 }
 
 - (void)testImageTimeFromTimelineTimeForwardsTheSourceTimeAndTheParameterID
 {
-	CMTime imageTime = FxTimingTestMakeTime(0);
+	CMTime imageTime = FxGripTimingTestMakeTime(0);
 
 	[self.api imageTime:&imageTime
 		 forParameterID:kTimingTestParameter
-	   fromTimelineTime:FxTimingTestMakeTime(240)];
+	   fromTimelineTime:FxGripTimingTestMakeTime(240)];
 
-	XCTAssertTrue(FxTimingTestTimesEqual(imageTime, self.firstAnswer));
+	XCTAssertTrue(FxGripTimingTestTimesEqual(imageTime, self.firstAnswer));
 	XCTAssertEqualObjects(self.hostAPI.inputValues[@"imageTimeFromTimelineTime"], @240);
 	XCTAssertEqualObjects(self.hostAPI.parameterIDs[@"imageTimeFromTimelineTime"],
 						  @(kTimingTestParameter));
@@ -405,10 +405,10 @@ static BOOL FxTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	[self.api durationTime:NULL ofImageParameter:kTimingTestParameter];
 	[self.api inPointTimeOfTimelineForEffect:NULL];
 	[self.api outPointTimeOfTimelineForEffect:NULL];
-	[self.api timelineTime:NULL fromInputTime:FxTimingTestMakeTime(1)];
-	[self.api timelineTime:NULL fromImageTime:FxTimingTestMakeTime(1) forParameterID:kTimingTestParameter];
-	[self.api inputTime:NULL fromTimelineTime:FxTimingTestMakeTime(1)];
-	[self.api imageTime:NULL forParameterID:kTimingTestParameter fromTimelineTime:FxTimingTestMakeTime(1)];
+	[self.api timelineTime:NULL fromInputTime:FxGripTimingTestMakeTime(1)];
+	[self.api timelineTime:NULL fromImageTime:FxGripTimingTestMakeTime(1) forParameterID:kTimingTestParameter];
+	[self.api inputTime:NULL fromTimelineTime:FxGripTimingTestMakeTime(1)];
+	[self.api imageTime:NULL forParameterID:kTimingTestParameter fromTimelineTime:FxGripTimingTestMakeTime(1)];
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }

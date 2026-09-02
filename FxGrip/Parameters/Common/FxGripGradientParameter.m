@@ -7,8 +7,8 @@
 //
 
 #import "FxGripGradientParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import <BEFoundation/NSCoder+AtIndex.h>
 #import "NSCoder+FxPlug.h"
 #import "FxGrip_ARC.h"

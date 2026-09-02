@@ -13,12 +13,33 @@ static const CGFloat kFxGripCurvePointRadius = 3.5;
 static const CGFloat kFxGripCurveHitRadius = 6.0;
 static const CGFloat kFxGripCurveRemoveMargin = 40.0;
 static const CGFloat kFxGripCurveInset = 4.0;
-static const CGFloat kFxGripCurveLineWidth = 1.0;
 
 const CGFloat kFxGripCurveSlowDragScaleDefault = 0.1;
+const CGFloat kFxGripCurveLineWidthDefault = 1.0;
 
 // The strip base tone. A vertical gradient fades to it through transparent stops.
 static const CGFloat kFxGripCurveBaseWhite = 0.16;
+
+/*! The stroke alpha for an interior alignment line at `line` of `divisions`.
+	A line's tier is the denominator of line/divisions in lowest terms: quarter and
+	coarser lines are primary, eighth lines dim, sixteenth lines dimmest. */
+static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
+{
+	NSInteger a = line, b = divisions;
+	while (b != 0) {
+		NSInteger t = a % b;
+		a = b;
+		b = t;
+	}
+	NSInteger denominator = divisions / a;			// line/divisions reduced
+	if (denominator >= 16) {
+		return 0.03;
+	}
+	if (denominator >= 8) {
+		return 0.06;
+	}
+	return 0.12;
+}
 
 #pragma mark - FxGripCurvePaint
 
@@ -81,6 +102,8 @@ static const CGFloat kFxGripCurveBaseWhite = 0.16;
 	CGPoint _dragStartPoint;			// the point's curve value at drag start, for Shift-constrain
 	NSColor *_lineColor;
 	FxGripCurveLineStyle _lineStyle;
+	CGFloat _lineWidth;
+	FxGripCurveGridDivisions _gridDivisions;
 	FxGripCurvePaint *_topPaint;
 	FxGripCurvePaint *_centerPaint;
 	FxGripCurvePaint *_bottomPaint;
@@ -107,7 +130,9 @@ static const CGFloat kFxGripCurveBaseWhite = 0.16;
 		_selectedPointIndex = NSNotFound;
 		_menuPointIndex = NSNotFound;
 		_hoveredPointIndex = NSNotFound;
+		_gridDivisions = FxGripCurveGridDivisionsEighths;
 		_slowDragScale = kFxGripCurveSlowDragScaleDefault;
+		_lineWidth = kFxGripCurveLineWidthDefault;
 		_curve = NARC_RETAIN([FxGripCurveData identityCurveWithRole:role domain:domain]);
 	}
 	return self;
@@ -151,6 +176,22 @@ static const CGFloat kFxGripCurveBaseWhite = 0.16;
 - (void)setLineStyle:(FxGripCurveLineStyle)lineStyle
 {
 	_lineStyle = lineStyle;
+	[self setNeedsDisplay:YES];
+}
+
+- (CGFloat)lineWidth { return _lineWidth; }
+
+- (void)setLineWidth:(CGFloat)lineWidth
+{
+	_lineWidth = lineWidth < 0.1 ? 0.1 : (lineWidth > 8.0 ? 8.0 : lineWidth);
+	[self setNeedsDisplay:YES];
+}
+
+- (FxGripCurveGridDivisions)gridDivisions { return _gridDivisions; }
+
+- (void)setGridDivisions:(FxGripCurveGridDivisions)gridDivisions
+{
+	_gridDivisions = gridDivisions;
 	[self setNeedsDisplay:YES];
 }
 
@@ -722,11 +763,13 @@ static const CGFloat kFxGripCurveBaseWhite = 0.16;
 	NSRect bounds = self.curveBounds;
 	[self drawBackgroundInRect:bounds];
 
-	// Quarter grid and the role's neutral line.
-	[[NSColor colorWithCalibratedWhite:1.0 alpha:0.12] setStroke];
-	for (int quarter = 1; quarter < 4; quarter++) {
-		CGFloat x = bounds.origin.x + bounds.size.width * quarter / 4.0;
-		CGFloat y = bounds.origin.y + bounds.size.height * quarter / 4.0;
+	// Alignment grid: quarter lines at full weight, finer lines dimmer per tier.
+	const NSInteger divisions = _gridDivisions;
+	for (NSInteger line = 1; line < divisions; line++) {
+		[[NSColor colorWithCalibratedWhite:1.0
+									 alpha:fxg_gridLineAlpha(line, divisions)] setStroke];
+		CGFloat x = bounds.origin.x + bounds.size.width * line / divisions;
+		CGFloat y = bounds.origin.y + bounds.size.height * line / divisions;
 		[NSBezierPath strokeLineFromPoint:NSMakePoint(x, bounds.origin.y)
 								  toPoint:NSMakePoint(x, NSMaxY(bounds))];
 		[NSBezierPath strokeLineFromPoint:NSMakePoint(bounds.origin.x, y)
@@ -750,7 +793,7 @@ static const CGFloat kFxGripCurveBaseWhite = 0.16;
 		for (NSUInteger sample = 1; sample < sampleCount; sample++) {
 			CGFloat fraction = (CGFloat)sample / (sampleCount - 1);
 			NSBezierPath *segment = [NSBezierPath bezierPath];
-			segment.lineWidth = kFxGripCurveLineWidth;
+			segment.lineWidth = _lineWidth;
 			[segment moveToPoint:points[sample - 1]];
 			[segment lineToPoint:points[sample]];
 			[[NSColor colorWithCalibratedHue:fraction saturation:1.0 brightness:1.0 alpha:1.0] setStroke];
@@ -758,7 +801,7 @@ static const CGFloat kFxGripCurveBaseWhite = 0.16;
 		}
 	} else {
 		NSBezierPath *path = [NSBezierPath bezierPath];
-		path.lineWidth = kFxGripCurveLineWidth;
+		path.lineWidth = _lineWidth;
 		[path moveToPoint:points[0]];
 		for (NSUInteger sample = 1; sample < sampleCount; sample++) {
 			[path lineToPoint:points[sample]];

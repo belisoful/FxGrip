@@ -11,7 +11,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxCustomDataClasses.h"
+#import "FxGripCustomDataClasses.h"
 #import "FxGripMutableParameter.h"
 
 //These are keys that respond to the parameter Get__Value in the API for the parameter.
@@ -42,7 +42,7 @@
  				The various Types of FxPlug data can be set without needing to regard translation through NSNumber.
 				This also feeds various custom values to the Standard FxParameterRetrievalAPI-v6.
  */
-@interface FxGripDictionary : NSMutableDictionary <FxGripMutableParameter, FxCustomDataClasses>
+@interface FxGripDictionary : NSMutableDictionary <FxGripMutableParameter, FxGripCustomDataClasses>
 
 	@property (strong, readonly, nonnull)  NSMutableDictionary*  data;
 

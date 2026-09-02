@@ -357,7 +357,7 @@ One reusable editor, not one view per mapping.
 disclosure per selector group, mirroring FCP's stacked strips. It multiplexes one
 `FxGripCurveSetData` value across its child editors, so one custom parameter carries the
 whole curve set and the host stores one keyframeable value per filter.
-`createViewForParameterID:` (`FxGrip/GuruFxTileableEffect.m:315`) returns this composite
+`createViewForParameterID:` (`FxGrip/Utilities/FxGripTileableEffect+CustomUI.m:13`) returns this composite
 for the curve-set parameter ID.
 
 ### 4.3 Value flow

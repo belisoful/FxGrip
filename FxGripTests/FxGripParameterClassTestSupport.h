@@ -20,7 +20,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /*! Builds an isolated NSPriorityNotificationCenter by name; BEFoundation is not linked. */
-NSNotificationCenter *FxParamClassTestMakePriorityCenter(void);
+NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void);
 
 #pragma mark - Creation API
 
@@ -29,7 +29,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void);
 	naming the method and each argument, so what a parameter class derives from its
 	configuration is observable.
 */
-@interface FxParamClassTestCreationAPI : NSObject
+@interface FxGripParamClassTestCreationAPI : NSObject
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *calls;
 @property (nonatomic, assign) BOOL succeeds;
 /*! Method names, as recorded, that are refused even while -succeeds stays YES. */
@@ -43,7 +43,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void);
 	Answers the value and flag getters with the values staged on it, and records every
 	read as a dictionary naming the accessor, the parameter ID, and the time asked for.
 */
-@interface FxParamClassTestRetrievalAPI : NSObject
+@interface FxGripParamClassTestRetrievalAPI : NSObject
 @property (nonatomic, assign) FxParameterFlags flags;
 @property (nonatomic, assign) BOOL succeeds;
 @property (nonatomic, strong) NSMutableArray<NSNumber *> *getFlagsParameterIDs;
@@ -76,7 +76,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void);
 @end
 
 /*! Records every write the parameter performs. */
-@interface FxParamClassTestSettingAPI : NSObject
+@interface FxGripParamClassTestSettingAPI : NSObject
 @property (nonatomic, assign) BOOL succeeds;
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *setFlagsCalls;
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *writes;
@@ -84,14 +84,14 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void);
 @end
 
 /*! Answers the name getter and records the name writes. */
-@interface FxParamClassTestDynamicAPI : NSObject
+@interface FxGripParamClassTestDynamicAPI : NSObject
 @property (nonatomic, copy, nullable) NSString *name;
 @property (nonatomic, strong, nullable) NSError *nameError;
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *setNameCalls;
 @end
 
 /*! Answers the image-parameter timing queries with the staged times. */
-@interface FxParamClassTestTimingAPI : NSObject
+@interface FxGripParamClassTestTimingAPI : NSObject
 @property (nonatomic, assign) CMTime startTime;
 @property (nonatomic, assign) CMTime durationTime;
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *queries;
@@ -99,25 +99,25 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void);
 
 #pragma mark - API manager
 
-@interface FxParamClassTestAPIManager : NSObject
+@interface FxGripParamClassTestAPIManager : NSObject
 @property (nonatomic, assign) unsigned long long sessionID;
-@property (nonatomic, strong, nullable) FxParamClassTestCreationAPI *paramCreateAPIv5;
-@property (nonatomic, strong, nullable) FxParamClassTestRetrievalAPI *paramGetAPIv6;
-@property (nonatomic, strong, nullable) FxParamClassTestSettingAPI *paramSetAPIv5;
-@property (nonatomic, strong, nullable) FxParamClassTestSettingAPI *paramSetAPIv6;
-@property (nonatomic, strong, nullable) FxParamClassTestDynamicAPI *dynamicParamAPIv3;
-@property (nonatomic, strong, nullable) FxParamClassTestTimingAPI *timingAPIv4;
+@property (nonatomic, strong, nullable) FxGripParamClassTestCreationAPI *paramCreateAPIv5;
+@property (nonatomic, strong, nullable) FxGripParamClassTestRetrievalAPI *paramGetAPIv6;
+@property (nonatomic, strong, nullable) FxGripParamClassTestSettingAPI *paramSetAPIv5;
+@property (nonatomic, strong, nullable) FxGripParamClassTestSettingAPI *paramSetAPIv6;
+@property (nonatomic, strong, nullable) FxGripParamClassTestDynamicAPI *dynamicParamAPIv3;
+@property (nonatomic, strong, nullable) FxGripParamClassTestTimingAPI *timingAPIv4;
 @end
 
 #pragma mark - Effect
 
 /*!
-	FxTileableEffectBase's designated initializer registers into the process-wide
+	FxGripTileableEffect's designated initializer registers into the process-wide
 	notification center and needs a live host, so the parameter classes are exercised
 	against this stub. It responds to exactly the messages the parameter classes send.
 */
-@interface FxParamClassTestEffect : NSObject
-@property (nonatomic, strong) FxParamClassTestAPIManager *apiManager;
+@interface FxGripParamClassTestEffect : NSObject
+@property (nonatomic, strong) FxGripParamClassTestAPIManager *apiManager;
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @property (nonatomic, copy) NSString *defaultFontName;
 @property (nonatomic, assign) BOOL isLinearColorParameters;
@@ -146,16 +146,16 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void);
 
 /*!
 	Builds a parameter configuration. The dictionary accessors in
-	NSDictionary+FxTileableEffect return their fallback unless "id", "type", and "name"
+	NSDictionary+FxGripTileableEffect return their fallback unless "id", "type", and "name"
 	are all present, so every configuration under test carries the three.
 */
-NSMutableDictionary *FxParamClassTestConfig(FxParameterId parameterID,
+NSMutableDictionary *FxGripParamClassTestConfig(FxParameterId parameterID,
 										   NSString *type,
 										   NSString *name,
 										   NSDictionary *_Nullable extra);
 
 /*! Builds a CMTime without calling CoreMedia, which the test bundle does not link. */
-CMTime FxParamClassTestTime(int64_t value, int32_t timescale);
+CMTime FxGripParamClassTestTime(int64_t value, int32_t timescale);
 
 NS_ASSUME_NONNULL_END
 

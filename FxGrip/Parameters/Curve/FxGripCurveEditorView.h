@@ -15,11 +15,14 @@
 /*! The default slowDragScale: one-tenth of mouse travel. */
 FOUNDATION_EXPORT const CGFloat kFxGripCurveSlowDragScaleDefault;
 
+/*! The default curve stroke width, in view points. */
+FOUNDATION_EXPORT const CGFloat kFxGripCurveLineWidthDefault;
+
 /*!
 	@enum       FxGripCurveBackground
 	@abstract   The strip background drawn behind the curve.
-	@discussion Grid draws quarter lines only. The ramps and the spectrum render the
-				selector axis (horizontal); the alpha checker renders transparency.
+	@discussion Grid draws alignment lines per `gridDivisions`. The ramps and the spectrum
+				render the selector axis (horizontal); the alpha checker renders transparency.
 */
 typedef NS_ENUM(NSInteger, FxGripCurveBackground) {
 	FxGripCurveBackgroundGrid			= 0,
@@ -30,6 +33,23 @@ typedef NS_ENUM(NSInteger, FxGripCurveBackground) {
 	FxGripCurveBackgroundGreenRamp		= 5,
 	FxGripCurveBackgroundBlueRamp		= 6,
 	FxGripCurveBackgroundAlphaChecker	= 7,
+};
+
+/*!
+	@enum       FxGripCurveGridDivisions
+	@abstract   How many equal divisions the alignment grid draws behind the curve.
+	@discussion Introduced in FxGrip 1.0. The interior lines split each axis into the given
+				number of equal parts, leaving `divisions - 1` lines per axis. Finer lines
+				dim by tier so the primary quarter lines stay dominant, matching Final Cut Pro:
+
+				Quarters  → 3 lines, all at the primary weight.
+				Eighths   → 7 lines; the 1/8 lines dim below the 1/4 lines. (Default.)
+				Sixteenths → 15 lines; the 1/16 lines dim below the 1/8 lines.
+*/
+typedef NS_ENUM(NSInteger, FxGripCurveGridDivisions) {
+	FxGripCurveGridDivisionsQuarters	= 4,
+	FxGripCurveGridDivisionsEighths		= 8,
+	FxGripCurveGridDivisionsSixteenths	= 16,
 };
 
 /*!
@@ -147,6 +167,10 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 /*! The curve set key this editor edits; consulted by updateFromCustomData:. */
 @property (nonatomic, copy, nullable) NSString *mappingKey;
 @property (nonatomic, assign) FxGripCurveBackground background;
+
+/*! The alignment grid density. Defaults to eighths (7 lines). Setting redraws. */
+@property (nonatomic, assign) FxGripCurveGridDivisions gridDivisions;
+
 @property (nonatomic, assign, nullable) id<FxGripCurveEditorDelegate> delegate;
 
 /*! The curve being edited; never nil after initialization. Setting redraws. */
@@ -163,6 +187,16 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 
 /*! How the curve line is stroked. Defaults to solid (lineColor). Setting redraws. */
 @property (nonatomic, assign) FxGripCurveLineStyle lineStyle;
+
+/*!
+	@property   lineWidth
+	@abstract   The stroke width of the curve line, in view points.
+	@discussion Defaults to kFxGripCurveLineWidthDefault (1.0). Applies to both the solid
+				and the hue line styles. A curve line of roughly 0.5 to 4 points reads well
+				at the standard strip height; setting clamps to [0.1, 8.0], a range wide
+				enough to try heavy lines, and redraws.
+*/
+@property (nonatomic, assign) CGFloat lineWidth;
 
 /*!
 	@abstract   A vertical background gradient built from up to three stops: top, center, bottom.

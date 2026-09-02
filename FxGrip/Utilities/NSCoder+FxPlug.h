@@ -33,18 +33,18 @@ typedef double  Matrix44Data[4][4];
 @class FxImageTile;
 @protocol Fx3DLighting_v5;
 
-extern NSString * _Nonnull const Fx3DCoderFocalLengthKey;
-extern NSString * _Nonnull const Fx3DCoderModelMatrixKey;
-extern NSString * _Nonnull const Fx3DCoderViewMatrixKey;
-extern NSString * _Nonnull const Fx3DCoderProjectionMatrixKey;
-extern NSString * _Nonnull const Fx3DCoderFrustumLeftKey;
-extern NSString * _Nonnull const Fx3DCoderFrustumRightKey;
-extern NSString * _Nonnull const Fx3DCoderFrustumBottomKey;
-extern NSString * _Nonnull const Fx3DCoderFrustumTopKey;
-extern NSString * _Nonnull const Fx3DCoderFrustumNearKey;
-extern NSString * _Nonnull const Fx3DCoderFrustumFarKey;
+extern NSString * _Nonnull const FxGrip3DCoderFocalLengthKey;
+extern NSString * _Nonnull const FxGrip3DCoderModelMatrixKey;
+extern NSString * _Nonnull const FxGrip3DCoderViewMatrixKey;
+extern NSString * _Nonnull const FxGrip3DCoderProjectionMatrixKey;
+extern NSString * _Nonnull const FxGrip3DCoderFrustumLeftKey;
+extern NSString * _Nonnull const FxGrip3DCoderFrustumRightKey;
+extern NSString * _Nonnull const FxGrip3DCoderFrustumBottomKey;
+extern NSString * _Nonnull const FxGrip3DCoderFrustumTopKey;
+extern NSString * _Nonnull const FxGrip3DCoderFrustumNearKey;
+extern NSString * _Nonnull const FxGrip3DCoderFrustumFarKey;
 
-extern NSString * _Nonnull const Fx3DCoderCurrentTimeKey;
+extern NSString * _Nonnull const FxGrip3DCoderCurrentTimeKey;
 
 
 @interface NSCoder (FxPlug)

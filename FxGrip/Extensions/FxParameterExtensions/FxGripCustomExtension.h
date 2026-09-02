@@ -12,7 +12,7 @@
 
 @property (readonly, retain, nonnull) NSSet *dataClasses;
 
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxTileableEffectBase>)effect;
++ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripTileableEffect>)effect;
 
 - (id<NSSecureCoding, NSCopying> _Nullable)value;
 - (id<NSSecureCoding, NSCopying> _Nullable)valueAtTime:(CMTime)renderTime;

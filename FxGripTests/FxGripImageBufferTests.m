@@ -22,7 +22,7 @@
 
 // The test bundle links only FxGrip and XCTest. Metal comes in with the framework, so its
 // entry points are reached through the loaded images rather than a link-time reference.
-typedef void *(*FxImageBufferTestCreateDevice)(void);
+typedef void *(*FxGripImageBufferTestCreateDevice)(void);
 
 static NSString *const kImageBufferCoderKey_Width = @"width";
 static NSString *const kImageBufferCoderKey_Height = @"height";
@@ -78,12 +78,12 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	Encodes chosen fields under the buffer's class name, so the unarchiver runs the buffer's
 	initWithCoder: over an archive the buffer itself would never produce.
 */
-@interface FxImageBufferTestArchiveStub : NSObject <NSSecureCoding>
+@interface FxGripImageBufferTestArchiveStub : NSObject <NSSecureCoding>
 @property (nonatomic, strong) NSDictionary<NSString *, id> *integerFields;
 @property (nonatomic, strong) NSData *payload;
 @end
 
-@implementation FxImageBufferTestArchiveStub
+@implementation FxGripImageBufferTestArchiveStub
 
 + (BOOL)supportsSecureCoding
 {
@@ -288,12 +288,12 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 /*! An archive carrying the given coder fields under the buffer's class name. */
 - (NSData *)archiveWithIntegerFields:(NSDictionary<NSString *, NSNumber *> *)fields payload:(NSData *)payload
 {
-	FxImageBufferTestArchiveStub *stub = [FxImageBufferTestArchiveStub.alloc init];
+	FxGripImageBufferTestArchiveStub *stub = [FxGripImageBufferTestArchiveStub.alloc init];
 	stub.integerFields = fields;
 	stub.payload = payload;
 
 	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:YES];
-	[archiver setClassName:NSStringFromClass(FxGripImageBuffer.class) forClass:FxImageBufferTestArchiveStub.class];
+	[archiver setClassName:NSStringFromClass(FxGripImageBuffer.class) forClass:FxGripImageBufferTestArchiveStub.class];
 	[archiver encodeObject:stub forKey:NSKeyedArchiveRootObjectKey];
 	[archiver finishEncoding];
 	return archiver.encodedData;
@@ -887,8 +887,8 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 - (id<MTLDevice>)metalDevice
 {
-	FxImageBufferTestCreateDevice create =
-		(FxImageBufferTestCreateDevice)dlsym(RTLD_DEFAULT, "MTLCreateSystemDefaultDevice");
+	FxGripImageBufferTestCreateDevice create =
+		(FxGripImageBufferTestCreateDevice)dlsym(RTLD_DEFAULT, "MTLCreateSystemDefaultDevice");
 	if (create == NULL) {
 		return nil;
 	}

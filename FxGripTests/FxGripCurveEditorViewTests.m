@@ -46,7 +46,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 #pragma mark - Probes for the AppKit classes the bundle does not link
 
 /*! NSEvent's synthetic-event factories. */
-@protocol FxCurveTestEventFactory <NSObject>
+@protocol FxGripCurveTestEventFactory <NSObject>
 + (nullable id)mouseEventWithType:(NSEventType)type
 						 location:(NSPoint)location
 					modifierFlags:(NSEventModifierFlags)flags
@@ -69,7 +69,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 @end
 
 /*! NSBitmapImageRep's offscreen backing store. */
-@protocol FxCurveTestBitmapRep <NSObject>
+@protocol FxGripCurveTestBitmapRep <NSObject>
 - (nullable id)initWithBitmapDataPlanes:(unsigned char *_Nullable *_Nullable)planes
 							 pixelsWide:(NSInteger)width
 							 pixelsHigh:(NSInteger)height
@@ -83,7 +83,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 @end
 
 /*! NSGraphicsContext's offscreen context stack. */
-@protocol FxCurveTestGraphicsContext <NSObject>
+@protocol FxGripCurveTestGraphicsContext <NSObject>
 + (nullable id)graphicsContextWithBitmapImageRep:(id)rep;
 + (void)setCurrentContext:(nullable id)context;
 + (void)saveGraphicsState;
@@ -93,12 +93,12 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 #pragma mark - Test doubles
 
 /*! Records the curves the strip reports, in order. */
-@interface FxCurveTestEditorDelegate : NSObject <FxGripCurveEditorDelegate>
+@interface FxGripCurveTestEditorDelegate : NSObject <FxGripCurveEditorDelegate>
 @property (nonatomic, strong) NSMutableArray<FxGripCurveData *> *edited;
 @property (nonatomic, strong) NSMutableArray<FxGripCurveData *> *committed;
 @end
 
-@implementation FxCurveTestEditorDelegate
+@implementation FxGripCurveTestEditorDelegate
 
 - (instancetype)init
 {
@@ -123,19 +123,19 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 @end
 
 /*! Stands in for the host's FxCustomParameterActionAPI_v4 the out-of-band access brackets. */
-@interface FxCurveTestActionAPI : NSObject
+@interface FxGripCurveTestActionAPI : NSObject
 @property (nonatomic, assign) CMTime currentTime;
 @property (nonatomic, assign) NSUInteger startCount;
 @property (nonatomic, assign) NSUInteger endCount;
 @end
 
-@implementation FxCurveTestActionAPI
+@implementation FxGripCurveTestActionAPI
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
-		_currentTime = FxParamClassTestTime(30, 60);
+		_currentTime = FxGripParamClassTestTime(30, 60);
 	}
 	return self;
 }
@@ -153,17 +153,17 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 @end
 
 /*! Adds the action API the shared manager double does not carry. */
-@interface FxCurveTestAPIManager : FxParamClassTestAPIManager
-@property (nonatomic, strong) FxCurveTestActionAPI *customParameterActionAPIv4;
+@interface FxGripCurveTestAPIManager : FxGripParamClassTestAPIManager
+@property (nonatomic, strong) FxGripCurveTestActionAPI *customParameterActionAPIv4;
 @end
 
-@implementation FxCurveTestAPIManager
+@implementation FxGripCurveTestAPIManager
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
-		_customParameterActionAPIv4 = [FxCurveTestActionAPI.alloc init];
+		_customParameterActionAPIv4 = [FxGripCurveTestActionAPI.alloc init];
 	}
 	return self;
 }
@@ -174,7 +174,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 @interface FxGripCurveEditorViewTests : XCTestCase
 @property (nonatomic, strong) FxGripCurveEditorView *editor;
-@property (nonatomic, strong) FxCurveTestEditorDelegate *recorder;
+@property (nonatomic, strong) FxGripCurveTestEditorDelegate *recorder;
 @end
 
 @implementation FxGripCurveEditorViewTests
@@ -182,7 +182,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 - (void)setUp
 {
 	[super setUp];
-	self.recorder = [FxCurveTestEditorDelegate.alloc init];
+	self.recorder = [FxGripCurveTestEditorDelegate.alloc init];
 	self.editor = [self editorWithRole:FxGripCurveRoleRemap domain:FxGripCurveDomainLinear];
 }
 
@@ -205,11 +205,11 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	return editor;
 }
 
-- (Class<FxCurveTestEventFactory>)eventFactory
+- (Class<FxGripCurveTestEventFactory>)eventFactory
 {
 	Class factory = NSClassFromString(@"NSEvent");
 	XCTAssertNotNil(factory, @"NSEvent must be reachable through the framework's AppKit link");
-	return (Class<FxCurveTestEventFactory>)factory;
+	return (Class<FxGripCurveTestEventFactory>)factory;
 }
 
 - (NSEvent *)mouseEventOfType:(NSEventType)type at:(NSPoint)location clickCount:(NSInteger)clickCount
@@ -876,7 +876,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	Class contextClass = NSClassFromString(@"NSGraphicsContext");
 	XCTAssertNotNil(repClass);
 	XCTAssertNotNil(contextClass);
-	Class<FxCurveTestGraphicsContext> context = (Class<FxCurveTestGraphicsContext>)contextClass;
+	Class<FxGripCurveTestGraphicsContext> context = (Class<FxGripCurveTestGraphicsContext>)contextClass;
 
 	for (FxGripCurveBackground background = FxGripCurveBackgroundGrid;
 		 background <= FxGripCurveBackgroundAlphaChecker;
@@ -892,7 +892,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 												  at:[editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)]
 										  clickCount:1]];
 
-			id<FxCurveTestBitmapRep> rep = [(id<FxCurveTestBitmapRep>)[repClass alloc]
+			id<FxGripCurveTestBitmapRep> rep = [(id<FxGripCurveTestBitmapRep>)[repClass alloc]
 										    initWithBitmapDataPlanes:NULL
 														  pixelsWide:100
 														  pixelsHigh:60
@@ -944,6 +944,24 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.editor.lineColor, [colorClass whiteColor], @"nil restores white");
 }
 
+- (void)testTheLineWidthDefaultsToOneAndClampsIntoItsRange
+{
+	XCTAssertEqualWithAccuracy(kFxGripCurveLineWidthDefault, 1.0, 1e-12);
+	XCTAssertEqualWithAccuracy(self.editor.lineWidth, kFxGripCurveLineWidthDefault, 1e-12);
+
+	self.editor.lineWidth = 3.5;
+	XCTAssertEqualWithAccuracy(self.editor.lineWidth, 3.5, 1e-12);
+
+	self.editor.lineWidth = 0.0;
+	XCTAssertEqualWithAccuracy(self.editor.lineWidth, 0.1, 1e-12);
+
+	self.editor.lineWidth = -2.0;
+	XCTAssertEqualWithAccuracy(self.editor.lineWidth, 0.1, 1e-12);
+
+	self.editor.lineWidth = 500.0;
+	XCTAssertEqualWithAccuracy(self.editor.lineWidth, 8.0, 1e-12);
+}
+
 - (void)testTheLineStyleAndVerticalPaintsRoundTrip
 {
 	XCTAssertEqual(self.editor.lineStyle, FxGripCurveLineStyleSolid, @"defaults to solid");
@@ -991,8 +1009,8 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 @interface FxGripCurveSetEditorViewTests : XCTestCase
 @property (nonatomic, strong) FxGripCurveSetEditorView *composite;
-@property (nonatomic, strong) FxParamClassTestEffect *effect;
-@property (nonatomic, strong) FxCurveTestAPIManager *apiManager;
+@property (nonatomic, strong) FxGripParamClassTestEffect *effect;
+@property (nonatomic, strong) FxGripCurveTestAPIManager *apiManager;
 @end
 
 @implementation FxGripCurveSetEditorViewTests
@@ -1000,9 +1018,9 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxParamClassTestEffect.alloc init];
-	self.apiManager = [FxCurveTestAPIManager.alloc init];
-	self.effect.apiManager = (FxParamClassTestAPIManager *)self.apiManager;
+	self.effect = [FxGripParamClassTestEffect.alloc init];
+	self.apiManager = [FxGripCurveTestAPIManager.alloc init];
+	self.effect.apiManager = (FxGripParamClassTestAPIManager *)self.apiManager;
 	self.composite = [FxGripCurveSetEditorView.alloc initWithFrame:NSMakeRect(0, 0, 200, 10)];
 	self.composite.parameterID = kCurveEditorTestParameter;
 }
@@ -1086,6 +1104,27 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(self.composite.slowDragScale, 0.05, 1e-12);
 	XCTAssertEqualWithAccuracy(luma.slowDragScale, 0.05, 1e-12);
 	XCTAssertEqualWithAccuracy(hue.slowDragScale, 0.05, 1e-12);
+}
+
+- (void)testTheCompositeLineWidthReachesExistingAndFutureStrips
+{
+	XCTAssertEqualWithAccuracy(self.composite.lineWidth, kFxGripCurveLineWidthDefault, 1e-12);
+
+	FxGripCurveEditorView *luma = [self addLumaEditor];
+	self.composite.lineWidth = 2.5;
+	FxGripCurveEditorView *hue = [self addHueEditor];
+
+	XCTAssertEqualWithAccuracy(self.composite.lineWidth, 2.5, 1e-12);
+	XCTAssertEqualWithAccuracy(luma.lineWidth, 2.5, 1e-12);
+	XCTAssertEqualWithAccuracy(hue.lineWidth, 2.5, 1e-12);
+
+	self.composite.lineWidth = 0.0;
+	XCTAssertEqualWithAccuracy(self.composite.lineWidth, 0.1, 1e-12);
+	XCTAssertEqualWithAccuracy(luma.lineWidth, 0.1, 1e-12);
+
+	self.composite.lineWidth = 500.0;
+	XCTAssertEqualWithAccuracy(self.composite.lineWidth, 8.0, 1e-12);
+	XCTAssertEqualWithAccuracy(luma.lineWidth, 8.0, 1e-12);
 }
 
 - (void)testAddingAnEditorWiresItsMappingKeyAndDelegate

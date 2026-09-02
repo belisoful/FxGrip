@@ -10,25 +10,18 @@
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxAPINotifications.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
 #import <FxGrip/FxGripDynamicParameterAPI_v3.h>
-#import <FxGrip/FxGripDynamicParameterAPI_v4.h>
+#import <FxGrip/FxGripParameterInfoAPI_v1.h>
 #import <FxGrip/FxGripParameterRetrievalAPI_v6.h>
 #import <FxGrip/FxGripI18N.h>
 
 static const FxParameterId kI18NTestParameter = 7;
 
-// FxGripDynamicParameterAPI_v4 implements parameter:entries:, but neither its class
-// interface nor FxDynamicParameterAPI_v4 declares the selector, so it is redeclared here.
-// The implementation comes from the linked framework.
-@interface FxGripDynamicParameterAPI_v4 (FxGripI18NTests)
-- (nullable NSError *)parameter:(FxParameterId)parameterID entries:(NSArray<NSString *> *_Nullable *_Nonnull)entries;
-@end
-
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
@@ -40,14 +33,14 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 	Stands in for the host's FxDynamicParameterAPI_v3. It hands back a fixed name and
 	records the name the wrapper forwards after the pre-notification has run.
 */
-@interface FxI18NTestStubDynamicAPI : NSObject
+@interface FxGripI18NTestStubDynamicAPI : NSObject
 @property (nonatomic, copy) NSString *hostName;
 @property (nonatomic, copy) NSArray<NSString *> *hostEntries;
 @property (nonatomic, copy) NSString *receivedName;
 @property (nonatomic, assign) NSUInteger setNameCallCount;
 @end
 
-@implementation FxI18NTestStubDynamicAPI
+@implementation FxGripI18NTestStubDynamicAPI
 
 - (NSError *)parameter:(UInt32)parameterID name:(NSString **)parameterName
 {
@@ -67,12 +60,12 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 @end
 
 /*! Stands in for the host's FxParameterRetrievalAPI_v6 string readback. */
-@interface FxI18NTestStubRetrievalAPI : NSObject
+@interface FxGripI18NTestStubRetrievalAPI : NSObject
 @property (nonatomic, copy) NSString *hostString;
 @property (nonatomic, assign) BOOL succeeds;
 @end
 
-@implementation FxI18NTestStubRetrievalAPI
+@implementation FxGripI18NTestStubRetrievalAPI
 
 - (BOOL)getStringParameterValue:(NSString * _Nullable * _Nonnull)string fromParameter:(UInt32)parameterID
 {
@@ -89,7 +82,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 	that a strings-table-free process maps to itself, so the recorded write is the evidence
 	that a handler ran and the level at which it wrote.
 */
-@interface FxI18NTestRecordingDictionary : NSMutableDictionary
+@interface FxGripI18NTestRecordingDictionary : NSMutableDictionary
 @property (nonatomic, strong) NSMutableArray<NSString *> *writtenKeys;
 + (instancetype)dictionaryWithSeededContents:(NSDictionary *)contents;
 @end
@@ -99,13 +92,13 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-designated-initializers"
 
-@implementation FxI18NTestRecordingDictionary {
+@implementation FxGripI18NTestRecordingDictionary {
 	NSMutableDictionary *_storage;
 }
 
 + (instancetype)dictionaryWithSeededContents:(NSDictionary *)contents
 {
-	FxI18NTestRecordingDictionary *dictionary = [self.alloc initWithCapacity:contents.count];
+	FxGripI18NTestRecordingDictionary *dictionary = [self.alloc initWithCapacity:contents.count];
 	[dictionary->_storage addEntriesFromDictionary:contents];
 	return dictionary;
 }
@@ -170,25 +163,25 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 #pragma clang diagnostic pop
 
 /*!
-	FxTileableEffectBase's designated initializer registers into the process-wide
+	FxGripTileableEffect's designated initializer registers into the process-wide
 	notification center, so the wrappers and the extension are exercised against a stub
 	carrying an isolated notifier. The wrappers read -notifier and subscript the effect
-	for the notification object; FxExtensionBase reads -addedToDocument and FxGripI18N
+	for the notification object; FxGripExtensionBase reads -addedToDocument and FxGripI18N
 	reads -pluginProperties during load.
 */
-@interface FxI18NTestStubEffect : NSObject
+@interface FxGripI18NTestStubEffect : NSObject
 @property (nonatomic, assign) BOOL addedToDocument;
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *pluginProperties;
 @end
 
-@implementation FxI18NTestStubEffect
+@implementation FxGripI18NTestStubEffect
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxI18NTestMakePriorityCenter();
+		_notifier = FxGripI18NTestMakePriorityCenter();
 		_pluginProperties = @{};
 	}
 	return self;
@@ -204,10 +197,10 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 // Supplies a fixture localization table so the localize/delocalize round-trip is testable
 // without a strings file on disk. The default localizationTable reads the plugin bundle,
 // which a headless test process has no fixture for.
-@interface FxI18NTestFixtureTable : FxGripI18N
+@interface FxGripI18NTestFixtureTable : FxGripI18N
 @end
 
-@implementation FxI18NTestFixtureTable
+@implementation FxGripI18NTestFixtureTable
 - (NSDictionary<NSString *, NSString *> *)localizationTable
 {
 	return @{@"Greeting": @"Bonjour", @"Farewell": @"Au revoir"};
@@ -217,9 +210,9 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 #pragma mark - Tests
 
 @interface FxGripI18NTests : XCTestCase
-@property (nonatomic, strong) FxI18NTestStubEffect *effect;
-@property (nonatomic, strong) FxI18NTestStubDynamicAPI *dynamicStub;
-@property (nonatomic, strong) FxI18NTestStubRetrievalAPI *retrievalStub;
+@property (nonatomic, strong) FxGripI18NTestStubEffect *effect;
+@property (nonatomic, strong) FxGripI18NTestStubDynamicAPI *dynamicStub;
+@property (nonatomic, strong) FxGripI18NTestStubRetrievalAPI *retrievalStub;
 @property (nonatomic, strong) NSMutableArray *observerTokens;
 // The notifier holds its observers weakly, so a loaded extension is retained for the
 // lifetime of the test.
@@ -231,9 +224,9 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxI18NTestStubEffect.alloc init];
-	self.dynamicStub = [FxI18NTestStubDynamicAPI.alloc init];
-	self.retrievalStub = [FxI18NTestStubRetrievalAPI.alloc init];
+	self.effect = [FxGripI18NTestStubEffect.alloc init];
+	self.dynamicStub = [FxGripI18NTestStubDynamicAPI.alloc init];
+	self.retrievalStub = [FxGripI18NTestStubRetrievalAPI.alloc init];
 	self.observerTokens = NSMutableArray.new;
 }
 
@@ -268,15 +261,15 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 	return [FxGripDynamicParameterAPI_v3.alloc initWithAPI:(id)self.dynamicStub effect:(id)self.effect];
 }
 
-- (FxGripDynamicParameterAPI_v4 *)dynamicAPIv4
+- (FxGripParameterInfoAPI_v1 *)parameterInfoAPI
 {
-	return [FxGripDynamicParameterAPI_v4.alloc initWithAPI:(id)self.dynamicStub effect:(id)self.effect];
+	return [FxGripParameterInfoAPI_v1.alloc initWithAPI:(id)self.dynamicStub effect:(id)self.effect];
 }
 
 - (FxGripParameterRetrievalAPI_v6 *)retrievalAPIv6
 {
 	return [FxGripParameterRetrievalAPI_v6.alloc initWithAPI:(id)self.retrievalStub
-										  dynamicParamAPIv4:nil
+										  parameterInfoAPIv1:nil
 													 effect:(id)self.effect];
 }
 
@@ -290,22 +283,22 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 }
 
 /*! The thin payload the wrappers post: an ID at both levels plus the property in play. */
-- (FxI18NTestRecordingDictionary *)userInfoWithNestedParameter:(NSMutableDictionary *)parameter
+- (FxGripI18NTestRecordingDictionary *)userInfoWithNestedParameter:(NSMutableDictionary *)parameter
 {
-	return [FxI18NTestRecordingDictionary dictionaryWithSeededContents:@{
+	return [FxGripI18NTestRecordingDictionary dictionaryWithSeededContents:@{
 		kFxParameterProperty_Id: @(kI18NTestParameter),
-		FxNotifyAPI_ParameterKey: parameter
+		FxGripNotifyAPI_ParameterKey: parameter
 	}];
 }
 
 /*! A nested parameter dictionary carrying the ID plus the property under test. */
-- (FxI18NTestRecordingDictionary *)nestedParameterWithProperty:(NSString *)key value:(id)value
+- (FxGripI18NTestRecordingDictionary *)nestedParameterWithProperty:(NSString *)key value:(id)value
 {
 	NSMutableDictionary *contents = @{kFxParameterProperty_Id: @(kI18NTestParameter)}.mutableCopy;
 	if (value) {
 		contents[key] = value;
 	}
-	return [FxI18NTestRecordingDictionary dictionaryWithSeededContents:contents];
+	return [FxGripI18NTestRecordingDictionary dictionaryWithSeededContents:contents];
 }
 
 #pragma mark Wrapper Mutation Round-Trips
@@ -314,7 +307,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 {
 	self.dynamicStub.hostName = @"HostName";
 	__block BOOL nestedWasMutable = NO;
-	[self observeName:FxNotifyAPI_ParameterGetNameName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetNameName usingBlock:^(NSNotification *notification) {
 		NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
 		nestedWasMutable = parameter != nil;
 		XCTAssertEqualObjects(parameter[kFxParameterProperty_Name], @"HostName");
@@ -343,7 +336,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 - (void)testDynamicAPIv3SetNameForwardsTheNameTheObserverRewrote
 {
 	__block BOOL nestedWasMutable = NO;
-	[self observeName:FxNotifyAPI_ParameterSetNamePreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterSetNamePreName usingBlock:^(NSNotification *notification) {
 		NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
 		nestedWasMutable = parameter != nil;
 		XCTAssertEqualObjects(parameter[kFxParameterProperty_Name], @"Original");
@@ -364,7 +357,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 	// the stub's entries are supplied through the observer that maps them.
 	self.dynamicStub.hostEntries = @[@"One", @"Two"];
 	__block NSArray *seededEntries = nil;
-	[self observeName:FxNotifyAPI_ParameterGetMenuName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetMenuName usingBlock:^(NSNotification *notification) {
 		NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
 		seededEntries = parameter[kFxParameterProperty_MenuItems];
 		NSMutableArray *mapped = NSMutableArray.new;
@@ -375,7 +368,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 	}];
 
 	NSArray<NSString *> *entries = nil;
-	NSError *error = [self.dynamicAPIv4 parameter:kI18NTestParameter entries:&entries];
+	NSError *error = [self.parameterInfoAPI parameter:kI18NTestParameter entries:&entries];
 
 	XCTAssertNil(error);
 	XCTAssertEqualObjects(seededEntries, @[]);
@@ -387,7 +380,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 	self.retrievalStub.hostString = @"HostValue";
 	self.retrievalStub.succeeds = YES;
 	__block BOOL nestedWasMutable = NO;
-	[self observeName:FxNotifyAPI_ParameterGetStringValueName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetStringValueName usingBlock:^(NSNotification *notification) {
 		NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
 		nestedWasMutable = parameter != nil;
 		XCTAssertEqualObjects(parameter[kFxParameterProperty_Default], @"HostValue");
@@ -443,11 +436,11 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 - (void)testSetNamePreHandlerWritesTheNestedParameterAndLeavesTheOuterUserInfo
 {
 	[self loadedI18NWithProperties:@{}];
-	FxI18NTestRecordingDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_Name
+	FxGripI18NTestRecordingDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_Name
 																		  value:@"FxGripI18NTestName"];
-	FxI18NTestRecordingDictionary *userInfo = [self userInfoWithNestedParameter:parameter];
+	FxGripI18NTestRecordingDictionary *userInfo = [self userInfoWithNestedParameter:parameter];
 
-	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterSetNamePreName
+	[self.effect.notifier postNotificationName:FxGripNotifyAPI_ParameterSetNamePreName
 										object:self.effect
 									  userInfo:userInfo];
 
@@ -464,16 +457,16 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 {
 	[self loadedI18NWithProperties:@{}];
 
-	FxI18NTestRecordingDictionary *nameless = [self nestedParameterWithProperty:kFxParameterProperty_Name value:nil];
-	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterSetNamePreName
+	FxGripI18NTestRecordingDictionary *nameless = [self nestedParameterWithProperty:kFxParameterProperty_Name value:nil];
+	[self.effect.notifier postNotificationName:FxGripNotifyAPI_ParameterSetNamePreName
 										object:self.effect
 									  userInfo:[self userInfoWithNestedParameter:nameless]];
 
 	XCTAssertEqualObjects(nameless.writtenKeys, @[]);
 	XCTAssertNil(nameless[kFxParameterProperty_Name]);
 
-	FxI18NTestRecordingDictionary *numeric = [self nestedParameterWithProperty:kFxParameterProperty_Name value:@42];
-	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterSetNamePreName
+	FxGripI18NTestRecordingDictionary *numeric = [self nestedParameterWithProperty:kFxParameterProperty_Name value:@42];
+	[self.effect.notifier postNotificationName:FxGripNotifyAPI_ParameterSetNamePreName
 										object:self.effect
 									  userInfo:[self userInfoWithNestedParameter:numeric]];
 
@@ -484,12 +477,12 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 - (void)testSetMenuPreHandlerMapsTheNestedMenuItemsArray
 {
 	[self loadedI18NWithProperties:@{}];
-	FxI18NTestRecordingDictionary *parameter =
+	FxGripI18NTestRecordingDictionary *parameter =
 		[self nestedParameterWithProperty:kFxParameterProperty_MenuItems
 									value:@[@"FxGripI18NTestAlpha", @"FxGripI18NTestBeta"]];
-	FxI18NTestRecordingDictionary *userInfo = [self userInfoWithNestedParameter:parameter];
+	FxGripI18NTestRecordingDictionary *userInfo = [self userInfoWithNestedParameter:parameter];
 
-	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterSetMenuPreName
+	[self.effect.notifier postNotificationName:FxGripNotifyAPI_ParameterSetMenuPreName
 										object:self.effect
 									  userInfo:userInfo];
 
@@ -506,10 +499,10 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 - (void)testSetMenuPreHandlerIgnoresNonArrayMenuItems
 {
 	[self loadedI18NWithProperties:@{}];
-	FxI18NTestRecordingDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_MenuItems
+	FxGripI18NTestRecordingDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_MenuItems
 																		  value:@"nope"];
 
-	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterSetMenuPreName
+	[self.effect.notifier postNotificationName:FxGripNotifyAPI_ParameterSetMenuPreName
 										object:self.effect
 									  userInfo:[self userInfoWithNestedParameter:parameter]];
 
@@ -527,7 +520,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 
 - (void)testLocalizeAndDelocalizeRoundTripThroughTheSameTable
 {
-	FxI18NTestFixtureTable *extension = [FxI18NTestFixtureTable.alloc init];
+	FxGripI18NTestFixtureTable *extension = [FxGripI18NTestFixtureTable.alloc init];
 
 	XCTAssertEqualObjects([extension localize:@"Greeting"], @"Bonjour");
 	XCTAssertEqualObjects([extension delocalize:@"Bonjour"], @"Greeting");
@@ -543,7 +536,7 @@ static NSNotificationCenter *FxI18NTestMakePriorityCenter(void)
 - (void)testApiManagerReturnsTheObjectCarriedByTheInitNotification
 {
 	NSObject *manager = NSObject.new;
-	NSDictionary *userInfo = @{FxTileableEffectInitAPIManagerKey: manager};
+	NSDictionary *userInfo = @{FxGripTileableEffectInitAPIManagerKey: manager};
 
 	XCTAssertTrue((id)[userInfo fxApiManager] == (id)manager);
 }

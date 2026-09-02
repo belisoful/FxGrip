@@ -37,10 +37,10 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	SUPER_DEALLOC();
 }
 
-- (NSMutableArray<id<FxExtension>> *)loadExtensions
+- (NSMutableArray<id<FxGripExtension>> *)loadExtensions
 {
-	NSMutableArray<id<FxExtension>> *extensions = [super loadExtensions];
-	[extensions addObject:(id<FxExtension>)[self newMLCacheExtension]];
+	NSMutableArray<id<FxGripExtension>> *extensions = [super loadExtensions];
+	[extensions addObject:(id<FxGripExtension>)[self newMLCacheExtension]];
 	return extensions;
 }
 

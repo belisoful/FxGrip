@@ -6,14 +6,9 @@
 //
 
 #import "FxGripToggleExtension.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "NSDictionary+FxTileableEffect.h"
-/*
-#import <CoreMedia/CoreMedia.h>
-#import "GuruFxTileableEffect.h"
-#import "GuruFxTileableEffect+Extensions.h"
-#import "FxGripInterpolatingDictionary.h" */
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"
 
 

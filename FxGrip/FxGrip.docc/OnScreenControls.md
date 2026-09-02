@@ -7,7 +7,7 @@ the effect's parameters.
 
 An FxPlug on-screen control (OSC) is its own plugin: a class implementing
 `FxOnScreenControl_v4`, registered beside the effect it serves.
-``FxOnScreenControlBase`` implements the whole protocol — the Metal drawing
+``FxGripOnScreenControl`` implements the whole protocol — the Metal drawing
 scaffold, coordinate conversion, hit-test dispatch, and drag routing — so a
 control subclass only declares which parts it is made of.
 
@@ -24,7 +24,7 @@ A complete OSC for an effect with a rectangle (two point parameters) and a
 movable, resizable, rotatable circle:
 
 ```objc
-@interface MyShapeOSC : FxOnScreenControlBase
+@interface MyShapeOSC : FxGripOnScreenControl
 @end
 
 @implementation MyShapeOSC
@@ -115,7 +115,7 @@ float sliders, angles in radians (the FxPlug angle-slider convention).
 
 ### Base class
 
-- ``FxOnScreenControlBase``
+- ``FxGripOnScreenControl``
 
 ### Parts
 

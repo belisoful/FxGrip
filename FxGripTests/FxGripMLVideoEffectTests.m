@@ -14,7 +14,7 @@
 #import <FxGrip/FxGripInferenceResult.h>
 #import <FxGrip/FxGripErrors.h>
 
-static CMTime FxMLVideoTestTime(void)
+static CMTime FxGripMLVideoTestTime(void)
 {
 	return (CMTime){ .value = 0, .timescale = 30, .flags = kCMTimeFlags_Valid };
 }
@@ -23,7 +23,7 @@ static CMTime FxMLVideoTestTime(void)
 
 /*! A backend whose readiness and result are staged; optionally blocks until released so a test
 	can cancel mid-run. */
-@interface FxMLVideoStubBackend : NSObject <FxGripInferenceBackend>
+@interface FxGripMLVideoStubBackend : NSObject <FxGripInferenceBackend>
 @property (nonatomic, assign) BOOL ready;
 @property (nonatomic, strong, nullable) FxGripInferenceResult *stagedResult;
 @property (nonatomic, strong, nullable) NSError *stagedError;
@@ -31,7 +31,7 @@ static CMTime FxMLVideoTestTime(void)
 @property (nonatomic, strong, nullable) dispatch_semaphore_t gate;
 @end
 
-@implementation FxMLVideoStubBackend
+@implementation FxGripMLVideoStubBackend
 
 - (instancetype)init
 {
@@ -60,16 +60,16 @@ static CMTime FxMLVideoTestTime(void)
 @end
 
 /*! An InferKit-video-asset-shaped object: only a fileURL. */
-@interface FxVideoAssetStub : NSObject
+@interface FxGripVideoAssetStub : NSObject
 @property (nonatomic, strong) NSURL *fileURL;
 @end
-@implementation FxVideoAssetStub
+@implementation FxGripVideoAssetStub
 @end
 
 #pragma mark - Test effect
 
 /*! Bypasses the host: sentinel source image, captured output, expectation-driven state hook. */
-@interface FxMLVideoTestEffect : FxGripMLVideoEffect
+@interface FxGripMLVideoTestEffect : FxGripMLVideoEffect
 @property (nonatomic, strong) NSNotificationCenter *privateNotifier;
 @property (nonatomic, strong) id capturedOutput;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *stagedInputs;
@@ -79,7 +79,7 @@ static CMTime FxMLVideoTestTime(void)
 @property (nonatomic, strong) NSURL *lastClipRendered;
 @end
 
-@implementation FxMLVideoTestEffect
+@implementation FxGripMLVideoTestEffect
 
 - (id)effectBase
 {
@@ -141,8 +141,8 @@ static CMTime FxMLVideoTestTime(void)
 #pragma mark - Tests
 
 @interface FxGripMLVideoEffectTests : XCTestCase
-@property (nonatomic, strong) FxMLVideoTestEffect *effect;
-@property (nonatomic, strong) FxMLVideoStubBackend *backend;
+@property (nonatomic, strong) FxGripMLVideoTestEffect *effect;
+@property (nonatomic, strong) FxGripMLVideoStubBackend *backend;
 @end
 
 @implementation FxGripMLVideoEffectTests
@@ -150,9 +150,9 @@ static CMTime FxMLVideoTestTime(void)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxMLVideoTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	self.effect = [FxGripMLVideoTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	self.effect.generationQueue = dispatch_queue_create("fxgrip.test.videogen", DISPATCH_QUEUE_SERIAL);
-	self.backend = [FxMLVideoStubBackend new];
+	self.backend = [FxGripMLVideoStubBackend new];
 	self.effect.inferenceBackend = self.backend;
 }
 
@@ -177,7 +177,7 @@ static CMTime FxMLVideoTestTime(void)
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"video": clip }];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"ready"];
 
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 
 	XCTAssertEqual(self.effect.generationState, FxGripMLVideoStateReady);
@@ -190,16 +190,16 @@ static CMTime FxMLVideoTestTime(void)
 {
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"video": @"/tmp/path.mov" }];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"path string"];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 	XCTAssertEqualObjects(self.effect.generatedClipURL, [NSURL fileURLWithPath:@"/tmp/path.mov"]);
 
-	FxVideoAssetStub *asset = [FxVideoAssetStub new];
+	FxGripVideoAssetStub *asset = [FxGripVideoAssetStub new];
 	asset.fileURL = [NSURL fileURLWithPath:@"/tmp/asset.mov"];
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"video": asset }];
 	[self.effect resetGeneration];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"asset shape"];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 	XCTAssertEqualObjects(self.effect.generatedClipURL, asset.fileURL,
 						  @"an object with a fileURL admits an InferKit video asset");
@@ -209,7 +209,7 @@ static CMTime FxMLVideoTestTime(void)
 {
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"text": @"no clip" }];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"failed"];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 
 	XCTAssertEqual(self.effect.generationState, FxGripMLVideoStateFailed);
@@ -220,7 +220,7 @@ static CMTime FxMLVideoTestTime(void)
 {
 	self.backend.ready = NO;
 	self.effect.terminalExpectation = [self expectationWithDescription:@"not ready"];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 
 	XCTAssertEqual(self.effect.generationState, FxGripMLVideoStateFailed);
@@ -234,7 +234,7 @@ static CMTime FxMLVideoTestTime(void)
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:
 								 @{ @"video": [NSURL fileURLWithPath:@"/tmp/late.mov"] }];
 
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	XCTAssertEqual(self.effect.generationState, FxGripMLVideoStateGenerating);
 
 	[self.effect cancelGeneration];
@@ -254,8 +254,8 @@ static CMTime FxMLVideoTestTime(void)
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:
 								 @{ @"video": [NSURL fileURLWithPath:@"/tmp/one.mov"] }];
 
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"single run"];
 	dispatch_semaphore_signal(self.backend.gate);
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
@@ -267,7 +267,7 @@ static CMTime FxMLVideoTestTime(void)
 {
 	NSError *error = nil;
 	XCTAssertTrue([self.effect renderMLFromSourceTile:nil toDestinationTile:nil
-											   atTime:FxMLVideoTestTime() error:&error]);
+											   atTime:FxGripMLVideoTestTime() error:&error]);
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"SOURCE");
 	XCTAssertEqual(self.backend.runCount, 0u, @"the render path never runs the backend");
 }
@@ -277,13 +277,13 @@ static CMTime FxMLVideoTestTime(void)
 	NSURL *clip = [NSURL fileURLWithPath:@"/tmp/generated.mov"];
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"video": clip }];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"ready"];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 
 	self.effect.clipRenderReturns = YES;
 	NSError *error = nil;
 	XCTAssertTrue([self.effect renderMLFromSourceTile:nil toDestinationTile:nil
-											   atTime:FxMLVideoTestTime() error:&error]);
+											   atTime:FxGripMLVideoTestTime() error:&error]);
 	XCTAssertEqualObjects(self.effect.lastClipRendered, clip);
 	XCTAssertNil(self.effect.capturedOutput, @"the clip frame, not the source, was written");
 }
@@ -293,13 +293,13 @@ static CMTime FxMLVideoTestTime(void)
 	NSURL *clip = [NSURL fileURLWithPath:@"/tmp/generated.mov"];
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"video": clip }];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"ready"];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 
 	self.effect.clipRenderReturns = NO;   // the default implementation's behavior
 	NSError *error = nil;
 	XCTAssertTrue([self.effect renderMLFromSourceTile:nil toDestinationTile:nil
-											   atTime:FxMLVideoTestTime() error:&error]);
+											   atTime:FxGripMLVideoTestTime() error:&error]);
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"SOURCE");
 }
 
@@ -308,7 +308,7 @@ static CMTime FxMLVideoTestTime(void)
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:
 								 @{ @"video": [NSURL fileURLWithPath:@"/tmp/x.mov"] }];
 	self.effect.terminalExpectation = [self expectationWithDescription:@"ready"];
-	[self.effect beginGenerationAtTime:FxMLVideoTestTime()];
+	[self.effect beginGenerationAtTime:FxGripMLVideoTestTime()];
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 
 	[self.effect resetGeneration];

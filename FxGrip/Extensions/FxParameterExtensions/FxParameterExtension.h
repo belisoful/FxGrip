@@ -5,11 +5,11 @@
 #ifndef FxParameterExtension_h
 #define FxParameterExtension_h
 
-#import "FxExtension.h"
+#import "FxGripExtension.h"
 #import "FxParameter.h"
 
 
-@protocol FxParameterExtension <FxExtension, FxParameter>
+@protocol FxParameterExtension <FxGripExtension, FxParameter>
 
 @property (readwrite, nonatomic) FxParameterId parameterID;
 
@@ -19,7 +19,7 @@
 
 
 //This is an extension that is itself a parameter
-@interface FxParameterExtension : FxExtension <FxParameter, FxParameterExtension>
+@interface FxParameterExtension : FxGripExtension <FxParameter, FxParameterExtension>
 {
 	BOOL					_addedToEffect;
 	
@@ -58,29 +58,5 @@
 
 
 
-/*
-@interface FxGripExtensionCustomParameter : FxGripExtensionParameter <FxGripCustomParameterProtocol>
-
-- (FxParameterType)parameterType;
-+ (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull GuruFxTileableEffect *)effect;
-
-- (id<NSSecureCoding, NSCopying> _Nullable)value;
-- (id<NSSecureCoding, NSCopying> _Nullable)valueAtTime:(CMTime)renderTime;
-- (void)setValue:(id<NSSecureCoding, NSCopying> _Nullable)value;
-- (void)setValue:(id<NSSecureCoding, NSCopying> _Nullable)value atTime:(CMTime)renderTime;
-
-- (void)encodeWithCoder:(NSCoder *_Nonnull)coder;
-
-@end
-
-
-
-
-@interface FxGripExtensionToggleParameter : FxGripExtensionParameter <FxGripToggleParameterProtocol>
-
-
-@end
-
-*/
 
 #endif

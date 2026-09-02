@@ -20,7 +20,20 @@
 #define kFxGripBannerKey_TextColor		@"textColor"
 #define kFxGripBannerKey_CornerRadius	@"cornerRadius"
 
+// Image mode. A resolvable image name switches the banner from a text strip to a graphic
+// (the title and subtitle still draw beneath it when present). A template image is drawn
+// tinted by the text color so a black-with-alpha graphic adapts to a light or dark UI. A
+// link URL makes the banner clickable; an action button shows a companion control that
+// opens the same link. This mirrors the FxFactory image banner.
+#define kFxGripBannerKey_ImageName		@"imageName"
+#define kFxGripBannerKey_TemplateImage	@"templateImage"
+#define kFxGripBannerKey_LinkURL		@"linkURL"
+#define kFxGripBannerKey_ActionButton	@"actionButton"
+
 #define kFxGripBannerDefaultFontSize	(12.0)
 #define kFxGripBannerSquareCorners		(-1.0)
+
+// FxFactory constrains banner graphics to this width, in view points.
+#define kFxGripBannerMaxImageWidth		(148.0)
 
 #endif

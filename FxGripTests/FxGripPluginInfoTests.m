@@ -25,10 +25,10 @@
 + (NSArray *)plugIns
 {
 	return @[
-		@{ kProPlugPlugIn_ClassNameProperty: @"FxMixedCasePlugin",
+		@{ kProPlugPlugIn_ClassNameProperty: @"FxGripMixedCasePlugin",
 		   kProPlugPlugIn_UuidProperty: @"AAAABBBB-CCCC-DDDD-EEEE-FFFF00001111",
 		   @"marker": @"mixed" },
-		@{ kProPlugPlugIn_ClassNameProperty: @"fxlowercaseplugin",
+		@{ kProPlugPlugIn_ClassNameProperty: @"fxgriplowercaseplugin",
 		   @"marker": @"lower" },
 		@{ kProPlugPlugIn_ClassNameProperty: @42 }
 	];
@@ -207,7 +207,7 @@
 
 - (void)testPluginPropertiesByClassNameIsAnEmptyDictionaryWhenNoPluginsAreRegistered
 {
-	NSDictionary *properties = [FxGripPluginInfo pluginPropertiesByClassName:@"FxTestPlugin"];
+	NSDictionary *properties = [FxGripPluginInfo pluginPropertiesByClassName:@"FxGripTestPlugin"];
 
 	XCTAssertNotNil(properties);
 	XCTAssertEqual(properties.count, (NSUInteger)0);
@@ -215,11 +215,11 @@
 
 - (void)testPluginPropertiesByClassNameMatchesAStagedEntryWithoutRegardToCase
 {
-	XCTAssertEqualObjects([FxGripPluginInfoTestStub pluginPropertiesByClassName:@"FxMixedCasePlugin"][@"marker"],
+	XCTAssertEqualObjects([FxGripPluginInfoTestStub pluginPropertiesByClassName:@"FxGripMixedCasePlugin"][@"marker"],
 						  @"mixed");
-	XCTAssertEqualObjects([FxGripPluginInfoTestStub pluginPropertiesByClassName:@"FXMIXEDCASEPLUGIN"][@"marker"],
+	XCTAssertEqualObjects([FxGripPluginInfoTestStub pluginPropertiesByClassName:@"FXGRIPMIXEDCASEPLUGIN"][@"marker"],
 						  @"mixed");
-	XCTAssertEqualObjects([FxGripPluginInfoTestStub pluginPropertiesByClassName:@"FxLowercasePlugin"][@"marker"],
+	XCTAssertEqualObjects([FxGripPluginInfoTestStub pluginPropertiesByClassName:@"FxGripLowercasePlugin"][@"marker"],
 						  @"lower");
 }
 

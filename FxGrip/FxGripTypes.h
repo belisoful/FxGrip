@@ -64,7 +64,7 @@ typedef UInt32	FxParameterId;
 
 // For FxGripClassRegistrar
 #ifndef kProPlugPlugInX_FxRegisteredPlugins_Property
-	#define kProPlugPlugInX_FxRegisteredPlugins_Property		@"FxRegisteredPlugins"
+	#define kProPlugPlugInX_FxRegisteredPlugins_Property		@"FxGripRegisteredPlugins"
 #endif
 
 //PluginGroup list properties
@@ -159,8 +159,7 @@ typedef UInt32	FxParameterId;
 /*!
 	@typedef	FxGripPresetOptions
 	@abstract	Selects which aspects of a target preset apply.
-	@discussion Introduced in FxGrip 1.0. Replaces the legacy GuruFxPresetOptions with
-				prefixed members and identical values.
+	@discussion Introduced in FxGrip 1.0.
 */
 typedef NS_OPTIONS(NSUInteger, FxGripPresetOptions) {
 	FxGripPresetAll		= NSUIntegerMax,
@@ -202,7 +201,7 @@ typedef NS_ENUM(NSUInteger, FxGripPresetSource) {
 #define kFxParameterProperty_SelectorPrefix	@"click"
 // Selector name registered with the host for push/help buttons: the prefix followed by
 // the decimal parameter ID (zero-argument, per the FxPlug button contract). The method is
-// not implemented anywhere; FxTileableEffectBase resolves it at runtime, decodes the
+// not implemented anywhere; FxGripTileableEffect resolves it at runtime, decodes the
 // parameter ID, and dispatches to the standardized -parameterClicked: path.
 #define kFxGripClickSelectorPrefix	@"clickFxGripParameterId"
 #define kFxParameterProperty_ManagePrefix	@"manage"
@@ -721,6 +720,9 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 	FxParameterType_Divider		= 128,
 	FxParameterType_WebView		= 129,	// can display links.
 	FxParameterType_VideoView	= 130,	// can display videos.
+	FxParameterType_LiveImage	= 131,	// shows images published from the render pass.
+	FxParameterType_TrackingOpacity = 132,	// read-only percent driven to 0% during analysis.
+	FxParameterType_Analyzer	= 133,	// button that starts the frame-analysis pass.
 	// https://developers.google.com/youtube/player_parameters
 	
 	//
@@ -798,6 +800,9 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 #define kFxParameterType_Divider	@"divider"
 #define kFxParameterType_WebView	@"webview"
 #define kFxParameterType_VideoView	@"videoview"
+#define kFxParameterType_LiveImage	@"liveimage"
+#define kFxParameterType_TrackingOpacity	@"trackingopacity"
+#define kFxParameterType_Analyzer	@"analyzer"
 
 
 

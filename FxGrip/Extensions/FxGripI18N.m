@@ -6,10 +6,10 @@
 //
 
 #import "FxGripI18N.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Extensions.h"
-#import "NSDictionary+FxTileableEffect.h"
-#import "FxAPINotifications.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Extensions.h"
+#import "NSDictionary+FxGripTileableEffect.h"
+#import "FxGripAPINotifications.h"
 #import "FxGrip_ARC.h"
 #import <BEFoundation/NSArray+BExtension.h>
 
@@ -32,14 +32,14 @@
 }
 
 // The plist properties are read here: the effect is nil until load.
-- (BOOL)extLoadWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect
 {
 	BOOL success = [super extLoadWithEffect:effect];
 	if (!success) {
 		return success;
 	}
 
-	NSDictionary *properties = ((FxTileableEffectBase*)effect).pluginProperties;
+	NSDictionary *properties = ((FxGripTileableEffect*)effect).pluginProperties;
 
 	NSNumber *value = properties[kProPlugPlugInX_DelocalizeNamesProperty];
 	if (value) {
@@ -75,7 +75,7 @@
 
 
 
-// The handlers operate on the nested FxNotifyAPI_ParameterKey dictionary with direct key
+// The handlers operate on the nested FxGripNotifyAPI_ParameterKey dictionary with direct key
 // access: the payloads are thin (no type/name for every key), so the guarded
 // NSDictionary accessors cannot read them.
 
@@ -261,7 +261,7 @@
 
 
 
-@implementation FxTileableEffectBase (I18N)
+@implementation FxGripTileableEffect (I18N)
 
 - (FxGripI18N*)i18n
 {

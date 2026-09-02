@@ -33,4 +33,7 @@
 
 #define kFxGripError_WindowAPIUnavailable	(kFxError_ThirdPartyDeveloperStart + 33000)
 
+#define kFxGripError_WatermarkNoDevice		(kFxError_ThirdPartyDeveloperStart + 34000)
+#define kFxGripError_WatermarkRender		(kFxError_ThirdPartyDeveloperStart + 34001)
+
 #endif

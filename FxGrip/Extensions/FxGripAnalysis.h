@@ -10,7 +10,7 @@
 
 #import "FxGripCustomExtension.h"
 #import "FxGripFrameData.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 
 /*!
 	@class      FxGripAnalysis
@@ -21,7 +21,7 @@
 				cache so large per-frame records spill to disk.
 
 				The extension is loaded automatically when the effect conforms to the FxPlug
-				`FxAnalyzer` protocol; the analysis pass in FxTileableEffectBase (Analyze)
+				`FxAnalyzer` protocol; the analysis pass in FxGripTileableEffect (Analyze)
 				reads and writes the frame data through the effect's `analysisData`.
 */
 @interface FxGripAnalysis : FxGripCustomExtension
@@ -32,7 +32,7 @@
 @end
 
 
-@interface FxTileableEffectBase (Analysis)
+@interface FxGripTileableEffect (Analysis)
 
 /*! The frame data of the loaded FxGripAnalysis extension; nil when analysis is not loaded. */
 @property (readonly, nullable, nonatomic) FxGripFrameData *analysisData;

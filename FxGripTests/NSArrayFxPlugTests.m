@@ -16,16 +16,16 @@
 	comparison without requiring FxPlug.framework, which is weak-linked and absent
 	outside an FxPlug host.
 */
-@interface FxTileSearchStub : NSObject
+@interface FxGripTileSearchStub : NSObject
 @property (nonatomic) UInt32 parameterID;
 + (instancetype)stubWithParameterID:(UInt32)parameterID;
 @end
 
-@implementation FxTileSearchStub
+@implementation FxGripTileSearchStub
 
 + (instancetype)stubWithParameterID:(UInt32)parameterID
 {
-	FxTileSearchStub *stub = [self new];
+	FxGripTileSearchStub *stub = [self new];
 	stub.parameterID = parameterID;
 	return stub;
 }
@@ -68,21 +68,21 @@
 
 - (void)testEffectSourceIgnoresElementsThatAreNotImageTiles
 {
-	NSArray *list = @[ [FxTileSearchStub stubWithParameterID:0], [FxTileSearchStub stubWithParameterID:1] ];
+	NSArray *list = @[ [FxGripTileSearchStub stubWithParameterID:0], [FxGripTileSearchStub stubWithParameterID:1] ];
 
 	XCTAssertNil(list.effectSource);
 }
 
 - (void)testImageTileAtIndexIgnoresElementsThatAreNotImageTiles
 {
-	NSArray *list = @[ [FxTileSearchStub stubWithParameterID:3] ];
+	NSArray *list = @[ [FxGripTileSearchStub stubWithParameterID:3] ];
 
 	XCTAssertNil([list imageTileAtIndex:3]);
 }
 
 - (void)testImageTilesAtIndexIgnoresElementsThatAreNotImageTiles
 {
-	NSArray *list = @[ [FxTileSearchStub stubWithParameterID:3], [FxTileSearchStub stubWithParameterID:3] ];
+	NSArray *list = @[ [FxGripTileSearchStub stubWithParameterID:3], [FxGripTileSearchStub stubWithParameterID:3] ];
 
 	NSArray *tiles = [list imageTilesAtIndex:3];
 
@@ -115,7 +115,7 @@
 */
 - (void)testEffectSourceIndexAgreesWithEffectSource
 {
-	NSArray *list = @[ [FxTileSearchStub stubWithParameterID:1], [FxTileSearchStub stubWithParameterID:0] ];
+	NSArray *list = @[ [FxGripTileSearchStub stubWithParameterID:1], [FxGripTileSearchStub stubWithParameterID:0] ];
 
 	XCTAssertNil(list.effectSource, "precondition: no element is an FxImageTile");
 	XCTAssertEqual(list.effectSourceIndex, (NSInteger)kFxImageTileNotFound,

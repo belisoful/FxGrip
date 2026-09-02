@@ -11,9 +11,9 @@
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
-#import "FxCustomDataClasses.h"
+#import "FxGripCustomDataClasses.h"
 
-@class FxTileableEffectBase;
+@class FxGripTileableEffect;
 
 /*!
 	@class      FxGripMetaManager
@@ -42,19 +42,19 @@
 				to the host through the effect's parameter-setting API and clears the
 				unsaved state.
 */
-@interface FxGripMetaManager : NSObject <NSSecureCoding, NSCopying, FxCustomDataClasses>
+@interface FxGripMetaManager : NSObject <NSSecureCoding, NSCopying, FxGripCustomDataClasses>
 
-@property (readonly, weak, nullable) FxTileableEffectBase *effect;
+@property (readonly, weak, nullable) FxGripTileableEffect *effect;
 @property (readonly) BOOL unsaved;
 
-- (nonnull instancetype)initWithEffect:(FxTileableEffectBase *_Nullable)effect;
+- (nonnull instancetype)initWithEffect:(FxGripTileableEffect *_Nullable)effect;
 
 /*!
 	@method     setEffect:
 	@abstract   Attaches the owning effect.
 	@discussion The effect is not archived; the loader calls this after decoding.
 */
-- (void)setEffect:(FxTileableEffectBase *_Nonnull)effect;
+- (void)setEffect:(FxGripTileableEffect *_Nonnull)effect;
 
 #pragma mark Record Management
 

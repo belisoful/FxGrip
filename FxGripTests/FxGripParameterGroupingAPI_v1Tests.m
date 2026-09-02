@@ -21,7 +21,7 @@ static const FxParameterId kGroupingTestMissing = 65;
 
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
@@ -34,14 +34,14 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 	FxSubParameters through -conformsToProtocol: so a leaf and a group can be told apart
 	without adopting the full parameter protocol.
 */
-@interface FxGroupingTestParameter : NSObject
+@interface FxGripGroupingTestParameter : NSObject
 @property (nonatomic, assign) FxParameterId parameterID;
 @property (nonatomic, assign) FxParameterId parameterParentID;
-@property (nonatomic, strong) NSArray<FxGroupingTestParameter *> *children;
+@property (nonatomic, strong) NSArray<FxGripGroupingTestParameter *> *children;
 @property (nonatomic, assign) BOOL isSubParameterContainer;
 @end
 
-@implementation FxGroupingTestParameter
+@implementation FxGripGroupingTestParameter
 
 - (instancetype)init
 {
@@ -73,12 +73,12 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 @end
 
 /*! Answers the parameter type the subgroup query branches on. */
-@interface FxGroupingTestDynamicAPI : NSObject
+@interface FxGripGroupingTestDynamicAPI : NSObject
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *types;
 @property (nonatomic, strong) NSMutableArray<NSNumber *> *requestedParameters;
 @end
 
-@implementation FxGroupingTestDynamicAPI
+@implementation FxGripGroupingTestDynamicAPI
 
 - (instancetype)init
 {
@@ -100,16 +100,16 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 @end
 
 /*!
-	FxTileableEffectBase's designated initializer registers into the process-wide
+	FxGripTileableEffect's designated initializer registers into the process-wide
 	notification center, so the wrapper is exercised against a stub carrying an isolated
 	notifier. The grouping queries subscript the effect for each parameter object.
 */
-@interface FxGroupingTestStubEffect : NSObject
+@interface FxGripGroupingTestStubEffect : NSObject
 @property (nonatomic, strong) NSNotificationCenter *notifier;
-@property (nonatomic, strong) NSMutableDictionary<NSNumber *, FxGroupingTestParameter *> *parameters;
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, FxGripGroupingTestParameter *> *parameters;
 @end
 
-@implementation FxGroupingTestStubEffect
+@implementation FxGripGroupingTestStubEffect
 
 - (id)effectBase
 {
@@ -122,7 +122,7 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxGroupingTestMakePriorityCenter();
+		_notifier = FxGripGroupingTestMakePriorityCenter();
 		_parameters = NSMutableDictionary.new;
 	}
 	return self;
@@ -138,8 +138,8 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 #pragma mark - Tests
 
 @interface FxGripParameterGroupingAPI_v1Tests : XCTestCase
-@property (nonatomic, strong) FxGroupingTestStubEffect *effect;
-@property (nonatomic, strong) FxGroupingTestDynamicAPI *dynamicAPI;
+@property (nonatomic, strong) FxGripGroupingTestStubEffect *effect;
+@property (nonatomic, strong) FxGripGroupingTestDynamicAPI *dynamicAPI;
 @property (nonatomic, strong) FxGripParameterGroupingAPI_v1 *api;
 @end
 
@@ -148,10 +148,10 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxGroupingTestStubEffect.alloc init];
-	self.dynamicAPI = [FxGroupingTestDynamicAPI.alloc init];
+	self.effect = [FxGripGroupingTestStubEffect.alloc init];
+	self.dynamicAPI = [FxGripGroupingTestDynamicAPI.alloc init];
 	self.api = [FxGripParameterGroupingAPI_v1.alloc initWithAPI:nil
-											  dynamicParamAPIv4:(id)self.dynamicAPI
+											  parameterInfoAPIv1:(id)self.dynamicAPI
 														 effect:(id)self.effect];
 }
 
@@ -165,11 +165,11 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 
 #pragma mark Helpers
 
-- (FxGroupingTestParameter *)addParameter:(FxParameterId)parameterID
+- (FxGripGroupingTestParameter *)addParameter:(FxParameterId)parameterID
 								   parent:(FxParameterId)parentID
 								container:(BOOL)container
 {
-	FxGroupingTestParameter *parameter = [FxGroupingTestParameter.alloc init];
+	FxGripGroupingTestParameter *parameter = [FxGripGroupingTestParameter.alloc init];
 	parameter.parameterID = parameterID;
 	parameter.parameterParentID = parentID;
 	parameter.isSubParameterContainer = container;
@@ -178,15 +178,15 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 }
 
 /*! A group holding two children, all three registered with the effect. */
-- (FxGroupingTestParameter *)installPopulatedGroup
+- (FxGripGroupingTestParameter *)installPopulatedGroup
 {
-	FxGroupingTestParameter *group = [self addParameter:kGroupingTestGroup
+	FxGripGroupingTestParameter *group = [self addParameter:kGroupingTestGroup
 												 parent:kFxParameterId_TopLevelGroup
 											  container:YES];
-	FxGroupingTestParameter *childA = [self addParameter:kGroupingTestChildA
+	FxGripGroupingTestParameter *childA = [self addParameter:kGroupingTestChildA
 												  parent:kGroupingTestGroup
 											   container:NO];
-	FxGroupingTestParameter *childB = [self addParameter:kGroupingTestChildB
+	FxGripGroupingTestParameter *childB = [self addParameter:kGroupingTestChildB
 												  parent:kGroupingTestGroup
 											   container:NO];
 	group.children = @[childA, childB];
@@ -219,7 +219,7 @@ static NSNotificationCenter *FxGroupingTestMakePriorityCenter(void)
 {
 	FxGripParameterGroupingAPI_v1 *api =
 		[FxGripParameterGroupingAPI_v1.alloc initWithAPI:nil
-									   dynamicParamAPIv4:nil
+									   parameterInfoAPIv1:nil
 												  effect:(id)self.effect];
 
 	XCTAssertFalse([api isSubGroup:kGroupingTestGroup],

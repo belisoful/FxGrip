@@ -7,12 +7,11 @@
 //
 
 #import "FxGripGroupParameter.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "FxAPINotifications.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "FxGripAPINotifications.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
-//#import "GuruFxTileableEffect+Parameters.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGrip_ARC.h"
 
 @implementation FxGripGroupParameter
@@ -39,8 +38,8 @@
 
 	// The group's children belong to whichever observer owns the configuration (the effect base's
 	// plist walk, or a plain host's own registration).
-	NSMutableDictionary *userInfo = @{FxTileableEffectGroupIDKey: @(parameter.parameterID)}.mutableCopy;
-	[effect.notifier postNotificationName:FxTileableEffectAddGroupParametersName
+	NSMutableDictionary *userInfo = @{FxGripTileableEffectGroupIDKey: @(parameter.parameterID)}.mutableCopy;
+	[effect.notifier postNotificationName:FxGripTileableEffectAddGroupParametersName
 								   object:effect
 								 userInfo:userInfo];
 	NSError *error = userInfo.fxError;

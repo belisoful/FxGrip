@@ -6,9 +6,9 @@
 //
 
 #import "FxGripParameterData.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "NSDictionary+FxTileableEffect.h"
-#import "FxTileableEffectBase+Extensions.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "NSDictionary+FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Extensions.h"
 #import "FxGripTypes.h"
 #import "FxGripParameterFlags.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
@@ -17,6 +17,7 @@
 @interface FxGripParameterData ()
 {
 	BOOL _documentAdded;   // tracked from the AddedToDocument notification
+	id _resolveObserver;
 }
 @end
 
@@ -45,8 +46,30 @@
 	}
 }
 
+/*! Answers the host's parameter-data-resolve notification with this extension, so the stored
+	menus and flags reach a plain host that loads it. */
+- (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect
+{
+	BOOL loaded = [super extLoadWithEffect:effect];
+	if (loaded && _resolveObserver == nil) {
+		__weak typeof(self) weakSelf = self;
+		_resolveObserver = NARC_RETAIN([self.effect.notifier
+			addObserverForName:FxGripTileableEffectResolveParameterDataName
+						object:effect
+						 queue:nil
+					usingBlock:^(NSNotification *note) {
+			((NSMutableDictionary *)note.userInfo)[FxGripTileableEffectResolvedObjectKey] = weakSelf;
+		}]);
+	}
+	return loaded;
+}
+
 - (void)dealloc
 {
+	if (_resolveObserver != nil) {
+		[self.effect.notifier removeObserver:_resolveObserver];
+		NARC_RELEASE(_resolveObserver);
+	}
 	NARC_RELEASE(_pData);
 	
 	SUPER_DEALLOC();
@@ -141,11 +164,11 @@
 {
 	NSInteger priority = [super ncPriority:aName];
 
-	if ([FxNotifyAPI_ParameterAddName isEqualToString:aName]) {
+	if ([FxGripNotifyAPI_ParameterAddName isEqualToString:aName]) {
 		return -20;
-	} else if ([FxTileableEffectAddedToDocumentName isEqualToString:aName]) {
+	} else if ([FxGripTileableEffectAddedToDocumentName isEqualToString:aName]) {
 		return -18;
-	} else if ([FxTileableEffectFlushName isEqualToString:aName]) {
+	} else if ([FxGripTileableEffectFlushName isEqualToString:aName]) {
 		// After the base flag flush (−14) so flag words it writes are persisted this cycle.
 		return -13;
 	}
@@ -294,7 +317,7 @@
 
 
 
-@implementation FxTileableEffectBase (ParameterData)
+@implementation FxGripTileableEffect (ParameterData)
 
 - (FxGripParameterData*)parameterData
 {

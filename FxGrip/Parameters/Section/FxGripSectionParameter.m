@@ -6,8 +6,8 @@
 #import "FxGripSectionParameter.h"
 #import "FxGripSection.h"
 #import "FxGripSectionData.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGrip_ARC.h"
 
 @implementation FxGripSectionView
@@ -148,9 +148,19 @@
 		_label.stringValue = [self transform:(title ?: @"") with:(FxGripSectionTransform)transform];
 	}
 
+	double opacity = kFxGripSectionDefaultOpacity;
+	double opacityValue = 0.0;
+	BOOL hasOpacity = [data getFloatValue:&opacityValue forKey:kFxGripSectionKey_Opacity];
+	if (hasOpacity) {
+		opacity = MIN(1.0, MAX(0.0, opacityValue));
+	}
+
 	double red = 0.0, green = 0.0, blue = 0.0, alpha = 1.0;
 	if ([data getRedValue:&red greenValue:&green blueValue:&blue alphaValue:&alpha forKey:kFxGripSectionKey_Color]) {
-		_label.textColor = [NSColor colorWithSRGBRed:red green:green blue:blue alpha:alpha];
+		_label.textColor = [NSColor colorWithSRGBRed:red green:green blue:blue alpha:alpha * opacity];
+	} else if (hasOpacity) {
+		// No color override; dim the inherited default label color to the requested opacity.
+		_label.textColor = [NSColor.labelColor colorWithAlphaComponent:opacity];
 	}
 
 	int margin = 0;

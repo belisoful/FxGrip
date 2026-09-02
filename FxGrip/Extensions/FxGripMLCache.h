@@ -8,7 +8,7 @@
 
 #import "FxGripCustomExtension.h"
 #import "FxGripFrameData.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 
 /*!
 	@class      FxGripMLCache
@@ -31,7 +31,7 @@
 @end
 
 
-@interface FxTileableEffectBase (MLCache)
+@interface FxGripTileableEffect (MLCache)
 
 /*! The frame data of the loaded FxGripMLCache extension; nil when the cache is not loaded. */
 @property (readonly, nullable, nonatomic) FxGripFrameData *mlCacheData;

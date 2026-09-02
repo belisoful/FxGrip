@@ -14,8 +14,8 @@
 
 // Defined in NSCoder+FxPlug.m and exported by the framework, but not declared in the
 // public header. The lighting wire format is pinned through them.
-extern NSString * const FxLightingCoderLightCountKey;
-extern NSString * const FxLightingCoderLightingKey;
+extern NSString * const FxGripLightingCoderLightCountKey;
+extern NSString * const FxGripLightingCoderLightingKey;
 
 #pragma mark - Stubs
 
@@ -24,7 +24,7 @@ extern NSString * const FxLightingCoderLightingKey;
 	-matrix, so any object answering that selector drives the encoder. FxPlug.framework
 	is weak-linked and absent outside a host, so FxMatrix44 itself cannot be instantiated.
 */
-@interface FxCoderMatrixStub : NSObject
+@interface FxGripCoderMatrixStub : NSObject
 {
 	Matrix44Data _data;
 }
@@ -32,7 +32,7 @@ extern NSString * const FxLightingCoderLightingKey;
 - (void)fillStartingAt:(double)start;
 @end
 
-@implementation FxCoderMatrixStub
+@implementation FxGripCoderMatrixStub
 
 - (Matrix44Data *)matrix
 {
@@ -50,10 +50,10 @@ extern NSString * const FxLightingCoderLightingKey;
 @end
 
 
-@interface FxCoder3DMock : NSObject <Fx3DAPI_v5>
-@property (nonatomic, strong) FxCoderMatrixStub *model;
-@property (nonatomic, strong) FxCoderMatrixStub *view;
-@property (nonatomic, strong) FxCoderMatrixStub *projection;
+@interface FxGripCoder3DMock : NSObject <Fx3DAPI_v5>
+@property (nonatomic, strong) FxGripCoderMatrixStub *model;
+@property (nonatomic, strong) FxGripCoderMatrixStub *view;
+@property (nonatomic, strong) FxGripCoderMatrixStub *projection;
 @property (nonatomic) double focalLength;
 @property (nonatomic) BOOL frustumSucceeds;
 // Index of the accessor that reports an error: 0 model, 1 view, 2 projection,
@@ -62,17 +62,17 @@ extern NSString * const FxLightingCoderLightingKey;
 @property (nonatomic) CMTime lastRequestedTime;
 @end
 
-@implementation FxCoder3DMock
+@implementation FxGripCoder3DMock
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
-		_model = [FxCoderMatrixStub new];
+		_model = [FxGripCoderMatrixStub new];
 		[_model fillStartingAt:100.0];
-		_view = [FxCoderMatrixStub new];
+		_view = [FxGripCoderMatrixStub new];
 		[_view fillStartingAt:200.0];
-		_projection = [FxCoderMatrixStub new];
+		_projection = [FxGripCoderMatrixStub new];
 		[_projection fillStartingAt:300.0];
 		_focalLength = 42.5;
 		_frustumSucceeds = YES;
@@ -87,7 +87,7 @@ extern NSString * const FxLightingCoderLightingKey;
 		return YES;
 	}
 	if (error) {
-		*error = [NSError errorWithDomain:@"FxCoderTest" code:(NSInteger)step userInfo:nil];
+		*error = [NSError errorWithDomain:@"FxGripCoderTest" code:(NSInteger)step userInfo:nil];
 	}
 	return NO;
 }
@@ -142,13 +142,13 @@ extern NSString * const FxLightingCoderLightingKey;
 @end
 
 
-@interface FxCoderLightingMock : NSObject <FxLightingAPI_v3>
+@interface FxGripCoderLightingMock : NSObject <FxLightingAPI_v3>
 @property (nonatomic) NSUInteger lightCount;
 // Index whose -lightInfo: call fails; NSNotFound means every light reports.
 @property (nonatomic) NSUInteger failingLight;
 @end
 
-@implementation FxCoderLightingMock
+@implementation FxGripCoderLightingMock
 
 - (instancetype)init
 {
@@ -169,7 +169,7 @@ extern NSString * const FxLightingCoderLightingKey;
 {
 	if (lightIndex == self.failingLight) {
 		if (error) {
-			*error = [NSError errorWithDomain:@"FxCoderTest" code:(NSInteger)lightIndex userInfo:nil];
+			*error = [NSError errorWithDomain:@"FxGripCoderTest" code:(NSInteger)lightIndex userInfo:nil];
 		}
 		return NO;
 	}
@@ -191,12 +191,12 @@ extern NSString * const FxLightingCoderLightingKey;
 
 @implementation NSCoderFxPlugTests
 
-static NSKeyedArchiver *FxCoderArchiver(void)
+static NSKeyedArchiver *FxGripCoderArchiver(void)
 {
 	return [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
 }
 
-static NSKeyedUnarchiver *FxCoderUnarchiver(NSKeyedArchiver *archiver)
+static NSKeyedUnarchiver *FxGripCoderUnarchiver(NSKeyedArchiver *archiver)
 {
 	[archiver finishEncoding];
 	NSError *error = nil;
@@ -207,7 +207,7 @@ static NSKeyedUnarchiver *FxCoderUnarchiver(NSKeyedArchiver *archiver)
 
 // A valid, non-zero CMTime built without linking CoreMedia: kCMTimeZero and
 // CMTimeMake are external, the flag constants are compile-time enumerators.
-static CMTime FxCoderTime(int64_t value, int32_t timescale)
+static CMTime FxGripCoderTime(int64_t value, int32_t timescale)
 {
 	CMTime time;
 	time.value = value;
@@ -217,22 +217,22 @@ static CMTime FxCoderTime(int64_t value, int32_t timescale)
 	return time;
 }
 
-static BOOL FxCoderTimesEqual(CMTime a, CMTime b)
+static BOOL FxGripCoderTimesEqual(CMTime a, CMTime b)
 {
 	return a.value == b.value && a.timescale == b.timescale && a.flags == b.flags && a.epoch == b.epoch;
 }
 
 // The archive key -encodeFxLightingAPI:atTime:forKey: writes one light under.
-static NSString *FxCoderLightKey(NSString *prefix, long index)
+static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 {
-	return [prefix stringByAppendingFormat:@"%ld%@", index, FxLightingCoderLightingKey];
+	return [prefix stringByAppendingFormat:@"%ld%@", index, FxGripLightingCoderLightingKey];
 }
 
 #pragma mark - Render Time
 
 - (void)testRenderTimeIsInvalidBeforeItIsAssigned
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	CMTime time = archiver.renderTime;
 
 	XCTAssertEqual(time.flags & kCMTimeFlags_Valid, 0);
@@ -241,20 +241,20 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testRenderTimeRoundTripsThroughTheAssociatedObject
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	CMTime time = FxCoderTime(1500, 600);
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	CMTime time = FxGripCoderTime(1500, 600);
 
 	archiver.renderTime = time;
 
-	XCTAssertTrue(FxCoderTimesEqual(archiver.renderTime, time));
+	XCTAssertTrue(FxGripCoderTimesEqual(archiver.renderTime, time));
 }
 
 - (void)testRenderTimeIsIndependentPerCoder
 {
-	NSKeyedArchiver *first = FxCoderArchiver();
-	NSKeyedArchiver *second = FxCoderArchiver();
+	NSKeyedArchiver *first = FxGripCoderArchiver();
+	NSKeyedArchiver *second = FxGripCoderArchiver();
 
-	first.renderTime = FxCoderTime(10, 30);
+	first.renderTime = FxGripCoderTime(10, 30);
 
 	XCTAssertEqual(second.renderTime.timescale, 0);
 	XCTAssertEqual(first.renderTime.timescale, 30);
@@ -262,11 +262,11 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testIsFxPluginStateEncoderTracksWhetherARenderTimeWasAssigned
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 
 	XCTAssertFalse(archiver.isFxPluginStateEncoder);
 
-	archiver.renderTime = FxCoderTime(0, 1);
+	archiver.renderTime = FxGripCoderTime(0, 1);
 
 	XCTAssertTrue(archiver.isFxPluginStateEncoder);
 }
@@ -275,7 +275,7 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testQualityLevelDefaultsToHighWhenTheKeyIsAbsent
 {
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(FxCoderArchiver());
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(FxGripCoderArchiver());
 
 	XCTAssertEqual(unarchiver.qualityLevel, (FxQuality)kFxQuality_HIGH);
 }
@@ -285,10 +285,10 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 	FxQuality levels[3] = { kFxQuality_LOW, kFxQuality_MEDIUM, kFxQuality_HIGH };
 
 	for (int i = 0; i < 3; i++) {
-		NSKeyedArchiver *archiver = FxCoderArchiver();
+		NSKeyedArchiver *archiver = FxGripCoderArchiver();
 		archiver.qualityLevel = levels[i];
 
-		NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+		NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 		XCTAssertEqual(unarchiver.qualityLevel, levels[i]);
 	}
@@ -296,10 +296,10 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testQualityLevelUsesTheDocumentedArchiveKey
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	archiver.qualityLevel = kFxQuality_MEDIUM;
 
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	XCTAssertTrue([unarchiver containsValueForKey:kFxPlugCoderQualityLevelKey]);
 	XCTAssertEqual([unarchiver decodeInt64ForKey:kFxPlugCoderQualityLevelKey], (int64_t)kFxQuality_MEDIUM);
@@ -309,11 +309,11 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxPoint2DRoundTrips
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	FxPoint2D point = { 12.5, -3.25 };
 
 	[archiver encodeFxPoint2D:point forKey:@"p"];
-	FxPoint2D decoded = [FxCoderUnarchiver(archiver) decodeFxPoint2D:@"p"];
+	FxPoint2D decoded = [FxGripCoderUnarchiver(archiver) decodeFxPoint2D:@"p"];
 
 	XCTAssertEqual(decoded.x, 12.5);
 	XCTAssertEqual(decoded.y, -3.25);
@@ -321,7 +321,7 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxPoint2DDecodesToZeroWhenTheKeyIsMissing
 {
-	FxPoint2D decoded = [FxCoderUnarchiver(FxCoderArchiver()) decodeFxPoint2D:@"absent"];
+	FxPoint2D decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxPoint2D:@"absent"];
 
 	XCTAssertEqual(decoded.x, 0.0);
 	XCTAssertEqual(decoded.y, 0.0);
@@ -329,10 +329,10 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxPoint2DDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 
 	[archiver encodeFxPoint3D:(FxPoint3D){ 1.0, 2.0, 3.0 } forKey:@"p"];
-	FxPoint2D decoded = [FxCoderUnarchiver(archiver) decodeFxPoint2D:@"p"];
+	FxPoint2D decoded = [FxGripCoderUnarchiver(archiver) decodeFxPoint2D:@"p"];
 
 	XCTAssertEqual(decoded.x, 0.0);
 	XCTAssertEqual(decoded.y, 0.0);
@@ -342,11 +342,11 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxSizeRoundTrips
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	FxSize size = { 1920.0, 1080.0 };
 
 	[archiver encodeFxSize:size forKey:@"s"];
-	FxSize decoded = [FxCoderUnarchiver(archiver) decodeFxSize:@"s"];
+	FxSize decoded = [FxGripCoderUnarchiver(archiver) decodeFxSize:@"s"];
 
 	XCTAssertEqual(decoded.width, 1920.0);
 	XCTAssertEqual(decoded.height, 1080.0);
@@ -354,7 +354,7 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxSizeDecodesToZeroWhenTheKeyIsMissing
 {
-	FxSize decoded = [FxCoderUnarchiver(FxCoderArchiver()) decodeFxSize:@"absent"];
+	FxSize decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxSize:@"absent"];
 
 	XCTAssertEqual(decoded.width, 0.0);
 	XCTAssertEqual(decoded.height, 0.0);
@@ -362,10 +362,10 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxSizeDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 
 	[archiver encodeFxPoint3D:(FxPoint3D){ 1.0, 2.0, 3.0 } forKey:@"s"];
-	FxSize decoded = [FxCoderUnarchiver(archiver) decodeFxSize:@"s"];
+	FxSize decoded = [FxGripCoderUnarchiver(archiver) decodeFxSize:@"s"];
 
 	XCTAssertEqual(decoded.width, 0.0);
 	XCTAssertEqual(decoded.height, 0.0);
@@ -375,11 +375,11 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxPoint3DRoundTrips
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	FxPoint3D point = { -1.5, 2.5, 3.75 };
 
 	[archiver encodeFxPoint3D:point forKey:@"p3"];
-	FxPoint3D decoded = [FxCoderUnarchiver(archiver) decodeFxPoint3D:@"p3"];
+	FxPoint3D decoded = [FxGripCoderUnarchiver(archiver) decodeFxPoint3D:@"p3"];
 
 	XCTAssertEqual(decoded.x, -1.5);
 	XCTAssertEqual(decoded.y, 2.5);
@@ -388,7 +388,7 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxPoint3DDecodesToZeroWhenTheKeyIsMissing
 {
-	FxPoint3D decoded = [FxCoderUnarchiver(FxCoderArchiver()) decodeFxPoint3D:@"absent"];
+	FxPoint3D decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxPoint3D:@"absent"];
 
 	XCTAssertEqual(decoded.x, 0.0);
 	XCTAssertEqual(decoded.y, 0.0);
@@ -397,10 +397,10 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxPoint3DDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 
 	[archiver encodeFxPoint2D:(FxPoint2D){ 1.0, 2.0 } forKey:@"p3"];
-	FxPoint3D decoded = [FxCoderUnarchiver(archiver) decodeFxPoint3D:@"p3"];
+	FxPoint3D decoded = [FxGripCoderUnarchiver(archiver) decodeFxPoint3D:@"p3"];
 
 	XCTAssertEqual(decoded.x, 0.0);
 	XCTAssertEqual(decoded.z, 0.0);
@@ -410,11 +410,11 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxRectRoundTrips
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	FxRect rect = { -10, -20, 30, 40 };
 
 	[archiver encodeFxRect:rect forKey:@"r"];
-	FxRect decoded = [FxCoderUnarchiver(archiver) decodeFxRect:@"r"];
+	FxRect decoded = [FxGripCoderUnarchiver(archiver) decodeFxRect:@"r"];
 
 	XCTAssertEqual(decoded.left, -10);
 	XCTAssertEqual(decoded.bottom, -20);
@@ -424,7 +424,7 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxRectDecodesToZeroWhenTheKeyIsMissing
 {
-	FxRect decoded = [FxCoderUnarchiver(FxCoderArchiver()) decodeFxRect:@"absent"];
+	FxRect decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxRect:@"absent"];
 
 	XCTAssertEqual(decoded.left, 0);
 	XCTAssertEqual(decoded.bottom, 0);
@@ -434,10 +434,10 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testFxRectDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 
 	[archiver encodeFxPoint3D:(FxPoint3D){ 1.0, 2.0, 3.0 } forKey:@"r"];
-	FxRect decoded = [FxCoderUnarchiver(archiver) decodeFxRect:@"r"];
+	FxRect decoded = [FxGripCoderUnarchiver(archiver) decodeFxRect:@"r"];
 
 	XCTAssertEqual(decoded.left, 0);
 	XCTAssertEqual(decoded.top, 0);
@@ -447,7 +447,7 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testMatrix44DataRoundTrips
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	Matrix44Data matrix = {
 		{  1.0,  2.0,  3.0,  4.0 },
 		{  5.0,  6.0,  7.0,  8.0 },
@@ -456,7 +456,7 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 	};
 
 	[archiver encodeMatrix44Data:&matrix forKey:@"m"];
-	Matrix44Data *decoded = [FxCoderUnarchiver(archiver) decodeMatrix44Data:@"m"];
+	Matrix44Data *decoded = [FxGripCoderUnarchiver(archiver) decodeMatrix44Data:@"m"];
 
 	XCTAssertTrue(decoded != NULL);
 	XCTAssertEqual(memcmp(decoded, &matrix, sizeof(Matrix44Data)), 0);
@@ -464,26 +464,26 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testMatrix44DataDecodesToNullWhenTheKeyIsMissing
 {
-	XCTAssertTrue([FxCoderUnarchiver(FxCoderArchiver()) decodeMatrix44Data:@"absent"] == NULL);
+	XCTAssertTrue([FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeMatrix44Data:@"absent"] == NULL);
 }
 
 - (void)testMatrix44DataDecodesToNullWhenTheStoredBlobIsADifferentSize
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 
 	[archiver encodeFxPoint3D:(FxPoint3D){ 1.0, 2.0, 3.0 } forKey:@"m"];
 
-	XCTAssertTrue([FxCoderUnarchiver(archiver) decodeMatrix44Data:@"m"] == NULL);
+	XCTAssertTrue([FxGripCoderUnarchiver(archiver) decodeMatrix44Data:@"m"] == NULL);
 }
 
 - (void)testEncodeFxMatrix44WritesTheObjectsRawMatrixData
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderMatrixStub *stub = [FxCoderMatrixStub new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderMatrixStub *stub = [FxGripCoderMatrixStub new];
 	[stub fillStartingAt:7.0];
 
 	[archiver encodeFxMatrix44:(FxMatrix44 *)stub forKey:@"m"];
-	Matrix44Data *decoded = [FxCoderUnarchiver(archiver) decodeMatrix44Data:@"m"];
+	Matrix44Data *decoded = [FxGripCoderUnarchiver(archiver) decodeMatrix44Data:@"m"];
 
 	XCTAssertTrue(decoded != NULL);
 	XCTAssertEqual(memcmp(decoded, stub.matrix, sizeof(Matrix44Data)), 0);
@@ -499,10 +499,10 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 	if (NSClassFromString(@"FxMatrix44") != Nil) {
 		XCTSkip(@"FxPlug is loaded; the object decoders resolve against the real class.");
 	}
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 	Matrix44Data matrix = { { 1.0 } };
 	[archiver encodeMatrix44Data:&matrix forKey:@"m"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	XCTAssertNil([unarchiver decodeFxMatrix44:@"m"]);
 	XCTAssertNil([unarchiver decodeFxColorMatrix44:@"m"]);
@@ -514,11 +514,11 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testEncodeFx3DAPIWritesEveryCameraValueUnderTheGivenKey
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoder3DMock *api = [FxCoder3DMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoder3DMock *api = [FxGripCoder3DMock new];
 
-	[archiver encodeFx3DAPI:api atTime:FxCoderTime(300, 600) forKey:@"K"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFx3DAPI:api atTime:FxGripCoderTime(300, 600) forKey:@"K"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	XCTAssertEqual([unarchiver decodeFx3DFocalLength:@"K"], 42.5);
 	XCTAssertEqual([unarchiver decodeFx3DFrustumLeft:@"K"], -1.0);
@@ -535,26 +535,26 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testEncodeFx3DAPIComposesKeysFromThePrefixAndTheDocumentedSuffixes
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
 
-	[archiver encodeFx3DAPI:[FxCoder3DMock new] atTime:FxCoderTime(0, 1) forKey:@"K"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFx3DAPI:[FxGripCoder3DMock new] atTime:FxGripCoderTime(0, 1) forKey:@"K"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
-	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:Fx3DCoderModelMatrixKey]]);
-	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:Fx3DCoderViewMatrixKey]]);
-	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:Fx3DCoderProjectionMatrixKey]]);
-	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:Fx3DCoderFocalLengthKey]]);
-	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:Fx3DCoderFrustumLeftKey]]);
-	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:Fx3DCoderFrustumFarKey]]);
+	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderModelMatrixKey]]);
+	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderViewMatrixKey]]);
+	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderProjectionMatrixKey]]);
+	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderFocalLengthKey]]);
+	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderFrustumLeftKey]]);
+	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderFrustumFarKey]]);
 }
 
 - (void)testEncodeFx3DAPIWithoutAKeyWritesUnderTheCurrentTimeKey
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	archiver.renderTime = FxCoderTime(900, 600);
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	archiver.renderTime = FxGripCoderTime(900, 600);
 
-	[archiver encodeFx3DAPI:[FxCoder3DMock new]];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFx3DAPI:[FxGripCoder3DMock new]];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	XCTAssertEqual([unarchiver decodeFx3DFocalLength], 42.5);
 	XCTAssertEqual([unarchiver decodeFx3DFrustumNear], 0.5);
@@ -565,23 +565,23 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testEncodeFx3DAPIPassesTheRenderTimeToTheHostAPI
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	CMTime time = FxCoderTime(1234, 600);
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	CMTime time = FxGripCoderTime(1234, 600);
 	archiver.renderTime = time;
-	FxCoder3DMock *api = [FxCoder3DMock new];
+	FxGripCoder3DMock *api = [FxGripCoder3DMock new];
 
 	[archiver encodeFx3DAPI:api];
 
-	XCTAssertTrue(FxCoderTimesEqual(api.lastRequestedTime, time));
+	XCTAssertTrue(FxGripCoderTimesEqual(api.lastRequestedTime, time));
 }
 
 - (void)testEncodeFx3DAPIUnderTheCurrentTimeKeySkipsATimeOtherThanTheRenderTime
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	archiver.renderTime = FxCoderTime(100, 600);
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	archiver.renderTime = FxGripCoderTime(100, 600);
 
-	[archiver encodeFx3DAPI:[FxCoder3DMock new] atTime:FxCoderTime(200, 600) forKey:Fx3DCoderCurrentTimeKey];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFx3DAPI:[FxGripCoder3DMock new] atTime:FxGripCoderTime(200, 600) forKey:FxGrip3DCoderCurrentTimeKey];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	XCTAssertTrue([unarchiver decodeFx3DModelMatrixData] == NULL);
 	XCTAssertEqual([unarchiver decodeFx3DFocalLength], 0.0);
@@ -594,20 +594,20 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 - (void)testEncodeFx3DAPIStopsAfterTheAccessorThatReportsAnError
 {
 	NSArray<NSString *> *suffixes = @[
-		Fx3DCoderModelMatrixKey,
-		Fx3DCoderViewMatrixKey,
-		Fx3DCoderProjectionMatrixKey,
-		Fx3DCoderFocalLengthKey,
-		Fx3DCoderFrustumLeftKey
+		FxGrip3DCoderModelMatrixKey,
+		FxGrip3DCoderViewMatrixKey,
+		FxGrip3DCoderProjectionMatrixKey,
+		FxGrip3DCoderFocalLengthKey,
+		FxGrip3DCoderFrustumLeftKey
 	];
 
 	for (NSUInteger failingStep = 0; failingStep < suffixes.count; failingStep++) {
-		NSKeyedArchiver *archiver = FxCoderArchiver();
-		FxCoder3DMock *api = [FxCoder3DMock new];
+		NSKeyedArchiver *archiver = FxGripCoderArchiver();
+		FxGripCoder3DMock *api = [FxGripCoder3DMock new];
 		api.failingStep = failingStep;
 
-		[archiver encodeFx3DAPI:api atTime:FxCoderTime(0, 1) forKey:@"K"];
-		NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+		[archiver encodeFx3DAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"K"];
+		NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 		for (NSUInteger step = 0; step < suffixes.count; step++) {
 			BOOL written = [unarchiver containsValueForKey:[@"K" stringByAppendingString:suffixes[step]]];
@@ -621,21 +621,21 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testEncodeFx3DAPIWritesNoFrustumWhenTheFrustumCallFails
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoder3DMock *api = [FxCoder3DMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoder3DMock *api = [FxGripCoder3DMock new];
 	api.frustumSucceeds = NO;
 
-	[archiver encodeFx3DAPI:api atTime:FxCoderTime(0, 1) forKey:@"K"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFx3DAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"K"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	XCTAssertEqual([unarchiver decodeFx3DFocalLength:@"K"], 42.5);
-	XCTAssertFalse([unarchiver containsValueForKey:[@"K" stringByAppendingString:Fx3DCoderFrustumLeftKey]]);
+	XCTAssertFalse([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderFrustumLeftKey]]);
 	XCTAssertEqual([unarchiver decodeFx3DFrustumFar:@"K"], 0.0);
 }
 
 - (void)testFx3DDecodersReturnZeroAndNullForAnEmptyArchive
 {
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(FxCoderArchiver());
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(FxGripCoderArchiver());
 
 	XCTAssertEqual([unarchiver decodeFx3DFocalLength], 0.0);
 	XCTAssertEqual([unarchiver decodeFx3DFrustumLeft], 0.0);
@@ -659,58 +659,58 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testEncodeFxLightingAPIWritesTheLightCount
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 3;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
-	XCTAssertEqual([unarchiver decodeIntegerForKey:[@"L" stringByAppendingString:FxLightingCoderLightCountKey]], (NSInteger)3);
+	XCTAssertEqual([unarchiver decodeIntegerForKey:[@"L" stringByAppendingString:FxGripLightingCoderLightCountKey]], (NSInteger)3);
 }
 
 - (void)testEncodeFxLightingAPIWithoutAKeyWritesUnderTheCurrentTimeKey
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	archiver.renderTime = FxCoderTime(60, 30);
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	archiver.renderTime = FxGripCoderTime(60, 30);
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 2;
 
 	[archiver encodeFxLightingAPI:api];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
-	XCTAssertEqual([unarchiver decodeIntegerForKey:[Fx3DCoderCurrentTimeKey stringByAppendingString:FxLightingCoderLightCountKey]], (NSInteger)2);
-	XCTAssertTrue([unarchiver containsValueForKey:FxCoderLightKey(Fx3DCoderCurrentTimeKey, 0)]);
-	XCTAssertTrue([unarchiver containsValueForKey:FxCoderLightKey(Fx3DCoderCurrentTimeKey, 1)]);
+	XCTAssertEqual([unarchiver decodeIntegerForKey:[FxGrip3DCoderCurrentTimeKey stringByAppendingString:FxGripLightingCoderLightCountKey]], (NSInteger)2);
+	XCTAssertTrue([unarchiver containsValueForKey:FxGripCoderLightKey(FxGrip3DCoderCurrentTimeKey, 0)]);
+	XCTAssertTrue([unarchiver containsValueForKey:FxGripCoderLightKey(FxGrip3DCoderCurrentTimeKey, 1)]);
 }
 
 - (void)testEncodeFxLightingAPIUnderTheCurrentTimeKeySkipsATimeOtherThanTheRenderTime
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	archiver.renderTime = FxCoderTime(10, 30);
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	archiver.renderTime = FxGripCoderTime(10, 30);
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 4;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(20, 30) forKey:Fx3DCoderCurrentTimeKey];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(20, 30) forKey:FxGrip3DCoderCurrentTimeKey];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
-	XCTAssertFalse([unarchiver containsValueForKey:[Fx3DCoderCurrentTimeKey stringByAppendingString:FxLightingCoderLightCountKey]]);
-	XCTAssertFalse([unarchiver containsValueForKey:FxCoderLightKey(Fx3DCoderCurrentTimeKey, 0)]);
+	XCTAssertFalse([unarchiver containsValueForKey:[FxGrip3DCoderCurrentTimeKey stringByAppendingString:FxGripLightingCoderLightCountKey]]);
+	XCTAssertFalse([unarchiver containsValueForKey:FxGripCoderLightKey(FxGrip3DCoderCurrentTimeKey, 0)]);
 	XCTAssertEqual([unarchiver decodeFxLightCount], 0L);
 }
 
 - (void)testEncodeFxLightingAPIWritesEachLightUnderItsIndexedKey
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 2;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	for (long index = 0; index < 2; index++) {
 		NSUInteger length = 0;
-		const FxLight *light = (const FxLight *)[unarchiver decodeBytesForKey:FxCoderLightKey(@"L", index) returnedLength:&length];
+		const FxLight *light = (const FxLight *)[unarchiver decodeBytesForKey:FxGripCoderLightKey(@"L", index) returnedLength:&length];
 
 		XCTAssertEqual(length, sizeof(FxLight));
 		XCTAssertTrue(light != NULL);
@@ -723,29 +723,29 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testEncodeFxLightingAPISkipsALightWhoseInfoCallFails
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 3;
 	api.failingLight = 1;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
-	XCTAssertEqual([unarchiver decodeIntegerForKey:[@"L" stringByAppendingString:FxLightingCoderLightCountKey]], (NSInteger)3);
-	XCTAssertTrue([unarchiver containsValueForKey:FxCoderLightKey(@"L", 0)]);
-	XCTAssertFalse([unarchiver containsValueForKey:FxCoderLightKey(@"L", 1)]);
-	XCTAssertTrue([unarchiver containsValueForKey:FxCoderLightKey(@"L", 2)]);
+	XCTAssertEqual([unarchiver decodeIntegerForKey:[@"L" stringByAppendingString:FxGripLightingCoderLightCountKey]], (NSInteger)3);
+	XCTAssertTrue([unarchiver containsValueForKey:FxGripCoderLightKey(@"L", 0)]);
+	XCTAssertFalse([unarchiver containsValueForKey:FxGripCoderLightKey(@"L", 1)]);
+	XCTAssertTrue([unarchiver containsValueForKey:FxGripCoderLightKey(@"L", 2)]);
 }
 
 - (void)testLightCountUsesTheDocumentedArchiveKey
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 5;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
 
-	XCTAssertTrue([FxCoderUnarchiver(archiver) containsValueForKey:[@"L" stringByAppendingString:FxLightingCoderLightCountKey]]);
+	XCTAssertTrue([FxGripCoderUnarchiver(archiver) containsValueForKey:[@"L" stringByAppendingString:FxGripLightingCoderLightCountKey]]);
 }
 
 /*!
@@ -757,21 +757,21 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 */
 - (void)testDecodeFxLightCountReadsBackTheEncodedCount
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 3;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
-	XCTAssertEqual([unarchiver decodeIntegerForKey:[@"L" stringByAppendingString:FxLightingCoderLightCountKey]], (NSInteger)3,
+	XCTAssertEqual([unarchiver decodeIntegerForKey:[@"L" stringByAppendingString:FxGripLightingCoderLightCountKey]], (NSInteger)3,
 				   "precondition: the count is in the archive");
 	XCTAssertEqual([unarchiver decodeFxLightCount:@"L"], 3L);
 }
 
 - (void)testLightCountIsZeroForAnEmptyArchive
 {
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(FxCoderArchiver());
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(FxGripCoderArchiver());
 
 	XCTAssertEqual([unarchiver decodeFxLightCount], 0L);
 	XCTAssertEqual([unarchiver decodeFxLightCount:@"L"], 0L);
@@ -779,12 +779,12 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testDecodeFxLightRejectsAnIndexOutsideTheStoredCount
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 2;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	XCTAssertTrue([unarchiver decodeFxLight:-1 forKey:@"L"] == NULL);
 	XCTAssertTrue([unarchiver decodeFxLight:2 forKey:@"L"] == NULL);
@@ -794,12 +794,12 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 - (void)testDecodeFxLightIntoAStructReportsFailureForAnIndexOutsideTheStoredCount
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 1;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	FxLight light;
 	memset(&light, 0, sizeof(light));
@@ -810,19 +810,19 @@ static NSString *FxCoderLightKey(NSString *prefix, long index)
 
 /*!
 	FRAMEWORK DEFECT. -encodeFxLightingAPI:atTime:forKey: writes each light under
-	`<key><index>` + FxLightingCoderLightingKey, but -decodeFxLight:forKey: reads
+	`<key><index>` + FxGripLightingCoderLightingKey, but -decodeFxLight:forKey: reads
 	`<key>` itself and ignores the index, so a light that was encoded can never be
 	read back. NSCoder+FxPlug.m:376. The count defect above blocks this path as
 	well; both have to be fixed for a light to survive the round trip.
 */
 - (void)testDecodeFxLightReadsBackALightThatWasEncoded
 {
-	NSKeyedArchiver *archiver = FxCoderArchiver();
-	FxCoderLightingMock *api = [FxCoderLightingMock new];
+	NSKeyedArchiver *archiver = FxGripCoderArchiver();
+	FxGripCoderLightingMock *api = [FxGripCoderLightingMock new];
 	api.lightCount = 2;
 
-	[archiver encodeFxLightingAPI:api atTime:FxCoderTime(0, 1) forKey:@"L"];
-	NSKeyedUnarchiver *unarchiver = FxCoderUnarchiver(archiver);
+	[archiver encodeFxLightingAPI:api atTime:FxGripCoderTime(0, 1) forKey:@"L"];
+	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
 	const FxLight *first = [unarchiver decodeFxLight:0 forKey:@"L"];
 

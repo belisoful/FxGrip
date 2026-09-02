@@ -9,6 +9,8 @@
 #define FxTileImage_FxGrip_h
 
 #import <FxPlug/FxPlugSDK.h>
+#import <Metal/Metal.h>
+#import <CoreImage/CoreImage.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -58,6 +60,44 @@ FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *_Nullable tra
 
 /*! An image-space rectangle covering a pixel-space region of this tile. */
 - (CGRect)imageRectForPixelBounds:(FxRect)pixelBounds;
+
+@end
+
+
+@interface FxImageTile (FxGripText)
+
+/*!
+	@method     fxg_compositeCIImage:opacity:error:
+	@abstract   Composites a Core Image overlay over this tile's output texture.
+	@param      overlay A CIImage positioned in the tile texture's pixel space, where the
+					origin is the texture's bottom-left corner and one unit is one pixel.
+	@param      opacity The overlay's composite alpha, from 0.0 to 1.0. The overlay's own
+					per-pixel alpha is scaled by this value, so transparent regions stay
+					transparent.
+	@discussion Introduced in FxGrip 1.0. Reads the tile's output texture as the background,
+				source-over composites overlay onto it, and writes the result back to the
+				same texture. Returns NO and sets outError when the tile has no backing
+				Metal device or the composite fails. The workhorse for both text drawing and
+				watermarking. This method has no dependency on FxGrip's extension,
+				notification, or FxFactory subsystems.
+*/
+- (BOOL)fxg_compositeCIImage:(CIImage *)overlay
+					 opacity:(CGFloat)opacity
+					   error:(NSError *_Nullable *_Nullable)outError;
+
+/*!
+	@method     fxg_drawText:attributes:atPixelPoint:error:
+	@abstract   Rasterizes text and composites it onto this tile at native resolution.
+	@param      text The string to draw.
+	@param      attributes The attributed-string attributes carrying font and color.
+	@param      pixelPoint The bottom-left placement of the text in the tile's pixel space.
+	@discussion Introduced in FxGrip 1.0. Draws the text opaque. Returns NO and sets outError
+				when rasterization or compositing fails.
+*/
+- (BOOL)fxg_drawText:(NSString *)text
+		 attributes:(NSDictionary<NSAttributedStringKey, id> *)attributes
+	   atPixelPoint:(CGPoint)pixelPoint
+			  error:(NSError *_Nullable *_Nullable)outError;
 
 @end
 

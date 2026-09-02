@@ -5,8 +5,8 @@
 
 #import "FxGripRandomParameter.h"
 #import "FxGripRandom.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripDictionary.h"
 #import "FxGripOOBParameterAccess.h"
 #import "FxGrip_ARC.h"
@@ -147,7 +147,7 @@ static const CGFloat kFxGripRandomHeight = 22.0;
 	context. */
 - (void)writeBackValue:(int)newValue
 {
-	FxTileableEffectBase *effect = (FxTileableEffectBase*)self.parameterEffect;
+	FxGripTileableEffect *effect = (FxGripTileableEffect*)self.parameterEffect;
 	if (effect == nil) {
 		return;
 	}

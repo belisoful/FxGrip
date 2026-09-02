@@ -58,9 +58,9 @@ typedef struct {
 	NSUInteger			bytesPerComponent;
 	BOOL				hasAlpha;
 	BOOL				isFloat;
-} FxCompressionTestFormatSpec;
+} FxGripCompressionTestFormatSpec;
 
-static const FxCompressionTestFormatSpec kCompressionTestFormatSpecs[] = {
+static const FxGripCompressionTestFormatSpec kCompressionTestFormatSpecs[] = {
 	{FxGripPixelFormatGray8U,		1, FxGripComponentTypeUInt8,	1, NO,	NO},
 	{FxGripPixelFormatGray16U,		1, FxGripComponentTypeUInt16,	2, NO,	NO},
 	{FxGripPixelFormatGray32U,		1, FxGripComponentTypeUInt32,	4, NO,	NO},
@@ -119,7 +119,7 @@ static const FxGripCompression kCompressionTestLossyCodecs[] = {
 static const NSUInteger kCompressionTestLossyCodecCount = 3;
 
 /*! A constant-byte payload; every codec shrinks it. */
-static NSData *FxCompressionTestCompressibleData(NSUInteger length)
+static NSData *FxGripCompressionTestCompressibleData(NSUInteger length)
 {
 	NSMutableData *data = [NSMutableData dataWithLength:length];
 	memset(data.mutableBytes, 0x5A, length);
@@ -127,7 +127,7 @@ static NSData *FxCompressionTestCompressibleData(NSUInteger length)
 }
 
 /*! A deterministic pseudo-random payload; no codec shrinks it. */
-static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
+static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 {
 	NSMutableData *data = [NSMutableData dataWithLength:length];
 	uint8_t *bytes = data.mutableBytes;
@@ -249,7 +249,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 - (void)testEveryNamedFormatReportsItsChannelCount
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
-		FxCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
+		FxGripCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
 
 		XCTAssertEqual(FxGripPixelFormatComponents(spec.format), spec.channels,
 					   @"format %ld", (long)spec.format);
@@ -259,7 +259,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 - (void)testEveryNamedFormatReportsItsComponentType
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
-		FxCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
+		FxGripCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
 
 		XCTAssertEqual(FxGripPixelFormatComponentType(spec.format), spec.componentType,
 					   @"format %ld", (long)spec.format);
@@ -269,7 +269,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 - (void)testEveryNamedFormatReportsItsBytesPerComponent
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
-		FxCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
+		FxGripCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
 
 		XCTAssertEqual(FxGripPixelFormatBytesPerComponent(spec.format), spec.bytesPerComponent,
 					   @"format %ld", (long)spec.format);
@@ -279,7 +279,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 - (void)testEveryNamedFormatReportsItsBytesPerPixel
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
-		FxCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
+		FxGripCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
 
 		XCTAssertEqual(FxGripPixelFormatBytesPerPixel(spec.format),
 					   spec.channels * spec.bytesPerComponent,
@@ -290,7 +290,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 - (void)testEveryNamedFormatReportsWhetherItCarriesAlpha
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
-		FxCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
+		FxGripCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
 
 		XCTAssertEqual(FxGripPixelFormatHasAlpha(spec.format), spec.hasAlpha,
 					   @"format %ld", (long)spec.format);
@@ -300,7 +300,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 - (void)testEveryNamedFormatReportsWhetherItsComponentsAreFloat
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
-		FxCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
+		FxGripCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
 
 		XCTAssertEqual(FxGripPixelFormatIsFloat(spec.format), spec.isFloat,
 					   @"format %ld", (long)spec.format);
@@ -310,7 +310,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 - (void)testPixelFormatMakeProducesTheNamedConstants
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
-		FxCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
+		FxGripCompressionTestFormatSpec spec = kCompressionTestFormatSpecs[index];
 
 		XCTAssertEqual(FxGripPixelFormatMake(spec.channels, spec.componentType), spec.format,
 					   @"format %ld", (long)spec.format);
@@ -394,7 +394,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testEveryCodecRoundTripsCompressibleData
 {
-	NSData *original = FxCompressionTestCompressibleData(8192);
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
 
 	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
 		FxGripCompression codec = kCompressionTestCodecs[index];
@@ -408,7 +408,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testEveryCodecShrinksCompressibleData
 {
-	NSData *original = FxCompressionTestCompressibleData(8192);
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
 
 	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
 		FxGripCompression codec = kCompressionTestCodecs[index];
@@ -420,18 +420,18 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testCompressionNoneReturnsNil
 {
-	XCTAssertNil(FxGripCompressedData(FxCompressionTestCompressibleData(8192), FxGripCompressionNone));
+	XCTAssertNil(FxGripCompressedData(FxGripCompressionTestCompressibleData(8192), FxGripCompressionNone));
 }
 
 - (void)testAnUnknownCodecReturnsNilFromCompression
 {
-	XCTAssertNil(FxGripCompressedData(FxCompressionTestCompressibleData(8192), (FxGripCompression)99));
+	XCTAssertNil(FxGripCompressedData(FxGripCompressionTestCompressibleData(8192), (FxGripCompression)99));
 }
 
 /*! The image codecs need width, height, and format; only FxGripImageBuffer can supply them. */
 - (void)testTheRawCompressorRejectsTheLossyImageCodecs
 {
-	NSData *original = FxCompressionTestCompressibleData(8192);
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
 
 	for (NSUInteger index = 0; index < kCompressionTestLossyCodecCount; index++) {
 		XCTAssertNil(FxGripCompressedData(original, kCompressionTestLossyCodecs[index]),
@@ -441,7 +441,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testTheRawDecompressorRejectsTheLossyImageCodecs
 {
-	NSData *original = FxCompressionTestCompressibleData(8192);
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
 
 	for (NSUInteger index = 0; index < kCompressionTestLossyCodecCount; index++) {
 		XCTAssertNil(FxGripDecompressedData(original, kCompressionTestLossyCodecs[index], original.length),
@@ -459,7 +459,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testIncompressibleDataReturnsNilFromEveryCodec
 {
-	NSData *noise = FxCompressionTestIncompressibleData(256);
+	NSData *noise = FxGripCompressionTestIncompressibleData(256);
 
 	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
 		XCTAssertNil(FxGripCompressedData(noise, kCompressionTestCodecs[index]),
@@ -469,7 +469,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testAShortIncompressiblePayloadReturnsNilRatherThanGrowing
 {
-	NSData *noise = FxCompressionTestIncompressibleData(8);
+	NSData *noise = FxGripCompressionTestIncompressibleData(8);
 
 	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
 		XCTAssertNil(FxGripCompressedData(noise, kCompressionTestCodecs[index]),
@@ -481,21 +481,21 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testDecompressionNonePassesTheDataThrough
 {
-	NSData *original = FxCompressionTestCompressibleData(64);
+	NSData *original = FxGripCompressionTestCompressibleData(64);
 
 	XCTAssertEqualObjects(FxGripDecompressedData(original, FxGripCompressionNone, original.length), original);
 }
 
 - (void)testDecompressionNoneIgnoresTheStatedLength
 {
-	NSData *original = FxCompressionTestCompressibleData(64);
+	NSData *original = FxGripCompressionTestCompressibleData(64);
 
 	XCTAssertEqualObjects(FxGripDecompressedData(original, FxGripCompressionNone, 999), original);
 }
 
 - (void)testDecompressionWithAnUnknownCodecReturnsNil
 {
-	NSData *original = FxCompressionTestCompressibleData(64);
+	NSData *original = FxGripCompressionTestCompressibleData(64);
 
 	XCTAssertNil(FxGripDecompressedData(original, (FxGripCompression)99, original.length));
 }
@@ -507,14 +507,14 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testDecompressionWithAZeroLengthReturnsNil
 {
-	NSData *compressed = FxGripCompressedData(FxCompressionTestCompressibleData(8192), FxGripCompressionLZFSE);
+	NSData *compressed = FxGripCompressedData(FxGripCompressionTestCompressibleData(8192), FxGripCompressionLZFSE);
 
 	XCTAssertNil(FxGripDecompressedData(compressed, FxGripCompressionLZFSE, 0));
 }
 
 - (void)testDecompressionWithALengthAboveTheOriginalReturnsNil
 {
-	NSData *original = FxCompressionTestCompressibleData(8192);
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
 
 	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
 		FxGripCompression codec = kCompressionTestCodecs[index];
@@ -529,7 +529,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 	overrun, so no codec returns truncated pixels. */
 - (void)testDecompressionWithALengthBelowTheOriginalReturnsNil
 {
-	NSData *original = FxCompressionTestCompressibleData(8192);
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
 
 	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
 		FxGripCompression codec = kCompressionTestCodecs[index];
@@ -542,7 +542,7 @@ static NSData *FxCompressionTestIncompressibleData(NSUInteger length)
 
 - (void)testDecompressionWithTheWrongCodecReturnsNil
 {
-	NSData *original = FxCompressionTestCompressibleData(8192);
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
 	NSData *compressed = FxGripCompressedData(original, FxGripCompressionLZFSE);
 
 	XCTAssertNil(FxGripDecompressedData(compressed, FxGripCompressionLZMA, original.length));

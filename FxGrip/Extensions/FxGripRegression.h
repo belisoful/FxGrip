@@ -8,19 +8,19 @@
 #ifndef FxGripRegression_h
 #define FxGripRegression_h
 
-#import "FxExtension.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripExtension.h"
+#import "FxGripTileableEffect.h"
 
 
-@interface FxGripRegression : FxExtension
+@interface FxGripRegression : FxGripExtension
 
-- (BOOL)extLoadWithEffect:(nonnull id<FxTileableEffectBase>)effect;
+- (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect;
 
 @end
 
 
 
-@interface FxTileableEffectBase (Regression)
+@interface FxGripTileableEffect (Regression)
 
 @property (readonly, nullable, nonatomic) FxGripRegression* regression;
 

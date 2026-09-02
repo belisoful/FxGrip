@@ -16,10 +16,10 @@
 #import "FxGrip/FxGripErrors.h"
 #import "FxGrip/FxParameterFlags.h"
 #import "FxGrip/FxGripMetaManager.h"
-#import "FxGrip/FxAPINotifications.h"
-#import "FxGrip/FxTileableEffectBase+Notifications.h"
+#import "FxGrip/FxGripAPINotifications.h"
+#import "FxGrip/FxGripTileableEffect+Notifications.h"
 #import "FxGrip/FxParameterTagsAPI_v1.h"
-#import "FxGrip/FxGripDynamicParameterAPI_v4.h"
+#import "FxGrip/FxGripMetaAPI_v1.h"
 
 // FxGripMeta.h reaches its superclass through a flat angled include, and
 // FxGripParameterTagsAPI_v1.h is not a public framework header, so neither resolves
@@ -48,7 +48,7 @@ static const FxParameterId kMetaTestParamB = 11;
 
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxMetaTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripMetaTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
@@ -59,7 +59,7 @@ static NSNotificationCenter *FxMetaTestMakePriorityCenter(void)
 	the constant is read from the loaded images. Outside an FxPlug host the symbol is absent
 	and FxGripErrors.h substitutes FxGripPlugErrorDomain.
 */
-static NSString *FxMetaTestExpectedErrorDomain(void)
+static NSString *FxGripMetaTestExpectedErrorDomain(void)
 {
 	NSString * __unsafe_unretained *domain = (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "FxPlugErrorDomain");
 	return domain ? *domain : FxGripPlugErrorDomainConstant;
@@ -67,11 +67,11 @@ static NSString *FxMetaTestExpectedErrorDomain(void)
 
 /*!
 	Builds an API parameter notification payload. The wrapper APIs carry the parameter
-	dictionary under FxNotifyAPI_ParameterKey and repeat the ID at the top level; the
-	NSDictionary(FxTileableEffect) accessors resolve only for a dictionary that also
+	dictionary under FxGripNotifyAPI_ParameterKey and repeat the ID at the top level; the
+	NSDictionary(FxGripTileableEffect) accessors resolve only for a dictionary that also
 	carries "type" and "name", so both levels carry the full triple.
 */
-static NSDictionary *FxMetaTestParameterUserInfo(FxParameterId parameterID)
+static NSDictionary *FxGripMetaTestParameterUserInfo(FxParameterId parameterID)
 {
 	NSDictionary *parameter = @{
 		kFxParameterProperty_Id: @(parameterID),
@@ -79,19 +79,19 @@ static NSDictionary *FxMetaTestParameterUserInfo(FxParameterId parameterID)
 		kFxParameterProperty_Name: @"Test Parameter"
 	};
 	NSMutableDictionary *userInfo = parameter.mutableCopy;
-	userInfo[FxNotifyAPI_ParameterKey] = parameter;
+	userInfo[FxGripNotifyAPI_ParameterKey] = parameter;
 	return userInfo;
 }
 
 /*!
 	The payload FxGripParameterCreationAPI_v5 posts: the parameter dictionary sits under
-	FxNotifyAPI_ParameterKey and the top level carries only the ID.
+	FxGripNotifyAPI_ParameterKey and the top level carries only the ID.
 */
-static NSDictionary *FxMetaTestHostAddUserInfo(FxParameterId parameterID)
+static NSDictionary *FxGripMetaTestHostAddUserInfo(FxParameterId parameterID)
 {
 	return @{
 		kFxParameterProperty_Id: @(parameterID),
-		FxNotifyAPI_ParameterKey: @{
+		FxGripNotifyAPI_ParameterKey: @{
 			kFxParameterProperty_Type: @(FxParameterType_Float),
 			kFxParameterProperty_Name: @"Test Parameter",
 			kFxParameterProperty_Id: @(parameterID),
@@ -101,48 +101,48 @@ static NSDictionary *FxMetaTestHostAddUserInfo(FxParameterId parameterID)
 }
 
 /*! The payload FxGripDynamicParameterAPI_v3 removeParameter: posts. */
-static NSDictionary *FxMetaTestHostRemoveUserInfo(FxParameterId parameterID)
+static NSDictionary *FxGripMetaTestHostRemoveUserInfo(FxParameterId parameterID)
 {
 	return @{
 		kFxParameterProperty_Id: @(parameterID),
-		FxNotifyAPI_ParameterKey: @{kFxParameterProperty_Id: @(parameterID)}
+		FxGripNotifyAPI_ParameterKey: @{kFxParameterProperty_Id: @(parameterID)}
 	};
 }
 
-static NSNotification *FxMetaTestParameterNotification(NSNotificationName name, FxParameterId parameterID, id object)
+static NSNotification *FxGripMetaTestParameterNotification(NSNotificationName name, FxParameterId parameterID, id object)
 {
 	return [NSNotification notificationWithName:name
 										 object:object
-									   userInfo:FxMetaTestParameterUserInfo(parameterID)];
+									   userInfo:FxGripMetaTestParameterUserInfo(parameterID)];
 }
 
 /*!
 	The test bundle links neither CoreMedia nor FxPlug, so the CMTime dictionary bridge is
-	resolved from the loaded images the way FxTileableEffectNotificationTests does.
+	resolved from the loaded images the way FxGripTileableEffectNotificationTests does.
 */
-typedef CFDictionaryRef (*FxMetaTestTimeToDictionaryFn)(CMTime, CFAllocatorRef);
+typedef CFDictionaryRef (*FxGripMetaTestTimeToDictionaryFn)(CMTime, CFAllocatorRef);
 
-static NSDictionary *FxMetaTestTimeDictionary(CMTime time)
+static NSDictionary *FxGripMetaTestTimeDictionary(CMTime time)
 {
-	FxMetaTestTimeToDictionaryFn fn =
-		(FxMetaTestTimeToDictionaryFn)dlsym(RTLD_DEFAULT, "CMTimeCopyAsDictionary");
+	FxGripMetaTestTimeToDictionaryFn fn =
+		(FxGripMetaTestTimeToDictionaryFn)dlsym(RTLD_DEFAULT, "CMTimeCopyAsDictionary");
 	NSCAssert(fn != NULL, @"CoreMedia CMTimeCopyAsDictionary must be resolvable in-process");
 	return (__bridge_transfer NSDictionary *)fn(time, kCFAllocatorDefault);
 }
 
-static CMTime FxMetaTestMakeTime(int64_t value, int32_t timescale)
+static CMTime FxGripMetaTestMakeTime(int64_t value, int32_t timescale)
 {
 	return (CMTime){.value = value, .timescale = timescale, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static BOOL FxMetaTestTimesEqual(CMTime lhs, CMTime rhs)
+static BOOL FxGripMetaTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
 }
 
 /*! One recorded step of the parameter-changed pass, tagged with the options it carried. */
-static NSString *FxMetaTestTriggerEvent(FxGripPresetOptions options)
+static NSString *FxGripMetaTestTriggerEvent(FxGripPresetOptions options)
 {
 	return [NSString stringWithFormat:@"target:%lu", (unsigned long)options];
 }
@@ -153,7 +153,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 // Records the value the extension writes on flush, and the reset value the
 // parameter-changed pass writes between the two target-preset calls.
-@interface FxMetaTestStubSetAPI : NSObject
+@interface FxGripMetaTestStubSetAPI : NSObject
 @property (nonatomic, strong) NSMutableArray *values;
 @property (nonatomic, strong) NSMutableArray<NSNumber *> *parameterIDs;
 @property (nonatomic, strong) NSMutableArray<NSString *> *events;
@@ -162,7 +162,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 @property (nonatomic, assign) CMTime lastResetTime;
 @end
 
-@implementation FxMetaTestStubSetAPI
+@implementation FxGripMetaTestStubSetAPI
 
 - (instancetype)init
 {
@@ -198,13 +198,13 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 @end
 
 // Records each target-preset trigger the parameter-changed pass performs.
-@interface FxMetaTestStubTagsAPI : NSObject
+@interface FxGripMetaTestStubTagsAPI : NSObject
 @property (nonatomic, strong) NSMutableArray<NSString *> *events;
 @property (nonatomic, strong) NSMutableArray<NSNumber *> *parameterIDs;
 @property (nonatomic, assign) CMTime lastTime;
 @end
 
-@implementation FxMetaTestStubTagsAPI
+@implementation FxGripMetaTestStubTagsAPI
 
 - (instancetype)init
 {
@@ -220,7 +220,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 							   atTime:(CMTime)time
 							  options:(FxGripPresetOptions)options
 {
-	[self.events addObject:FxMetaTestTriggerEvent(options)];
+	[self.events addObject:FxGripMetaTestTriggerEvent(options)];
 	[self.parameterIDs addObject:@(parameterID)];
 	self.lastTime = time;
 	return YES;
@@ -229,12 +229,12 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 @end
 
 // Hands the extension the manager stored in the document.
-@interface FxMetaTestStubGetAPI : NSObject
+@interface FxGripMetaTestStubGetAPI : NSObject
 @property (nonatomic, strong) NSObject<NSSecureCoding, NSCopying> *storedValue;
 @property (nonatomic, assign) FxParameterId lastRequestedParameter;
 @end
 
-@implementation FxMetaTestStubGetAPI
+@implementation FxGripMetaTestStubGetAPI
 
 - (BOOL)getCustomParameterValue:(NSObject<NSSecureCoding, NSCopying> * _Nullable * _Nonnull)value
 				  fromParameter:(UInt32)parameterID
@@ -250,28 +250,28 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 @end
 
-@interface FxMetaTestStubAPIManager : NSObject
-@property (nonatomic, strong) FxMetaTestStubGetAPI *paramGetAPIv6;
-@property (nonatomic, strong) FxMetaTestStubSetAPI *paramSetAPIv5;
+@interface FxGripMetaTestStubAPIManager : NSObject
+@property (nonatomic, strong) FxGripMetaTestStubGetAPI *paramGetAPIv6;
+@property (nonatomic, strong) FxGripMetaTestStubSetAPI *paramSetAPIv5;
 @property (nonatomic, strong) id paramTagsAPIv1;
 @end
 
-@implementation FxMetaTestStubAPIManager
+@implementation FxGripMetaTestStubAPIManager
 @end
 
-// FxTileableEffectBase's designated initializer registers into the process-wide
+// FxGripTileableEffect's designated initializer registers into the process-wide
 // notification center, so the extension is exercised against a stub exposing the
 // members the meta wiring reads.
-@interface FxMetaTestStubEffect : NSObject
+@interface FxGripMetaTestStubEffect : NSObject
 @property (nonatomic, assign) BOOL addedToDocument;
 @property (nonatomic, strong) NSNotificationCenter *notifier;
-@property (nonatomic, strong) FxMetaTestStubAPIManager *apiManager;
+@property (nonatomic, strong) FxGripMetaTestStubAPIManager *apiManager;
 @property (nonatomic, assign) BOOL hasMeta;
 @property (nonatomic, strong) FxGripMetaManager *meta;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSDictionary *> *configurations;
 @end
 
-@implementation FxMetaTestStubEffect
+@implementation FxGripMetaTestStubEffect
 
 - (id)effectBase
 {
@@ -284,11 +284,11 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxMetaTestMakePriorityCenter();
-		_apiManager = FxMetaTestStubAPIManager.new;
-		_apiManager.paramGetAPIv6 = FxMetaTestStubGetAPI.new;
-		_apiManager.paramSetAPIv5 = FxMetaTestStubSetAPI.new;
-		_apiManager.paramTagsAPIv1 = FxMetaTestStubTagsAPI.new;
+		_notifier = FxGripMetaTestMakePriorityCenter();
+		_apiManager = FxGripMetaTestStubAPIManager.new;
+		_apiManager.paramGetAPIv6 = FxGripMetaTestStubGetAPI.new;
+		_apiManager.paramSetAPIv5 = FxGripMetaTestStubSetAPI.new;
+		_apiManager.paramTagsAPIv1 = FxGripMetaTestStubTagsAPI.new;
 		_configurations = NSMutableDictionary.new;
 	}
 	return self;
@@ -305,7 +305,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 @interface FxGripMetaTests : XCTestCase
 @property (nonatomic, strong) FxGripMeta *extension;
-@property (nonatomic, strong) FxMetaTestStubEffect *effect;
+@property (nonatomic, strong) FxGripMetaTestStubEffect *effect;
 @end
 
 @implementation FxGripMetaTests
@@ -314,7 +314,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 {
 	[super setUp];
 	self.extension = [FxGripMeta.alloc init];
-	self.effect = [FxMetaTestStubEffect.alloc init];
+	self.effect = [FxGripMetaTestStubEffect.alloc init];
 }
 
 - (void)tearDown
@@ -330,7 +330,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	if (configuration) {
 		self.effect.configurations[@(parameterID)] = configuration;
 	}
-	[self.extension extAPIParameterAdd:FxMetaTestParameterNotification(FxNotifyAPI_ParameterAddName,
+	[self.extension extAPIParameterAdd:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterAddName,
 																	  parameterID,
 																	  self.effect)];
 }
@@ -371,9 +371,9 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 - (void)testExtAddParametersRegistersTheHiddenInstanceMetaParameter
 {
 	NSMutableArray *parameters = NSMutableArray.new;
-	NSNotification *notification = [NSNotification notificationWithName:FxTileableEffectAddParametersName
+	NSNotification *notification = [NSNotification notificationWithName:FxGripTileableEffectAddParametersName
 																 object:self.effect
-															   userInfo:@{FxTileableEffectParametersKey: parameters}];
+															   userInfo:@{FxGripTileableEffectParametersKey: parameters}];
 
 	[self.extension extAddParameters:notification];
 
@@ -463,7 +463,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	[self seedParameter:kMetaTestParamA withConfiguration:nil];
 	XCTAssertTrue([self.extension.manager parameterExists:kMetaTestParamA]);
 
-	[self.extension extAPIParameterRemove:FxMetaTestParameterNotification(FxNotifyAPI_ParameterRemoveName,
+	[self.extension extAPIParameterRemove:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterRemoveName,
 																		  kMetaTestParamA,
 																		  self.effect)];
 
@@ -474,7 +474,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
 
-	[self.extension extAPIParameterAdd:FxMetaTestParameterNotification(FxNotifyAPI_ParameterAddName,
+	[self.extension extAPIParameterAdd:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterAddName,
 																	   kFxParameterId_InstanceMeta,
 																	   self.effect)];
 
@@ -485,9 +485,9 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
 
-	[self.extension extAPIParameterAdd:[NSNotification notificationWithName:FxNotifyAPI_ParameterAddName
+	[self.extension extAPIParameterAdd:[NSNotification notificationWithName:FxGripNotifyAPI_ParameterAddName
 																	 object:self.effect
-																   userInfo:FxMetaTestHostAddUserInfo(kMetaTestParamA)]];
+																   userInfo:FxGripMetaTestHostAddUserInfo(kMetaTestParamA)]];
 
 	XCTAssertEqualObjects(self.extension.manager.parameterIDs, @[@(kMetaTestParamA)],
 						  @"the seeded record carries the parameter ID the creation API announced");
@@ -498,9 +498,9 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	[self.extension extLoadWithEffect:(id)self.effect];
 	[self seedParameter:kMetaTestParamA withConfiguration:nil];
 
-	[self.extension extAPIParameterRemove:[NSNotification notificationWithName:FxNotifyAPI_ParameterRemoveName
+	[self.extension extAPIParameterRemove:[NSNotification notificationWithName:FxGripNotifyAPI_ParameterRemoveName
 																		object:self.effect
-																	  userInfo:FxMetaTestHostRemoveUserInfo(kMetaTestParamA)]];
+																	  userInfo:FxGripMetaTestHostRemoveUserInfo(kMetaTestParamA)]];
 
 	XCTAssertFalse([self.extension.manager parameterExists:kMetaTestParamA],
 				   @"the removed record is the one the dynamic API announced");
@@ -528,7 +528,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 		  kFxParameterProperty_Meta: @{@"only": @"seeded"}
 	  }];
 
-	[self.extension extAddedToDocument:[NSNotification notificationWithName:FxTileableEffectAddedToDocumentName
+	[self.extension extAddedToDocument:[NSNotification notificationWithName:FxGripTileableEffectAddedToDocumentName
 																	object:self.effect
 																  userInfo:nil]];
 
@@ -554,7 +554,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
 
-	[self.extension extAddedToDocument:[NSNotification notificationWithName:FxTileableEffectAddedToDocumentName
+	[self.extension extAddedToDocument:[NSNotification notificationWithName:FxGripTileableEffectAddedToDocumentName
 																	object:self.effect
 																  userInfo:nil]];
 
@@ -580,7 +580,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 		kFxParameterProperty_ResetValue: @9
 	}];
 
-	[self.extension extAddedToDocument:[NSNotification notificationWithName:FxTileableEffectAddedToDocumentName
+	[self.extension extAddedToDocument:[NSNotification notificationWithName:FxGripTileableEffectAddedToDocumentName
 																	object:self.effect
 																  userInfo:nil]];
 
@@ -593,12 +593,12 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 #pragma mark Parameter Changed
 
-- (FxMetaTestStubTagsAPI *)stubTagsAPI
+- (FxGripMetaTestStubTagsAPI *)stubTagsAPI
 {
 	return self.effect.apiManager.paramTagsAPIv1;
 }
 
-- (FxMetaTestStubSetAPI *)stubSetAPI
+- (FxGripMetaTestStubSetAPI *)stubSetAPI
 {
 	return self.effect.apiManager.paramSetAPIv5;
 }
@@ -614,24 +614,24 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 - (NSString *)valueSectionsTriggerEvent
 {
-	return FxMetaTestTriggerEvent(FxGripPresetValues | FxGripPresetFlags
+	return FxGripMetaTestTriggerEvent(FxGripPresetValues | FxGripPresetFlags
 								  | FxGripPresetTags | FxGripPresetMeta);
 }
 
 - (NSString *)namesTriggerEvent
 {
-	return FxMetaTestTriggerEvent(FxGripPresetNames);
+	return FxGripMetaTestTriggerEvent(FxGripPresetNames);
 }
 
 - (void)changeParameter:(FxParameterId)parameterID atTimeDictionary:(NSDictionary *)timeDictionary
 {
 	NSMutableDictionary *userInfo = NSMutableDictionary.new;
-	userInfo[FxTileableEffectParameterChangedIDKey] = @(parameterID);
+	userInfo[FxGripTileableEffectParameterChangedIDKey] = @(parameterID);
 	if (timeDictionary) {
-		userInfo[FxTileableEffectParameterChangedAtTimeKey] = timeDictionary;
+		userInfo[FxGripTileableEffectParameterChangedAtTimeKey] = timeDictionary;
 	}
 	[self.extension extParameterChanged:
-		[NSNotification notificationWithName:FxTileableEffectParameterChangedName
+		[NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
 									  object:self.effect
 									userInfo:userInfo]];
 }
@@ -643,7 +643,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	NSMutableArray<NSString *> *events = [self installChangeRecorder];
 
 	[self.extension extParameterChanged:
-		[NSNotification notificationWithName:FxTileableEffectParameterChangedName
+		[NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
 									  object:self.effect
 									userInfo:@{}]];
 
@@ -694,12 +694,12 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	[self.extension extLoadWithEffect:(id)self.effect];
 	[self seedParameter:kMetaTestParamA withConfiguration:[self configurationWithTags:@[] meta:@{}]];
 	[self installChangeRecorder];
-	CMTime time = FxMetaTestMakeTime(1001, 30000);
+	CMTime time = FxGripMetaTestMakeTime(1001, 30000);
 
-	[self changeParameter:kMetaTestParamA atTimeDictionary:FxMetaTestTimeDictionary(time)];
+	[self changeParameter:kMetaTestParamA atTimeDictionary:FxGripMetaTestTimeDictionary(time)];
 
-	XCTAssertTrue(FxMetaTestTimesEqual(self.stubTagsAPI.lastTime, time));
-	XCTAssertTrue(FxMetaTestTimesEqual(self.stubSetAPI.lastResetTime, time));
+	XCTAssertTrue(FxGripMetaTestTimesEqual(self.stubTagsAPI.lastTime, time));
+	XCTAssertTrue(FxGripMetaTestTimesEqual(self.stubSetAPI.lastResetTime, time));
 }
 
 - (void)testParameterChangedWithoutATimeUsesTheZeroTime
@@ -710,8 +710,8 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 	[self changeParameter:kMetaTestParamA atTimeDictionary:nil];
 
-	XCTAssertTrue(FxMetaTestTimesEqual(self.stubTagsAPI.lastTime, FxMetaTestMakeTime(0, 1)));
-	XCTAssertTrue(FxMetaTestTimesEqual(self.stubSetAPI.lastResetTime, FxMetaTestMakeTime(0, 1)));
+	XCTAssertTrue(FxGripMetaTestTimesEqual(self.stubTagsAPI.lastTime, FxGripMetaTestMakeTime(0, 1)));
+	XCTAssertTrue(FxGripMetaTestTimesEqual(self.stubSetAPI.lastResetTime, FxGripMetaTestMakeTime(0, 1)));
 }
 
 - (void)testParameterChangedAppliesNothingWhenTheTagsAPILacksTheTrigger
@@ -728,7 +728,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 - (void)testParameterChangedPriorityFollowsThePerParameterHandlers
 {
-	XCTAssertEqual([self.extension ncPriority:FxTileableEffectParameterChangedName], (NSInteger)-10);
+	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectParameterChangedName], (NSInteger)-10);
 }
 
 #pragma mark Persistence
@@ -742,8 +742,8 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	[manager setEffect:(id)self.effect];
 	XCTAssertTrue(manager.unsaved);
 
-	FxMetaTestStubSetAPI *setAPI = self.effect.apiManager.paramSetAPIv5;
-	NSNotification *flush = [NSNotification notificationWithName:FxTileableEffectFlushName
+	FxGripMetaTestStubSetAPI *setAPI = self.effect.apiManager.paramSetAPIv5;
+	NSNotification *flush = [NSNotification notificationWithName:FxGripTileableEffectFlushName
 														 object:self.effect
 													   userInfo:nil];
 
@@ -769,7 +769,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 - (void)assertError:(NSError *)error isNoMetaFailureForParameter:(FxParameterId)parameterID
 {
 	XCTAssertNotNil(error);
-	XCTAssertEqualObjects(error.domain, FxMetaTestExpectedErrorDomain());
+	XCTAssertEqualObjects(error.domain, FxGripMetaTestExpectedErrorDomain());
 	XCTAssertEqual(error.code, kFxError_ThirdPartyDeveloperStart + parameterID);
 }
 
@@ -820,16 +820,15 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 #pragma mark Dynamic API Meta Delegation
 
-- (FxGripDynamicParameterAPI_v4 *)dynamicAPI
+- (FxGripMetaAPI_v1 *)dynamicAPI
 {
-	id<FxDynamicParameterAPI_v3> hostAPI = nil;
-	return [FxGripDynamicParameterAPI_v4.alloc initWithAPI:hostAPI effect:(id)self.effect];
+	return [FxGripMetaAPI_v1.alloc initWithEffect:(id)self.effect];
 }
 
 - (void)testDynamicAPIMetaReturnsSentinelsWhenTheEffectHasNoMeta
 {
 	self.effect.hasMeta = NO;
-	FxGripDynamicParameterAPI_v4 *api = self.dynamicAPI;
+	FxGripMetaAPI_v1 *api = self.dynamicAPI;
 
 	XCTAssertEqual([api metaCountFromParameter:kMetaTestParamA], -1);
 
@@ -853,7 +852,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	self.effect.meta = manager;
 	self.effect.hasMeta = YES;
 
-	FxGripDynamicParameterAPI_v4 *api = self.dynamicAPI;
+	FxGripMetaAPI_v1 *api = self.dynamicAPI;
 
 	XCTAssertEqual([api metaCountFromParameter:kMetaTestParamA], 0);
 	XCTAssertTrue([api setMeta:@"v" forKey:@"k" toParameter:kMetaTestParamA]);

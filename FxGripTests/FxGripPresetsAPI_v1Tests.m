@@ -42,7 +42,7 @@ static NSString *const kPresetsTestGroupUuid = @"GROUP-UUID-1";
 	the constant is read from the loaded images. Outside an FxPlug host the symbol is absent
 	and FxGripErrors.h substitutes FxGripPlugErrorDomain.
 */
-static NSString *FxPresetsTestExpectedErrorDomain(void)
+static NSString *FxGripPresetsTestExpectedErrorDomain(void)
 {
 	NSString * __unsafe_unretained *domain = (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "FxPlugErrorDomain");
 	return domain ? *domain : FxGripPlugErrorDomainConstant;
@@ -53,17 +53,17 @@ static const FxParameterId kPresetsTestParamB = 20;
 
 // The test bundle links only FxGrip and XCTest, so CMTime values are built and compared
 // without the CoreMedia symbols.
-static CMTime FxPresetsTestTime(void)
+static CMTime FxGripPresetsTestTime(void)
 {
 	return (CMTime){.value = 7, .timescale = 30, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static CMTime FxPresetsTestZeroTime(void)
+static CMTime FxGripPresetsTestZeroTime(void)
 {
 	return (CMTime){.value = 0, .timescale = 1, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
+static BOOL FxGripPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
@@ -72,11 +72,11 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 #pragma mark - Test doubles
 
 // Supplies the parameter type the preset value primitives dispatch on.
-@interface FxPresetsTestDynamicAPI : NSObject
+@interface FxGripPresetsTestDynamicAPI : NSObject
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *typesByParameter;
 @end
 
-@implementation FxPresetsTestDynamicAPI
+@implementation FxGripPresetsTestDynamicAPI
 
 - (instancetype)init
 {
@@ -96,14 +96,14 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 // Answers the value and flag reads the capture performs with the values staged on it.
-@interface FxPresetsTestRetrievalAPI : NSObject
+@interface FxGripPresetsTestRetrievalAPI : NSObject
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *floatsByParameter;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSString *> *stringsByParameter;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *flagsByParameter;
 @property (nonatomic, assign) CMTime lastReadTime;
 @end
 
-@implementation FxPresetsTestRetrievalAPI
+@implementation FxGripPresetsTestRetrievalAPI
 
 - (instancetype)init
 {
@@ -147,19 +147,19 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 // Stands in for the FxGrip setting wrapper: it exposes the retrieval and dynamic APIs the
 // preset value primitives reach through.
-@interface FxPresetsTestSettingAPI : NSObject
-@property (nonatomic, strong) FxPresetsTestRetrievalAPI *retrievalAPI;
-@property (nonatomic, strong) FxPresetsTestDynamicAPI *dynamicAPI;
+@interface FxGripPresetsTestSettingAPI : NSObject
+@property (nonatomic, strong) FxGripPresetsTestRetrievalAPI *retrievalAPI;
+@property (nonatomic, strong) FxGripPresetsTestDynamicAPI *dynamicAPI;
 @end
 
-@implementation FxPresetsTestSettingAPI
+@implementation FxGripPresetsTestSettingAPI
 
 - (id)paramGetAPIv6
 {
 	return self.retrievalAPI;
 }
 
-- (id)dynamicParamAPIv4
+- (id)parameterInfoAPIv1
 {
 	return self.dynamicAPI;
 }
@@ -171,7 +171,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 	manager vends to FxGripParameterTagsAPI_v1, so the spy is one. It records the arguments
 	of the application instead of touching parameters.
 */
-@interface FxPresetsTestTagsAPI : FxGripParameterTagsAPI_v1
+@interface FxGripPresetsTestTagsAPI : FxGripParameterTagsAPI_v1
 @property (nonatomic, assign) NSUInteger applyCount;
 @property (nonatomic, strong) NSDictionary *appliedPreset;
 @property (nonatomic, assign) CMTime appliedTime;
@@ -183,7 +183,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *tagsByParameter;
 @end
 
-@implementation FxPresetsTestTagsAPI
+@implementation FxGripPresetsTestTagsAPI
 
 - (NSArray<NSString *> *)parameterTags:(FxParameterId)parameterID
 {
@@ -209,14 +209,14 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
-@interface FxPresetsTestAPIManager : NSObject
+@interface FxGripPresetsTestAPIManager : NSObject
 @property (nonatomic, copy, nullable) NSString *pluginUUID;
-@property (nonatomic, strong) FxPresetsTestSettingAPI *settingAPI;
-@property (nonatomic, strong) FxPresetsTestRetrievalAPI *retrievalAPI;
-@property (nonatomic, strong) FxPresetsTestTagsAPI *tagsAPI;
+@property (nonatomic, strong) FxGripPresetsTestSettingAPI *settingAPI;
+@property (nonatomic, strong) FxGripPresetsTestRetrievalAPI *retrievalAPI;
+@property (nonatomic, strong) FxGripPresetsTestTagsAPI *tagsAPI;
 @end
 
-@implementation FxPresetsTestAPIManager
+@implementation FxGripPresetsTestAPIManager
 
 - (id)paramSetAPIv5
 {
@@ -235,19 +235,19 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
-// FxTileableEffectBase's designated initializer registers into the process-wide
+// FxGripTileableEffect's designated initializer registers into the process-wide
 // notification center and needs a live host, so the API is exercised against a stub
 // exposing the members the preset layer reads.
-@interface FxPresetsTestStubEffect : NSObject
+@interface FxGripPresetsTestStubEffect : NSObject
 @property (nonatomic, copy) NSString *pluginUUID;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *pluginProperties;
-@property (nonatomic, strong) FxPresetsTestAPIManager *apiManager;
+@property (nonatomic, strong) FxGripPresetsTestAPIManager *apiManager;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, id> *parameters;
 @property (nonatomic, assign) BOOL hasMeta;
 @property (nonatomic, strong) FxGripMetaManager *meta;
 @end
 
-@implementation FxPresetsTestStubEffect
+@implementation FxGripPresetsTestStubEffect
 
 - (id)effectBase
 {
@@ -268,12 +268,12 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 /*! Redirects both preset folders so no test reaches the real Application Support tree. */
-@interface FxPresetsTestAPI : FxGripPresetsAPI_v1
+@interface FxGripPresetsTestAPI : FxGripPresetsAPI_v1
 @property (nonatomic, strong) NSURL *userFolderURL;
 @property (nonatomic, strong) NSURL *pluginFolderURL;
 @end
 
-@implementation FxPresetsTestAPI
+@implementation FxGripPresetsTestAPI
 
 - (NSURL *)userPresetURL
 {
@@ -290,12 +290,12 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 #pragma mark - Tests
 
 @interface FxGripPresetsAPI_v1Tests : XCTestCase
-@property (nonatomic, strong) FxPresetsTestStubEffect *effect;
-@property (nonatomic, strong) FxPresetsTestAPIManager *apiManager;
-@property (nonatomic, strong) FxPresetsTestSettingAPI *settingAPI;
-@property (nonatomic, strong) FxPresetsTestRetrievalAPI *retrievalAPI;
-@property (nonatomic, strong) FxPresetsTestDynamicAPI *dynamicAPI;
-@property (nonatomic, strong) FxPresetsTestTagsAPI *tagsAPI;
+@property (nonatomic, strong) FxGripPresetsTestStubEffect *effect;
+@property (nonatomic, strong) FxGripPresetsTestAPIManager *apiManager;
+@property (nonatomic, strong) FxGripPresetsTestSettingAPI *settingAPI;
+@property (nonatomic, strong) FxGripPresetsTestRetrievalAPI *retrievalAPI;
+@property (nonatomic, strong) FxGripPresetsTestDynamicAPI *dynamicAPI;
+@property (nonatomic, strong) FxGripPresetsTestTagsAPI *tagsAPI;
 @property (nonatomic, strong) NSURL *sandboxURL;
 @end
 
@@ -311,25 +311,25 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 											attributes:nil
 												 error:NULL];
 
-	self.effect = [FxPresetsTestStubEffect.alloc init];
+	self.effect = [FxGripPresetsTestStubEffect.alloc init];
 	self.effect.pluginUUID = kPresetsTestPluginUuid;
 	self.effect.pluginProperties = @{
 		kProPlugPlugIn_UuidProperty: kPresetsTestPluginUuid,
-		kProPlugPlugIn_ClassNameProperty: @"FxPresetsTestEffect",
+		kProPlugPlugIn_ClassNameProperty: @"FxGripPresetsTestEffect",
 		kProPlugPlugIn_DisplayNameProperty: @"Presets Test",
 		kProPlugPlugIn_GroupUUIDProperty: kPresetsTestGroupUuid,
 		kProPlugPlugIn_VersionProperty: @"2.5"
 	};
 
-	self.retrievalAPI = [FxPresetsTestRetrievalAPI.alloc init];
-	self.dynamicAPI = [FxPresetsTestDynamicAPI.alloc init];
-	self.settingAPI = [FxPresetsTestSettingAPI.alloc init];
+	self.retrievalAPI = [FxGripPresetsTestRetrievalAPI.alloc init];
+	self.dynamicAPI = [FxGripPresetsTestDynamicAPI.alloc init];
+	self.settingAPI = [FxGripPresetsTestSettingAPI.alloc init];
 	self.settingAPI.retrievalAPI = self.retrievalAPI;
 	self.settingAPI.dynamicAPI = self.dynamicAPI;
-	self.tagsAPI = [FxPresetsTestTagsAPI.alloc initWithAPI:nil effect:(id)self.effect];
+	self.tagsAPI = [FxGripPresetsTestTagsAPI.alloc initWithAPI:nil effect:(id)self.effect];
 	self.tagsAPI.tagsByParameter = NSMutableDictionary.new;
 
-	self.apiManager = [FxPresetsTestAPIManager.alloc init];
+	self.apiManager = [FxGripPresetsTestAPIManager.alloc init];
 	self.apiManager.settingAPI = self.settingAPI;
 	self.apiManager.retrievalAPI = self.retrievalAPI;
 	self.apiManager.tagsAPI = self.tagsAPI;
@@ -351,9 +351,9 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 }
 
 /*! The redirected API: both folders live under the per-test sandbox. */
-- (FxPresetsTestAPI *)api
+- (FxGripPresetsTestAPI *)api
 {
-	FxPresetsTestAPI *api = [FxPresetsTestAPI.alloc initWithAPI:nil effect:(id)self.effect];
+	FxGripPresetsTestAPI *api = [FxGripPresetsTestAPI.alloc initWithAPI:nil effect:(id)self.effect];
 	api.userFolderURL = [self.sandboxURL URLByAppendingPathComponent:@"user" isDirectory:YES];
 	api.pluginFolderURL = [self.sandboxURL URLByAppendingPathComponent:@"bundled" isDirectory:YES];
 	return api;
@@ -486,11 +486,11 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	FxGripPreset *preset = [self compatiblePreset];
 
-	XCTAssertNil([self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxPresetsTestTime()]);
+	XCTAssertNil([self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxGripPresetsTestTime()]);
 
 	XCTAssertEqual(self.tagsAPI.applyCount, 1u);
 	XCTAssertEqualObjects(self.tagsAPI.appliedPreset, preset.presetSections);
-	XCTAssertTrue(FxPresetsTestTimesEqual(self.tagsAPI.appliedTime, FxPresetsTestTime()));
+	XCTAssertTrue(FxGripPresetsTestTimesEqual(self.tagsAPI.appliedTime, FxGripPresetsTestTime()));
 	XCTAssertEqual(self.tagsAPI.appliedSource, FxGripPresetSourceFile);
 	XCTAssertEqualObjects(self.tagsAPI.appliedTag, @"look");
 	XCTAssertEqual(self.tagsAPI.appliedFlags, (FxParameterPresetFlags)kFxParameterPreset_Default);
@@ -498,7 +498,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testSetPresetRequestsTheValuesTagsAndMetaSections
 {
-	XCTAssertNil([self.api setPreset:[self compatiblePreset] options:kFxParameterPreset_Default atTime:FxPresetsTestTime()]);
+	XCTAssertNil([self.api setPreset:[self compatiblePreset] options:kFxParameterPreset_Default atTime:FxGripPresetsTestTime()]);
 
 	XCTAssertEqual(self.tagsAPI.appliedOptions, (FxGripPresetOptions)(FxGripPresetValues | FxGripPresetTags | FxGripPresetMeta));
 }
@@ -507,7 +507,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	XCTAssertNil([self.api setPreset:[self compatiblePreset]
 							 options:kFxParameterPreset_IgnoreMetaData
-							  atTime:FxPresetsTestTime()]);
+							  atTime:FxGripPresetsTestTime()]);
 
 	XCTAssertEqual(self.tagsAPI.appliedOptions, (FxGripPresetOptions)(FxGripPresetValues | FxGripPresetTags));
 	XCTAssertEqual(self.tagsAPI.appliedOptions & FxGripPresetMeta, (FxGripPresetOptions)0);
@@ -517,7 +517,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	FxParameterPresetFlags flags = kFxParameterPreset_IgnoreTagBoundary;
 
-	XCTAssertNil([self.api setPreset:[self compatiblePreset] options:flags atTime:FxPresetsTestTime()]);
+	XCTAssertNil([self.api setPreset:[self compatiblePreset] options:flags atTime:FxGripPresetsTestTime()]);
 
 	XCTAssertEqual(self.tagsAPI.appliedFlags, flags);
 }
@@ -527,7 +527,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil([self.api setPreset:[self compatiblePreset] options:kFxParameterPreset_Default]);
 
 	XCTAssertEqual(self.tagsAPI.applyCount, 1u);
-	XCTAssertTrue(FxPresetsTestTimesEqual(self.tagsAPI.appliedTime, FxPresetsTestZeroTime()));
+	XCTAssertTrue(FxGripPresetsTestTimesEqual(self.tagsAPI.appliedTime, FxGripPresetsTestZeroTime()));
 }
 
 - (void)testSetPresetRefusesAnIncompatiblePresetWithoutApplyingIt
@@ -535,10 +535,10 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 	FxGripPreset *preset = [self compatiblePreset];
 	preset.pluginUuid = @"99999999-9999-9999-9999-999999999999";
 
-	NSError *error = [self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxPresetsTestTime()];
+	NSError *error = [self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxGripPresetsTestTime()];
 
 	XCTAssertNotNil(error);
-	XCTAssertEqualObjects(error.domain, FxPresetsTestExpectedErrorDomain());
+	XCTAssertEqualObjects(error.domain, FxGripPresetsTestExpectedErrorDomain());
 	XCTAssertEqual(error.code, kFxGripError_Preset);
 	XCTAssertEqual(self.tagsAPI.applyCount, 0u);
 }
@@ -550,7 +550,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertNil([self.api setPreset:preset
 							 options:kFxParameterPreset_IgnoreCompatibility
-							  atTime:FxPresetsTestTime()]);
+							  atTime:FxGripPresetsTestTime()]);
 
 	XCTAssertEqual(self.tagsAPI.applyCount, 1u);
 }
@@ -558,10 +558,10 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)testSetPresetRefusesANilPreset
 {
 	FxGripPreset *preset = nil;
-	NSError *error = [self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxPresetsTestTime()];
+	NSError *error = [self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxGripPresetsTestTime()];
 
 	XCTAssertNotNil(error);
-	XCTAssertEqualObjects(error.domain, FxPresetsTestExpectedErrorDomain());
+	XCTAssertEqualObjects(error.domain, FxGripPresetsTestExpectedErrorDomain());
 	XCTAssertEqual(error.code, kFxGripError_Preset);
 	XCTAssertEqual(self.tagsAPI.applyCount, 0u);
 }
@@ -570,7 +570,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	self.apiManager.tagsAPI = nil;
 
-	NSError *error = [self.api setPreset:[self compatiblePreset] options:kFxParameterPreset_Default atTime:FxPresetsTestTime()];
+	NSError *error = [self.api setPreset:[self compatiblePreset] options:kFxParameterPreset_Default atTime:FxGripPresetsTestTime()];
 
 	XCTAssertNotNil(error);
 	XCTAssertEqual(error.code, kFxGripError_Preset);
@@ -583,7 +583,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	XCTAssertEqualObjects([self.api setPreset:[self compatiblePreset]
 									  options:kFxParameterPreset_Default
-									   atTime:FxPresetsTestTime()], failure);
+									   atTime:FxGripPresetsTestTime()], failure);
 }
 
 - (void)testSetPresetPassesANilTagForAPresetWithoutOne
@@ -591,7 +591,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 	FxGripPreset *preset = [self compatiblePreset];
 	preset.tag = nil;
 
-	XCTAssertNil([self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxPresetsTestTime()]);
+	XCTAssertNil([self.api setPreset:preset options:kFxParameterPreset_Default atTime:FxGripPresetsTestTime()]);
 
 	XCTAssertNil(self.tagsAPI.appliedTag);
 }
@@ -629,7 +629,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 	[self generateFromLabel:@"Captured"];
 
-	XCTAssertTrue(FxPresetsTestTimesEqual(self.retrievalAPI.lastReadTime, FxPresetsTestZeroTime()));
+	XCTAssertTrue(FxGripPresetsTestTimesEqual(self.retrievalAPI.lastReadTime, FxGripPresetsTestZeroTime()));
 }
 
 - (void)testGeneratePresetSkipsAParameterThatAnswersNoValue
@@ -903,7 +903,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 	[properties removeObjectForKey:kProPlugPlugIn_DisplayNameProperty];
 	self.effect.pluginProperties = properties;
 
-	XCTAssertTrue([[self plainAPI].userPresetURL.path hasSuffix:@"/FxPresetsTestEffect"]);
+	XCTAssertTrue([[self plainAPI].userPresetURL.path hasSuffix:@"/FxGripPresetsTestEffect"]);
 }
 
 - (void)testDefaultUserPresetURLIsNilWithoutAPluginName
@@ -1033,7 +1033,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)testPluginPresetsListsTheBundledFilesAfterThePlistEntries
 {
 	[self installPresetsTableEntry:@{kFxParameterProperty_TargetPresetValues: @{@"10": @1}} forTag:@"look"];
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[self writePreset:[self presetNamed:@"Bundled"] named:@"Bundled.fxpreset" inFolder:api.pluginFolderURL tag:@"look"];
 
 	NSArray<FxGripPreset *> *presets = [api pluginPresetsForTag:@"look"];
@@ -1045,7 +1045,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagLoadsTheFilesSortedByFileName
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[self writePreset:[self presetNamed:@"Cool"] named:@"Cool.fxpreset" inFolder:api.userFolderURL tag:@"look"];
 	[self writePreset:[self presetNamed:@"Ambient"] named:@"Ambient.fxpreset" inFolder:api.userFolderURL tag:@"look"];
 	[self writePreset:[self presetNamed:@"beta"] named:@"beta.fxpreset" inFolder:api.userFolderURL tag:@"look"];
@@ -1056,7 +1056,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagFillsAMissingTagFromTheFolder
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[self writePreset:[self presetNamed:@"Ambient"] named:@"Ambient.fxpreset" inFolder:api.userFolderURL tag:@"look"];
 
 	XCTAssertEqualObjects([api userPresetsForTag:@"look"].firstObject.tag, @"look");
@@ -1064,7 +1064,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagKeepsTheTagAFileCarries
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	FxGripPreset *preset = [self presetNamed:@"Ambient"];
 	preset.tag = @"carried";
 	[self writePreset:preset named:@"Ambient.fxpreset" inFolder:api.userFolderURL tag:@"look"];
@@ -1074,7 +1074,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagFillsAMissingNameFromTheFileName
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	FxGripPreset *preset = [FxGripPreset.alloc init];
 	preset.pluginUuid = kPresetsTestPluginUuid;
 	[self writePreset:preset named:@"From File Name.fxpreset" inFolder:api.userFolderURL tag:@"look"];
@@ -1084,7 +1084,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagKeepsTheNameAFileCarries
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[self writePreset:[self presetNamed:@"Carried"] named:@"On Disk.fxpreset" inFolder:api.userFolderURL tag:@"look"];
 
 	XCTAssertEqualObjects([api userPresetsForTag:@"look"].firstObject.name, @"Carried");
@@ -1092,7 +1092,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagIgnoresFilesWithAnotherExtension
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[self writePreset:[self presetNamed:@"Ambient"] named:@"Ambient.fxpreset" inFolder:api.userFolderURL tag:@"look"];
 	NSURL *tagURL = [api.userFolderURL URLByAppendingPathComponent:@"look" isDirectory:YES];
 	XCTAssertTrue([[@"text" dataUsingEncoding:NSUTF8StringEncoding]
@@ -1103,7 +1103,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagAcceptsAnUppercaseExtension
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[self writePreset:[self presetNamed:@"Ambient"] named:@"Ambient.FXPRESET" inFolder:api.userFolderURL tag:@"look"];
 
 	XCTAssertEqual([api userPresetsForTag:@"look"].count, 1u);
@@ -1111,7 +1111,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testUserPresetsForTagSkipsAFileThatIsNotAPresetPropertyList
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	NSURL *tagURL = [api.userFolderURL URLByAppendingPathComponent:@"look" isDirectory:YES];
 	[NSFileManager.defaultManager createDirectoryAtURL:tagURL withIntermediateDirectories:YES attributes:nil error:NULL];
 	XCTAssertTrue([[@"garbage" dataUsingEncoding:NSUTF8StringEncoding]
@@ -1135,7 +1135,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)testPresetsForTagListsPluginPresetsBeforeUserPresets
 {
 	[self installPresetsTableEntry:@{kFxParameterProperty_TargetPresetValues: @{@"10": @1}} forTag:@"look"];
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[self writePreset:[self presetNamed:@"Bundled"] named:@"Bundled.fxpreset" inFolder:api.pluginFolderURL tag:@"look"];
 	[self writePreset:[self presetNamed:@"Mine"] named:@"Mine.fxpreset" inFolder:api.userFolderURL tag:@"look"];
 
@@ -1157,7 +1157,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testObserveTagReturnsAWatcherForAnExistingFolder
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[NSFileManager.defaultManager createDirectoryAtURL:[api userPresetURL:@"look"]
 						   withIntermediateDirectories:YES
 											attributes:nil
@@ -1173,7 +1173,7 @@ static BOOL FxPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testObserveTagIsNilForANilHandler
 {
-	FxPresetsTestAPI *api = self.api;
+	FxGripPresetsTestAPI *api = self.api;
 	[NSFileManager.defaultManager createDirectoryAtURL:[api userPresetURL:@"look"]
 						   withIntermediateDirectories:YES
 											attributes:nil

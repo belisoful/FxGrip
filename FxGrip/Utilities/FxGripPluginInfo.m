@@ -14,7 +14,7 @@
 
 #import "FxGripPluginInfo.h"
 #import "FxGripAPIAccessing.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 #import "FxGripOOBParameterAccess.h"
 #import <PluginManager/PROPlugInBundleRegistration.h>
 #import "FxGripPrincipalDelegate.h"

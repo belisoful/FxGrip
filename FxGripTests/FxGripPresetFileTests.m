@@ -13,12 +13,26 @@
 #import <CoreMedia/CoreMedia.h>
 #import "FxGrip/FxGripPreset.h"
 
-/*! The FxFactory sample lives beside the test folder in the repository. */
-static NSURL *FxPresetFileTestSampleURL(void)
+/*! The FxFactory sample is an external fixture kept beside the project. It is not committed
+	(the gitignored Local/ copy is the working original), so the resolver tries each known
+	location and returns the first that exists; when none does it returns the primary
+	repo-root path so the skip message names a sensible spot to restore it. */
+static NSURL *FxGripPresetFileTestSampleURL(void)
 {
 	NSString *source = [NSString stringWithUTF8String:__FILE__];
 	NSString *root = source.stringByDeletingLastPathComponent.stringByDeletingLastPathComponent;
-	return [NSURL fileURLWithPath:[root stringByAppendingPathComponent:@"FxFactory Circle Preset.fxpreset"]];
+	NSArray<NSString *> *candidates = @[
+		@"FxFactory Circle Preset.fxpreset",
+		@"Local/FxFactory Circle Preset xml.fxpreset",
+		@"Local/FxFactory Circle Preset.fxpreset"
+	];
+	for (NSString *candidate in candidates) {
+		NSString *path = [root stringByAppendingPathComponent:candidate];
+		if ([NSFileManager.defaultManager fileExistsAtPath:path]) {
+			return [NSURL fileURLWithPath:path];
+		}
+	}
+	return [NSURL fileURLWithPath:[root stringByAppendingPathComponent:candidates.firstObject]];
 }
 
 @interface FxGripPresetFileTests : XCTestCase
@@ -480,7 +494,12 @@ static NSURL *FxPresetFileTestSampleURL(void)
 
 - (FxGripPreset *)fxFactorySample
 {
-	NSURL *url = FxPresetFileTestSampleURL();
+	// The sample is an external fixture beside the project; skip rather than fail when it is
+	// absent so a moved fixture reads as "restore the file", not a code regression.
+	if (![NSFileManager.defaultManager fileExistsAtPath:FxGripPresetFileTestSampleURL().path]) {
+		XCTSkip(@"the FxFactory sample is expected at %@", FxGripPresetFileTestSampleURL().path);
+	}
+	NSURL *url = FxGripPresetFileTestSampleURL();
 	FxGripPreset *preset = [FxGripPreset loadPresetFromURL:url];
 	XCTAssertNotNil(preset, @"the FxFactory sample is expected at %@", url.path);
 	return preset;
@@ -488,7 +507,8 @@ static NSURL *FxPresetFileTestSampleURL(void)
 
 - (void)testFxFactorySampleReadsTheCreatedByParameterId
 {
-	XCTAssertEqual([self fxFactorySample].createdByParameterId, 117u);
+	FxGripPreset *preset = [self fxFactorySample];
+	XCTAssertEqual(preset.createdByParameterId, 117u);
 }
 
 - (void)testFxFactorySampleReadsTheParameterValuesUnderStringKeys
@@ -535,7 +555,7 @@ static NSURL *FxPresetFileTestSampleURL(void)
 																	   options:NSPropertyListImmutable
 																		format:NULL
 																		 error:NULL];
-	NSDictionary *sample = [NSPropertyListSerialization propertyListWithData:[NSData dataWithContentsOfURL:FxPresetFileTestSampleURL()]
+	NSDictionary *sample = [NSPropertyListSerialization propertyListWithData:[NSData dataWithContentsOfURL:FxGripPresetFileTestSampleURL()]
 																	options:NSPropertyListImmutable
 																	 format:NULL
 																	  error:NULL];

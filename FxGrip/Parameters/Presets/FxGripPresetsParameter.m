@@ -5,9 +5,9 @@
 
 #import <AppKit/AppKit.h>
 #import "FxGripPresetsParameter.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripAPIAccessing.h"
 #import "FxGripPresetsAPI_v1.h"
 #import "FxGripParameterData.h"
@@ -77,7 +77,7 @@
 											    effect:(nonnull id<FxGripEffectHost>)effect
 {
 	NSString *tag = [self presetTagForParameter:parameter];
-	FxGripPresetsAPI_v1 *presetsAPI = effect.apiManager.presetsAPIv1;
+	id<FxPresetsAPI_v1> presetsAPI = effect.apiManager.presetsAPIv1;
 
 	NSMutableArray *entries = [NSMutableArray arrayWithObject:NSLocalizedString(kFxPresetsMenuEntry_Default, kFxPresetsMenuEntry_Default)];
 	if (tag != nil && presetsAPI != nil) {
@@ -115,7 +115,7 @@
 	[super installNotifications];
 	[self.effect.notifier addObserver:self
 							 selector:@selector(notifyPresetsParameterChanged:)
-								 name:FxTileableEffectParameterChangedName
+								 name:FxGripTileableEffectParameterChangedName
 							   object:self.effect];
 	[self attachUserPresetWatcher];
 }
@@ -151,7 +151,7 @@
 	if (tag == nil) {
 		return;
 	}
-	FxGripPresetsAPI_v1 *presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	NSURL *folderURL = [presetsAPI userPresetURL:tag];
 	if (folderURL == nil || ![NSFileManager.defaultManager fileExistsAtPath:folderURL.path]) {
 		return;
@@ -194,7 +194,7 @@
 // After the meta trigger (-10) has run its target-preset pass.
 - (NSInteger)ncPriority:(nullable NSNotificationName)aName
 {
-	if ([FxTileableEffectParameterChangedName isEqualToString:aName]) {
+	if ([FxGripTileableEffectParameterChangedName isEqualToString:aName]) {
 		return -8;
 	}
 	return [super ncPriority:aName];
@@ -226,7 +226,7 @@
 	if (tag == nil) {
 		return nil;
 	}
-	FxGripPresetsAPI_v1 *presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	for (FxGripPreset *preset in [presetsAPI userPresetsForTag:tag]) {
 		if ([preset.name isEqualToString:name]) {
 			return preset;
@@ -273,7 +273,7 @@
 
 - (void)revealUserPresetsAtTime:(CMTime)time
 {
-	FxGripPresetsAPI_v1 *presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	NSString *tag = [self.class presetTagForParameter:_data];
 	NSURL *folderURL = tag != nil ? [presetsAPI userPresetURL:tag] : [presetsAPI userPresetURL];
 	if (folderURL != nil) {
@@ -289,7 +289,7 @@
 
 - (void)saveCurrentStateAsPresetAtTime:(CMTime)time
 {
-	FxGripPresetsAPI_v1 *presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	FxGripPreset *preset = nil;
 	NSError *error = [presetsAPI generatePreset:&preset fromLabel:self.parameterName ?: @"Preset"];
 	if (error == nil && preset != nil) {
@@ -309,12 +309,12 @@
 
 - (void)notifyPresetsParameterChanged:(nonnull NSNotification *)notification
 {
-	NSNumber *pid = notification.userInfo[FxTileableEffectParameterChangedIDKey];
+	NSNumber *pid = notification.userInfo[FxGripTileableEffectParameterChangedIDKey];
 	if (![pid isKindOfClass:NSNumber.class] || pid.unsignedIntValue != self.parameterID) {
 		return;
 	}
 	CMTime time = kCMTimeZero;
-	NSDictionary *timeDict = notification.userInfo[FxTileableEffectParameterChangedAtTimeKey];
+	NSDictionary *timeDict = notification.userInfo[FxGripTileableEffectParameterChangedAtTimeKey];
 	if ([timeDict isKindOfClass:NSDictionary.class]) {
 		time = CMTimeMakeFromDictionary((__bridge CFDictionaryRef)timeDict);
 	}
@@ -347,7 +347,7 @@
 		NSLog(@"%s Error: no preset named %@ for parameter %d.", __func__, entry, self.parameterID);
 		return;
 	}
-	FxGripPresetsAPI_v1 *presetsAPI = effect.apiManager.presetsAPIv1;
+	id<FxPresetsAPI_v1> presetsAPI = effect.apiManager.presetsAPIv1;
 	NSError *error = [presetsAPI setPreset:preset options:kFxParameterPreset_Default atTime:time];
 	if (error != nil) {
 		NSLog(@"%s Error: could not apply the preset %@: %@", __func__, entry, error);

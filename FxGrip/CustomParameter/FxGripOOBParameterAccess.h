@@ -9,7 +9,7 @@
 #define FxGripOOBParameterAccess_h
 
 #import <Foundation/Foundation.h>
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 
 /*!
 	@interface  FxGripOOBParameterAccess

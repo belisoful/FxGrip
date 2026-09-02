@@ -13,23 +13,23 @@
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxParameterFlags.h>
 #import <FxGrip/FxGripParameterFlags.h>
-#import <FxGrip/FxTileableEffectBase.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
-#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripDebugMenu.h>
 #import <FxGrip/FxGripAboutMenu.h>
 #import <FxGrip/FxGripRegression.h>
 
 // The debug menu selections the extension recognizes. The values mirror the private
 // enumeration in FxGripDebugMenu.m.
-typedef NS_ENUM(NSUInteger, FxDebugTestMenuItem) {
-	FxDebugTestItem_Main = 0,
-	FxDebugTestItem_ToggleUnhide = 2,
-	FxDebugTestItem_ToggleShow = 3,
-	FxDebugTestItem_ToggleMenu = 5,
-	FxDebugTestItem_RemoveDebug = 7,
-	FxDebugTestItem_AddParam = 8,
-	FxDebugTestItem_RemoveParam = 9,
+typedef NS_ENUM(NSUInteger, FxGripDebugTestMenuItem) {
+	FxGripDebugTestItem_Main = 0,
+	FxGripDebugTestItem_ToggleUnhide = 2,
+	FxGripDebugTestItem_ToggleShow = 3,
+	FxGripDebugTestItem_ToggleMenu = 5,
+	FxGripDebugTestItem_RemoveDebug = 7,
+	FxGripDebugTestItem_AddParam = 8,
+	FxGripDebugTestItem_RemoveParam = 9,
 };
 
 static const FxParameterId kFxDebugTestTempParameter = 888;
@@ -37,7 +37,7 @@ static const FxParameterId kFxDebugTestTempParameter = 888;
 // FxGripDebugMenu.h and FxGripAboutMenu.h publish the classes without their members, so
 // the members the tests drive are declared here. The implementations come from the
 // linked framework.
-@interface FxGripDebugMenu (FxDebugMenuTestAccess)
+@interface FxGripDebugMenu (FxGripDebugMenuTestAccess)
 @property (readonly) BOOL hasDebugMenu;
 @property (readonly) BOOL hasDebugActivator;
 @property (readonly) BOOL isDebugUnhiding;
@@ -52,30 +52,30 @@ static const FxParameterId kFxDebugTestTempParameter = 888;
 - (NSArray<NSString *> * _Nonnull)debugMenuItems:(BOOL)unhide;
 @end
 
-@interface FxGripAboutMenu (FxAboutMenuTestAccess)
+@interface FxGripAboutMenu (FxGripAboutMenuTestAccess)
 - (void)extProcessParameters:(nonnull NSMutableArray *)parameters;
 - (NSArray * _Nullable)computeAboutMenuFrom:(nullable id)paramGetAPIv6 atTime:(CMTime)time;
 - (void)clickResetAboutMenu;
 - (void)clickAboutMenu:(unsigned int)selectionIndex paramAPIv6:(nullable id)paramGetAPIv6 atTime:(CMTime)time;
 @end
 
-static NSNotificationCenter *FxDebugTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripDebugTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
 }
 
-static CMTime FxDebugTestZeroTime(void)
+static CMTime FxGripDebugTestZeroTime(void)
 {
 	return (CMTime){.value = 0, .timescale = 1, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-/*! A dictionary the NSDictionary(FxTileableEffect) plugin accessors accept. */
-static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL debugActivator)
+/*! A dictionary the NSDictionary(FxGripTileableEffect) plugin accessors accept. */
+static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL debugActivator)
 {
 	return @{
 		kProPlugPlugIn_UuidProperty: @"33333333-3333-3333-3333-333333333333",
-		kProPlugPlugIn_ClassNameProperty: @"FxDebugTestPlugin",
+		kProPlugPlugIn_ClassNameProperty: @"FxGripDebugTestPlugin",
 		kProPlugPlugIn_GroupUUIDProperty: @"44444444-4444-4444-4444-444444444444",
 		kProPlugPlugIn_DisplayNameProperty: @"Debug Test Plugin",
 		kProPlugPlugIn_VersionProperty: @3,
@@ -86,7 +86,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 #pragma mark - Host API doubles
 
-@interface FxDebugTestStubDynamicAPI : NSObject
+@interface FxGripDebugTestStubDynamicAPI : NSObject
 @property (nonatomic, strong) NSArray<NSNumber *> *parameterIDList;
 @property (nonatomic, strong) NSArray *menuEntries;
 @property (nonatomic, assign) FxParameterId menuParameter;
@@ -94,7 +94,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 @property (nonatomic, strong) NSError *removeError;
 @end
 
-@implementation FxDebugTestStubDynamicAPI
+@implementation FxGripDebugTestStubDynamicAPI
 
 - (instancetype)init
 {
@@ -133,7 +133,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 @end
 
-@interface FxDebugTestStubGetAPI : NSObject
+@interface FxGripDebugTestStubGetAPI : NSObject
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *flags;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *intValues;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *boolValues;
@@ -142,7 +142,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 @property (nonatomic, assign) BOOL boolReadSucceeds;
 @end
 
-@implementation FxDebugTestStubGetAPI
+@implementation FxGripDebugTestStubGetAPI
 
 - (instancetype)init
 {
@@ -187,13 +187,13 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 @end
 
-@interface FxDebugTestStubSetAPI : NSObject
+@interface FxGripDebugTestStubSetAPI : NSObject
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *flags;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *boolValues;
 @property (nonatomic, assign) BOOL writeSucceeds;
 @end
 
-@implementation FxDebugTestStubSetAPI
+@implementation FxGripDebugTestStubSetAPI
 
 - (instancetype)init
 {
@@ -220,12 +220,12 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 @end
 
-@interface FxDebugTestStubCreateAPI : NSObject
+@interface FxGripDebugTestStubCreateAPI : NSObject
 @property (nonatomic, strong) NSMutableArray<NSNumber *> *addedParameters;
 @property (nonatomic, assign) BOOL addSucceeds;
 @end
 
-@implementation FxDebugTestStubCreateAPI
+@implementation FxGripDebugTestStubCreateAPI
 
 - (instancetype)init
 {
@@ -248,28 +248,28 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 @end
 
-@interface FxDebugTestStubAPIManager : NSObject
-@property (nonatomic, strong) FxDebugTestStubDynamicAPI *dynamicParamAPIv3;
-@property (nonatomic, strong) FxDebugTestStubGetAPI *paramGetAPIv6;
-@property (nonatomic, strong) FxDebugTestStubSetAPI *paramSetAPIv5;
-@property (nonatomic, strong) FxDebugTestStubSetAPI *paramSetAPIv6;
-@property (nonatomic, strong) FxDebugTestStubCreateAPI *paramCreateAPIv5;
+@interface FxGripDebugTestStubAPIManager : NSObject
+@property (nonatomic, strong) FxGripDebugTestStubDynamicAPI *dynamicParamAPIv3;
+@property (nonatomic, strong) FxGripDebugTestStubGetAPI *paramGetAPIv6;
+@property (nonatomic, strong) FxGripDebugTestStubSetAPI *paramSetAPIv5;
+@property (nonatomic, strong) FxGripDebugTestStubSetAPI *paramSetAPIv6;
+@property (nonatomic, strong) FxGripDebugTestStubCreateAPI *paramCreateAPIv5;
 @end
 
-@implementation FxDebugTestStubAPIManager
+@implementation FxGripDebugTestStubAPIManager
 @end
 
-// FxTileableEffectBase's designated initializer registers into the process-wide
+// FxGripTileableEffect's designated initializer registers into the process-wide
 // notification center, so the extensions run against a stub exposing the members they read.
-@interface FxDebugTestStubEffect : NSObject
+@interface FxGripDebugTestStubEffect : NSObject
 @property (nonatomic, assign) BOOL addedToDocument;
 @property (nonatomic, strong) NSNotificationCenter *notifier;
-@property (nonatomic, strong) FxDebugTestStubAPIManager *apiManager;
+@property (nonatomic, strong) FxGripDebugTestStubAPIManager *apiManager;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *pluginProperties;
 @property (nonatomic, copy) NSString *pluginUUID;
 @end
 
-@implementation FxDebugTestStubEffect
+@implementation FxGripDebugTestStubEffect
 
 - (id)effectBase
 {
@@ -282,14 +282,14 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxDebugTestMakePriorityCenter();
-		_apiManager = FxDebugTestStubAPIManager.new;
-		_apiManager.dynamicParamAPIv3 = FxDebugTestStubDynamicAPI.new;
-		_apiManager.paramGetAPIv6 = FxDebugTestStubGetAPI.new;
-		_apiManager.paramSetAPIv5 = FxDebugTestStubSetAPI.new;
-		_apiManager.paramSetAPIv6 = FxDebugTestStubSetAPI.new;
-		_apiManager.paramCreateAPIv5 = FxDebugTestStubCreateAPI.new;
-		_pluginProperties = FxDebugTestPluginProperties(YES, YES);
+		_notifier = FxGripDebugTestMakePriorityCenter();
+		_apiManager = FxGripDebugTestStubAPIManager.new;
+		_apiManager.dynamicParamAPIv3 = FxGripDebugTestStubDynamicAPI.new;
+		_apiManager.paramGetAPIv6 = FxGripDebugTestStubGetAPI.new;
+		_apiManager.paramSetAPIv5 = FxGripDebugTestStubSetAPI.new;
+		_apiManager.paramSetAPIv6 = FxGripDebugTestStubSetAPI.new;
+		_apiManager.paramCreateAPIv5 = FxGripDebugTestStubCreateAPI.new;
+		_pluginProperties = FxGripDebugTestPluginProperties(YES, YES);
 		_pluginUUID = @"33333333-3333-3333-3333-333333333333";
 	}
 	return self;
@@ -301,7 +301,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 @interface FxGripDebugMenuTests : XCTestCase
 @property (nonatomic, strong) FxGripDebugMenu *extension;
-@property (nonatomic, strong) FxDebugTestStubEffect *effect;
+@property (nonatomic, strong) FxGripDebugTestStubEffect *effect;
 @end
 
 @implementation FxGripDebugMenuTests
@@ -310,7 +310,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	[super setUp];
 	self.extension = [FxGripDebugMenu.alloc init];
-	self.effect = [FxDebugTestStubEffect.alloc init];
+	self.effect = [FxGripDebugTestStubEffect.alloc init];
 	[self.extension extLoadWithEffect:(id)self.effect];
 }
 
@@ -323,30 +323,30 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 - (void)setDebugMenu:(BOOL)debugMenu activator:(BOOL)activator
 {
-	self.effect.pluginProperties = FxDebugTestPluginProperties(debugMenu, activator);
+	self.effect.pluginProperties = FxGripDebugTestPluginProperties(debugMenu, activator);
 }
 
-- (FxDebugTestStubDynamicAPI *)dynamicAPI { return self.effect.apiManager.dynamicParamAPIv3; }
-- (FxDebugTestStubGetAPI *)getAPI { return self.effect.apiManager.paramGetAPIv6; }
-- (FxDebugTestStubSetAPI *)setAPIv5 { return self.effect.apiManager.paramSetAPIv5; }
-- (FxDebugTestStubSetAPI *)setAPIv6 { return self.effect.apiManager.paramSetAPIv6; }
+- (FxGripDebugTestStubDynamicAPI *)dynamicAPI { return self.effect.apiManager.dynamicParamAPIv3; }
+- (FxGripDebugTestStubGetAPI *)getAPI { return self.effect.apiManager.paramGetAPIv6; }
+- (FxGripDebugTestStubSetAPI *)setAPIv5 { return self.effect.apiManager.paramSetAPIv5; }
+- (FxGripDebugTestStubSetAPI *)setAPIv6 { return self.effect.apiManager.paramSetAPIv6; }
 
 - (BOOL)selectMenuItem:(NSUInteger)selection
 {
 	self.getAPI.intValues[@(kFxParameterId_DebugMenu)] = @(selection);
 	NSError *error = nil;
 	return [self.extension manageDebuggerController:kFxParameterId_DebugMenu
-											 atTime:FxDebugTestZeroTime()
+											 atTime:FxGripDebugTestZeroTime()
 											  error:&error];
 }
 
-// The add-parameters handler reads its list from the notification's FxEffectParameters entry.
+// The add-parameters handler reads its list from the notification's FxGripEffectParameters entry.
 - (NSMutableArray *)runAddParameters
 {
 	NSMutableArray *parameters = NSMutableArray.new;
-	NSNotification *note = [NSNotification notificationWithName:FxTileableEffectAddParametersName
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectAddParametersName
 														object:self.effect
-													  userInfo:@{FxTileableEffectParametersKey: parameters}];
+													  userInfo:@{FxGripTileableEffectParametersKey: parameters}];
 	[self.extension extAddParameters:note];
 	return parameters;
 }
@@ -358,7 +358,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 										kFxParameterProperty_Flags: @(flags)} mutableCopy];
 	NSNotification *note = [NSNotification notificationWithName:@"flags"
 														object:self.effect
-													  userInfo:@{FxNotifyAPI_ParameterKey: parameter}];
+													  userInfo:@{FxGripNotifyAPI_ParameterKey: parameter}];
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
 	[self.extension performSelector:handler withObject:note];
@@ -453,17 +453,17 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 	XCTAssertTrue([withActivator containsObject:@"FxGrip::DebugMenu::ToggleDebugToggle"]);
 	XCTAssertFalse([withoutActivator containsObject:@"FxGrip::DebugMenu::ToggleDebugToggle"]);
 	XCTAssertEqualObjects(withActivator.firstObject, @"FxGrip::DebugMenu::MainItem");
-	XCTAssertEqualObjects(withActivator[FxDebugTestItem_ToggleUnhide], @"FxGrip::DebugMenu::ToggleUnhideOff");
-	XCTAssertEqualObjects(withActivator[FxDebugTestItem_ToggleShow], @"FxGrip::DebugMenu::ToggleDebugToggle");
-	XCTAssertEqualObjects(withActivator[FxDebugTestItem_ToggleMenu], @"FxGrip::DebugMenu::ToggleDebugMenu");
-	XCTAssertEqualObjects(withActivator[FxDebugTestItem_RemoveDebug], @"FxGrip::DebugMenu::RemoveDebugMenu");
+	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_ToggleUnhide], @"FxGrip::DebugMenu::ToggleUnhideOff");
+	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_ToggleShow], @"FxGrip::DebugMenu::ToggleDebugToggle");
+	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_ToggleMenu], @"FxGrip::DebugMenu::ToggleDebugMenu");
+	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_RemoveDebug], @"FxGrip::DebugMenu::RemoveDebugMenu");
 }
 
 - (void)testTheUnhideItemNamesTheStateItSwitchesTo
 {
-	XCTAssertEqualObjects([self.extension debugMenuItems:YES][FxDebugTestItem_ToggleUnhide],
+	XCTAssertEqualObjects([self.extension debugMenuItems:YES][FxGripDebugTestItem_ToggleUnhide],
 						  @"FxGrip::DebugMenu::ToggleUnhideOn");
-	XCTAssertEqualObjects([self.extension debugMenuItems:NO][FxDebugTestItem_ToggleUnhide],
+	XCTAssertEqualObjects([self.extension debugMenuItems:NO][FxGripDebugTestItem_ToggleUnhide],
 						  @"FxGrip::DebugMenu::ToggleUnhideOff");
 }
 
@@ -585,7 +585,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 - (void)testSelectingTheMainItemDoesNothing
 {
-	XCTAssertTrue([self selectMenuItem:FxDebugTestItem_Main]);
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_Main]);
 
 	XCTAssertEqual(self.setAPIv5.flags.count, (NSUInteger)0);
 	XCTAssertEqual(self.dynamicAPI.removedParameters.count, (NSUInteger)0);
@@ -597,7 +597,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 	NSError *error = nil;
 	XCTAssertFalse([self.extension manageDebuggerController:kFxParameterId_DebugMenu
-													 atTime:FxDebugTestZeroTime()
+													 atTime:FxGripDebugTestZeroTime()
 													  error:&error]);
 }
 
@@ -605,7 +605,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	self.dynamicAPI.parameterIDList = @[@1];
 
-	XCTAssertTrue([self selectMenuItem:FxDebugTestItem_ToggleUnhide]);
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_ToggleUnhide]);
 
 	XCTAssertEqualObjects(self.setAPIv5.flags[@1], @(kFxParameterFlag_IN_DEBUG_MODE));
 }
@@ -615,14 +615,14 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 	self.dynamicAPI.parameterIDList = @[@1];
 	self.getAPI.flagsReadSucceeds = NO;
 
-	XCTAssertFalse([self selectMenuItem:FxDebugTestItem_ToggleUnhide]);
+	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_ToggleUnhide]);
 }
 
 - (void)testSelectingTheShowItemFlipsTheActivatorVisibility
 {
 	self.getAPI.flags[@(kFxParameterId_DebugActivator)] = @(kFxParameterFlag_HIDDEN);
 
-	XCTAssertTrue([self selectMenuItem:FxDebugTestItem_ToggleShow]);
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_ToggleShow]);
 
 	XCTAssertEqualObjects(self.setAPIv6.flags[@(kFxParameterId_DebugActivator)], @(0));
 }
@@ -631,7 +631,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	self.getAPI.boolValues[@(kFxParameterId_DebugActivator)] = @(NO);
 
-	XCTAssertTrue([self selectMenuItem:FxDebugTestItem_ToggleMenu]);
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_ToggleMenu]);
 
 	XCTAssertEqualObjects(self.setAPIv5.boolValues[@(kFxParameterId_DebugActivator)], @(YES));
 }
@@ -640,7 +640,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	self.getAPI.boolReadSucceeds = NO;
 
-	XCTAssertFalse([self selectMenuItem:FxDebugTestItem_ToggleMenu]);
+	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_ToggleMenu]);
 	XCTAssertEqual(self.setAPIv5.boolValues.count, (NSUInteger)0);
 }
 
@@ -649,7 +649,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 	self.getAPI.boolValues[@(kFxParameterId_DebugActivator)] = @(NO);
 	self.setAPIv5.writeSucceeds = NO;
 
-	XCTAssertFalse([self selectMenuItem:FxDebugTestItem_ToggleMenu]);
+	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_ToggleMenu]);
 }
 
 - (void)testSelectingRemoveEndsTheUnhideFirstAndStopsWhenThatFails
@@ -659,13 +659,13 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 	self.getAPI.flags[@1] = @(kFxParameterFlag_IN_DEBUG_MODE);
 	self.setAPIv5.writeSucceeds = NO;
 
-	XCTAssertFalse([self selectMenuItem:FxDebugTestItem_RemoveDebug]);
+	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_RemoveDebug]);
 	XCTAssertEqual(self.dynamicAPI.removedParameters.count, (NSUInteger)0);
 }
 
 - (void)testSelectingRemoveDropsTheActivatorAndTheMenu
 {
-	XCTAssertTrue([self selectMenuItem:FxDebugTestItem_RemoveDebug]);
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_RemoveDebug]);
 
 	XCTAssertEqualObjects(self.dynamicAPI.removedParameters,
 						  (@[@(kFxParameterId_DebugActivator), @(kFxParameterId_DebugMenu)]));
@@ -677,9 +677,9 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 	// Without the activator the host menu carries one item fewer, so the selection the
 	// extension receives is one lower than the enumerated position.
-	self.getAPI.intValues[@(kFxParameterId_DebugMenu)] = @(FxDebugTestItem_RemoveDebug - 1);
+	self.getAPI.intValues[@(kFxParameterId_DebugMenu)] = @(FxGripDebugTestItem_RemoveDebug - 1);
 	XCTAssertTrue([self.extension manageDebuggerController:kFxParameterId_DebugMenu
-													atTime:FxDebugTestZeroTime()
+													atTime:FxGripDebugTestZeroTime()
 													 error:NULL]);
 
 	XCTAssertEqualObjects(self.dynamicAPI.removedParameters, @[@(kFxParameterId_DebugMenu)]);
@@ -687,14 +687,14 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 - (void)testSelectingRemoveReportsTheHostRemovalError
 {
-	self.dynamicAPI.removeError = [NSError errorWithDomain:@"FxDebugTest" code:3 userInfo:nil];
+	self.dynamicAPI.removeError = [NSError errorWithDomain:@"FxGripDebugTest" code:3 userInfo:nil];
 
-	XCTAssertFalse([self selectMenuItem:FxDebugTestItem_RemoveDebug]);
+	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_RemoveDebug]);
 }
 
 - (void)testSelectingAddParameterCreatesTheTemporaryParameter
 {
-	XCTAssertTrue([self selectMenuItem:FxDebugTestItem_AddParam]);
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_AddParam]);
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramCreateAPIv5.addedParameters,
 						  @[@(kFxDebugTestTempParameter)]);
@@ -705,29 +705,29 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	self.effect.apiManager.paramCreateAPIv5.addSucceeds = NO;
 
-	XCTAssertFalse([self selectMenuItem:FxDebugTestItem_AddParam]);
+	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_AddParam]);
 	XCTAssertNil(self.setAPIv5.flags[@(kFxDebugTestTempParameter)]);
 }
 
 - (void)testSelectingRemoveParameterDropsTheTemporaryParameter
 {
-	XCTAssertTrue([self selectMenuItem:FxDebugTestItem_RemoveParam]);
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_RemoveParam]);
 
 	XCTAssertEqualObjects(self.dynamicAPI.removedParameters, @[@(kFxDebugTestTempParameter)]);
 }
 
 - (void)testSelectingRemoveParameterReportsTheHostError
 {
-	self.dynamicAPI.removeError = [NSError errorWithDomain:@"FxDebugTest" code:4 userInfo:nil];
+	self.dynamicAPI.removeError = [NSError errorWithDomain:@"FxGripDebugTest" code:4 userInfo:nil];
 
-	XCTAssertFalse([self selectMenuItem:FxDebugTestItem_RemoveParam]);
+	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_RemoveParam]);
 }
 
 #pragma mark Effect Category
 
 - (void)testTheEffectExposesItsDebugMenuExtension
 {
-	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:@selector(debugMenu)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(debugMenu)]);
 }
 
 @end
@@ -756,7 +756,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	XCTAssertEqualObjects(self.extension.extKey, FxGripAboutMenuExtensionKey);
 	XCTAssertEqualObjects(self.extension.extKey, @"FxGripAboutMenu");
-	XCTAssertEqual([self.extension ncPriority:nil], FxExtensionDefaultPriority);
+	XCTAssertEqual([self.extension ncPriority:nil], FxGripExtensionDefaultPriority);
 }
 
 /*!
@@ -771,13 +771,13 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 	[self.extension extProcessParameters:parameters];
 
 	XCTAssertEqual(parameters.count, (NSUInteger)0);
-	XCTAssertNil([self.extension computeAboutMenuFrom:nil atTime:FxDebugTestZeroTime()]);
+	XCTAssertNil([self.extension computeAboutMenuFrom:nil atTime:FxGripDebugTestZeroTime()]);
 }
 
 - (void)testTheAboutMenuClickHandlersAreInert
 {
 	XCTAssertNoThrow([self.extension clickResetAboutMenu]);
-	XCTAssertNoThrow([self.extension clickAboutMenu:0 paramAPIv6:nil atTime:FxDebugTestZeroTime()]);
+	XCTAssertNoThrow([self.extension clickAboutMenu:0 paramAPIv6:nil atTime:FxGripDebugTestZeroTime()]);
 }
 
 @end
@@ -786,7 +786,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 @interface FxGripRegressionTests : XCTestCase
 @property (nonatomic, strong) FxGripRegression *extension;
-@property (nonatomic, strong) FxDebugTestStubEffect *effect;
+@property (nonatomic, strong) FxGripDebugTestStubEffect *effect;
 @end
 
 @implementation FxGripRegressionTests
@@ -795,7 +795,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 {
 	[super setUp];
 	self.extension = [FxGripRegression.alloc init];
-	self.effect = [FxDebugTestStubEffect.alloc init];
+	self.effect = [FxGripDebugTestStubEffect.alloc init];
 }
 
 - (void)tearDown
@@ -807,7 +807,7 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 - (void)setPluginProperties:(NSDictionary *)overrides
 {
-	NSMutableDictionary *properties = FxDebugTestPluginProperties(NO, NO);
+	NSMutableDictionary *properties = FxGripDebugTestPluginProperties(NO, NO);
 	[properties addEntriesFromDictionary:overrides];
 	self.effect.pluginProperties = properties;
 }
@@ -845,8 +845,8 @@ static NSMutableDictionary *FxDebugTestPluginProperties(BOOL debugMenu, BOOL deb
 
 - (void)testTheEffectBuildsARegressionExtension
 {
-	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:@selector(regression)]);
-	XCTAssertTrue([FxTileableEffectBase instancesRespondToSelector:@selector(newRegressionExtension)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(regression)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(newRegressionExtension)]);
 }
 
 @end

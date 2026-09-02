@@ -12,7 +12,7 @@
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxParameterFlags.h>
-#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripParameterCreationAPI_v5.h>
 
 static const FxParameterId kCreationTestParameter = 11;
@@ -21,7 +21,7 @@ static const FxParameterId kCreationTestInnerGroup = 4;
 
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
@@ -34,12 +34,12 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 	naming the method and every argument it received, so the arguments the wrapper
 	derives from the notification payload are observable.
 */
-@interface FxCreationTestStubAPI : NSObject
+@interface FxGripCreationTestStubAPI : NSObject
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *calls;
 @property (nonatomic, assign) BOOL succeeds;
 @end
 
-@implementation FxCreationTestStubAPI
+@implementation FxGripCreationTestStubAPI
 
 - (instancetype)init
 {
@@ -314,15 +314,15 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 @end
 
 /*!
-	FxTileableEffectBase's designated initializer registers into the process-wide
+	FxGripTileableEffect's designated initializer registers into the process-wide
 	notification center, so the wrapper is exercised against a stub carrying an isolated
 	notifier. The creation wrapper reads only -notifier from its effect.
 */
-@interface FxCreationTestStubEffect : NSObject
+@interface FxGripCreationTestStubEffect : NSObject
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @end
 
-@implementation FxCreationTestStubEffect
+@implementation FxGripCreationTestStubEffect
 
 - (id)effectBase
 {
@@ -335,7 +335,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxCreationTestMakePriorityCenter();
+		_notifier = FxGripCreationTestMakePriorityCenter();
 	}
 	return self;
 }
@@ -345,8 +345,8 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 #pragma mark - Tests
 
 @interface FxGripParameterCreationAPI_v5Tests : XCTestCase
-@property (nonatomic, strong) FxCreationTestStubEffect *effect;
-@property (nonatomic, strong) FxCreationTestStubAPI *hostAPI;
+@property (nonatomic, strong) FxGripCreationTestStubEffect *effect;
+@property (nonatomic, strong) FxGripCreationTestStubAPI *hostAPI;
 @property (nonatomic, strong) FxGripParameterCreationAPI_v5 *api;
 @property (nonatomic, strong) NSMutableArray<NSNotification *> *posted;
 // The notifier holds its observers weakly, so every token is retained for the test.
@@ -358,8 +358,8 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxCreationTestStubEffect.alloc init];
-	self.hostAPI = [FxCreationTestStubAPI.alloc init];
+	self.effect = [FxGripCreationTestStubEffect.alloc init];
+	self.hostAPI = [FxGripCreationTestStubAPI.alloc init];
 	self.api = [FxGripParameterCreationAPI_v5.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
 	self.posted = NSMutableArray.new;
 	self.observerTokens = NSMutableArray.new;
@@ -387,11 +387,11 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 
 - (NSArray<NSNotificationName> *)recordedNotificationNames
 {
-	return @[FxNotifyAPI_ParameterSetNamePreName,
-			 FxNotifyAPI_ParameterAddPreName,
-			 FxNotifyAPI_ParameterAddName,
-			 FxNotifyAPI_ParameterStartGroupName,
-			 FxNotifyAPI_ParameterEndGroupName];
+	return @[FxGripNotifyAPI_ParameterSetNamePreName,
+			 FxGripNotifyAPI_ParameterAddPreName,
+			 FxGripNotifyAPI_ParameterAddName,
+			 FxGripNotifyAPI_ParameterStartGroupName,
+			 FxGripNotifyAPI_ParameterEndGroupName];
 }
 
 - (void)observeName:(NSNotificationName)name usingBlock:(void (^)(NSNotification *notification))block
@@ -422,7 +422,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 /*! The nested parameter dictionary carried by the completed add notification. */
 - (NSDictionary *)addedParameter
 {
-	return [self notificationNamed:FxNotifyAPI_ParameterAddName].userInfo.fxParameter;
+	return [self notificationNamed:FxGripNotifyAPI_ParameterAddName].userInfo.fxParameter;
 }
 
 - (NSDictionary *)hostCall
@@ -433,7 +433,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 /*! Registers an observer that rewrites one key of the nested pre-notification payload. */
 - (void)rewriteAddPreKey:(NSString *)key toValue:(id)value
 {
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		notification.userInfo.mutableFxParameter[key] = value;
 	}];
 }
@@ -832,15 +832,15 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 {
 	XCTAssertTrue([self addFloatParameter]);
 
-	XCTAssertEqualObjects(self.postedNames, (@[FxNotifyAPI_ParameterSetNamePreName,
-											   FxNotifyAPI_ParameterAddPreName,
-											   FxNotifyAPI_ParameterAddName]));
+	XCTAssertEqualObjects(self.postedNames, (@[FxGripNotifyAPI_ParameterSetNamePreName,
+											   FxGripNotifyAPI_ParameterAddPreName,
+											   FxGripNotifyAPI_ParameterAddName]));
 }
 
 - (void)testThePreNotificationsRunBeforeTheHostIsCalled
 {
 	__block NSUInteger callsAtPre = NSUIntegerMax;
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		callsAtPre = self.hostAPI.calls.count;
 	}];
 
@@ -853,7 +853,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 - (void)testThePreNotificationCarriesTheParameterIDAtBothLevels
 {
 	__block NSDictionary *seen = nil;
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		seen = @{@"outer": notification.userInfo[kFxParameterProperty_Id],
 				 @"nested": notification.userInfo.fxParameter[kFxParameterProperty_Id]};
 	}];
@@ -867,7 +867,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 - (void)testTheNestedPreNotificationPayloadIsMutable
 {
 	__block BOOL mutable = NO;
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		mutable = notification.userInfo.mutableFxParameter != nil;
 	}];
 
@@ -888,7 +888,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 
 - (void)testAnObserverRewritingTheDefaultAndBoundsChangesWhatTheHostReceives
 {
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
 		parameter[kFxParameterProperty_Default] = @0.75;
 		parameter[kFxParameterProperty_Minimum] = @(-1.0);
@@ -932,7 +932,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 
 - (void)testAnObserverCannotChangeTheIDTypeOrParentThroughThePreNotification
 {
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
 		parameter[kFxParameterProperty_Id] = @999;
 		parameter[kFxParameterProperty_Type] = @(FxParameterType_String);
@@ -962,22 +962,22 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 
 - (void)testAnObserverSettingAnErrorAbortsTheCreationBeforeTheHostIsCalled
 {
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		((NSMutableDictionary *)notification.userInfo).fxError =
-			[NSError errorWithDomain:@"FxCreationTest" code:1 userInfo:nil];
+			[NSError errorWithDomain:@"FxGripCreationTest" code:1 userInfo:nil];
 	}];
 
 	XCTAssertFalse([self addFloatParameter]);
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
-	XCTAssertNil([self notificationNamed:FxNotifyAPI_ParameterAddName]);
+	XCTAssertNil([self notificationNamed:FxGripNotifyAPI_ParameterAddName]);
 }
 
 - (void)testAnErrorFromTheNamePreNotificationAlsoAbortsTheCreation
 {
-	[self observeName:FxNotifyAPI_ParameterSetNamePreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterSetNamePreName usingBlock:^(NSNotification *notification) {
 		((NSMutableDictionary *)notification.userInfo).fxError =
-			[NSError errorWithDomain:@"FxCreationTest" code:1 userInfo:nil];
+			[NSError errorWithDomain:@"FxGripCreationTest" code:1 userInfo:nil];
 	}];
 
 	XCTAssertFalse([self addFloatParameter]);
@@ -992,9 +992,9 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 	XCTAssertFalse([self addFloatParameter]);
 
 	XCTAssertEqual(self.hostAPI.calls.count, (NSUInteger)1);
-	XCTAssertNil([self notificationNamed:FxNotifyAPI_ParameterAddName]);
-	XCTAssertEqualObjects(self.postedNames, (@[FxNotifyAPI_ParameterSetNamePreName,
-											   FxNotifyAPI_ParameterAddPreName]));
+	XCTAssertNil([self notificationNamed:FxGripNotifyAPI_ParameterAddName]);
+	XCTAssertEqualObjects(self.postedNames, (@[FxGripNotifyAPI_ParameterSetNamePreName,
+											   FxGripNotifyAPI_ParameterAddPreName]));
 }
 
 - (void)testEveryCreationMethodReportsAHostRefusal
@@ -1022,14 +1022,14 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 	XCTAssertFalse([self.api startParameterSubGroup:@"S" parameterID:19 parameterFlags:0]);
 	XCTAssertFalse([self.api endParameterSubGroup]);
 
-	XCTAssertNil([self notificationNamed:FxNotifyAPI_ParameterAddName]);
+	XCTAssertNil([self notificationNamed:FxGripNotifyAPI_ParameterAddName]);
 }
 
 - (void)testAnObserverErrorAbortsEveryCreationMethodBeforeTheHostIsCalled
 {
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		((NSMutableDictionary *)notification.userInfo).fxError =
-			[NSError errorWithDomain:@"FxCreationTest" code:1 userInfo:nil];
+			[NSError errorWithDomain:@"FxGripCreationTest" code:1 userInfo:nil];
 	}];
 
 	XCTAssertFalse([self.api addAngleSliderWithName:@"A" parameterID:1 defaultDegrees:0 parameterMinDegrees:0 parameterMaxDegrees:1 parameterFlags:0]);
@@ -1081,10 +1081,10 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 											@"name": @"Group",
 											@"id": @(kCreationTestGroup),
 											@"flags": @(kFxParameterFlag_DEFAULT)}));
-	XCTAssertEqualObjects(self.postedNames, (@[FxNotifyAPI_ParameterSetNamePreName,
-											   FxNotifyAPI_ParameterAddPreName,
-											   FxNotifyAPI_ParameterAddName,
-											   FxNotifyAPI_ParameterStartGroupName]));
+	XCTAssertEqualObjects(self.postedNames, (@[FxGripNotifyAPI_ParameterSetNamePreName,
+											   FxGripNotifyAPI_ParameterAddPreName,
+											   FxGripNotifyAPI_ParameterAddName,
+											   FxGripNotifyAPI_ParameterStartGroupName]));
 	XCTAssertEqualObjects(self.api.subGroupStack, (@[@(kFxParameterId_TopLevelGroup),
 													 @(kCreationTestGroup)]));
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Group));
@@ -1124,10 +1124,10 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 	XCTAssertTrue([self.api endParameterSubGroup]);
 
 	XCTAssertEqualObjects(self.hostCall, @{@"method": @"endgroup"});
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterEndGroupName]);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterEndGroupName]);
 	XCTAssertEqualObjects(self.api.subGroupStack, @[@(kFxParameterId_TopLevelGroup)]);
 
-	NSDictionary *userInfo = [self notificationNamed:FxNotifyAPI_ParameterEndGroupName].userInfo;
+	NSDictionary *userInfo = [self notificationNamed:FxGripNotifyAPI_ParameterEndGroupName].userInfo;
 	XCTAssertEqualObjects(userInfo[kFxParameterProperty_Id], @(kCreationTestGroup));
 	NSDictionary *parameter = userInfo.fxParameter;
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_Type], @(FxParameterType_Group));
@@ -1145,7 +1145,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 
 	XCTAssertTrue([self.api endParameterSubGroup]);
 
-	NSDictionary *parameter = [self notificationNamed:FxNotifyAPI_ParameterEndGroupName].userInfo.fxParameter;
+	NSDictionary *parameter = [self notificationNamed:FxGripNotifyAPI_ParameterEndGroupName].userInfo.fxParameter;
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_Id], @(kCreationTestInnerGroup));
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_ParentId], @(kCreationTestGroup));
 	XCTAssertEqualObjects(self.api.subGroupStack, (@[@(kFxParameterId_TopLevelGroup),
@@ -1172,7 +1172,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 	XCTAssertTrue([self.api endParameterSubGroup]);
 
 	XCTAssertEqualObjects(self.api.subGroupStack, @[@(kFxParameterId_TopLevelGroup)]);
-	NSDictionary *parameter = [self notificationNamed:FxNotifyAPI_ParameterEndGroupName].userInfo.fxParameter;
+	NSDictionary *parameter = [self notificationNamed:FxGripNotifyAPI_ParameterEndGroupName].userInfo.fxParameter;
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_Id], @(kCreationTestGroup));
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_ParentId], @(kFxParameterId_TopLevelGroup));
 }
@@ -1186,7 +1186,7 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 									 parameterFlags:0]);
 
 	XCTAssertEqualObjects(self.api.subGroupStack, @[@(kFxParameterId_TopLevelGroup)]);
-	XCTAssertNil([self notificationNamed:FxNotifyAPI_ParameterStartGroupName]);
+	XCTAssertNil([self notificationNamed:FxGripNotifyAPI_ParameterStartGroupName]);
 }
 
 - (void)testAnEndTheHostRefusesLeavesTheStackAndPostsNothing
@@ -1204,9 +1204,9 @@ static NSNotificationCenter *FxCreationTestMakePriorityCenter(void)
 
 - (void)testAGroupAbortedByAnObserverErrorIsNotPushedAndReachesNoHost
 {
-	[self observeName:FxNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
 		((NSMutableDictionary *)notification.userInfo).fxError =
-			[NSError errorWithDomain:@"FxCreationTest" code:1 userInfo:nil];
+			[NSError errorWithDomain:@"FxGripCreationTest" code:1 userInfo:nil];
 	}];
 
 	XCTAssertFalse([self.api startParameterSubGroup:@"Group"

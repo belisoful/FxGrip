@@ -6,19 +6,19 @@
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripParameterRetrievalAPI_v7.h>
 
-static CMTime FxV7Time(void)
+static CMTime FxGripV7Time(void)
 {
 	return (CMTime){ .value = 0, .timescale = 30, .flags = kCMTimeFlags_Valid };
 }
 
 /*! A stand-in host v7 API recording the request and returning a staged size. */
-@interface FxV7StubAPI : NSObject
+@interface FxGripV7StubAPI : NSObject
 @property (nonatomic, assign) CGSize stagedSize;
 @property (nonatomic, assign) BOOL stagedResult;
 @property (nonatomic, assign) UInt32 lastParameterID;
 @end
 
-@implementation FxV7StubAPI
+@implementation FxGripV7StubAPI
 
 - (instancetype)init
 {
@@ -41,11 +41,11 @@ static CMTime FxV7Time(void)
 
 @end
 
-@interface FxV7StubEffect : NSObject
+@interface FxGripV7StubEffect : NSObject
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @end
 
-@implementation FxV7StubEffect
+@implementation FxGripV7StubEffect
 - (instancetype)init
 {
 	self = [super init];
@@ -61,22 +61,22 @@ static CMTime FxV7Time(void)
 
 @implementation FxGripParameterRetrievalAPI_v7Tests
 
-- (FxGripParameterRetrievalAPI_v7 *)wrapperWithHost:(FxV7StubAPI *)host
+- (FxGripParameterRetrievalAPI_v7 *)wrapperWithHost:(FxGripV7StubAPI *)host
 {
 	return [FxGripParameterRetrievalAPI_v7.alloc initWithAPI:(id)host
-										   dynamicParamAPIv4:nil
-													  effect:(id)FxV7StubEffect.new];
+										   parameterInfoAPIv1:nil
+													  effect:(id)FxGripV7StubEffect.new];
 }
 
 - (void)testImageSizeForwardsToTheHostAPI
 {
-	FxV7StubAPI *host = FxV7StubAPI.new;
+	FxGripV7StubAPI *host = FxGripV7StubAPI.new;
 	host.stagedSize = CGSizeMake(3840, 2160);
 	FxGripParameterRetrievalAPI_v7 *wrapper = [self wrapperWithHost:host];
 
 	CGSize size = CGSizeMake(0, 0);
 	NSError *error = nil;
-	BOOL ok = [wrapper imageSize:&size fromParameter:42 atTime:FxV7Time() error:&error];
+	BOOL ok = [wrapper imageSize:&size fromParameter:42 atTime:FxGripV7Time() error:&error];
 
 	XCTAssertTrue(ok);
 	XCTAssertEqual(size.width, 3840.0);
@@ -86,17 +86,17 @@ static CMTime FxV7Time(void)
 
 - (void)testImageSizePropagatesFailure
 {
-	FxV7StubAPI *host = FxV7StubAPI.new;
+	FxGripV7StubAPI *host = FxGripV7StubAPI.new;
 	host.stagedResult = NO;
 	FxGripParameterRetrievalAPI_v7 *wrapper = [self wrapperWithHost:host];
 
 	CGSize size = CGSizeMake(0, 0);
-	XCTAssertFalse([wrapper imageSize:&size fromParameter:1 atTime:FxV7Time() error:NULL]);
+	XCTAssertFalse([wrapper imageSize:&size fromParameter:1 atTime:FxGripV7Time() error:NULL]);
 }
 
 - (void)testTheV7WrapperIsAlsoAV6Wrapper
 {
-	FxGripParameterRetrievalAPI_v7 *wrapper = [self wrapperWithHost:FxV7StubAPI.new];
+	FxGripParameterRetrievalAPI_v7 *wrapper = [self wrapperWithHost:FxGripV7StubAPI.new];
 	XCTAssertTrue([wrapper conformsToProtocol:@protocol(FxParameterRetrievalAPI_v7)]);
 	XCTAssertTrue([wrapper conformsToProtocol:@protocol(FxParameterRetrievalAPI_v6)]);
 	XCTAssertTrue([wrapper isKindOfClass:FxGripParameterRetrievalAPI_v6.class]);

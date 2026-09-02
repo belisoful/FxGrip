@@ -13,7 +13,7 @@
 #import "FxGrip/FxGripParameterUtility.h"
 
 
-static NSMutableDictionary *FxTPConfig(int parameterID, id type)
+static NSMutableDictionary *FxGripTPConfig(int parameterID, id type)
 {
 	return [NSMutableDictionary dictionaryWithDictionary:@{
 		kFxParameterProperty_Id: @(parameterID),
@@ -22,22 +22,22 @@ static NSMutableDictionary *FxTPConfig(int parameterID, id type)
 	}];
 }
 
-static NSMutableDictionary *FxTPDriver(int parameterID, id type, id defaultValue, id definition)
+static NSMutableDictionary *FxGripTPDriver(int parameterID, id type, id defaultValue, id definition)
 {
-	NSMutableDictionary *config = FxTPConfig(parameterID, type);
+	NSMutableDictionary *config = FxGripTPConfig(parameterID, type);
 	config[kFxParameterProperty_Default] = defaultValue;
 	config[kFxParameterProperty_TargetPreset] = definition;
 	return config;
 }
 
-static NSMutableArray<NSMutableDictionary*> *FxTPList(NSArray<NSMutableDictionary*> *configs)
+static NSMutableArray<NSMutableDictionary*> *FxGripTPList(NSArray<NSMutableDictionary*> *configs)
 {
 	return [NSMutableArray arrayWithArray:configs];
 }
 
 // A preset whose `names` section renames parameter 2, used as the visible effect of a
 // driver that resolves.
-static NSDictionary *FxTPRenamePreset(NSString *name)
+static NSDictionary *FxGripTPRenamePreset(NSString *name)
 {
 	return @{ kFxParameterProperty_TargetPresetNames: @{ @2: name } };
 }
@@ -52,10 +52,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testMenuDefaultIndexSelectsTheMatchingPresetEntry
 {
-	NSArray *definition = @[FxTPRenamePreset(@"first"), FxTPRenamePreset(@"second")];
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @1, definition),
+	NSArray *definition = @[FxGripTPRenamePreset(@"first"), FxGripTPRenamePreset(@"second")];
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @1, definition),
 		target
 	]);
 
@@ -66,10 +66,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testToggleDefaultNoSelectsTheFirstPresetEntry
 {
-	NSArray *definition = @[FxTPRenamePreset(@"off"), FxTPRenamePreset(@"on")];
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Toggle), @NO, definition),
+	NSArray *definition = @[FxGripTPRenamePreset(@"off"), FxGripTPRenamePreset(@"on")];
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Toggle), @NO, definition),
 		target
 	]);
 
@@ -80,10 +80,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testToggleDefaultYesSelectsTheSecondPresetEntry
 {
-	NSArray *definition = @[FxTPRenamePreset(@"off"), FxTPRenamePreset(@"on")];
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Toggle), @YES, definition),
+	NSArray *definition = @[FxGripTPRenamePreset(@"off"), FxGripTPRenamePreset(@"on")];
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Toggle), @YES, definition),
 		target
 	]);
 
@@ -94,10 +94,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testTypeGivenAsANameStringDrivesTheSameApplication
 {
-	NSArray *definition = @[FxTPRenamePreset(@"first")];
-	NSMutableDictionary *target = FxTPConfig(2, kFxParameterType_Float);
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, kFxParameterType_Menu, @0, definition),
+	NSArray *definition = @[FxGripTPRenamePreset(@"first")];
+	NSMutableDictionary *target = FxGripTPConfig(2, kFxParameterType_Float);
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, kFxParameterType_Menu, @0, definition),
 		target
 	]);
 
@@ -108,9 +108,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testInlineArrayDefinitionResolvesWithoutAPresetTable
 {
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[FxTPRenamePreset(@"inline")]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[FxGripTPRenamePreset(@"inline")]),
 		target
 	]);
 
@@ -121,10 +121,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testInlineDictionaryDefinitionResolvesByNumberKey
 {
-	NSDictionary *definition = @{ @1: FxTPRenamePreset(@"numbered") };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @1, definition),
+	NSDictionary *definition = @{ @1: FxGripTPRenamePreset(@"numbered") };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @1, definition),
 		target
 	]);
 
@@ -135,10 +135,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testInlineDictionaryDefinitionResolvesByStringKey
 {
-	NSDictionary *definition = @{ @"1": FxTPRenamePreset(@"stringKeyed") };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @1, definition),
+	NSDictionary *definition = @{ @"1": FxGripTPRenamePreset(@"stringKeyed") };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @1, definition),
 		target
 	]);
 
@@ -149,10 +149,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testDictionaryDefinitionHasNoDefaultKeyFallback
 {
-	NSDictionary *definition = @{ kFxParameterProperty_Default: FxTPRenamePreset(@"fallback") };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @1, definition),
+	NSDictionary *definition = @{ kFxParameterProperty_Default: FxGripTPRenamePreset(@"fallback") };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @1, definition),
 		target
 	]);
 
@@ -163,15 +163,15 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testArrayIndexOutOfRangeAppliesNothing
 {
-	NSArray *definition = @[FxTPRenamePreset(@"first"), FxTPRenamePreset(@"second")];
-	NSMutableDictionary *high = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableDictionary *low = FxTPConfig(2, @(FxParameterType_Float));
+	NSArray *definition = @[FxGripTPRenamePreset(@"first"), FxGripTPRenamePreset(@"second")];
+	NSMutableDictionary *high = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *low = FxGripTPConfig(2, @(FxParameterType_Float));
 
-	XCTAssertNoThrow([FxGripParameterUtility applyTargetPresetDefaults:FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @7, definition), high
+	XCTAssertNoThrow([FxGripParameterUtility applyTargetPresetDefaults:FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @7, definition), high
 	]) pluginPresets:nil]);
-	XCTAssertNoThrow([FxGripParameterUtility applyTargetPresetDefaults:FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @(-1), definition), low
+	XCTAssertNoThrow([FxGripParameterUtility applyTargetPresetDefaults:FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @(-1), definition), low
 	]) pluginPresets:nil]);
 
 	XCTAssertEqualObjects(high[kFxParameterProperty_Name], @"declared");
@@ -180,10 +180,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testStringDefinitionResolvesThroughThePluginPresets
 {
-	NSDictionary *pluginPresets = @{ @"styles": @[FxTPRenamePreset(@"fromTable")] };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @"styles"),
+	NSDictionary *pluginPresets = @{ @"styles": @[FxGripTPRenamePreset(@"fromTable")] };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @"styles"),
 		target
 	]);
 
@@ -194,10 +194,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testUnresolvableStringDefinitionAppliesNothing
 {
-	NSDictionary *pluginPresets = @{ @"styles": @[FxTPRenamePreset(@"fromTable")] };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @"missing"),
+	NSDictionary *pluginPresets = @{ @"styles": @[FxGripTPRenamePreset(@"fromTable")] };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @"missing"),
 		target
 	]);
 
@@ -208,9 +208,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testDriverThatIsNeitherMenuNorToggleIsIgnored
 {
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Int), @0, @[FxTPRenamePreset(@"ignored")]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Int), @0, @[FxGripTPRenamePreset(@"ignored")]),
 		target
 	]);
 
@@ -221,9 +221,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 
 - (void)testSelectedEntryThatIsNotADictionaryAppliesNothing
 {
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[@"not a preset"]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[@"not a preset"]),
 		target
 	]);
 
@@ -237,9 +237,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testNamesSectionRewritesTheTargetName
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetNames: @{ @2: @"Renamed" } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -251,9 +251,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testNamesSectionIgnoresANonStringEntry
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetNames: @{ @2: @17 } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -268,10 +268,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testFlagsSectionAddsBareAndPlusPrefixedNames
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @[@"hidden", @"+disabled"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Flags] = [NSMutableArray arrayWithObject:@"dontsave"];
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -283,10 +283,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testFlagsSectionRemovesMinusPrefixedNames
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @[@"-hidden"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Flags] = @[@"hidden", @"disabled"];
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -298,10 +298,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testFlagsSectionDoesNotDuplicateAnExistingName
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @[@"hidden"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Flags] = @[@"hidden"];
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -313,9 +313,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testFlagsSectionCreatesTheArrayWhenTheTargetHasNone
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @[@"hidden"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -327,10 +327,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testFlagsSectionAcceptsADividerSeparatedStringSpec
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @"hidden, +disabled -dontsave" } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Flags] = @[@"dontsave"];
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -342,10 +342,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testFlagsSectionConvertsAnExistingStringValueToAnArray
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @[@"disabled"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Flags] = @"hidden dontsave";
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -360,10 +360,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testTagsSectionAddsAndRemovesNames
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetTags: @{ @2: @[@"outline", @"-legacy"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Tags] = @[@"legacy", @"style"];
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -375,10 +375,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testTagsSectionDoesNotDuplicateAnExistingName
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetTags: @{ @2: @[@"style"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Tags] = @[@"style"];
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -390,9 +390,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testTagsSectionCreatesTheArrayWhenTheTargetHasNone
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetTags: @{ @2: @[@"style"] } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -404,10 +404,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testTagsSectionAcceptsADividerSeparatedStringSpec
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetTags: @{ @2: @"style; -legacy" } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Tags] = @[@"legacy"];
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -424,9 +424,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{
 		@2: @{ kFxParameterProperty_Red: @0.25, kFxParameterProperty_Green: @0.5, kFxParameterProperty_Blue: @0.75 }
 	} };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_RGB));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_RGB));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -444,9 +444,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 		@2: @{ kFxParameterProperty_Red: @1.0, kFxParameterProperty_Green: @0.0,
 			   kFxParameterProperty_Blue: @0.0, kFxParameterProperty_Alpha: @0.5 }
 	} };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_RGBA));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_RGBA));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -463,10 +463,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{
 		@2: @{ kFxParameterProperty_Red: @1.0 }
 	} };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_RGBA));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_RGBA));
 	target[kFxParameterProperty_Alpha] = @0.25;
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -481,9 +481,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{
 		@2: @{ kFxParameterProperty_X: @12, kFxParameterProperty_Y: @34 }
 	} };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Point));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Point));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -498,14 +498,14 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{
 		@2: @{ @"shared": @"preset", @"nested": @{ @"inner": @"preset" } }
 	} };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Custom));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Custom));
 	target[kFxParameterProperty_Default] = @{
 		@"shared": @"declared",
 		@"kept": @"declared",
 		@"nested": @{ @"inner": @"declared", @"innerKept": @"declared" }
 	};
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -522,9 +522,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 {
 	NSDictionary *value = @{ @"shape": @"circle" };
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{ @2: value } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Custom));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Custom));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -536,10 +536,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 - (void)testValuesSectionSetsTheDefaultForEveryOtherType
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{ @2: @42.5 } };
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
 	target[kFxParameterProperty_Default] = @1.0;
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 
@@ -557,10 +557,10 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 		kFxParameterProperty_TargetPresetNames: @{ @"2": @"byString" },
 		kFxParameterProperty_TargetPresetValues: @{ @3: @9 }
 	};
-	NSMutableDictionary *named = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableDictionary *valued = FxTPConfig(3, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *named = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *valued = FxGripTPConfig(3, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		named,
 		valued
 	]);
@@ -577,9 +577,9 @@ static NSDictionary *FxTPRenamePreset(NSString *name)
 		kFxParameterProperty_TargetPresetNames: @{ @2: @"Renamed", @99: @"Nowhere" },
 		kFxParameterProperty_TargetPresetValues: @{ @2: @5, @99: @6 }
 	};
-	NSMutableDictionary *target = FxTPConfig(2, @(FxParameterType_Float));
-	NSMutableArray *parameters = FxTPList(@[
-		FxTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
 		target
 	]);
 

@@ -5,9 +5,9 @@
 #import "FxGripTypes.h"
 #import "FxGripPluginInfo.h"
 #import "FxGrip_ARC.h"
-#import "NSDictionary+FxTileableEffect.h"
-#import "FxRegisteredPlugin.h"
-#import "FxPluginGroupData.h"
+#import "NSDictionary+FxGripTileableEffect.h"
+#import "FxGripRegisteredPlugin.h"
+#import "FxGripPluginGroupData.h"
 
 /**!
  	You may ask yourself, why should there be a constant class for registering FxPlug Plugins?
@@ -73,7 +73,7 @@
  * @param	error	The error Handle
  * @return		Return a NSArray of NSDictionaries mirroring the structure found in property lists.
  * 				eg. @[@{@"groupName" : @"Plugin Group", @"uuid": @"00000000-60C2-4634-B29C-00C6FE8C9E9E"},
- * 				@{@"groupName" : @"FxPluginEffect::Group Name", @"uuid": @"11111111-60C2-4634-B29C-01C6FE8C9E9E"}]
+ * 				@{@"groupName" : @"FxGripPluginEffect::Group Name", @"uuid": @"11111111-60C2-4634-B29C-01C6FE8C9E9E"}]
  *@discussion	The groupName field is localized by` FxGripPluginInfo::localizeObject:`.
  *				If the subclass contains method `plugInGroupsWithError`, it is called and the return value passed to `registerGroups`
  *
@@ -134,7 +134,7 @@
 
 
 /**
- 	Go through all classes, find the FxRegisteredPlugin, and if active, include it.
+ 	Go through all classes, find the FxGripRegisteredPlugin, and if active, include it.
  */
 
 - (nullable NSArray *)registeredPlugInsWithError:(NSError **)error
@@ -184,20 +184,27 @@
 		// Search for plugins using other OSC plugins
 		__block BOOL hasOSC = NO;
 		[__registeredPlugIns.allValues enumerateObjectsUsingBlock:^(NSDictionary*  _Nonnull plugin, NSUInteger idx, BOOL * _Nonnull stop) {
-			*stop = hasOSC = plugin[kProPlugPlugInX_OSCUUIDsProperty];
+			if (plugin[kProPlugPlugInX_OSCUUIDsProperty]) {
+				hasOSC = YES;
+				*stop = YES;
+			}
 		}];
 		
 		if (hasOSC) {
-			// Move any plugins that use OSC over to their OSC
-			[__registeredPlugIns.allValues enumerateObjectsUsingBlock:^(NSMutableDictionary*  _Nonnull plugin, NSUInteger idx, BOOL * _Nonnull stop) {
-				
-				NSArray* oscUUIDs = plugin[kProPlugPlugInX_OSCUUIDsProperty];
+			// Move any plugins that use OSC over to their OSC. Iterate a key snapshot and
+			// operate through the live store: plugins are registered immutable, so each entry
+			// is upgraded to a mutable copy in place before it is edited.
+			for (NSString *pluginUUID in __registeredPlugIns.allKeys) {
+				id oscUUIDs = __registeredPlugIns[pluginUUID][kProPlugPlugInX_OSCUUIDsProperty];
 				if (!oscUUIDs) {
-					return;
+					continue;
 				}
-				[plugin removeObjectForKey:kProPlugPlugInX_OSCUUIDsProperty];
-				
-				NSString* pluginUUID = plugin[kProPlugPlugIn_UuidProperty];
+				// The osc key is a registration-time directive, not part of the plugin record.
+				if (![__registeredPlugIns[pluginUUID] isKindOfClass:NSMutableDictionary.class]) {
+					__registeredPlugIns[pluginUUID] = [__registeredPlugIns[pluginUUID] mutableCopy];
+				}
+				[(NSMutableDictionary*)__registeredPlugIns[pluginUUID] removeObjectForKey:kProPlugPlugInX_OSCUUIDsProperty];
+
 				if ([oscUUIDs isKindOfClass:NSDictionary.class]) {
 					oscUUIDs = [(NSDictionary*)oscUUIDs allValues];
 				} else if([oscUUIDs isKindOfClass:NSString.class]) {
@@ -206,6 +213,7 @@
 				for(NSString *oscUUID in oscUUIDs) {
 					if (!__registeredPlugIns[oscUUID]) {
 						NSLog(@"Error: Plugin UUID %@ wants OSC UUID %@ that does not exist.", pluginUUID, oscUUID);
+						continue;
 					}
 					if (![__registeredPlugIns[oscUUID] isKindOfClass:NSMutableDictionary.class]) {
 						__registeredPlugIns[oscUUID] = [__registeredPlugIns[oscUUID] mutableCopy];
@@ -216,15 +224,15 @@
 					}
 					__registeredPlugIns[oscUUID][kProPlugPlugIn_SupportedPluginsProperty] = [supportedPlugins arrayByAddingObject:pluginUUID];
 				}
-			}];
+			}
 		}
-		
+
 		//Make the plugins immutable
-		[__registeredPlugIns enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull plugin, BOOL * _Nonnull stop) {
+		for (NSString *key in __registeredPlugIns.allKeys) {
 			if ([__registeredPlugIns[key] isKindOfClass:NSMutableDictionary.class]) {
 				__registeredPlugIns[key] = [__registeredPlugIns[key] copy];
 			}
-		}];
+		}
 		
 		plugInsArray = _registeredPlugIns = [[FxGripPluginInfo localizeObject:__registeredPlugIns.allValues] copy];
 		__registeredPlugIns = nil;
@@ -247,20 +255,20 @@
 
 
 #pragma mark -
-#pragma mark FxRegisteringGroups Implementation
+#pragma mark FxGripRegisteringGroups Implementation
 
 - (void)registerGroup:(nullable id)inputGroup
 {
-	if (!inputGroup || !([inputGroup isKindOfClass:FxPluginGroupData.class] || [inputGroup isKindOfClass:NSDictionary.class])) {
+	if (!inputGroup || !([inputGroup isKindOfClass:FxGripPluginGroupData.class] || [inputGroup isKindOfClass:NSDictionary.class])) {
 		return;
 	}
 	
 	NSString *groupName = nil;
 	NSString *uuid = nil;
 	
-	if ([inputGroup isKindOfClass:FxPluginGroupData.class]) {
-		groupName = ((FxPluginGroupData*)inputGroup).name;
-		uuid = ((FxPluginGroupData*)inputGroup).uuid;
+	if ([inputGroup isKindOfClass:FxGripPluginGroupData.class]) {
+		groupName = ((FxGripPluginGroupData*)inputGroup).name;
+		uuid = ((FxGripPluginGroupData*)inputGroup).uuid;
 	} else if ([inputGroup isKindOfClass:NSDictionary.class]) {
 		groupName = inputGroup[kProPlugPlugInX_RegGroupNameProperty];
 		uuid = inputGroup[kProPlugPlugInX_RegGroupUUIDProperty];
@@ -292,16 +300,24 @@
 #if DEBUG
 		NSLog(@"Error: Cannot register a group after the registration process");
 #endif
-	} else if (!uuid && !groupName) {
-		NSLog(@"Error: attempting to register a group that doesn't have a Group Name or UUID");
-	} else if (!uuid) {
-		NSLog(@"Error: attempting to register a group that doesn't have a UUID");
-	} else if (!groupName) {
-		NSLog(@"Error: attempting to register a group that doesn't have a Group Name");
-	} else if (__registeredPlugInGroups[uuid] && ![__registeredPlugInGroups[uuid][kProPlugPlugInX_RegGroupNameProperty] isEqualToString:groupName]) {
-		NSLog(@"Error: groupUUID '%@' already registered with groupName '%@'", uuid, __registeredPlugInGroups[uuid]);
+		return;
 	}
-	
+	if (!uuid && !groupName) {
+		NSLog(@"Error: attempting to register a group that doesn't have a Group Name or UUID");
+		return;
+	}
+	if (!uuid) {
+		NSLog(@"Error: attempting to register a group that doesn't have a UUID");
+		return;
+	}
+	if (!groupName) {
+		NSLog(@"Error: attempting to register a group that doesn't have a Group Name");
+		return;
+	}
+	if (__registeredPlugInGroups[uuid] && ![__registeredPlugInGroups[uuid][kProPlugPlugInX_RegGroupNameProperty] isEqualToString:groupName]) {
+		NSLog(@"Error: groupUUID '%@' already registered with groupName '%@'", uuid, __registeredPlugInGroups[uuid][kProPlugPlugInX_RegGroupNameProperty]);
+	}
+
 	NSDictionary *group = @{kProPlugPlugInX_RegGroupUUIDProperty: uuid,
 							kProPlugPlugInX_RegGroupNameProperty: groupName};
 	[__registeredPlugInGroups setObject:group forKey:uuid];
@@ -314,11 +330,11 @@
 
 
 #pragma mark -
-#pragma mark FxRegisteringPlugins Implementation
+#pragma mark FxGripRegisteringPlugins Implementation
 
 - (BOOL)registerPluginClass:(nonnull Class)pluginClass
 {
-	if (![pluginClass conformsToProtocol:@protocol(FxRegisteredPlugin)]) {
+	if (![pluginClass conformsToProtocol:@protocol(FxGripRegisteredPlugin)]) {
 		return NO;
 	}
 	

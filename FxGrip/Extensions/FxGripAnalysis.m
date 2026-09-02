@@ -6,9 +6,9 @@
 //
 
 #import "FxGripAnalysis.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "FxTileableEffectBase+Extensions.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "FxGripTileableEffect+Extensions.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTypes.h"
 #import "FxParameterFlags.h"
 #import "FxGripAPIAccessing.h"
@@ -82,7 +82,7 @@
 @end
 
 
-@implementation FxTileableEffectBase (Analysis)
+@implementation FxGripTileableEffect (Analysis)
 
 - (nullable FxGripFrameData *)analysisData
 {

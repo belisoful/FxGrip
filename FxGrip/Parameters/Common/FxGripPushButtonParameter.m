@@ -7,8 +7,8 @@
 //
 
 #import "FxGripPushButtonParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripParameterUtility.h"
 
 @implementation FxGripPushButtonParameter
@@ -40,7 +40,7 @@
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The host registers the synthesized selector encoding the parameter ID; clicks
-	// dispatch through -[FxTileableEffectBase parameterClicked:]. The configuration's
+	// dispatch through -[FxGripTileableEffect parameterClicked:]. The configuration's
 	// "selector" is the optional subclass hook and keeps the "click" prefix requirement.
 	NSString *declaredSelector = parameter.parameterSelector;
 	if (declaredSelector && ![declaredSelector.lowercaseString hasPrefix:kFxParameterProperty_SelectorPrefix]) {

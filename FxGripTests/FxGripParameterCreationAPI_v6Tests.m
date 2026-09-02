@@ -5,10 +5,10 @@
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripParameterCreationAPI_v6.h>
-#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
 
 /*! A stand-in host v6 creation API recording the tagged-popup request. */
-@interface FxCreate6StubAPI : NSObject
+@interface FxGripCreate6StubAPI : NSObject
 @property (nonatomic, copy) NSString *lastName;
 @property (nonatomic, assign) UInt32 lastParameterID;
 @property (nonatomic, assign) UInt32 lastDefaultValue;
@@ -16,7 +16,7 @@
 @property (nonatomic, assign) BOOL stagedResult;
 @end
 
-@implementation FxCreate6StubAPI
+@implementation FxGripCreate6StubAPI
 
 - (instancetype)init
 {
@@ -42,11 +42,11 @@
 
 @end
 
-@interface FxCreate6StubEffect : NSObject
+@interface FxGripCreate6StubEffect : NSObject
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @end
 
-@implementation FxCreate6StubEffect
+@implementation FxGripCreate6StubEffect
 - (instancetype)init
 {
 	self = [super init];
@@ -58,8 +58,8 @@
 @end
 
 @interface FxGripParameterCreationAPI_v6Tests : XCTestCase
-@property (nonatomic, strong) FxCreate6StubAPI *host;
-@property (nonatomic, strong) FxCreate6StubEffect *effect;
+@property (nonatomic, strong) FxGripCreate6StubAPI *host;
+@property (nonatomic, strong) FxGripCreate6StubEffect *effect;
 @property (nonatomic, strong) FxGripParameterCreationAPI_v6 *wrapper;
 @property (nonatomic, strong) NSMutableArray<NSNotificationName> *posted;
 @property (nonatomic, strong) NSMutableArray *tokens;
@@ -70,13 +70,13 @@
 - (void)setUp
 {
 	[super setUp];
-	self.host = FxCreate6StubAPI.new;
-	self.effect = FxCreate6StubEffect.new;
+	self.host = FxGripCreate6StubAPI.new;
+	self.effect = FxGripCreate6StubEffect.new;
 	self.wrapper = [FxGripParameterCreationAPI_v6.alloc initWithAPI:(id)self.host effect:(id)self.effect];
 
 	self.posted = NSMutableArray.new;
 	self.tokens = NSMutableArray.new;
-	for (NSNotificationName name in @[FxNotifyAPI_ParameterAddName, FxNotifyAPI_ParameterAddPreName]) {
+	for (NSNotificationName name in @[FxGripNotifyAPI_ParameterAddName, FxGripNotifyAPI_ParameterAddPreName]) {
 		id token = [self.effect.notifier addObserverForName:name object:nil queue:nil usingBlock:^(NSNotification *note) {
 			[self.posted addObject:note.name];
 		}];
@@ -106,7 +106,7 @@
 	XCTAssertEqual(self.host.lastParameterID, (UInt32)7);
 	XCTAssertEqual(self.host.lastDefaultValue, (UInt32)2);
 	XCTAssertEqual(self.host.lastEntries.count, (NSUInteger)2);
-	XCTAssertTrue([self.posted containsObject:FxNotifyAPI_ParameterAddName], @"a successful add posts the notification");
+	XCTAssertTrue([self.posted containsObject:FxGripNotifyAPI_ParameterAddName], @"a successful add posts the notification");
 }
 
 - (void)testAFailingHostAddReturnsNOAndDoesNotPostTheAdd
@@ -119,7 +119,7 @@
 									   parameterFlags:kFxParameterFlag_DEFAULT];
 
 	XCTAssertFalse(ok);
-	XCTAssertFalse([self.posted containsObject:FxNotifyAPI_ParameterAddName], @"a failed add does not post the add notification");
+	XCTAssertFalse([self.posted containsObject:FxGripNotifyAPI_ParameterAddName], @"a failed add does not post the add notification");
 }
 
 - (void)testTheV6WrapperIsAlsoAV5Wrapper

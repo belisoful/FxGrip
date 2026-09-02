@@ -13,7 +13,7 @@
 #import <BEFoundation/BESingleton.h>
 #import <PluginManager/PROPlugInBundleRegistration.h>
 
-@protocol FxRegisteringGroups
+@protocol FxGripRegisteringGroups
 - (void)registerGroup:(nullable id)inputGroup;
 - (void)registerGroups:(nullable id)groups; // NSArray<NSDictionary*>*, or NSDictionary<NSString*, NSDictionary*>.allValues
 - (void)registerGroupUUID:(nonnull NSString*)uuid groupName:(nonnull NSString*)groupName;
@@ -21,7 +21,7 @@
 @end
 
 
-@protocol FxRegisteringPlugins <FxRegisteringGroups>
+@protocol FxGripRegisteringPlugins <FxGripRegisteringGroups>
 - (BOOL)registerPluginClass:(nonnull Class)pluginClass;
 - (BOOL)registerPlugin:(nullable NSDictionary*)plugin;
 - (void)registerPlugins:(nullable NSArray<NSDictionary*>*)plugins;
@@ -45,7 +45,7 @@
 
 
 
-@interface FxGripStaticRegistrar : NSObject <PROPlugInRegistering, FxGripStaticRegistrarSubclass, FxRegisteringPlugins, BESingleton>
+@interface FxGripStaticRegistrar : NSObject <PROPlugInRegistering, FxGripStaticRegistrarSubclass, FxGripRegisteringPlugins, BESingleton>
 {
 	NSMutableDictionary<NSString*, NSDictionary*> *__registeredPlugInGroups;
 	NSMutableDictionary<NSString*, id> *__registeredPlugIns; //Mutable for OSC Processing

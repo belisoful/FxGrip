@@ -10,9 +10,20 @@
 #define FxGripPointParameter_h
 
 #import "FxParameter.h"
+#import "FxGripPointOptions.h"
 
 
+/*!
+	@class      FxGripPointParameter
+	@abstract   A host point parameter with FxGripPointOptions design-time options.
+	@discussion The value is the host's X and Y. The declaration's option keys (see
+				FxGripPointOptions.h) are parsed once into options, which an effect passes to
+				FxGripPointOSC to draw and constrain the point's on-screen control.
+*/
 @interface FxGripPointParameter : FxParameter <FxStateParameter>
+
+/*! The parsed design-time options; the documented defaults when the declaration sets none. */
+@property (readonly, nonnull) FxGripPointOptions *options;
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;

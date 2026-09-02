@@ -8,7 +8,7 @@
 #import <AppKit/AppKit.h>
 #import "FxGripMetaManager.h"
 #import "FxGripTypes.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 #import "FxGripAPIAccessing.h"
 #import <BEFoundation/BEMutable.h>
 #import <BEFoundation/FxTime.h>
@@ -24,7 +24,7 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	NSMutableDictionary<NSString*, NSMutableArray<NSNumber*>*> *__tags;
 	NSMutableDictionary<NSNumber*, NSMutableDictionary<NSString*, id>*> *__parameters;
 	NSRecursiveLock *_metaLock;
-	__weak FxTileableEffectBase *_effect;
+	__weak FxGripTileableEffect *_effect;
 	BOOL _unsaved;
 }
 
@@ -35,7 +35,7 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	return [self initWithEffect:nil];
 }
 
-- (nonnull instancetype)initWithEffect:(FxTileableEffectBase *_Nullable)effect
+- (nonnull instancetype)initWithEffect:(FxGripTileableEffect *_Nullable)effect
 {
 	self = [super init];
 	if (self) {
@@ -48,12 +48,12 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	return self;
 }
 
-- (nullable FxTileableEffectBase *)effect
+- (nullable FxGripTileableEffect *)effect
 {
 	return _effect;
 }
 
-- (void)setEffect:(FxTileableEffectBase *_Nonnull)effect
+- (void)setEffect:(FxGripTileableEffect *_Nonnull)effect
 {
 	[_metaLock lock];
 	_effect = effect;
@@ -623,7 +623,7 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	return _data.hash;
 }
 
-#pragma mark FxCustomDataClasses
+#pragma mark FxGripCustomDataClasses
 
 + (NSOrderedSet<Class>*_Nonnull)classesForParameter
 {

@@ -6,7 +6,7 @@
 //  FxGripDividerParameter (type identity, the class creation entry point, the custom value
 //  each hands the creation API, and the flags each forces on), the secure-coding
 //  allow-list a parameter class declares and the effect resolves for a configured
-//  parameter, the view host on FxTileableEffectBase, and the switch view's data push and
+//  parameter, the view host on FxGripTileableEffect, and the switch view's data push and
 //  toggle write.
 //
 //  FxGripSwitchParameter.h is marked public but imports FxGripCustomViewDataDelegate.h,
@@ -24,7 +24,7 @@
 #import <AppKit/AppKit.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxParameter.h>
 #import <FxGrip/FxGripDictionary.h>
 #import <FxGrip/FxGripMetaManager.h>
@@ -36,14 +36,14 @@
 #import <FxGrip/FxGripVideoView.h>
 #import <FxGrip/FxGripRandom.h>
 #import <FxGrip/FxGripFloatParameter.h>
-#import <FxGrip/FxTileableEffectBase.h>
-#import <FxGrip/FxTileableEffectBase+CustomUI.h>
-#import <FxGrip/FxTileableEffectBase+Parameters.h>
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripTileableEffect+CustomUI.h>
+#import <FxGrip/FxGripTileableEffect+Parameters.h>
 
 #pragma mark - Probes for the classes behind the uninstallable header
 
 /*! The class-level parameter surface under test. */
-@protocol FxCustomUIParameterClassProbe <NSObject>
+@protocol FxGripCustomUIParameterClassProbe <NSObject>
 + (FxParameterType)parameterType;
 + (nullable NSString *)parameterTypeString;
 + (nullable NSSet<Class> *)customValueClasses;
@@ -51,7 +51,7 @@
 @end
 
 /*! The instance surface a custom-view parameter adds to FxParameter. */
-@protocol FxCustomUIParameterProbe <NSObject>
+@protocol FxGripCustomUIParameterProbe <NSObject>
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary effect:(id)effect;
 - (FxParameterType)parameterType;
 - (nullable NSView *)newParameterView;
@@ -59,7 +59,7 @@
 @end
 
 /*! FxGripSwitchView. The state accessor is NSControl's; the rest is the framework's. */
-@protocol FxCustomUISwitchViewProbe <NSObject>
+@protocol FxGripCustomUISwitchViewProbe <NSObject>
 - (instancetype)initWithFrame:(NSRect)frameRect;
 @property (nonatomic, assign) NSControlStateValue state;
 @property (nonatomic, assign) id parameterEffect;
@@ -69,22 +69,22 @@
 @end
 
 /*! The display views (FxGripStatusView, FxGripProgressView) take a value and redraw. */
-@protocol FxCustomUIDisplayViewProbe <NSObject>
+@protocol FxGripCustomUIDisplayViewProbe <NSObject>
 - (instancetype)initWithFrame:(NSRect)frameRect;
 - (void)updateFromCustomData:(nullable NSObject<NSSecureCoding, NSCopying> *)value;
 @end
 
 /*! FxGripRandomView carries the parameter identity and writes its integer on reload. */
-@protocol FxCustomUIRandomViewProbe <NSObject>
+@protocol FxGripCustomUIRandomViewProbe <NSObject>
 - (instancetype)initWithFrame:(NSRect)frameRect;
-@property (nonatomic, assign, nullable) id<FxTileableEffectBase> parameterEffect;
+@property (nonatomic, assign, nullable) id<FxGripTileableEffect> parameterEffect;
 @property (nonatomic, assign) FxParameterId parameterID;
 - (void)updateFromCustomData:(nullable NSObject<NSSecureCoding, NSCopying> *)value;
 - (void)reloadClicked:(nullable id)sender;
 @end
 
-/*! Implemented on FxTileableEffectBase but absent from the installed headers. */
-@interface FxTileableEffectBase (FxGripCustomUIParameterTests)
+/*! Implemented on FxGripTileableEffect but absent from the installed headers. */
+@interface FxGripTileableEffect (FxGripCustomUIParameterTests)
 - (BOOL)addParametersWithError:(NSError **)error;
 - (nullable NSSet<Class> *)classesForCustomParameterID:(UInt32)parameterID;
 - (NSMutableArray<NSDictionary *> *)parametersConfiguration;
@@ -103,57 +103,57 @@ static const FxParameterId kCustomUITestWebView = 90;
 static const FxParameterId kCustomUITestVideo = 91;
 static const FxParameterId kCustomUITestRandom = 92;
 
-static Class FxCustomUITestSwitchClass(void)
+static Class FxGripCustomUITestSwitchClass(void)
 {
 	return NSClassFromString(@"FxGripSwitchParameter");
 }
 
-static Class FxCustomUITestSwitchViewClass(void)
+static Class FxGripCustomUITestSwitchViewClass(void)
 {
 	return NSClassFromString(@"FxGripSwitchView");
 }
 
-static Class FxCustomUITestStatusClass(void)
+static Class FxGripCustomUITestStatusClass(void)
 {
 	return NSClassFromString(@"FxGripStatusParameter");
 }
 
-static Class FxCustomUITestProgressClass(void)
+static Class FxGripCustomUITestProgressClass(void)
 {
 	return NSClassFromString(@"FxGripProgressParameter");
 }
 
-static Class FxCustomUITestSectionClass(void)
+static Class FxGripCustomUITestSectionClass(void)
 {
 	return NSClassFromString(@"FxGripSectionParameter");
 }
 
-static Class FxCustomUITestBannerClass(void)
+static Class FxGripCustomUITestBannerClass(void)
 {
 	return NSClassFromString(@"FxGripBannerParameter");
 }
 
-static Class FxCustomUITestCapsuleClass(void)
+static Class FxGripCustomUITestCapsuleClass(void)
 {
 	return NSClassFromString(@"FxGripCapsuleParameter");
 }
 
-static Class FxCustomUITestWebViewClass(void)
+static Class FxGripCustomUITestWebViewClass(void)
 {
 	return NSClassFromString(@"FxGripWebViewParameter");
 }
 
-static Class FxCustomUITestVideoClass(void)
+static Class FxGripCustomUITestVideoClass(void)
 {
 	return NSClassFromString(@"FxGripVideoViewParameter");
 }
 
-static Class FxCustomUITestRandomClass(void)
+static Class FxGripCustomUITestRandomClass(void)
 {
 	return NSClassFromString(@"FxGripRandomParameter");
 }
 
-static Class FxCustomUITestRandomViewClass(void)
+static Class FxGripCustomUITestRandomViewClass(void)
 {
 	return NSClassFromString(@"FxGripRandomView");
 }
@@ -162,19 +162,19 @@ static Class FxCustomUITestRandomViewClass(void)
 
 /*! Stands in for the host's FxCustomParameterActionAPI_v4 that the out-of-band access
 	context brackets its write with. */
-@interface FxCustomUITestActionAPI : NSObject
+@interface FxGripCustomUITestActionAPI : NSObject
 @property (nonatomic, assign) CMTime currentTime;
 @property (nonatomic, assign) NSUInteger startCount;
 @property (nonatomic, assign) NSUInteger endCount;
 @end
 
-@implementation FxCustomUITestActionAPI
+@implementation FxGripCustomUITestActionAPI
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
-		_currentTime = FxParamClassTestTime(30, 60);
+		_currentTime = FxGripParamClassTestTime(30, 60);
 	}
 	return self;
 }
@@ -192,17 +192,17 @@ static Class FxCustomUITestRandomViewClass(void)
 @end
 
 /*! Adds the action API the shared manager double does not carry. */
-@interface FxCustomUITestAPIManager : FxParamClassTestAPIManager
-@property (nonatomic, strong) FxCustomUITestActionAPI *customParameterActionAPIv4;
+@interface FxGripCustomUITestAPIManager : FxGripParamClassTestAPIManager
+@property (nonatomic, strong) FxGripCustomUITestActionAPI *customParameterActionAPIv4;
 @end
 
-@implementation FxCustomUITestAPIManager
+@implementation FxGripCustomUITestAPIManager
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
-		_customParameterActionAPIv4 = [FxCustomUITestActionAPI.alloc init];
+		_customParameterActionAPIv4 = [FxGripCustomUITestActionAPI.alloc init];
 	}
 	return self;
 }
@@ -214,12 +214,12 @@ static Class FxCustomUITestRandomViewClass(void)
 	record its parameter pass stores, and the view host. It answers a private notification
 	center so no test touches the process-wide one.
 */
-@interface FxCustomUITestHostEffect : FxTileableEffectBase
+@interface FxGripCustomUITestHostEffect : FxGripTileableEffect
 @property (nonatomic, strong) NSNotificationCenter *privateNotifier;
 @property (nonatomic, strong, nullable) NSMutableArray<NSDictionary *> *stagedConfiguration;
 @end
 
-@implementation FxCustomUITestHostEffect
+@implementation FxGripCustomUITestHostEffect
 
 - (id)effectBase
 {
@@ -245,11 +245,11 @@ static Class FxCustomUITestRandomViewClass(void)
 @end
 
 /*! Answers the parameter lookup the view host performs from a staged table. */
-@interface FxCustomUITestViewHostEffect : FxCustomUITestHostEffect
+@interface FxGripCustomUITestViewHostEffect : FxGripCustomUITestHostEffect
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, id> *stagedParameters;
 @end
 
-@implementation FxCustomUITestViewHostEffect
+@implementation FxGripCustomUITestViewHostEffect
 
 - (id)effectBase
 {
@@ -276,8 +276,8 @@ static Class FxCustomUITestRandomViewClass(void)
 #pragma mark - Tests
 
 @interface FxGripCustomUIParameterTests : XCTestCase
-@property (nonatomic, strong) FxParamClassTestEffect *effect;
-@property (nonatomic, strong) FxCustomUITestAPIManager *apiManager;
+@property (nonatomic, strong) FxGripParamClassTestEffect *effect;
+@property (nonatomic, strong) FxGripCustomUITestAPIManager *apiManager;
 @end
 
 @implementation FxGripCustomUIParameterTests
@@ -285,8 +285,8 @@ static Class FxCustomUITestRandomViewClass(void)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxParamClassTestEffect.alloc init];
-	self.apiManager = [FxCustomUITestAPIManager.alloc init];
+	self.effect = [FxGripParamClassTestEffect.alloc init];
+	self.apiManager = [FxGripCustomUITestAPIManager.alloc init];
 	self.effect.apiManager = self.apiManager;
 }
 
@@ -306,43 +306,43 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (NSMutableDictionary *)switchConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestSwitch, kFxParameterType_Switch, @"Enabled", extra);
+	return FxGripParamClassTestConfig(kCustomUITestSwitch, kFxParameterType_Switch, @"Enabled", extra);
 }
 
 - (NSMutableDictionary *)dividerConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestDivider, kFxParameterType_Divider, @"Rule", extra);
+	return FxGripParamClassTestConfig(kCustomUITestDivider, kFxParameterType_Divider, @"Rule", extra);
 }
 
-- (Class<FxCustomUIParameterClassProbe>)switchClass
+- (Class<FxGripCustomUIParameterClassProbe>)switchClass
 {
-	Class parameterClass = FxCustomUITestSwitchClass();
+	Class parameterClass = FxGripCustomUITestSwitchClass();
 	XCTAssertNotNil(parameterClass, @"FxGripSwitchParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)parameterClass;
+	return (Class<FxGripCustomUIParameterClassProbe>)parameterClass;
 }
 
-- (id<FxCustomUIParameterProbe>)makeSwitchParameterWithExtra:(nullable NSDictionary *)extra
+- (id<FxGripCustomUIParameterProbe>)makeSwitchParameterWithExtra:(nullable NSDictionary *)extra
 													  effect:(id)effect
 {
-	return [(id<FxCustomUIParameterProbe>)[FxCustomUITestSwitchClass() alloc]
+	return [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestSwitchClass() alloc]
 			initWithDictionary:[self switchConfigWithExtra:extra] effect:effect];
 }
 
-- (id<FxCustomUISwitchViewProbe>)makeSwitchView
+- (id<FxGripCustomUISwitchViewProbe>)makeSwitchView
 {
-	Class viewClass = FxCustomUITestSwitchViewClass();
+	Class viewClass = FxGripCustomUITestSwitchViewClass();
 	XCTAssertNotNil(viewClass, @"FxGripSwitchView must be loaded from the framework");
-	return [(id<FxCustomUISwitchViewProbe>)[viewClass alloc] initWithFrame:NSMakeRect(0, 0, 80, 24)];
+	return [(id<FxGripCustomUISwitchViewProbe>)[viewClass alloc] initWithFrame:NSMakeRect(0, 0, 80, 24)];
 }
 
 /*! A real effect whose parameter pass has stored the switch, divider and float records. */
-- (FxCustomUITestHostEffect *)makeConfiguredEffect
+- (FxGripCustomUITestHostEffect *)makeConfiguredEffect
 {
-	FxCustomUITestHostEffect *effect = [FxCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripCustomUITestHostEffect *effect = [FxGripCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertNotNil(effect);
 	effect.stagedConfiguration = @[[self switchConfigWithExtra:nil],
 								   [self dividerConfigWithExtra:nil],
-								   FxParamClassTestConfig(kCustomUITestFloat, kFxParameterType_Float, @"Amount", nil)].mutableCopy;
+								   FxGripParamClassTestConfig(kCustomUITestFloat, kFxParameterType_Float, @"Amount", nil)].mutableCopy;
 	NSError *error = nil;
 	[effect addParametersWithError:&error];
 	return effect;
@@ -358,7 +358,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testASwitchInstanceReportsTheSwitchType
 {
-	id<FxCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)self.effect];
+	id<FxGripCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)self.effect];
 
 	XCTAssertEqual(parameter.parameterType, FxParameterType_Switch);
 }
@@ -401,7 +401,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testASwitchKeepsTheNameItsConfigurationDeclares
 {
-	NSDictionary *config = FxParamClassTestConfig(kCustomUITestSwitch, kFxParameterType_Switch, @"Motion Blur", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kCustomUITestSwitch, kFxParameterType_Switch, @"Motion Blur", nil);
 
 	XCTAssertTrue([self.switchClass addParameter:config toEffect:(id)self.effect]);
 
@@ -493,9 +493,9 @@ static Class FxCustomUITestRandomViewClass(void)
 */
 - (void)testAConfigurationOfTheWrongTypeBuildsNoCustomUIParameter
 {
-	NSDictionary *config = FxParamClassTestConfig(kCustomUITestSwitch, kFxParameterType_Custom, @"Enabled", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kCustomUITestSwitch, kFxParameterType_Custom, @"Enabled", nil);
 
-	id parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestSwitchClass() alloc]
+	id parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestSwitchClass() alloc]
 					initWithDictionary:config effect:(id)self.effect];
 
 	XCTAssertNil(parameter);
@@ -505,17 +505,17 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheEffectResolvesTheSwitchTypeToTheSwitchParameterClass
 {
-	FxCustomUITestHostEffect *effect = [FxCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripCustomUITestHostEffect *effect = [FxGripCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertNotNil(effect);
 
-	XCTAssertEqualObjects([effect parameterClassWithTypeString:kFxParameterType_Switch], FxCustomUITestSwitchClass());
-	XCTAssertEqualObjects([effect parameterClassWithType:FxParameterType_Switch], FxCustomUITestSwitchClass());
+	XCTAssertEqualObjects([effect parameterClassWithTypeString:kFxParameterType_Switch], FxGripCustomUITestSwitchClass());
+	XCTAssertEqualObjects([effect parameterClassWithType:FxParameterType_Switch], FxGripCustomUITestSwitchClass());
 	XCTAssertEqual([effect parameterTypeWithString:kFxParameterType_Switch], FxParameterType_Switch);
 }
 
 - (void)testTheEffectResolvesTheDividerTypeToTheDividerParameterClass
 {
-	FxCustomUITestHostEffect *effect = [FxCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripCustomUITestHostEffect *effect = [FxGripCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertNotNil(effect);
 
 	XCTAssertEqualObjects([effect parameterClassWithTypeString:kFxParameterType_Divider], FxGripDividerParameter.class);
@@ -552,7 +552,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheEffectStoresTheCustomUIConfigurationRecords
 {
-	FxCustomUITestHostEffect *effect = [self makeConfiguredEffect];
+	FxGripCustomUITestHostEffect *effect = [self makeConfiguredEffect];
 
 	XCTAssertEqualObjects([effect configurationForParameter:kCustomUITestSwitch][kFxParameterProperty_Type],
 						  kFxParameterType_Switch);
@@ -562,7 +562,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testASwitchParameterResolvesTheDictionaryValueClasses
 {
-	FxCustomUITestHostEffect *effect = [self makeConfiguredEffect];
+	FxGripCustomUITestHostEffect *effect = [self makeConfiguredEffect];
 
 	NSSet<Class> *classes = [effect classesForCustomParameterID:kCustomUITestSwitch];
 
@@ -572,7 +572,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testADividerParameterResolvesItsOwnDataClass
 {
-	FxCustomUITestHostEffect *effect = [self makeConfiguredEffect];
+	FxGripCustomUITestHostEffect *effect = [self makeConfiguredEffect];
 
 	XCTAssertEqualObjects([effect classesForCustomParameterID:kCustomUITestDivider],
 						  [NSSet setWithObject:NSClassFromString(@"FxGripDividerData")]);
@@ -580,7 +580,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheInstanceMetaParameterKeepsItsOwnValueClasses
 {
-	FxCustomUITestHostEffect *effect = [self makeConfiguredEffect];
+	FxGripCustomUITestHostEffect *effect = [self makeConfiguredEffect];
 
 	NSSet<Class> *classes = [effect classesForCustomParameterID:kFxParameterId_InstanceMeta];
 
@@ -590,14 +590,14 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testAParameterWithoutACustomValueResolvesNoClasses
 {
-	FxCustomUITestHostEffect *effect = [self makeConfiguredEffect];
+	FxGripCustomUITestHostEffect *effect = [self makeConfiguredEffect];
 
 	XCTAssertNil([effect classesForCustomParameterID:kCustomUITestFloat]);
 }
 
 - (void)testAnUnconfiguredParameterResolvesNoClasses
 {
-	FxCustomUITestHostEffect *effect = [self makeConfiguredEffect];
+	FxGripCustomUITestHostEffect *effect = [self makeConfiguredEffect];
 
 	XCTAssertNil([effect classesForCustomParameterID:kCustomUITestUnconfigured]);
 }
@@ -606,31 +606,31 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testASwitchParameterBuildsASwitchViewCarryingItsIdentity
 {
-	id<FxCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)self.effect];
+	id<FxGripCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)self.effect];
 	XCTAssertNotNil(parameter);
 
-	id<FxCustomUISwitchViewProbe> view = (id<FxCustomUISwitchViewProbe>)[parameter newParameterView];
+	id<FxGripCustomUISwitchViewProbe> view = (id<FxGripCustomUISwitchViewProbe>)[parameter newParameterView];
 
-	XCTAssertTrue([view isKindOfClass:FxCustomUITestSwitchViewClass()]);
+	XCTAssertTrue([view isKindOfClass:FxGripCustomUITestSwitchViewClass()]);
 	XCTAssertEqual(view.parameterID, kCustomUITestSwitch);
 	XCTAssertEqualObjects(view.parameterEffect, self.effect);
 }
 
 - (void)testASwitchParameterViewStartsOffWithoutADeclaredDefault
 {
-	id<FxCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)self.effect];
+	id<FxGripCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)self.effect];
 
-	id<FxCustomUISwitchViewProbe> view = (id<FxCustomUISwitchViewProbe>)[parameter newParameterView];
+	id<FxGripCustomUISwitchViewProbe> view = (id<FxGripCustomUISwitchViewProbe>)[parameter newParameterView];
 
 	XCTAssertEqual(view.state, NSControlStateValueOff);
 }
 
 - (void)testASwitchParameterViewStartsOnForADeclaredTrueDefault
 {
-	id<FxCustomUIParameterProbe> parameter =
+	id<FxGripCustomUIParameterProbe> parameter =
 		[self makeSwitchParameterWithExtra:@{kFxParameterProperty_Default: @YES} effect:(id)self.effect];
 
-	id<FxCustomUISwitchViewProbe> view = (id<FxCustomUISwitchViewProbe>)[parameter newParameterView];
+	id<FxGripCustomUISwitchViewProbe> view = (id<FxGripCustomUISwitchViewProbe>)[parameter newParameterView];
 
 	XCTAssertEqual(view.state, NSControlStateValueOn);
 }
@@ -670,19 +670,19 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheViewHostReturnsAndAttachesASwitchView
 {
-	FxCustomUITestViewHostEffect *effect = [FxCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
-	id<FxCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)effect];
+	FxGripCustomUITestViewHostEffect *effect = [FxGripCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	id<FxGripCustomUIParameterProbe> parameter = [self makeSwitchParameterWithExtra:nil effect:(id)effect];
 	effect.stagedParameters[@(kCustomUITestSwitch)] = parameter;
 
 	NSView *view = [effect createViewForParameterID:kCustomUITestSwitch];
 
-	XCTAssertTrue([view isKindOfClass:FxCustomUITestSwitchViewClass()]);
+	XCTAssertTrue([view isKindOfClass:FxGripCustomUITestSwitchViewClass()]);
 	XCTAssertEqualObjects(parameter.customView, view);
 }
 
 - (void)testTheViewHostReturnsTheDividerContainerAndLeavesTheAttachedBox
 {
-	FxCustomUITestViewHostEffect *effect = [FxCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripCustomUITestViewHostEffect *effect = [FxGripCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	FxGripDividerParameter *parameter = [FxGripDividerParameter.alloc
 										 initWithDictionary:[self dividerConfigWithExtra:nil]
 										 effect:(id)effect];
@@ -699,8 +699,8 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheViewHostReturnsNothingForAParameterClassWithoutAView
 {
-	FxCustomUITestViewHostEffect *effect = [FxCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
-	NSDictionary *config = FxParamClassTestConfig(kCustomUITestFloat, kFxParameterType_Float, @"Amount", nil);
+	FxGripCustomUITestViewHostEffect *effect = [FxGripCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	NSDictionary *config = FxGripParamClassTestConfig(kCustomUITestFloat, kFxParameterType_Float, @"Amount", nil);
 	FxGripFloatParameter *parameter = [FxGripFloatParameter.alloc initWithDictionary:config effect:(id)effect];
 	effect.stagedParameters[@(kCustomUITestFloat)] = parameter;
 
@@ -710,7 +710,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheViewHostReturnsNothingForAnUnknownParameter
 {
-	FxCustomUITestViewHostEffect *effect = [FxCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripCustomUITestViewHostEffect *effect = [FxGripCustomUITestViewHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 
 	XCTAssertNil([effect createViewForParameterID:kCustomUITestUnconfigured]);
 }
@@ -719,9 +719,9 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheEffectRegistersAConstructedParameter
 {
-	FxCustomUITestHostEffect *effect = [FxCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripCustomUITestHostEffect *effect = [FxGripCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 
-	[effect.notifier postNotificationName:FxNotifyAPI_ParameterAddName
+	[effect.notifier postNotificationName:FxGripNotifyAPI_ParameterAddName
 								   object:effect
 								 userInfo:[self dividerConfigWithExtra:nil]];
 
@@ -735,8 +735,8 @@ static Class FxCustomUITestRandomViewClass(void)
 */
 - (void)testTheEffectFindsAConstructedParameterBySubscript
 {
-	FxCustomUITestHostEffect *effect = [FxCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
-	[effect.notifier postNotificationName:FxNotifyAPI_ParameterAddName
+	FxGripCustomUITestHostEffect *effect = [FxGripCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	[effect.notifier postNotificationName:FxGripNotifyAPI_ParameterAddName
 								   object:effect
 								 userInfo:[self dividerConfigWithExtra:nil]];
 
@@ -750,8 +750,8 @@ static Class FxCustomUITestRandomViewClass(void)
 */
 - (void)testTheViewHostBuildsTheViewForAConstructedParameter
 {
-	FxCustomUITestHostEffect *effect = [FxCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
-	[effect.notifier postNotificationName:FxNotifyAPI_ParameterAddName
+	FxGripCustomUITestHostEffect *effect = [FxGripCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	[effect.notifier postNotificationName:FxGripNotifyAPI_ParameterAddName
 								   object:effect
 								 userInfo:[self dividerConfigWithExtra:nil]];
 
@@ -760,8 +760,8 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheViewHostBuildsTheViewOnceTheParameterCacheIsPopulated
 {
-	FxCustomUITestHostEffect *effect = [FxCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
-	[effect.notifier postNotificationName:FxNotifyAPI_ParameterAddName
+	FxGripCustomUITestHostEffect *effect = [FxGripCustomUITestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	[effect.notifier postNotificationName:FxGripNotifyAPI_ParameterAddName
 								   object:effect
 								 userInfo:[self dividerConfigWithExtra:nil]];
 	__unused NSDictionary *repopulate = effect.parameters;
@@ -773,7 +773,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheSwitchViewTakesItsStateFromABoolCarryingDictionary
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 
 	[view updateFromCustomData:[FxGripDictionary dictionaryWithDictionary:@{kCustomAPI_BoolKey: @YES}]];
 
@@ -782,7 +782,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheSwitchViewClearsItsStateForAFalseDictionary
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.state = NSControlStateValueOn;
 
 	[view updateFromCustomData:[FxGripDictionary dictionaryWithDictionary:@{kCustomAPI_BoolKey: @NO}]];
@@ -792,7 +792,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheSwitchViewIgnoresAValueOfAnotherClass
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.state = NSControlStateValueOn;
 
 	[view updateFromCustomData:@"off"];
@@ -804,7 +804,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheSwitchViewIgnoresADictionaryWithoutTheBooleanKey
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.state = NSControlStateValueOn;
 
 	[view updateFromCustomData:[FxGripDictionary dictionaryWithDictionary:@{@"tint": @"blue"}]];
@@ -816,7 +816,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTogglingTheSwitchWritesTheStateIntoTheParameterValue
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.parameterEffect = (id)self.effect;
 	view.parameterID = kCustomUITestSwitch;
 	view.state = NSControlStateValueOn;
@@ -835,7 +835,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTogglingTheSwitchOffWritesAFalseValue
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.parameterEffect = (id)self.effect;
 	view.parameterID = kCustomUITestSwitch;
 	view.state = NSControlStateValueOff;
@@ -849,7 +849,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTogglingTheSwitchReadsTheParameterValueAtTheContextTime
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.parameterEffect = (id)self.effect;
 	view.parameterID = kCustomUITestSwitch;
 
@@ -865,7 +865,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTogglingTheSwitchKeepsTheOtherKeysOfTheParameterValue
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.parameterEffect = (id)self.effect;
 	view.parameterID = kCustomUITestSwitch;
 	view.state = NSControlStateValueOn;
@@ -883,7 +883,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTogglingTheSwitchUnlocksALockedParameterValue
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.parameterEffect = (id)self.effect;
 	view.parameterID = kCustomUITestSwitch;
 	view.state = NSControlStateValueOn;
@@ -900,7 +900,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTogglingTheSwitchBracketsTheWriteInAnActionContext
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.parameterEffect = (id)self.effect;
 	view.parameterID = kCustomUITestSwitch;
 
@@ -914,7 +914,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTogglingTheSwitchWithoutAnEffectWritesNothing
 {
-	id<FxCustomUISwitchViewProbe> view = [self makeSwitchView];
+	id<FxGripCustomUISwitchViewProbe> view = [self makeSwitchView];
 	view.parameterID = kCustomUITestSwitch;
 	view.state = NSControlStateValueOn;
 
@@ -963,16 +963,16 @@ static Class FxCustomUITestRandomViewClass(void)
 
 #pragma mark Status display
 
-- (Class<FxCustomUIParameterClassProbe>)statusClass
+- (Class<FxGripCustomUIParameterClassProbe>)statusClass
 {
-	Class cls = FxCustomUITestStatusClass();
+	Class cls = FxGripCustomUITestStatusClass();
 	XCTAssertNotNil(cls, @"FxGripStatusParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)statusConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestStatus, kFxParameterType_Status, @"State", extra);
+	return FxGripParamClassTestConfig(kCustomUITestStatus, kFxParameterType_Status, @"State", extra);
 }
 
 - (void)testTheStatusParameterReportsItsTypeAndTypeString
@@ -1014,12 +1014,12 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testAStatusViewBuildsAndAcceptsAValueWithoutThrowing
 {
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestStatusClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestStatusClass() alloc]
 		initWithDictionary:[self statusConfigWithExtra:nil] effect:(id)self.effect];
 	NSView *view = [parameter newParameterView];
 	XCTAssertNotNil(view, @"the status parameter vends a view");
 
-	id<FxCustomUIDisplayViewProbe> probe = (id<FxCustomUIDisplayViewProbe>)view;
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
 	FxGripDictionary *value = [FxGripDictionary dictionaryWithDictionary:@{
 		kCustomAPI_IntKey: @1, kCustomAPI_StringKey: @"Ready"}];
 	NSDictionary *plain = @{kCustomAPI_IntKey: @1};
@@ -1029,16 +1029,16 @@ static Class FxCustomUITestRandomViewClass(void)
 
 #pragma mark Progress display
 
-- (Class<FxCustomUIParameterClassProbe>)progressClass
+- (Class<FxGripCustomUIParameterClassProbe>)progressClass
 {
-	Class cls = FxCustomUITestProgressClass();
+	Class cls = FxGripCustomUITestProgressClass();
 	XCTAssertNotNil(cls, @"FxGripProgressParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)progressConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestProgress, kFxParameterType_Progress, @"Progress", extra);
+	return FxGripParamClassTestConfig(kCustomUITestProgress, kFxParameterType_Progress, @"Progress", extra);
 }
 
 - (void)testTheProgressParameterReportsItsTypeAndTypeString
@@ -1070,12 +1070,12 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testAProgressViewBuildsAndAcceptsDeterminateAndIndeterminateValues
 {
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestProgressClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestProgressClass() alloc]
 		initWithDictionary:[self progressConfigWithExtra:nil] effect:(id)self.effect];
 	NSView *view = [parameter newParameterView];
 	XCTAssertNotNil(view, @"the progress parameter vends a view");
 
-	id<FxCustomUIDisplayViewProbe> probe = (id<FxCustomUIDisplayViewProbe>)view;
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
 	FxGripDictionary *determinate = [FxGripDictionary dictionaryWithDictionary:@{
 		kCustomAPI_FloatKey: @0.45, kCustomAPI_IntKey: @4, kCustomAPI_StringKey: @"Generating"}];
 	FxGripDictionary *indeterminate = [FxGripDictionary dictionaryWithDictionary:@{kCustomAPI_FloatKey: @(-1.0)}];
@@ -1088,16 +1088,16 @@ static Class FxCustomUITestRandomViewClass(void)
 
 #pragma mark Section header
 
-- (Class<FxCustomUIParameterClassProbe>)sectionClass
+- (Class<FxGripCustomUIParameterClassProbe>)sectionClass
 {
-	Class cls = FxCustomUITestSectionClass();
+	Class cls = FxGripCustomUITestSectionClass();
 	XCTAssertNotNil(cls, @"FxGripSectionParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)sectionConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestSection, kFxParameterType_Section, @"Adjustments", extra);
+	return FxGripParamClassTestConfig(kCustomUITestSection, kFxParameterType_Section, @"Adjustments", extra);
 }
 
 - (void)testTheSectionParameterReportsItsTypeAndTypeString
@@ -1146,28 +1146,28 @@ static Class FxCustomUITestRandomViewClass(void)
 		  kFxGripSectionKey_Alignment: @(NSTextAlignmentCenter), kCustomAPI_FloatKey: @14.0,
 		  kFxGripSectionKey_MarginTop: @6, kFxGripSectionKey_MarginBottom: @2}}];
 
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestSectionClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestSectionClass() alloc]
 		initWithDictionary:config effect:(id)self.effect];
 	NSView *view = [parameter newParameterView];
 	XCTAssertNotNil(view, @"the section parameter vends a view");
 
-	id<FxCustomUIDisplayViewProbe> probe = (id<FxCustomUIDisplayViewProbe>)view;
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
 	NSDictionary *plain = @{kCustomAPI_StringKey: @"Detail"};
 	XCTAssertNoThrow([probe updateFromCustomData:(NSObject<NSSecureCoding,NSCopying>*)plain]);
 }
 
 #pragma mark Banner strip
 
-- (Class<FxCustomUIParameterClassProbe>)bannerClass
+- (Class<FxGripCustomUIParameterClassProbe>)bannerClass
 {
-	Class cls = FxCustomUITestBannerClass();
+	Class cls = FxGripCustomUITestBannerClass();
 	XCTAssertNotNil(cls, @"FxGripBannerParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)bannerConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestBanner, kFxParameterType_Banner, @"Notice", extra);
+	return FxGripParamClassTestConfig(kCustomUITestBanner, kFxParameterType_Banner, @"Notice", extra);
 }
 
 - (void)testTheBannerParameterReportsItsTypeAndTypeString
@@ -1206,28 +1206,57 @@ static Class FxCustomUITestRandomViewClass(void)
 		  kCustomAPI_FloatKey: @13.0, kCustomAPI_RGBAKey: @[@0.1, @0.5, @0.2, @1.0],
 		  kFxGripBannerKey_TextColor: @[@1.0, @1.0, @1.0, @1.0], kFxGripBannerKey_CornerRadius: @4.0}}];
 
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestBannerClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestBannerClass() alloc]
 		initWithDictionary:config effect:(id)self.effect];
 	NSView *view = [parameter newParameterView];
 	XCTAssertNotNil(view, @"the banner parameter vends a view");
 
-	id<FxCustomUIDisplayViewProbe> probe = (id<FxCustomUIDisplayViewProbe>)view;
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
 	FxGripDictionary *update = [FxGripDictionary dictionaryWithDictionary:@{kCustomAPI_StringKey: @"Trial"}];
 	XCTAssertNoThrow([probe updateFromCustomData:update]);
 }
 
+- (void)testAnImageBannerTakesNoTitleFallbackSoTheGraphicCanStandAlone
+{
+	NSDictionary *config = [self bannerConfigWithExtra:@{kFxParameterProperty_Default:
+		@{kFxGripBannerKey_ImageName: @"NSApplicationIcon"}}];
+
+	XCTAssertTrue([self.bannerClass addParameter:config toEffect:(id)self.effect]);
+
+	XCTAssertNil([self.call[@"default"] objectForKey:kCustomAPI_StringKey],
+				 @"an image banner is not given the parameter name as a title");
+	XCTAssertEqualObjects([self.call[@"default"] objectForKey:kFxGripBannerKey_ImageName], @"NSApplicationIcon");
+}
+
+- (void)testABannerViewAcceptsImageTemplateLinkAndActionButtonKeysWithoutThrowing
+{
+	NSDictionary *config = [self bannerConfigWithExtra:@{kFxParameterProperty_Default:
+		@{kFxGripBannerKey_ImageName: @"NSApplicationIcon", kFxGripBannerKey_TemplateImage: @YES,
+		  kFxGripBannerKey_LinkURL: @"https://example.com/docs", kFxGripBannerKey_ActionButton: @YES}}];
+
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestBannerClass() alloc]
+		initWithDictionary:config effect:(id)self.effect];
+	NSView *view = [parameter newParameterView];
+	XCTAssertNotNil(view, @"an image banner vends a view");
+
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
+	FxGripDictionary *update = [FxGripDictionary dictionaryWithDictionary:@{
+		kFxGripBannerKey_ImageName: @"NSInfo", kFxGripBannerKey_LinkURL: @""}];
+	XCTAssertNoThrow([probe updateFromCustomData:update], @"clearing the link and swapping the image is safe");
+}
+
 #pragma mark Capsule badge
 
-- (Class<FxCustomUIParameterClassProbe>)capsuleClass
+- (Class<FxGripCustomUIParameterClassProbe>)capsuleClass
 {
-	Class cls = FxCustomUITestCapsuleClass();
+	Class cls = FxGripCustomUITestCapsuleClass();
 	XCTAssertNotNil(cls, @"FxGripCapsuleParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)capsuleConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestCapsule, kFxParameterType_Capsule, @"Tier", extra);
+	return FxGripParamClassTestConfig(kCustomUITestCapsule, kFxParameterType_Capsule, @"Tier", extra);
 }
 
 - (void)testTheCapsuleParameterReportsItsTypeAndTypeString
@@ -1259,28 +1288,28 @@ static Class FxCustomUITestRandomViewClass(void)
 		  kCustomAPI_RGBAKey: @[@0.2, @0.2, @0.9, @1.0],
 		  kFxGripCapsuleKey_TextColor: @[@1.0, @1.0, @1.0, @1.0], kFxGripCapsuleKey_CornerRadius: @6.0}}];
 
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestCapsuleClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestCapsuleClass() alloc]
 		initWithDictionary:config effect:(id)self.effect];
 	NSView *view = [parameter newParameterView];
 	XCTAssertNotNil(view, @"the capsule parameter vends a view");
 
-	id<FxCustomUIDisplayViewProbe> probe = (id<FxCustomUIDisplayViewProbe>)view;
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
 	FxGripDictionary *pill = [FxGripDictionary dictionaryWithDictionary:@{kCustomAPI_StringKey: @"FREE"}];
 	XCTAssertNoThrow([probe updateFromCustomData:pill], @"an absent corner radius draws a full pill");
 }
 
 #pragma mark WebView
 
-- (Class<FxCustomUIParameterClassProbe>)webViewClass
+- (Class<FxGripCustomUIParameterClassProbe>)webViewClass
 {
-	Class cls = FxCustomUITestWebViewClass();
+	Class cls = FxGripCustomUITestWebViewClass();
 	XCTAssertNotNil(cls, @"FxGripWebViewParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)webViewConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestWebView, kFxParameterType_WebView, @"Docs", extra);
+	return FxGripParamClassTestConfig(kCustomUITestWebView, kFxParameterType_WebView, @"Docs", extra);
 }
 
 - (void)testTheWebViewParameterReportsItsTypeAndTypeString
@@ -1329,29 +1358,29 @@ static Class FxCustomUITestRandomViewClass(void)
 		@{kFxGripWebViewKey_URL: @"https://developer.apple.com/", kFxGripWebViewKey_Whitelist: @[@"apple.com"],
 		  kFxGripWebViewKey_Height: @240.0}}];
 
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestWebViewClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestWebViewClass() alloc]
 		initWithDictionary:config effect:(id)self.effect];
 	NSView *view = [parameter newParameterView];
 	XCTAssertNotNil(view, @"the web-view parameter vends a view");
 
 	// The view is off-window here, so applying content must not create the WKWebView.
-	id<FxCustomUIDisplayViewProbe> probe = (id<FxCustomUIDisplayViewProbe>)view;
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
 	FxGripDictionary *update = [FxGripDictionary dictionaryWithDictionary:@{kFxGripWebViewKey_URL: @"https://developer.apple.com/x"}];
 	XCTAssertNoThrow([probe updateFromCustomData:update]);
 }
 
 #pragma mark Video
 
-- (Class<FxCustomUIParameterClassProbe>)videoClass
+- (Class<FxGripCustomUIParameterClassProbe>)videoClass
 {
-	Class cls = FxCustomUITestVideoClass();
+	Class cls = FxGripCustomUITestVideoClass();
 	XCTAssertNotNil(cls, @"FxGripVideoViewParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)videoConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestVideo, kFxParameterType_VideoView, @"Tutorial", extra);
+	return FxGripParamClassTestConfig(kCustomUITestVideo, kFxParameterType_VideoView, @"Tutorial", extra);
 }
 
 - (void)testTheVideoParameterReportsItsTypeAndTypeString
@@ -1391,34 +1420,34 @@ static Class FxCustomUITestRandomViewClass(void)
 		@{kFxGripVideoKey_URL: @"https://www.youtube.com/watch?v=abc",
 		  kFxGripVideoKey_Autoplay: @YES, kFxGripVideoKey_Loop: @YES, kFxGripVideoKey_Height: @200.0}}];
 
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestVideoClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestVideoClass() alloc]
 		initWithDictionary:config effect:(id)self.effect];
 	NSView *view = [parameter newParameterView];
 	XCTAssertNotNil(view, @"the video parameter vends a view");
 
 	// Off-window, so applying content must not create a WKWebView or AVPlayerView.
-	id<FxCustomUIDisplayViewProbe> probe = (id<FxCustomUIDisplayViewProbe>)view;
+	id<FxGripCustomUIDisplayViewProbe> probe = (id<FxGripCustomUIDisplayViewProbe>)view;
 	FxGripDictionary *media = [FxGripDictionary dictionaryWithDictionary:@{kFxGripVideoKey_URL: @"https://youtu.be/xyz"}];
 	XCTAssertNoThrow([probe updateFromCustomData:media]);
 }
 
 #pragma mark Random
 
-- (Class<FxCustomUIParameterClassProbe>)randomClass
+- (Class<FxGripCustomUIParameterClassProbe>)randomClass
 {
-	Class cls = FxCustomUITestRandomClass();
+	Class cls = FxGripCustomUITestRandomClass();
 	XCTAssertNotNil(cls, @"FxGripRandomParameter must be loaded from the framework");
-	return (Class<FxCustomUIParameterClassProbe>)cls;
+	return (Class<FxGripCustomUIParameterClassProbe>)cls;
 }
 
 - (NSMutableDictionary *)randomConfigWithExtra:(nullable NSDictionary *)extra
 {
-	return FxParamClassTestConfig(kCustomUITestRandom, kFxParameterType_Random, @"Seed", extra);
+	return FxGripParamClassTestConfig(kCustomUITestRandom, kFxParameterType_Random, @"Seed", extra);
 }
 
-- (id<FxCustomUIRandomViewProbe>)makeRandomViewForID:(FxParameterId)parameterID
+- (id<FxGripCustomUIRandomViewProbe>)makeRandomViewForID:(FxParameterId)parameterID
 {
-	id<FxCustomUIRandomViewProbe> view = [(id<FxCustomUIRandomViewProbe>)[FxCustomUITestRandomViewClass() alloc]
+	id<FxGripCustomUIRandomViewProbe> view = [(id<FxGripCustomUIRandomViewProbe>)[FxGripCustomUITestRandomViewClass() alloc]
 		initWithFrame:NSMakeRect(0, 0, 120, 22)];
 	view.parameterEffect = (id)self.effect;
 	view.parameterID = parameterID;
@@ -1461,18 +1490,18 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testTheRandomViewCarriesItsIdentity
 {
-	id<FxCustomUIParameterProbe> parameter = [(id<FxCustomUIParameterProbe>)[FxCustomUITestRandomClass() alloc]
+	id<FxGripCustomUIParameterProbe> parameter = [(id<FxGripCustomUIParameterProbe>)[FxGripCustomUITestRandomClass() alloc]
 		initWithDictionary:[self randomConfigWithExtra:nil] effect:(id)self.effect];
-	id<FxCustomUIRandomViewProbe> view = (id<FxCustomUIRandomViewProbe>)[parameter newParameterView];
+	id<FxGripCustomUIRandomViewProbe> view = (id<FxGripCustomUIRandomViewProbe>)[parameter newParameterView];
 
-	XCTAssertTrue([view isKindOfClass:FxCustomUITestRandomViewClass()]);
+	XCTAssertTrue([view isKindOfClass:FxGripCustomUITestRandomViewClass()]);
 	XCTAssertEqual(view.parameterID, kCustomUITestRandom);
 	XCTAssertEqualObjects(view.parameterEffect, self.effect);
 }
 
 - (void)testReloadWritesTheDrawnValueIntoTheParameter
 {
-	id<FxCustomUIRandomViewProbe> view = [self makeRandomViewForID:kCustomUITestRandom];
+	id<FxGripCustomUIRandomViewProbe> view = [self makeRandomViewForID:kCustomUITestRandom];
 	// A single-value range makes the draw deterministic.
 	FxGripDictionary *pinned = [FxGripDictionary dictionaryWithDictionary:@{
 		kFxGripRandomKey_Min: @42, kFxGripRandomKey_Max: @42}];
@@ -1491,7 +1520,7 @@ static Class FxCustomUITestRandomViewClass(void)
 
 - (void)testReloadStaysWithinTheConfiguredRange
 {
-	id<FxCustomUIRandomViewProbe> view = [self makeRandomViewForID:kCustomUITestRandom];
+	id<FxGripCustomUIRandomViewProbe> view = [self makeRandomViewForID:kCustomUITestRandom];
 	FxGripDictionary *range = [FxGripDictionary dictionaryWithDictionary:@{
 		kFxGripRandomKey_Min: @10, kFxGripRandomKey_Max: @20}];
 	[view updateFromCustomData:range];

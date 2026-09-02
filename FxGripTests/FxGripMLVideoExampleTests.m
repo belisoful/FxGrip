@@ -2,7 +2,7 @@
 //  FxGripMLVideoExampleTests.m
 //  FxGripTests
 //
-//  FxMLVideoExampleEffect is the worked example for FxGripMLVideoEffect: a prompt, a Generate
+//  FxGripMLVideoExampleEffect is the worked example for FxGripMLVideoEffect: a prompt, a Generate
 //  push-button, and a status and progress control that mirror the generation lifecycle. The
 //  Inference DocC article quotes the class verbatim, and these tests keep the sample honest.
 //
@@ -32,10 +32,10 @@ enum : UInt32 {
 
 /*! A text-to-video effect: type a prompt, press Generate, and watch the status and progress
 	controls follow the generation; the clip renders once it is ready. */
-@interface FxMLVideoExampleEffect : FxGripMLVideoEffect
+@interface FxGripMLVideoExampleEffect : FxGripMLVideoEffect
 @end
 
-@implementation FxMLVideoExampleEffect
+@implementation FxGripMLVideoExampleEffect
 
 /*! The inspector: a prompt, the Generate button, and the two lifecycle displays. */
 - (NSArray<NSDictionary *> *)exampleParameters
@@ -126,21 +126,21 @@ enum : UInt32 {
 #pragma mark - Test scaffolding
 
 /*! The stub manager plus the action API the out-of-band access asks for (nil: no host action). */
-@interface FxMLVideoExampleTestAPIManager : FxParamClassTestAPIManager
+@interface FxGripMLVideoExampleTestAPIManager : FxGripParamClassTestAPIManager
 @property (nonatomic, strong, nullable) id customParameterActionAPIv4;
 @end
-@implementation FxMLVideoExampleTestAPIManager
+@implementation FxGripMLVideoExampleTestAPIManager
 @end
 
 /*! The example, bent to the test bundle: a private notifier, the stub API manager, and a
 	terminal-state expectation. The example's own logic is untouched. */
-@interface FxMLVideoExampleTestEffect : FxMLVideoExampleEffect
+@interface FxGripMLVideoExampleTestEffect : FxGripMLVideoExampleEffect
 @property (nonatomic, strong) NSNotificationCenter *privateNotifier;
-@property (nonatomic, strong) FxMLVideoExampleTestAPIManager *stubManager;
+@property (nonatomic, strong) FxGripMLVideoExampleTestAPIManager *stubManager;
 @property (nonatomic, strong) XCTestExpectation *terminalExpectation;
 @end
 
-@implementation FxMLVideoExampleTestEffect
+@implementation FxGripMLVideoExampleTestEffect
 
 - (id)effectBase
 {
@@ -172,12 +172,12 @@ enum : UInt32 {
 @end
 
 /*! A staged backend returning a clip. */
-@interface FxMLVideoExampleStubBackend : NSObject <FxGripInferenceBackend>
+@interface FxGripMLVideoExampleStubBackend : NSObject <FxGripInferenceBackend>
 @property (nonatomic, strong, nullable) FxGripInferenceRequest *lastRequest;
 @property (nonatomic, strong, nullable) FxGripInferenceResult *stagedResult;
 @end
 
-@implementation FxMLVideoExampleStubBackend
+@implementation FxGripMLVideoExampleStubBackend
 - (BOOL)isReady { return YES; }
 - (NSString *)backendIdentifier { return @"example-stub"; }
 - (FxGripInferenceResult *)runInferenceForRequest:(FxGripInferenceRequest *)request error:(NSError **)error
@@ -190,8 +190,8 @@ enum : UInt32 {
 #pragma mark - Tests
 
 @interface FxGripMLVideoExampleTests : XCTestCase
-@property (nonatomic, strong) FxMLVideoExampleTestEffect *effect;
-@property (nonatomic, strong) FxMLVideoExampleStubBackend *backend;
+@property (nonatomic, strong) FxGripMLVideoExampleTestEffect *effect;
+@property (nonatomic, strong) FxGripMLVideoExampleStubBackend *backend;
 @end
 
 @implementation FxGripMLVideoExampleTests
@@ -199,12 +199,12 @@ enum : UInt32 {
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxMLVideoExampleTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	self.effect = [FxGripMLVideoExampleTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	self.effect.generationQueue = dispatch_queue_create("fxgrip.test.videoexample", DISPATCH_QUEUE_SERIAL);
-	self.effect.stubManager = [FxMLVideoExampleTestAPIManager new];
-	self.effect.stubManager.paramGetAPIv6 = [FxParamClassTestRetrievalAPI new];
-	self.effect.stubManager.paramSetAPIv5 = [FxParamClassTestSettingAPI new];
-	self.backend = [FxMLVideoExampleStubBackend new];
+	self.effect.stubManager = [FxGripMLVideoExampleTestAPIManager new];
+	self.effect.stubManager.paramGetAPIv6 = [FxGripParamClassTestRetrievalAPI new];
+	self.effect.stubManager.paramSetAPIv5 = [FxGripParamClassTestSettingAPI new];
+	self.backend = [FxGripMLVideoExampleStubBackend new];
 	self.effect.inferenceBackend = self.backend;
 }
 

@@ -3,7 +3,7 @@
 #import "FxGripDynamicRegistrar.h"
 #import "FxGripTypes.h"
 #import "FxGripPluginInfo.h"
-#import "FxRegisteredPlugin.h"
+#import "FxGripRegisteredPlugin.h"
 
 @implementation FxGripDynamicRegistrar
 
@@ -59,28 +59,31 @@
 				}
 			}
 			
-			// Handle any remaining unnamed groups
+			// Fill any names still missing from the host bundle's group list.
+			if (missingGroups.count) {
+				id groupList = [[NSBundle mainBundle] objectForInfoDictionaryKey:kProPlugPlugIn_GroupList_Property];
+				if ([groupList isKindOfClass:NSDictionary.class]) {
+					groupList = [(NSDictionary*)groupList allValues];
+				}
+				if ([groupList isKindOfClass:NSArray.class]) {
+					for (NSDictionary *groupInfo in groupList) {
+						if (![groupInfo isKindOfClass:NSDictionary.class]) {
+							continue;
+						}
+						NSString *uuid = groupInfo[kProPlugPlugInX_RegGroupUUIDProperty];
+						if (![missingGroups containsObject:uuid]) {
+							continue;
+						}
+						[missingGroups removeObject:uuid];
+						[self registerGroup:groupInfo];
+					}
+				}
+			}
+
+			// Any group still without a name gets a placeholder.
 			NSInteger unlabelledIndex = 1;
 			for (NSString *uuid in missingGroups) {
 				[self registerGroupUUID:uuid groupName:[NSString stringWithFormat:@"Unlabelled Group %ld", (long)unlabelledIndex++]];
-			}
-			
-			if (missingGroups.count) {
-				// Get ProPlugPlugInGroupList and verify all UUIDs are present
-				NSBundle *mainBundle = [NSBundle mainBundle];
-				if (mainBundle) {
-					NSArray *groupList = [mainBundle objectForInfoDictionaryKey:kProPlugPlugIn_GroupList_Property];
-					if (groupList) {
-						for (NSDictionary *groupInfo in missingGroups) {
-							NSString *uuid = groupInfo[kProPlugPlugInX_RegGroupUUIDProperty];
-							if (![missingGroups containsObject:uuid]) {
-								continue;
-							}
-							[missingGroups removeObject:uuid];
-							[self registerGroup:groupInfo];
-						}
-					}
-				}
 			}
 		}
 		@catch (NSException *exception) {
@@ -103,7 +106,7 @@
 	unsigned int numClasses;
 	Class *classes = objc_copyClassList(&numClasses);
 
-	Protocol *registeredPlugin = @protocol(FxRegisteredPlugin);
+	Protocol *registeredPlugin = @protocol(FxGripRegisteredPlugin);
 	for (unsigned int i = 0; i < numClasses; i++) {
 		// objc_copyClassList includes classes that lack an NSObject root and trap on any
 		// message send; only runtime C calls are safe here. class_conformsToProtocol does
@@ -121,7 +124,7 @@
 }
 
 /**
- 	Go through all classes, find the FxRegisteredPlugin, and if active, include it.
+ 	Go through all classes, find the FxGripRegisteredPlugin, and if active, include it.
  */
 
 - (nullable NSArray *) plugInsWithError:(NSError * _Nullable * _Nonnull)error;

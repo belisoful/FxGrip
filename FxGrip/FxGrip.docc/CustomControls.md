@@ -1,8 +1,8 @@
 # Custom Parameter Controls
 
 Add a status light, a progress bar, a section header, a banner, a badge, a
-randomizer, a curve editor, a web view, or a video player to the inspector by
-declaring a parameter of the matching custom type.
+randomizer, a curve editor, a web view, a video player, or a live image strip
+to the inspector by declaring a parameter of the matching custom type.
 
 ## Overview
 
@@ -38,6 +38,7 @@ The images below are rendered from the live controls by the
 | Curve editor | custom view | ``FxGripCurveSetEditorView`` | ``FxGripCurveSetData`` |
 | Web view | `webview` | ``FxGripWebViewParameter`` | ``FxGripDictionary`` |
 | Video | `videoview` | ``FxGripVideoViewParameter`` | ``FxGripDictionary`` |
+| Live image | `liveimage` | ``FxGripLiveImageParameter`` | ``FxGripDictionary`` |
 
 ## Structural controls
 
@@ -396,6 +397,59 @@ NSURL *media = [[NSBundle bundleForClass:self.class] URLForResource:@"intro"
 }
 ```
 
+
+## Live image
+
+![Four live image slots labeled Channel A through D](liveimage)
+
+A strip of image slots fed from the render pass. The FxPlug host runs the render
+pass and the custom parameter views in the same plugin process, so an image the
+effect holds at render reaches the inspector without a trip through the host's
+parameter store. The value carries only the configuration: the slot labels (one
+slot per label), the row height, the info caption, the checkerboard, a vertical
+flip, and the snapshot size, from `FxGripLiveImage.h`. The pixels never enter the
+host document. Creation adds the custom-UI, not-animatable, full-view-width, and
+no-state flags.
+
+```objc
+@{
+    kFxParameterProperty_Id:      @(kMyChannelsID),
+    kFxParameterProperty_Name:    @"Channels",
+    kFxParameterProperty_Type:    kFxParameterType_LiveImage,
+    kFxParameterProperty_Default: @{
+        kFxGripLiveImageKey_Labels: @[ @"Channel A", @"Channel B", @"Channel C", @"Channel D" ],
+        kFxGripLiveImageKey_Height: @96.0,
+    },
+}
+```
+
+### Publishing
+
+The runtime parameter is the effect's parameter for the ID. The effect publishes
+from the render pass, on any thread, and the call returns before the copy runs.
+A slot shows its latest ``FxGripLiveFrame``; a view attached later shows the
+stored frames.
+
+```objc
+FxGripLiveImageParameter *channels = (FxGripLiveImageParameter *)self[kMyChannelsID];
+[channels publishTextures:@[ channelA, channelB, channelC, channelD ]];   // one command buffer
+[channels publishTexture:bufferA inSlot:0];                               // one slot
+[channels publishImageTile:sourceImages.firstObject inSlot:1];            // an FxImageTile
+[channels publishImageBuffer:cachedFrame inSlot:2];                       // an FxGripImageBuffer
+```
+
+A Metal texture is copied on the GPU into a CPU-readable staging texture,
+downscaled through its mipmap chain until its longest side is at most the
+snapshot size (640 pixels by default), and read back when the command buffer
+completes. A slot whose previous copy is still in flight drops the new texture,
+so a fast render never queues behind the inspector. The supported texture
+formats are the RGBA and BGRA 8-bit, RGBA 16-bit, RGBA half and float, and the
+single-channel 8-bit, half, and float formats.
+
+Set the flip key when a source stores its bottom row first, as a raw FxPlug tile
+texture does. The info caption shows each frame's dimensions and pixel format
+beside the slot label.
+
 ## Topics
 
 ### Structural
@@ -428,4 +482,10 @@ NSURL *media = [[NSBundle bundleForClass:self.class] URLForResource:@"intro"
 - ``FxGripWebViewParameter``
 - ``FxGripVideoViewParameter``
 - <doc:WebContent>
+
+### Live image
+
+- ``FxGripLiveImageParameter``
+- ``FxGripLiveImageView``
+- ``FxGripLiveFrame``
 ```

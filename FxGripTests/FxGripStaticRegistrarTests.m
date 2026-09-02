@@ -22,6 +22,10 @@
 #define kPlugin2UUID		@"C38DB915-C100-4327-81D2-E422FDF20682"
 #define kPlugin2ClassName	@"Plugin2Class"
 
+#define kOSCPluginUUID		@"A1111111-0000-4000-8000-000000000001"
+#define kConsumerAUUID		@"A2222222-0000-4000-8000-000000000002"
+#define kConsumerBUUID		@"A3333333-0000-4000-8000-000000000003"
+
 @interface StaticRegistrarPropertiesClass : FxGripStaticRegistrar
 @end
 @implementation StaticRegistrarPropertiesClass
@@ -92,8 +96,8 @@
 - (void)testRegistrationProtocols {
 	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(PROPlugInRegistering)]);
 	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(FxGripStaticRegistrarSubclass)]);
-	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(FxRegisteringGroups)]);
-	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(FxRegisteringPlugins)]);
+	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(FxGripRegisteringGroups)]);
+	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(FxGripRegisteringPlugins)]);
 }
 
 
@@ -247,6 +251,100 @@
 	NSError *error = nil;
 	XCTAssertNil([staticRegistrar registeredPlugInsWithError:&error]);
 	XCTAssertNotNil(error);
+}
+
+
+#pragma mark OSC linking
+
+- (NSDictionary *)plugin:(NSString *)uuid inArray:(NSArray<NSDictionary *> *)plugins {
+	for (NSDictionary *plugin in plugins) {
+		if ([plugin[kProPlugPlugIn_UuidProperty] isEqualToString:uuid]) {
+			return plugin;
+		}
+	}
+	return nil;
+}
+
+- (NSDictionary *)validPluginUUID:(NSString *)uuid extra:(NSDictionary *)extra {
+	NSMutableDictionary *plugin = [@{
+		kProPlugPlugIn_UuidProperty: uuid,
+		kProPlugPlugIn_ClassNameProperty: NSStringFromClass(StaticRegistrarTestClass.class),
+		kProPlugPlugIn_DisplayNameProperty: @"",
+		kProPlugPlugIn_GroupUUIDProperty: kGroup1UUID,
+		kProPlugPlugIn_ProtocolNamesProperty: @[],
+		kProPlugPlugIn_InfoStringProperty: @"",
+		kProPlugPlugIn_VersionProperty: @1000
+	} mutableCopy];
+	[plugin addEntriesFromDictionary:extra];
+	return plugin;
+}
+
+// An `osc` directive links a plugin to its on-screen-control plugin: registration strips the
+// directive from the consumer and adds the consumer's uuid to the OSC's supportedPlugins.
+- (void)testRegisteredPlugIns_OSCConsumer_MovesToSupportedPlugins {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kOSCPluginUUID extra:@{}]]);
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID
+															  extra:@{kProPlugPlugInX_OSCUUIDsProperty: kOSCPluginUUID}]]);
+
+	NSError *error = nil;
+	NSArray *plugIns = [registrar registeredPlugInsWithError:&error];
+	XCTAssertNil(error);
+
+	NSDictionary *consumer = [self plugin:kConsumerAUUID inArray:plugIns];
+	NSDictionary *osc = [self plugin:kOSCPluginUUID inArray:plugIns];
+
+	XCTAssertNil(consumer[kProPlugPlugInX_OSCUUIDsProperty]);
+	XCTAssertEqualObjects(osc[kProPlugPlugIn_SupportedPluginsProperty], @[kConsumerAUUID]);
+}
+
+// Two consumers naming the same OSC both accumulate; the OSC entry is upgraded to a mutable
+// copy in place without corrupting either consumer's record.
+- (void)testRegisteredPlugIns_MultipleOSCConsumers_Accumulate {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kOSCPluginUUID extra:@{}]]);
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID
+															  extra:@{kProPlugPlugInX_OSCUUIDsProperty: kOSCPluginUUID}]]);
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerBUUID
+															  extra:@{kProPlugPlugInX_OSCUUIDsProperty: @[kOSCPluginUUID]}]]);
+
+	NSError *error = nil;
+	NSArray *plugIns = [registrar registeredPlugInsWithError:&error];
+	XCTAssertNil(error);
+
+	NSArray *supported = [self plugin:kOSCPluginUUID inArray:plugIns][kProPlugPlugIn_SupportedPluginsProperty];
+
+	XCTAssertEqual(supported.count, 2);
+	XCTAssertTrue([supported containsObject:kConsumerAUUID]);
+	XCTAssertTrue([supported containsObject:kConsumerBUUID]);
+	XCTAssertNil([self plugin:kConsumerAUUID inArray:plugIns][kProPlugPlugInX_OSCUUIDsProperty]);
+	XCTAssertNil([self plugin:kConsumerBUUID inArray:plugIns][kProPlugPlugInX_OSCUUIDsProperty]);
+}
+
+// A dangling OSC reference is logged and skipped, leaving the consumer registered.
+- (void)testRegisteredPlugIns_OSCReferenceToMissingPlugin_DoesNotCrash {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID
+															  extra:@{kProPlugPlugInX_OSCUUIDsProperty: kOSCPluginUUID}]]);
+
+	NSError *error = nil;
+	NSArray *plugIns = nil;
+	XCTAssertNoThrow(plugIns = [registrar registeredPlugInsWithError:&error]);
+	XCTAssertNil(error);
+	XCTAssertNil([self plugin:kConsumerAUUID inArray:plugIns][kProPlugPlugInX_OSCUUIDsProperty]);
+}
+
+- (void)testRegisterGroupUUID_NilArguments_DoNotRegisterOrCrash {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertNoThrow([registrar registerGroupUUID:nil groupName:kGroup1Name]);
+	XCTAssertNoThrow([registrar registerGroupUUID:kGroup1UUID groupName:nil]);
+	XCTAssertNoThrow([registrar registerGroupUUID:nil groupName:nil]);
+
+	XCTAssertFalse([registrar containsGroupUUID:kGroup1UUID]);
 }
 
 

@@ -6,13 +6,13 @@
 //
 
 #import "FxGripDebugMenu.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Extensions.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "FxAPINotifications.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Extensions.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "FxGripAPINotifications.h"
 #import "FxGripParameterFlags.h"
 #import "FxGripPluginInfo.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 
 typedef NS_ENUM(NSUInteger, FxGripDebugMenuItem) {
@@ -45,8 +45,8 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 // FxGripParameterData restores at the default priority on a flags read, so it runs after.
 - (NSInteger)ncPriority:(nullable NSNotificationName)aName
 {
-	if ([FxNotifyAPI_ParameterGetFlagsName isEqualToString:aName]) {
-		return FxExtensionDefaultPriority + 2;
+	if ([FxGripNotifyAPI_ParameterGetFlagsName isEqualToString:aName]) {
+		return FxGripExtensionDefaultPriority + 2;
 	}
 	return [super ncPriority:aName];
 }
@@ -313,7 +313,7 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 
 
 
-@implementation FxTileableEffectBase (DebugMenu)
+@implementation FxGripTileableEffect (DebugMenu)
 
 - (FxGripDebugMenu *)debugMenu
 {

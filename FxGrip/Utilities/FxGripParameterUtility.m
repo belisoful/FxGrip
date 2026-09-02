@@ -7,7 +7,7 @@
 
 #import "FxGripParameterUtility.h"
 #import "FxGripPluginInfo.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import <BEFoundation/NSArray+BExtension.h>
 #import <BEFoundation/NSDictionary+BExtension.h>
 #import <BEFoundation/BEMutable.h>
@@ -50,6 +50,7 @@
 		kFxParameterType_Divider: @(FxParameterType_Divider),
 		kFxParameterType_WebView: @(FxParameterType_WebView),
 		kFxParameterType_VideoView: @(FxParameterType_VideoView),
+		kFxParameterType_LiveImage: @(FxParameterType_LiveImage),
 
 	};
 	return typeMap;

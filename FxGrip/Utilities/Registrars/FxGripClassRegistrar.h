@@ -10,7 +10,7 @@
 #define FxGripClassRegistrar_h
 
 #ifndef kProPlugPlugInX_FxRegisteredPlugins_Property
-	#define kProPlugPlugInX_FxRegisteredPlugins_Property		@"FxRegisteredPlugins"
+	#define kProPlugPlugInX_FxRegisteredPlugins_Property		@"FxGripRegisteredPlugins"
 #endif
 
 #import "FxGripStaticRegistrar.h"

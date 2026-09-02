@@ -6,10 +6,10 @@
 //
 
 #import "FxGripInstanceTracker.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Extensions.h"
-#import "FxTileableEffectBase+Timing.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Extensions.h"
+#import "FxGripTileableEffect+Timing.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripOOBParameterAccess.h"
 #import "FxGrip_ARC.h"
 
@@ -71,7 +71,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 
 // Do NOT keep this array. It is for temporary purposes only because it links all the plugin instances
 //	and would cause circular references in garbage collection.
-- (NSArray<id<FxTileableEffectBase>> *)instances
+- (NSArray<id<FxGripTileableEffect>> *)instances
 {
 	NSString *uuid = self.effect.pluginUUID;
 	if (uuid == nil) {
@@ -81,7 +81,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 	@synchronized (gEffectInstances) {
 		for (NSValue* pluginValue in gEffectInstances[uuid])
 		{
-			id<FxTileableEffectBase> plugin  = (id<FxTileableEffectBase>)[pluginValue pointerValue];
+			id<FxGripTileableEffect> plugin  = (id<FxGripTileableEffect>)[pluginValue pointerValue];
 			[instances addObject:plugin];
 		}
 	}
@@ -91,8 +91,8 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 // Called in FxTileableEffect::init
 - (void)extAddedToDocument:(nonnull NSNotification*)notification;
 {
-	id<FxTileableEffectBase> effect = notification.object;
-	if (![effect isKindOfClass:FxTileableEffectBase.class]) {
+	id<FxGripTileableEffect> effect = notification.object;
+	if (![effect isKindOfClass:FxGripTileableEffect.class]) {
 		return;
 	}
 	@synchronized (gEffectInstances) {
@@ -117,8 +117,8 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 // Called in FxTileableEffect::dealloc - instanceRemovedFromDocument
 - (void)extRemovedFromDocument:(nonnull NSNotification*)notification;
 {
-	FxTileableEffectBase *effect = notification.object;
-	if (![effect isKindOfClass:FxTileableEffectBase.class]) {
+	FxGripTileableEffect *effect = notification.object;
+	if (![effect isKindOfClass:FxGripTileableEffect.class]) {
 		return;
 	}
 	FxGripInstanceTrackerRemove(effect.pluginUUID, (__bridge void*)effect);
@@ -128,7 +128,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 }
 
 
-- (CMTime)startTimeOfNextEffect:(id<FxTileableEffectBase>)effect;
+- (CMTime)startTimeOfNextEffect:(id<FxGripTileableEffect>)effect;
 {
 	CMTime  timelineEffectTime  = effect.effectStartTimeInTimeline;
 	CMTime  startTime   = kCMTimeInvalid;
@@ -141,7 +141,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 		CMTime  nextTimelineTime    = kCMTimePositiveInfinity;
 		for (NSValue* pluginValue in gEffectInstances[effect.pluginUUID])
 		{
-			id<FxTileableEffectBase> plugin  = (id<FxTileableEffectBase>)[pluginValue pointerValue];
+			id<FxGripTileableEffect> plugin  = (id<FxGripTileableEffect>)[pluginValue pointerValue];
 			if (plugin != effect)
 			{
 				FxGripOOBParameterAccess *__attribute__((unused)) accessor = [plugin startContext];
@@ -163,7 +163,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 	return startTime;
 }
 
-- (CMTime)startTimeOfPreviousEffect:(id<FxTileableEffectBase>)effect;
+- (CMTime)startTimeOfPreviousEffect:(id<FxGripTileableEffect>)effect;
 {
 	CMTime  timelineEffectTime  = effect.effectStartTimeInTimeline;
 	CMTime  startTime   = kCMTimeInvalid;
@@ -172,7 +172,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 		CMTime  prevTimelineTime    = kCMTimeNegativeInfinity;
 		for (NSValue* pluginValue in gEffectInstances[effect.pluginUUID])
 		{
-			id<FxTileableEffectBase> plugin = (id<FxTileableEffectBase>)[pluginValue pointerValue];
+			id<FxGripTileableEffect> plugin = (id<FxGripTileableEffect>)[pluginValue pointerValue];
 			if (plugin != effect)
 			{
 				FxGripOOBParameterAccess *__attribute__((unused)) accessor = [plugin startContext];
@@ -199,9 +199,9 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 
 
 #pragma mark -
-#pragma mark FxTileableEffectBase (InstanceTracker)
+#pragma mark FxGripTileableEffect (InstanceTracker)
 
-@implementation FxTileableEffectBase (InstanceTracker)
+@implementation FxGripTileableEffect (InstanceTracker)
 
 - (nullable FxGripInstanceTracker*)newFxInstanceTracker
 {
@@ -219,7 +219,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 }
 
 
-- (nonnull NSArray<id<FxTileableEffectBase>>*)instances
+- (nonnull NSArray<id<FxGripTileableEffect>>*)instances
 {
 	return self.instanceTracker.instances ?: @[];
 }
@@ -232,7 +232,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 }
 
 
-- (nullable id<FxTileableEffectBase>)instanceAtIndex:(int)index
+- (nullable id<FxGripTileableEffect>)instanceAtIndex:(int)index
 {
 	@synchronized (gEffectInstances) {
 		NSArray<NSValue*> *bucket = gEffectInstances[self.pluginUUID];

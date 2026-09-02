@@ -8,9 +8,9 @@
 
 #import "FxParameter.h"
 #import "FxParameterFlags.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripAPIAccessing.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 #import <BEFoundation/NSCoder+AtIndex.h>
 #import "NSCoder+FxPlug.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
@@ -33,7 +33,7 @@
 
 - (NSInteger)ncPriority:(nullable NSNotificationName)aName
 {
-	if ([FxNotifyAPI_ParameterGetFlagsPreName isEqualToString:aName]) {
+	if ([FxGripNotifyAPI_ParameterGetFlagsPreName isEqualToString:aName]) {
 		return -17;
 	}
 	return -19;
@@ -152,7 +152,7 @@
 			}
 			[paramTagsAPI setTags:paramTags toParameter:parameterID];
 		} else {
-			NSLog(@"GuruFxTileableEffect(%llu)::generateParameters ERROR - Parameter (#%d) could not get the ParamTagsAPI", _apiManager.sessionID, parameterID);
+			NSLog(@"FxGripTileableEffect(%llu)::generateParameters ERROR - Parameter (#%d) could not get the ParamTagsAPI", _apiManager.sessionID, parameterID);
 			
 		}
 	}*/

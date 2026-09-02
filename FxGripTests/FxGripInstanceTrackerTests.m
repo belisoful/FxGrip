@@ -4,9 +4,9 @@
 //
 //  Unit tests for FxGripInstanceTracker: the process-wide registry of effect
 //  instances keyed by plugin UUID, the add/remove notification handlers, the
-//  neighbour-start-time searches, and the FxTileableEffectBase accessors.
+//  neighbour-start-time searches, and the FxGripTileableEffect accessors.
 //
-//  The registry only accepts real FxTileableEffectBase instances, so the effects
+//  The registry only accepts real FxGripTileableEffect instances, so the effects
 //  here are instances of a local subclass whose -notifier returns a private
 //  NSPriorityNotificationCenter. No test touches the process-wide center.
 //
@@ -14,20 +14,20 @@
 #import <XCTest/XCTest.h>
 #import <CoreMedia/CoreMedia.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxTileableEffectBase.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
-#import <FxGrip/FxTileableEffectBase+Extensions.h>
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
+#import <FxGrip/FxGripTileableEffect+Extensions.h>
 #import <FxGrip/FxGripInstanceTracker.h>
 
 static NSString * const kTrackTestUUIDOne = @"11111111-1111-1111-1111-111111111111";
 static NSString * const kTrackTestUUIDTwo = @"22222222-2222-2222-2222-222222222222";
 
-static CMTime FxTrackTestMakeTime(int64_t value, int32_t timescale)
+static CMTime FxGripTrackTestMakeTime(int64_t value, int32_t timescale)
 {
 	return (CMTime){.value = value, .timescale = timescale, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
+static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
@@ -35,13 +35,13 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark - Effect double
 
-@interface FxTrackTestEffect : FxTileableEffectBase
+@interface FxGripTrackTestEffect : FxGripTileableEffect
 @property (nonatomic, strong) NSNotificationCenter *privateNotifier;
 @property (nonatomic, copy) NSString *trackedUUID;
 @property (nonatomic, assign) CMTime timelineStartTime;
 @end
 
-@implementation FxTrackTestEffect
+@implementation FxGripTrackTestEffect
 
 - (id)effectBase
 {
@@ -78,10 +78,10 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 // Carries the private notifier without opting into instance tracking.
-@interface FxTrackTestUntrackedEffect : FxTrackTestEffect
+@interface FxGripTrackTestUntrackedEffect : FxGripTrackTestEffect
 @end
 
-@implementation FxTrackTestUntrackedEffect
+@implementation FxGripTrackTestUntrackedEffect
 
 - (id)effectBase
 {
@@ -100,7 +100,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 #pragma mark - Tests
 
 @interface FxGripInstanceTrackerTests : XCTestCase
-@property (nonatomic, strong) NSMutableArray<FxTrackTestEffect *> *effects;
+@property (nonatomic, strong) NSMutableArray<FxGripTrackTestEffect *> *effects;
 @end
 
 @implementation FxGripInstanceTrackerTests
@@ -114,32 +114,32 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 // The registry outlives the effects, so every registration is undone.
 - (void)tearDown
 {
-	for (FxTrackTestEffect *effect in self.effects) {
+	for (FxGripTrackTestEffect *effect in self.effects) {
 		[effect.instanceTracker extRemovedFromDocument:[self documentNotificationFor:effect removed:YES]];
 	}
 	self.effects = nil;
 	[super tearDown];
 }
 
-- (FxTrackTestEffect *)makeEffectWithUUID:(NSString *)uuid startSeconds:(int64_t)seconds
+- (FxGripTrackTestEffect *)makeEffectWithUUID:(NSString *)uuid startSeconds:(int64_t)seconds
 {
-	FxTrackTestEffect *effect = [FxTrackTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripTrackTestEffect *effect = [FxGripTrackTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertNotNil(effect);
 	effect.trackedUUID = uuid;
-	effect.timelineStartTime = FxTrackTestMakeTime(seconds, 1);
+	effect.timelineStartTime = FxGripTrackTestMakeTime(seconds, 1);
 	[self.effects addObject:effect];
 	return effect;
 }
 
 - (NSNotification *)documentNotificationFor:(id)object removed:(BOOL)removed
 {
-	return [NSNotification notificationWithName:(removed ? FxTileableEffectRemovedFromDocumentName
-													     : FxTileableEffectAddedToDocumentName)
+	return [NSNotification notificationWithName:(removed ? FxGripTileableEffectRemovedFromDocumentName
+													     : FxGripTileableEffectAddedToDocumentName)
 										 object:object
 									   userInfo:nil];
 }
 
-- (void)addToDocument:(FxTrackTestEffect *)effect through:(FxGripInstanceTracker *)tracker
+- (void)addToDocument:(FxGripTrackTestEffect *)effect through:(FxGripInstanceTracker *)tracker
 {
 	[tracker extAddedToDocument:[self documentNotificationFor:effect removed:NO]];
 }
@@ -148,7 +148,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testTheEffectLoadsATrackerWhenItTracksInstances
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 
 	XCTAssertNotNil(effect.instanceTracker);
 	XCTAssertTrue([effect.instanceTracker isKindOfClass:FxGripInstanceTracker.class]);
@@ -159,7 +159,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testAnEffectThatDoesNotTrackInstancesHasNoTracker
 {
-	FxTrackTestUntrackedEffect *plain = [FxTrackTestUntrackedEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripTrackTestUntrackedEffect *plain = [FxGripTrackTestUntrackedEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertNotNil(plain);
 	[self.effects addObject:plain];
 
@@ -174,7 +174,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testAddingToTheDocumentRegistersTheInstance
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 
 	XCTAssertEqualObjects(effect.instances, @[]);
 	XCTAssertEqual(effect.instanceCount, (NSUInteger)0);
@@ -189,7 +189,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testRegisteringTheSameInstanceTwiceKeepsOneEntry
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 
 	[self addToDocument:effect through:effect.instanceTracker];
 	[self addToDocument:effect through:effect.instanceTracker];
@@ -199,8 +199,8 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testInstancesOfOnePluginShareTheRegistryEntry
 {
-	FxTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
-	FxTrackTestEffect *second = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:2];
+	FxGripTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *second = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:2];
 
 	[self addToDocument:first through:first.instanceTracker];
 	[self addToDocument:second through:second.instanceTracker];
@@ -214,8 +214,8 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testInstancesOfDifferentPluginsAreTrackedSeparately
 {
-	FxTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
-	FxTrackTestEffect *other = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:1];
+	FxGripTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *other = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:1];
 
 	[self addToDocument:first through:first.instanceTracker];
 	[self addToDocument:other through:other.instanceTracker];
@@ -227,7 +227,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testAnObjectThatIsNotAnEffectIsNeverRegistered
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 
 	[effect.instanceTracker extAddedToDocument:[self documentNotificationFor:NSObject.new removed:NO]];
 
@@ -238,8 +238,8 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testRemovingFromTheDocumentDropsTheInstance
 {
-	FxTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
-	FxTrackTestEffect *second = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:2];
+	FxGripTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *second = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:2];
 	[self addToDocument:first through:first.instanceTracker];
 	[self addToDocument:second through:second.instanceTracker];
 
@@ -251,7 +251,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testRemovingTheLastInstanceEmptiesTheRegistryEntry
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 	[self addToDocument:effect through:effect.instanceTracker];
 
 	[effect.instanceTracker extRemovedFromDocument:[self documentNotificationFor:effect removed:YES]];
@@ -263,8 +263,8 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testRemovingAnUnregisteredInstanceOrANonEffectDoesNothing
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
-	FxTrackTestEffect *stranger = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:9];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *stranger = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:9];
 	[self addToDocument:effect through:effect.instanceTracker];
 
 	[effect.instanceTracker extRemovedFromDocument:[self documentNotificationFor:stranger removed:YES]];
@@ -275,7 +275,7 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testInstanceAtIndexIsBoundedAndDoesNotThrow
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 	[self addToDocument:effect through:effect.instanceTracker];
 
 	XCTAssertTrue([effect instanceAtIndex:0] == effect);
@@ -289,9 +289,9 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 // weak, or the effect (and every observer it registered) leaks for the process lifetime.
 - (void)testAnEffectWithATrackerDeallocatesWhenReleased
 {
-	__weak FxTrackTestEffect *weakEffect = nil;
+	__weak FxGripTrackTestEffect *weakEffect = nil;
 	@autoreleasepool {
-		FxTrackTestEffect *effect = [FxTrackTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+		FxGripTrackTestEffect *effect = [FxGripTrackTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 		effect.trackedUUID = kTrackTestUUIDOne;
 		weakEffect = effect;
 		XCTAssertNotNil(effect.instanceTracker, @"the tracker must load so the back-reference path is exercised");
@@ -305,11 +305,11 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 // filter, so the tracker cannot depend on it.
 - (void)testAnEffectDeallocRemovesItsRegistryEntryWithoutANotification
 {
-	FxTrackTestEffect *survivor = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:0];
+	FxGripTrackTestEffect *survivor = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:0];
 	[self addToDocument:survivor through:survivor.instanceTracker];
 
 	@autoreleasepool {
-		FxTrackTestEffect *transient = [FxTrackTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+		FxGripTrackTestEffect *transient = [FxGripTrackTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 		transient.trackedUUID = kTrackTestUUIDTwo;
 		[self addToDocument:transient through:transient.instanceTracker];
 		XCTAssertEqual(survivor.instanceCount, (NSUInteger)2);
@@ -323,11 +323,11 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Neighbour Start Times
 
-- (NSArray<FxTrackTestEffect *> *)threeRegisteredEffects
+- (NSArray<FxGripTrackTestEffect *> *)threeRegisteredEffects
 {
-	FxTrackTestEffect *early = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
-	FxTrackTestEffect *middle = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:5];
-	FxTrackTestEffect *late = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:9];
+	FxGripTrackTestEffect *early = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *middle = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:5];
+	FxGripTrackTestEffect *late = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:9];
 
 	[self addToDocument:early through:early.instanceTracker];
 	[self addToDocument:middle through:middle.instanceTracker];
@@ -338,18 +338,18 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testTheNextEffectIsTheNearestLaterInstance
 {
-	NSArray<FxTrackTestEffect *> *effects = [self threeRegisteredEffects];
+	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
 	FxGripInstanceTracker *tracker = effects[0].instanceTracker;
 
-	XCTAssertTrue(FxTrackTestTimesEqual([tracker startTimeOfNextEffect:effects[0]],
-										FxTrackTestMakeTime(5, 1)));
-	XCTAssertTrue(FxTrackTestTimesEqual([tracker startTimeOfNextEffect:effects[1]],
-										FxTrackTestMakeTime(9, 1)));
+	XCTAssertTrue(FxGripTrackTestTimesEqual([tracker startTimeOfNextEffect:effects[0]],
+										FxGripTrackTestMakeTime(5, 1)));
+	XCTAssertTrue(FxGripTrackTestTimesEqual([tracker startTimeOfNextEffect:effects[1]],
+										FxGripTrackTestMakeTime(9, 1)));
 }
 
 - (void)testTheNextEffectIsInvalidForTheLastInstance
 {
-	NSArray<FxTrackTestEffect *> *effects = [self threeRegisteredEffects];
+	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
 
 	CMTime next = [effects[0].instanceTracker startTimeOfNextEffect:effects[2]];
 
@@ -359,18 +359,18 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testThePreviousEffectIsTheNearestEarlierInstance
 {
-	NSArray<FxTrackTestEffect *> *effects = [self threeRegisteredEffects];
+	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
 	FxGripInstanceTracker *tracker = effects[0].instanceTracker;
 
-	XCTAssertTrue(FxTrackTestTimesEqual([tracker startTimeOfPreviousEffect:effects[2]],
-										FxTrackTestMakeTime(5, 1)));
-	XCTAssertTrue(FxTrackTestTimesEqual([tracker startTimeOfPreviousEffect:effects[1]],
-										FxTrackTestMakeTime(1, 1)));
+	XCTAssertTrue(FxGripTrackTestTimesEqual([tracker startTimeOfPreviousEffect:effects[2]],
+										FxGripTrackTestMakeTime(5, 1)));
+	XCTAssertTrue(FxGripTrackTestTimesEqual([tracker startTimeOfPreviousEffect:effects[1]],
+										FxGripTrackTestMakeTime(1, 1)));
 }
 
 - (void)testThePreviousEffectIsInvalidForTheFirstInstance
 {
-	NSArray<FxTrackTestEffect *> *effects = [self threeRegisteredEffects];
+	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
 
 	CMTime previous = [effects[0].instanceTracker startTimeOfPreviousEffect:effects[0]];
 
@@ -380,9 +380,9 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testAnUnregisteredPluginHasNoNextStartTime
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 	[self addToDocument:effect through:effect.instanceTracker];
-	FxTrackTestEffect *unregistered = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:3];
+	FxGripTrackTestEffect *unregistered = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:3];
 
 	CMTime next = [effect.instanceTracker startTimeOfNextEffect:unregistered];
 
@@ -392,9 +392,9 @@ static BOOL FxTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testAnUnregisteredPluginHasNoPreviousStartTime
 {
-	FxTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
+	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
 	[self addToDocument:effect through:effect.instanceTracker];
-	FxTrackTestEffect *unregistered = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:3];
+	FxGripTrackTestEffect *unregistered = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:3];
 
 	CMTime previous = [effect.instanceTracker startTimeOfPreviousEffect:unregistered];
 

@@ -7,8 +7,8 @@
 #define FxGripWindow_h
 
 #import <AppKit/AppKit.h>
-#import "FxExtension.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripExtension.h"
+#import "FxGripTileableEffect.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -31,7 +31,7 @@ extern NSString * const FxGripWindowExtensionKey;
 				The reply from the host arrives asynchronously. State changes and the completion
 				run on the caller's thread of the host's reply; present from the main thread.
 */
-@interface FxGripWindow : FxExtension
+@interface FxGripWindow : FxGripExtension
 
 /*! The host's parent view for the plug-in's window; nil when no window is presented. */
 @property (readonly, nullable, nonatomic) NSView *windowParentView;
@@ -83,7 +83,7 @@ extern NSString * const FxGripWindowExtensionKey;
 @end
 
 
-@interface FxTileableEffectBase (Window)
+@interface FxGripTileableEffect (Window)
 
 /*! The loaded FxGripWindow extension; nil when none is loaded. */
 @property (readonly, nullable, nonatomic) FxGripWindow *windowExtension;

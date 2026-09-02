@@ -15,11 +15,11 @@
 static const FxParameterId kGroupTestParameter = 71;
 
 /*! Records how far creation had progressed at the moment the recursion ran. */
-@interface FxGroupTestEffect : FxParamClassTestEffect
+@interface FxGripGroupTestEffect : FxGripParamClassTestEffect
 @property (nonatomic, assign) NSUInteger creationCallsAtRecursion;
 @end
 
-@implementation FxGroupTestEffect
+@implementation FxGripGroupTestEffect
 
 - (id)effectBase
 {
@@ -37,7 +37,7 @@ static const FxParameterId kGroupTestParameter = 71;
 @end
 
 @interface FxGripGroupParameterTests : XCTestCase
-@property (nonatomic, strong) FxGroupTestEffect *effect;
+@property (nonatomic, strong) FxGripGroupTestEffect *effect;
 @end
 
 @implementation FxGripGroupParameterTests
@@ -45,7 +45,7 @@ static const FxParameterId kGroupTestParameter = 71;
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxGroupTestEffect.alloc init];
+	self.effect = [FxGripGroupTestEffect.alloc init];
 }
 
 - (void)tearDown
@@ -72,19 +72,19 @@ static const FxParameterId kGroupTestParameter = 71;
 
 - (BOOL)addGroupWithExtra:(NSDictionary *)extra
 {
-	NSDictionary *config = FxParamClassTestConfig(kGroupTestParameter, kFxParameterType_Group, @"Shape", extra);
+	NSDictionary *config = FxGripParamClassTestConfig(kGroupTestParameter, kFxParameterType_Group, @"Shape", extra);
 	return [FxGripGroupParameter addParameter:config toEffect:(id)self.effect];
 }
 
 - (FxGripGroupParameter *)makeGroupWithID:(FxParameterId)parameterID
 {
-	NSDictionary *config = FxParamClassTestConfig(parameterID, kFxParameterType_Group, @"Shape", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(parameterID, kFxParameterType_Group, @"Shape", nil);
 	return [FxGripGroupParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
 - (FxGripFloatParameter *)makeLeafWithID:(FxParameterId)parameterID
 {
-	NSDictionary *config = FxParamClassTestConfig(parameterID, kFxParameterType_Float, @"Amount", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(parameterID, kFxParameterType_Float, @"Amount", nil);
 	return [FxGripFloatParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
@@ -153,7 +153,7 @@ static const FxParameterId kGroupTestParameter = 71;
 - (void)testAFailingChildListFailsTheGroupButStillClosesIt
 {
 	self.effect.groupRecursionSucceeds = NO;
-	self.effect.groupRecursionError = [NSError errorWithDomain:@"FxGroupTest" code:1 userInfo:nil];
+	self.effect.groupRecursionError = [NSError errorWithDomain:@"FxGripGroupTest" code:1 userInfo:nil];
 
 	XCTAssertFalse([self addGroupWithExtra:nil]);
 

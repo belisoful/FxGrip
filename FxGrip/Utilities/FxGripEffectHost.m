@@ -4,7 +4,7 @@
 //
 
 #import "FxGripEffectHost.h"
-#import "FxTileableEffectBase+Notifications.h"
+#import "FxGripTileableEffect+Notifications.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxGrip_ARC.h"
 
@@ -23,12 +23,12 @@ static id _Nullable FxGripHostResolveService(id<FxGripEffectHost> _Nullable host
 	}
 	NSMutableDictionary *userInfo = @{}.mutableCopy;
 	[host.notifier postNotificationName:name object:host userInfo:userInfo];
-	return userInfo[FxTileableEffectResolvedObjectKey];
+	return userInfo[FxGripTileableEffectResolvedObjectKey];
 }
 
 FxGripMetaManager * _Nullable FxGripHostMeta(id<FxGripEffectHost> _Nullable host)
 {
-	return FxGripHostResolveService(host, @selector(meta), FxTileableEffectResolveMetaName);
+	return FxGripHostResolveService(host, @selector(meta), FxGripTileableEffectResolveMetaName);
 }
 
 BOOL FxGripHostHasMeta(id<FxGripEffectHost> _Nullable host)
@@ -43,5 +43,5 @@ BOOL FxGripHostHasMeta(id<FxGripEffectHost> _Nullable host)
 FxGripParameterData * _Nullable FxGripHostParameterData(id<FxGripEffectHost> _Nullable host)
 {
 	return FxGripHostResolveService(host, @selector(parameterData),
-									FxTileableEffectResolveParameterDataName);
+									FxGripTileableEffectResolveParameterDataName);
 }

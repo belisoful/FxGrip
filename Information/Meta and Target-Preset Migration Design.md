@@ -1,11 +1,22 @@
-# Meta and Target-Preset Migration Design
+> **OBSOLETED by [Meta and Target-Preset Design.md](Meta%20and%20Target-Preset%20Design.md)**
+> (`Information/Meta and Target-Preset Design.md`).
+>
+> See the new file for the current design. This file is only for reference.
 
-Design document for porting the two remaining legacy GuruFx subsystems into the FxGrip
-architecture: the instance meta/tag subsystem (`GuruFxMetaManager`) and the target-preset
-system (`GuruFxTileableEffect`). This is a point-in-time engineering document; line numbers
-reference the repository as of 2026-07-20 (commit `faec2ea`) unless a section states
-otherwise. The legacy files are excluded from the build and must not be modified; they are
-the porting source only.
+---
+
+# Meta and Target-Preset Design
+
+Design and implementation record for two FxGrip subsystems: the instance meta/tag
+subsystem (`FxGripMetaManager`) and the target-preset system on `FxGripTileableEffect`.
+Class and file names use the current FxGrip names throughout. This is a point-in-time
+engineering document. Line numbers in sections 1 and 2 reference the original single-file
+implementation (commit `faec2ea`, 2026-07-20) this design is built from; that
+implementation predates the current layout, where `FxGripTileableEffect` is split into
+categories under `FxGrip/Utilities/`, so those line numbers do not map to the current
+source. Sections 1 and 2 describe the original behavior, including latent bugs; section 3
+lists the fixes the implementation applies. Later sections pin their own line numbers where
+stated.
 
 Revision 2026-07-27: the meta subsystem (sections 3.2–3.5, port steps 1–8) is ported and
 live in the working tree. Section 3.6 is replaced: the target-preset engine and the
@@ -14,12 +25,12 @@ replaced by steps 9–15. Sections 1, 2, 3.1–3.5, and 5 stand as written; supe
 statements carry an explicit `[Superseded]` marker. Line numbers inside section 3.6 and the
 revised step list reference the working tree as of 2026-07-27.
 
-Legacy sources:
+Reference implementation (commit `faec2ea`, since superseded by the current source):
 
-- `FxGrip/GuruFxMetaManager.h` / `FxGrip/GuruFxMetaManager.m`
-- `FxGrip/GuruFxTileableEffect.m` (`filterParameters:` 1416–1719, `parameterTargetPreset:parameterData:` 1806–1837, `setParameterTargetPreset:atTime:options:` 1840–1985, `completeParameterChanged:atTime:error:` 2141–2195, `meta` getter 1058–1080)
+- `FxGripMetaManager.h` / `FxGripMetaManager.m`
+- `FxGripTileableEffect.m` (`filterParameters:` 1416–1719, `parameterTargetPreset:parameterData:` 1806–1837, `setParameterTargetPreset:atTime:options:` 1840–1985, `completeParameterChanged:atTime:error:` 2141–2195, `meta` getter 1058–1080)
 
-New landing zones (status as of 2026-07-27):
+Current landing zones (status as of 2026-07-27):
 
 - `FxGrip/FxGripAPIAccessing/FxGripParameterTagsAPI_v1.m` (live; delegates to `effect.meta`; gains the preset core per section 3.6)
 - `FxGrip/FxGripAPIAccessing/FxGripDynamicParameterAPI_v4.m` (nine meta methods live at 314–373)
@@ -28,16 +39,16 @@ New landing zones (status as of 2026-07-27):
 - `FxGrip/CustomParameter/FxGripMetaManager.{h,m}` (live; the ported manager of section 3.2)
 - `FxGrip/Extensions/FxGripMeta.m` (live; registers the InstanceMeta parameter and seeds records per section 5)
 - `FxGrip/Parameters/FxParameter.h` (per-parameter `tags` / `meta` properties)
-- `FxGrip/Utilities/FxTileableEffectBase.{h,m}` (`meta` / `hasMeta` category live in `FxGripMeta.m` 255–272; posts `FxTileableEffectParameterChangedName`; `configurationForParameter:` at `.m` 619)
+- `FxGrip/Utilities/FxGripTileableEffect.{h,m}` (`meta` / `hasMeta` category live in `FxGripMeta.m` 255–272; posts `FxGripTileableEffectParameterChangedName`; `configurationForParameter:` at `.m` 619)
 - `FxGrip/Extensions/FxGripFactory.m` / `FxGripFactoryParameters.m` (intend to consume target presets for the licensing toggle; `@todo` at `FxGripFactoryParameters.m` 1057)
 
 ---
 
-## 1. Legacy meta subsystem, as built
+## 1. Meta subsystem: original implementation
 
 ### 1.1 Class and storage model
 
-`GuruFxMetaManager : NSObject <NSSecureCoding, NSCopying, FxCustomDataClasses>` is the
+`FxGripMetaManager : NSObject <NSSecureCoding, NSCopying, FxCustomDataClasses>` is the
 value of a hidden Custom parameter (`kFxParameterId_InstanceMeta`). It is compiled MRC
 (explicit `retain` / `[super dealloc]`). One instance exists per effect instance; the
 `effect` back-pointer is `assign` (non-retaining) and is restored with `setEffect:` after
@@ -55,7 +66,7 @@ Instance state:
 | `_tags` | `NSArray` (synthesized backing of `tags`) | Cached `[__tags allKeys]`. |
 | `_lastModified` | `CFAbsoluteTime` | Declared, auto-synthesized, never written. Only referenced from commented-out clock-change code (.m 233–243). Vestigial. |
 
-Per-parameter record keys (`kFxMetaProperty_*`, GuruFxMetaManager.h 19–50):
+Per-parameter record keys (`kFxMetaProperty_*`, FxGripMetaManager.h 19–50):
 
 | Key macro | String | Value |
 |---|---|---|
@@ -82,7 +93,7 @@ Per-parameter record keys (`kFxMetaProperty_*`, GuruFxMetaManager.h 19–50):
 
 - `+supportsSecureCoding` → YES.
 - `encodeWithCoder:` encodes `_data` with unkeyed `encodeObject:` (.m 107–110); `initWithCoder:` uses unkeyed `[aDecoder decodeObject]` plus manual `retain`, then re-aliases `__tags` / `__parameters` from the decoded root (.m 91–105). The effect pointer is not encoded; callers must `setEffect:` after decode.
-- `+classesForParameter` (.m 131–155) is the secure-decode allow-list surfaced to the host through the effect's `classesForCustomParameterID:` (`GuruFxTileableEffect.m` 246–250 returns `GuruFxMetaManager` unioned with this set). The set: `NSMutableDictionary, NSDictionary, NSMutableArray, NSArray, NSMutableString, NSString, NSMutableSet, NSSet, NSMutableOrderedSet, NSOrderedSet, NSNumber, NSDecimalNumber, NSColor, NSMutableData, NSData, NSValue, NSURL, NSUUID, NSFxTime`. The instance method `classesForParameter` returns nil (.m 812–814).
+- `+classesForParameter` (.m 131–155) is the secure-decode allow-list surfaced to the host through the effect's `classesForCustomParameterID:` (`FxGripTileableEffect.m` 246–250 returns `FxGripMetaManager` unioned with this set). The set: `NSMutableDictionary, NSDictionary, NSMutableArray, NSArray, NSMutableString, NSString, NSMutableSet, NSSet, NSMutableOrderedSet, NSOrderedSet, NSNumber, NSDecimalNumber, NSColor, NSMutableData, NSData, NSValue, NSURL, NSUUID, NSFxTime`. The instance method `classesForParameter` returns nil (.m 812–814).
 - `copyWithZone:` → `initWithMeta:` → `[metaManager.data mutableCopyRecursive]` (BEFoundation deep copy), fresh lock, same (assign) effect.
 - `isEqual:` compares `_data` only.
 - `initWithObjects:forKeys:count:` accepts pre-built root content and re-aliases the two root keys; effect is left nil (.m 162–179).
@@ -172,7 +183,7 @@ marks the manager dirty on every mutation.
 3. If `flags & kFxParameterFlag_CACHEDIRTY`: **bug** — `flags &= kFxParameterFlag_CACHEDIRTY`
    keeps only that bit instead of clearing it (`&= ~` intended), which also guarantees the
    subsequent CACHE branch never runs for this record. Pops `"value"` / `"valuetime"`; calls
-   `[GuruFxPreset setParameterValue:newValue toParameter:pid atTime:newValueTime.time withAPI:paramSetAPIv5]`
+   `[FxGripPreset setParameterValue:newValue toParameter:pid atTime:newValueTime.time withAPI:paramSetAPIv5]`
    only when both value and time exist (a value without a time is silently dropped).
 4. If `flags & kFxParameterFlag_CACHE`: same inversion **bug** (`flags &= kFxParameterFlag_CACHE`),
    then `[paramSetAPIv5 setParameterFlags:flags toParameter:pid]` — which writes a flags
@@ -199,7 +210,7 @@ multi-call atomicity by callers.
 
 ### 1.8 Effect-side attachment (legacy)
 
-- `meta` getter (`GuruFxTileableEffect.m` 1058–1080): `@synchronized(self)`; lazily reads
+- `meta` getter (`FxGripTileableEffect.m` 1058–1080): `@synchronized(self)`; lazily reads
   the custom parameter through `paramGetAPIv6_Raw` (bypassing the FxGrip wrapper layer to
   avoid recursion), `setEffect:self` on success, else `initWithEffect:self`.
 - `hasMeta` (1354–1357) → `self.properties.pluginManageMeta`, i.e. plist key
@@ -220,7 +231,7 @@ multi-call atomicity by callers.
 
 ---
 
-## 2. Legacy target-preset system, as built
+## 2. Target-preset system: original implementation
 
 A Menu or Toggle parameter can carry a target-preset definition under the key
 `kFxParameterProperty_TargetPreset` = `"targetpreset"` (`FxGripTypes.h` 140). The
@@ -245,7 +256,7 @@ Each per-index preset dictionary may contain (`FxGripTypes.h` 141–144):
 `splitByHumanDividers` (whitespace, newline, `.`, `,`, `;` — `FxGripPluginInfo.separatorSet`).
 
 **Flag/tag prefix semantics** (identical in all three implementations, e.g.
-`GuruFxTileableEffect.m` 1589–1605, 1936–1955; partial read-side already ported at
+`FxGripTileableEffect.m` 1589–1605, 1936–1955; partial read-side already ported at
 `NSDictionary+FxTileableEffect.m` 66–93):
 
 - leading `"-"` → remove the named item (strip one character);
@@ -261,7 +272,7 @@ Working example (`Extensions/FxGripDebugMenu.m` 63–74): the debug-activator To
 `targetpreset: @[ {flags: {@"9997": "+hidden"}}, {flags: {@"9997": "-hidden"}} ]` —
 toggle off hides the debug menu, toggle on reveals it.
 
-Options mask (`GuruFxTileableEffect.h` 93–99):
+Options mask (`FxGripTileableEffect.h` 93–99):
 `PresetAll = -1`, `PresetName = 1<<0`, `PresetFlags = 1<<1`, `PresetTags = 1<<2`,
 `PresetValues = 1<<3`.
 
@@ -319,7 +330,7 @@ Faithful stepwise pseudocode:
           if ![paramGetAPIv6 getParameterFlags:&paramFlags fromParameter:pid] → log, continue
           changed := NO
           for flagString in spec:
-              parse +/- prefix; bit := [GuruFxParameterUtility convertFlag:name]
+              parse +/- prefix; bit := [FxGripParameterUtility convertFlag:name]
               add  and bit not set → set bit,  changed := YES
               remove and bit set   → clear bit, changed := YES
           if changed and ![paramSetAPIv6 setParameterFlags:paramFlags toParameter:pid] → log, continue
@@ -384,7 +395,7 @@ The new architecture already covers part of the legacy manager:
   (`type`, `flags`, parent, menu items, selector) keyed by pid, persists them as the custom
   parameter `kFxParameterId_ParameterData` (9998), and implements the deferred-write
   pattern (`isCacheDirty` + `extFlush:` low-priority handler). This supersedes the
-  `{id, type, flags}` portion of `GuruFxMetaManager` and the `CACHE` flag mechanics.
+  `{id, type, flags}` portion of `FxGripMetaManager` and the `CACHE` flag mechanics.
 - `FxParameter` objects (`Parameters/FxParameter.h` 225–226) expose per-parameter `tags`
   and `meta` containers seeded from the configuration dictionary.
 
@@ -403,11 +414,11 @@ Public header: mark Public, add to `FxGrip.h`.
 /// Introduced in FxGrip 1.0.
 @interface FxGripMetaManager : NSObject <NSSecureCoding, NSCopying, FxCustomDataClasses>
 
-@property (readonly, weak, nullable) FxTileableEffectBase *effect;
+@property (readonly, weak, nullable) FxGripTileableEffect *effect;
 @property (readonly) BOOL unsaved;
 
-- (nonnull instancetype)initWithEffect:(FxTileableEffectBase *_Nullable)effect;
-- (void)setEffect:(FxTileableEffectBase *_Nonnull)effect;
+- (nonnull instancetype)initWithEffect:(FxGripTileableEffect *_Nullable)effect;
+- (void)setEffect:(FxGripTileableEffect *_Nonnull)effect;
 
 // Record management (records carry only "id", "tags", "meta"; type/flags live in
 // FxGripParameterData)
@@ -489,7 +500,7 @@ Legacy semantics dropped:
 - `kFxParameterFlag_CACHE` / `SAVING` bookkeeping inside the manager — the flag write path
   already flows through `FxNotifyAPI_ParameterSetFlags` and `FxGripParameterData`
   (`RemoveTempFlags` applied at `FxGripParameterData.m` 222).
-- Deferred `"value"` / `"valuetime"` writes and the `GuruFxPreset setParameterValue:` call
+- Deferred `"value"` / `"valuetime"` writes and the `FxGripPreset setParameterValue:` call
   in `saveMeta`. If deferred value writes return, they belong in a transaction object, not
   in per-record cache bits. `saveMeta` reduces to: if `unsaved`, clear it and
   `setCustomParameterValue:self toParameter:kFxParameterId_InstanceMeta atTime:kCMTimeZero`
@@ -511,10 +522,10 @@ Move to `FxGrip/FxGripTypes.h`:
 - `#define kFxParameterId_InstanceMeta (9995)` — new id. 9996/9997 belong to the debug
   activator/menu, 9998 to `FxGripParameterData`, 9999 to Apple. The legacy ids (9998 per
   the file comment, 9997 per the commented define) are both taken in the new layout.
-  Documents saved by legacy GuruFx builds stored the archive at 9998; FxGrip has not
+  Documents saved by legacy builds stored the archive at 9998; FxGrip has not
   shipped, so no migration shim is provided. `kFxParameterId_Maximum` in
   `FxGripDynamicParameterAPI_v4.h` (9998) already excludes user parameters from this range.
-- `FxGripPresetOptions` replaces `GuruFxPresetOptions`, same values, prefixed members:
+- `FxGripPresetOptions`, prefixed members:
   `FxGripPresetAll = NSUIntegerMax`, `FxGripPresetNames = 1<<0`, `FxGripPresetFlags = 1<<1`,
   `FxGripPresetTags = 1<<2`, `FxGripPresetValues = 1<<3`.
 
@@ -523,7 +534,7 @@ Move to `FxGrip/FxGripTypes.h`:
 Follow the `FxGripParameterData` pattern exactly (extension + accessor category in the
 same file pair). Complete `Extensions/FxGripMeta.{h,m}` and return it to the build:
 
-- `FxGripMeta : FxExtension` owns the `FxGripMetaManager`.
+- `FxGripMeta : FxGripExtension` owns the `FxGripMetaManager`.
 - `extAddParameters:` registers the InstanceMeta parameter (already written; converts to
   the `notification.userInfo.fxEffectParameters` form used by `FxGripParameterData.m`
   149–160; id `kFxParameterId_InstanceMeta`; flags
@@ -531,11 +542,11 @@ same file pair). Complete `Extensions/FxGripMeta.{h,m}` and return it to the bui
 - `extAddedToDocument:` loads the manager with
   `getCustomParameterValue:fromParameter:kFxParameterId_InstanceMeta` through
   `paramGetAPIv6` (the wrapper is safe here; the legacy `_Raw` bypass guarded against the
-  GuruFx wrapper's own meta recursion, which no longer exists), calls `setEffect:`, and
+  original wrapper's own meta recursion, which no longer exists), calls `setEffect:`, and
   falls back to a fresh manager.
 - `extAPIParameterAdd:` seeds a record for the new pid and transfers configuration state:
   the config dict's `"tags"` array and `"meta"` dictionary (this replaces the commented
-  legacy transfer at `GuruFxTileableEffect.m` 1775–1788; `"targetpreset"` and
+  legacy transfer at `FxGripTileableEffect.m` 1775–1788; `"targetpreset"` and
   `"resetvalue"` stay readable from `__configParameters` / `FxParameter` and are not
   duplicated into the manager).
 - `extAPIParameterRemove:` removes the record.
@@ -545,7 +556,7 @@ same file pair). Complete `Extensions/FxGripMeta.{h,m}` and return it to the bui
 - Accessors, declared in `FxGripMeta.h`, implemented beside the extension:
 
 ```objc
-@interface FxTileableEffectBase (Meta)
+@interface FxGripTileableEffect (Meta)
 @property (readonly, nullable) FxGripMetaManager *meta;   // extension's manager
 @property (readonly) BOOL hasMeta;                        // extension loaded and active
 - (nonnull FxGripMeta *)newMetaExtension;
@@ -553,7 +564,7 @@ same file pair). Complete `Extensions/FxGripMeta.{h,m}` and return it to the bui
 ```
 
 `hasMeta` is `[self extensionForClass:FxGripMeta.class] != nil`; extension activation is
-driven by the plist `manageMeta` boolean through the standard `FxExtension` activation
+driven by the plist `manageMeta` boolean through the standard `FxGripExtension` activation
 path, keeping the opt-in default.
 
 ### 3.5 API delegation (the 23 stubs)
@@ -578,7 +589,7 @@ signatures whose parameter types drifted from the header
 
 `FxGripPreset.m` / `FxGripPresetsAPI_v1.m` remain a separate port (file-based plugin
 presets). The only coupling removed by this design is `saveMeta`'s call into
-`GuruFxPreset setParameterValue:…`, which is dropped with the deferred-value mechanism.
+`FxGripPreset setParameterValue:…`, which is dropped with the deferred-value mechanism.
 
 `[Superseded 2026-07-27]` The paragraph above treats the file-preset subsystem as separate
 and out of scope. Section 3.6 merges target presets and file presets into one core on the
@@ -587,7 +598,7 @@ deletion of the four `FxGripDynamicParameterAPI_v4` orphan stubs stands.
 
 ### 3.6 Unified preset core on the tag API (replaces the 2026-07-20 category design)
 
-This section replaces the earlier `FxTileableEffectBase+TargetPresets` category proposal.
+This section replaces the earlier `FxGripTileableEffect+TargetPresets` category proposal.
 Line numbers reference the working tree as of 2026-07-27.
 
 #### 3.6.1 Decision and rationale
@@ -600,7 +611,7 @@ definition, and a tag selects the parameters a preset applies to. Evidence:
 
 - Both subsystems resolve definitions from the same tag-addressed table. Target-preset
   resolution reads `self.properties.pluginPresets[tag]`
-  (`GuruFxTileableEffect.m` 1823–1835; plist key `kProPlugPlugInX_PresetsProperty` =
+  (`FxGripTileableEffect.m` 1823–1835; plist key `kProPlugPlugInX_PresetsProperty` =
   `"presets"`, accessor `NSDictionary+FxTileableEffect.m` 179–183).
   `FxGripPresetsAPI_v1 +pluginPresetsForTag:` is documented "get plist presets"
   (`FxGripPresetsAPI_v1.h` 90–91). Same table, same tag addressing.
@@ -617,9 +628,8 @@ definition, and a tag selects the parameters a preset applies to. Evidence:
   (`FxGripParameterFlags.h` 82–83) are per-parameter opt-outs from preset meta and tag
   handling; they apply identically to capture and application in both subsystems.
 - `+[FxGripPreset setParameterValue:toParameter:atTime:withAPI:]` (`FxGripPreset.h` 63)
-  is the one typed apply primitive. The legacy deferred-value path already called it as
-  `GuruFxPreset` (`GuruFxMetaManager.m` 499); `GuruFxPreset.h` is absent from the
-  repository, so `FxGripPreset` is its only concrete home.
+  is the one typed apply primitive. The original deferred-value path (`FxGripMetaManager.m`
+  499) already called this primitive, so `FxGripPreset` is its only concrete home.
 - `getMetaKeys:forPreset:fromParameter:`, deleted from `FxGripDynamicParameterAPI_v4` as
   an orphan during the meta port, is a preset-core method under the merged design (3.6.4)
   and survives as a stub at `FxGripPreset.m` 44.
@@ -702,7 +712,7 @@ Resolution, `targetPresetForParameter:record:`:
 
 ```
 r := effect.hasMeta ? [effect.meta parameterData:pid] : nil
-r == nil → r := [effect configurationForParameter:pid]        // FxTileableEffectBase.m 619
+r == nil → r := [effect configurationForParameter:pid]        // FxGripTileableEffect.m 619
 r == nil → return nil
 record out-parameter := r
 def := r[kFxParameterProperty_TargetPreset]                    // "targetpreset"
@@ -760,7 +770,7 @@ the error is a deliberate change from the legacy unconditional YES.
 Key lookup: section dictionaries key by ID string. The core normalizes lookups to accept
 `NSString` and `NSNumber` keys (the `objectForIndex:` dual-lookup pattern,
 `NSDictionary+FxTileableEffect.m` 123–130). This corrects the legacy creation-time values
-bug at `GuruFxTileableEffect.m` 1656–1712: the loop iterates string keys but subscripts
+bug at `FxGripTileableEffect.m` 1656–1712: the loop iterates string keys but subscripts
 `presetValues[pid]` with an `NSNumber`, so plist-sourced values sections resolve to nil.
 
 #### 3.6.5 Target-preset trigger
@@ -786,15 +796,15 @@ The trigger is thin: menu/toggle change → index → definition → core.
       presetFlags:kFxParameterPreset_Default tag:resolvedTag] == nil
 ```
 
-Wiring: `FxGripMeta` observes `FxTileableEffectParameterChangedName` (posted by
-`parameterChanged:` at `FxTileableEffectBase.m` 571–581) at a negative priority so the
+Wiring: `FxGripMeta` observes `FxGripTileableEffectParameterChangedName` (posted by
+`parameterChanged:` at `FxGripTileableEffect.m` 571–581) at a negative priority so the
 per-parameter `startChangedTime:` handlers run first. The definitions live in the meta
 record (section 5), the core lives on the tags API, and the extension already owns the
 record lifecycle, so the trigger belongs there. The handler:
 
 ```
-pid  := userInfo[FxTileableEffectParameterChangedIDKey].unsignedIntValue     // required
-time := CMTime from userInfo[FxTileableEffectParameterChangedAtTimeKey]
+pid  := userInfo[FxGripTileableEffectParameterChangedIDKey].unsignedIntValue     // required
+time := CMTime from userInfo[FxGripTileableEffectParameterChangedAtTimeKey]
         (kCMTimeZero when the key is absent)
 [tagsAPI applyTargetPresetForParameter:pid atTime:time
         options:(FxGripPresetFlags | FxGripPresetTags | FxGripPresetValues)]
@@ -806,7 +816,7 @@ resetValue → [FxGripPreset setParameterValue:resetValue toParameter:pid atTime
 
 Ordering contract: value work first, reset value next, names last. Setting a parameter
 name and then reading a String parameter glitches in Final Cut Pro
-(`GuruFxTileableEffect.m` 2186–2188). The legacy `completeParameterChanged:` applies
+(`FxGripTileableEffect.m` 2186–2188). The legacy `completeParameterChanged:` applies
 `PresetName` before the reset value (2172–2182); the comment contract wins and the port
 applies names last. Errors propagate through the existing `userInfo.fxError` convention.
 
@@ -831,7 +841,7 @@ debug-activator toggle through `options:FxGripPresetFlags`) and the
 definition, apply the default-index preset to the configuration dictionaries (names →
 `"name"`, flags → the flag-string array, tags → the `"tags"` array created on demand,
 values → the type dispatch into defaults). `addParametersWithError:` calls it inside the
-existing `postBlock` after `flattenDictionaryParameters:` (`FxTileableEffectBase.m`
+existing `postBlock` after `flattenDictionaryParameters:` (`FxGripTileableEffect.m`
 463–466), so extension-added parameters participate. This path runs before any host API
 exists and stays outside the tags API. No `"default"` fallback on this path, matching
 legacy. The string/number key fix (3.6.4) applies here as well.
@@ -877,7 +887,7 @@ Flow into the core:
 
 `FxProjectAPI mediaFolderURL:error:` provides a plug-in data folder inside a Motion
 project's media folder, surfaced already as `projectMediaFolder`
-(`FxTileableEffectBase+ProjectProperties`). It is the only such API; the protocol declares
+(`FxGripTileableEffect+ProjectProperties`). It is the only such API; the protocol declares
 three methods total and offers no unconditional variant. The URL is nil when the project
 is unsaved or was saved without "Collect Media", an opt-in save option, so the folder is
 absent for most projects. A preset source that is usually missing is less useful than no
@@ -1076,7 +1086,7 @@ Remaining open:
    - The sample's `CreatedByParameterID` (117) is evidence for open question 4.
 4. `kFxPresetProperty_CreatedByParameterId` semantics: which trigger path creates a
    preset from a push-button parameter.
-5. The min/max/slider preset sections (legacy placeholder at `GuruFxTileableEffect.m`
+5. The min/max/slider preset sections (legacy placeholder at `FxGripTileableEffect.m`
    1973): in scope or dropped.
 6. RESOLVED 2026-07-28. The file layer's apply methods take an `atTime:` argument and
    document `kCMTimeZero` as the value for a user-initiated load. Two findings decide it:
@@ -1122,7 +1132,7 @@ same wrappers.
 Tests are XCTest files in `FxGripTests/` (synchronized group), one per class, named
 `<ClassName>Tests.m`. Host API responses are mocked by subscribing to the effect's
 `notifier` for the `FxNotifyAPI_*` names and filling `userInfo` (pattern in
-`FxTileableEffectNotificationTests.m`). Each step ends with the Full Check (arm64 test,
+`FxGripTileableEffectNotificationTests.m`). Each step ends with the Full Check (arm64 test,
 x86_64 test, ASan test, docbuild).
 
 Status 2026-07-27: steps 1–8 are landed in the working tree (constants, the manager, the
@@ -1131,7 +1141,7 @@ Steps 9–15 replace the former steps 9–11 and implement the section 3.6 unifi
 
 1. **Constants and enum.** Add `kFxParameterId_InstanceMeta` (9995), the five ported
    `kFxMetaProperty_*` defines, and `FxGripPresetOptions` to `FxGripTypes.h`. Fix the
-   `__configParameters` array/dictionary assignment at `FxTileableEffectBase.m` 455.
+   `__configParameters` array/dictionary assignment at `FxGripTileableEffect.m` 455.
    Tests: extend `FxGripPluginTests.m` (or a small `FxGripTypesTests.m`) asserting id
    uniqueness across 9995–9999 and that `parametersConfiguration`-driven setup populates
    `__configParameters` as a pid-keyed dictionary (observable through
@@ -1162,7 +1172,7 @@ Steps 9–15 replace the former steps 9–11 and implement the section 3.6 unifi
 
 6. **FxGripMeta extension + effect attachment.** Return `Extensions/FxGripMeta.m` to the
    build; implement lifecycle handlers; add the `(Meta)` category.
-   Tests (`FxExtensionTests.m` additions or `FxGripMetaTests.m`): `hasMeta` tracks the
+   Tests (`FxGripExtensionTests.m` additions or `FxGripMetaTests.m`): `hasMeta` tracks the
    `manageMeta` plist property; InstanceMeta parameter registered with the documented
    flags at id 9995; `extAPIParameterAdd:` seeds records and transfers config `"tags"` /
    `"meta"`; `extAddedToDocument:` adopts a mocked `getCustomParameterValue:` result and
@@ -1209,7 +1219,7 @@ Steps 9–15 replace the former steps 9–11 and implement the section 3.6 unifi
     returned as the first error.
 
 12. **Target-preset trigger.** `applyTargetPresetForParameter:atTime:options:` plus the
-    `FxGripMeta` observer for `FxTileableEffectParameterChangedName` with the ordering
+    `FxGripMeta` observer for `FxGripTileableEffectParameterChangedName` with the ordering
     contract (values/flags/tags, then `resetvalue`, names last).
     Tests (`FxGripMetaTests.m` additions): array bounds-check → no-op; dictionary
     `@(i)` / `"i"` / `"default"` fallback; toggle value 0/1; Menu int value; non-Menu/
@@ -1241,7 +1251,7 @@ Steps 9–15 replace the former steps 9–11 and implement the section 3.6 unifi
 
 15. **Consumers.** Re-enable the debug-menu preset call (`FxGripDebugMenu.m` ~218–221);
     wire the factory licensing toggle (`FxGripFactoryParameters.m` 1057).
-    Tests (extend `FxExtensionTests.m`): the debug activator toggle hides and reveals the
+    Tests (extend `FxGripExtensionTests.m`): the debug activator toggle hides and reveals the
     debug menu through the preset path.
 
 Dependencies: 9 precedes 10–15; 11 needs 10 (the values branch calls the primitive); 12

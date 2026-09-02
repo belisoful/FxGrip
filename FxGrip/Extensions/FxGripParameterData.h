@@ -10,7 +10,7 @@
 
 #import "FxGripCustomExtension.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 
 // Record keys. These alias the parameter property keys the notification payloads carry,
 // so the stored records and the accessors name the same entries.
@@ -49,7 +49,7 @@
 
 
 
-@interface FxTileableEffectBase (ParameterData)
+@interface FxGripTileableEffect (ParameterData)
 
 @property (readonly, nullable, nonatomic) FxGripParameterData* parameterData;
 

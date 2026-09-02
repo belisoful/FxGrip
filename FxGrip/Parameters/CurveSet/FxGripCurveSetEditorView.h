@@ -12,7 +12,7 @@
 #import "FxGripCurveSetData.h"
 #import "FxGripTypes.h"
 
-@protocol FxTileableEffectBase;
+@protocol FxGripTileableEffect;
 
 /*!
 	@class      FxGripCurveSetEditorView
@@ -48,6 +48,15 @@
 				Defaults to kFxGripCurveSlowDragScaleDefault.
 */
 @property (nonatomic, assign) CGFloat slowDragScale;
+
+/*!
+	@property   lineWidth
+	@abstract   The curve stroke width, in view points, applied to every strip.
+	@discussion Setting propagates to the existing strips and to strips added later.
+				Each strip clamps to [0.1, 8.0]; the getter reports the clamped value.
+				Defaults to kFxGripCurveLineWidthDefault.
+*/
+@property (nonatomic, assign) CGFloat lineWidth;
 
 /*!
 	@method     addEditorForKey:title:role:domain:background:

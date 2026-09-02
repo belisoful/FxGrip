@@ -4,8 +4,8 @@
 //
 
 #import "FxGripDividerParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripDividerData.h"
 #import "FXBox.h"
 #import "FxGrip_ARC.h"

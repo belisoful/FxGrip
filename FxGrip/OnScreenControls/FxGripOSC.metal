@@ -2,7 +2,7 @@
 //  FxGripOSC.metal
 //  FxGrip
 //
-//  The flat-color pipeline FxOnScreenControlBase draws with. Vertices arrive in
+//  The flat-color pipeline FxGripOnScreenControl draws with. Vertices arrive in
 //  viewport-centered pixel coordinates; the fragment color is a uniform.
 //
 

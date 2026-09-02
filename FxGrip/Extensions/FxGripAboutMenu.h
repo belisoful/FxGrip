@@ -8,11 +8,11 @@
 #ifndef FxGripAboutMenu_h
 #define FxGripAboutMenu_h
 
-#import "FxExtension.h"
+#import "FxGripExtension.h"
 
 extern NSString*	const _Nonnull FxGripAboutMenuExtensionKey;
 
-@interface FxGripAboutMenu : FxExtension
+@interface FxGripAboutMenu : FxGripExtension
 
 
 @end

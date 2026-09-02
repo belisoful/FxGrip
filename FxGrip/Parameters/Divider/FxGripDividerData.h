@@ -12,7 +12,7 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxCustomDataClasses.h"
+#import "FxGripCustomDataClasses.h"
 #import "FxGripMutableParameter.h"
 #import "FxGripCustomViewData.h"
 #import "FxDivider.h"

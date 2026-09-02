@@ -8,18 +8,18 @@
 #ifndef FxGripDebugMenu_h
 #define FxGripDebugMenu_h
 
-#import "FxExtension.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripExtension.h"
+#import "FxGripTileableEffect.h"
 
 extern NSString*	const _Nonnull FxGripDebugMenuExtensionKey;
 
-@interface FxGripDebugMenu : FxExtension
+@interface FxGripDebugMenu : FxGripExtension
 
 
 @end
 
 
-@interface FxTileableEffectBase (DebugMenu)
+@interface FxGripTileableEffect (DebugMenu)
 
 @property (readonly, nullable) FxGripDebugMenu *debugMenu;
 

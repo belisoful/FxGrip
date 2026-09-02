@@ -5,8 +5,8 @@ FxGrip is a framework for FxPlug praviding advanced features and functionality n
 ## Overview
 
 There are two primary classes
-	- FxTileableEffectBase
-	- FxTileableGeneratorBase
+	- FxGripTileableEffect
+	- FxGripTileableGenerator
 
 ## Topics
 
@@ -16,7 +16,7 @@ There are multiple topics introduced
 
 - <doc:Adoption>
 
-### FxTileableEffectBase
+### FxGripTileableEffect
 
 ### Registrars
 
@@ -31,7 +31,7 @@ This puts a wrapper around the standard FxPlug API Protocols and adds its own AP
 - <doc:CustomControls>
 - <doc:WebContent>
 
-### FxExtension
+### FxGripExtension
 
 FxGripAboutMenu
 FxGripDebugMenu

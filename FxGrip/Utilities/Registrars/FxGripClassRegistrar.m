@@ -4,7 +4,7 @@
 
 
 /*!
- Within the mainBundle, the property `FxRegisteredPlugins` contains the list of plugin effect classes via `NSString*` (human separated), NSArray, or NSDictionary values.
+ Within the mainBundle, the property `FxGripRegisteredPlugins` contains the list of plugin effect classes via `NSString*` (human separated), NSArray, or NSDictionary values.
  */
 
 @implementation FxGripClassRegistrar

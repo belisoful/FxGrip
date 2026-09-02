@@ -3,50 +3,45 @@
 //  FxGripTests
 //
 //  Unit tests for the dynamic parameter wrappers. FxGripDynamicParameterAPI_v3 forwards
-//  the host's dynamic API and posts a notification for each mutation it completes;
-//  FxGripDynamicParameterAPI_v4 adds parameter existence and type queries, the ID
-//  enumeration, and the single-bound convenience setters built on the v3 bounds pair.
+//  the host's dynamic API and posts a notification for each mutation it completes.
+//  FxGripParameterInfoAPI_v1 adds parameter existence and type queries, the ID
+//  enumeration, and menu entries; FxGripParameterBoundsAPI_v1 adds the single-bound
+//  convenience setters built on the v3 bounds pair.
 //
 
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripDynamicParameterAPI_v3.h>
-#import <FxGrip/FxGripDynamicParameterAPI_v4.h>
+#import <FxGrip/FxGripParameterInfoAPI_v1.h>
+#import <FxGrip/FxGripParameterBoundsAPI_v1.h>
 
 static const FxParameterId kDynamicTestParameter = 41;
 
-// FxGripDynamicParameterAPI_v4 implements parameter:entries:, but neither its class
-// interface nor FxDynamicParameterAPI_v4 declares the selector, so it is redeclared here.
-// The implementation comes from the linked framework.
-@interface FxGripDynamicParameterAPI_v4 (FxGripDynamicParameterAPITests)
-- (nullable NSError *)parameter:(FxParameterId)parameterID entries:(NSArray<NSString *> *_Nullable *_Nonnull)entries;
-@end
-
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
-static NSNotificationCenter *FxDynamicTestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripDynamicTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
 }
 
 // CoreMedia is not linked, so CMTime values are built without its symbols.
-static CMTime FxDynamicTestTime(void)
+static CMTime FxGripDynamicTestTime(void)
 {
 	return (CMTime){.value = 4, .timescale = 25, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static NSError *FxDynamicTestError(void)
+static NSError *FxGripDynamicTestError(void)
 {
-	return [NSError errorWithDomain:@"FxDynamicTest" code:7 userInfo:nil];
+	return [NSError errorWithDomain:@"FxGripDynamicTest" code:7 userInfo:nil];
 }
 
 #pragma mark - Test doubles
 
 /*! Stands in for the host's FxDynamicParameterAPI_v3, recording every forwarded call. */
-@interface FxDynamicTestStubAPI : NSObject
+@interface FxGripDynamicTestStubAPI : NSObject
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *calls;
 @property (nonatomic, strong) NSError *nextError;
 @property (nonatomic, copy) NSString *hostName;
@@ -63,7 +58,7 @@ static NSError *FxDynamicTestError(void)
 @property (nonatomic, assign) CMTime lastDefaultsTime;
 @end
 
-@implementation FxDynamicTestStubAPI
+@implementation FxGripDynamicTestStubAPI
 
 - (instancetype)init
 {
@@ -189,7 +184,7 @@ static NSError *FxDynamicTestError(void)
 	self.lastDefaultsTime = time;
 	[self record:@"setdefaults" arguments:@{}];
 	if (!self.defaultsSucceed && error) {
-		*error = FxDynamicTestError();
+		*error = FxGripDynamicTestError();
 	}
 	return self.defaultsSucceed;
 }
@@ -197,17 +192,17 @@ static NSError *FxDynamicTestError(void)
 @end
 
 /*!
-	FxTileableEffectBase's designated initializer registers into the process-wide
+	FxGripTileableEffect's designated initializer registers into the process-wide
 	notification center, so the wrappers are exercised against a stub carrying an isolated
 	notifier. The name and menu setters also subscript the effect for the object they post
 	against; the stub reports no parameter object.
 */
-@interface FxDynamicTestStubEffect : NSObject
+@interface FxGripDynamicTestStubEffect : NSObject
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @property (nonatomic, assign) BOOL hasMeta;
 @end
 
-@implementation FxDynamicTestStubEffect
+@implementation FxGripDynamicTestStubEffect
 
 - (id)effectBase
 {
@@ -220,7 +215,7 @@ static NSError *FxDynamicTestError(void)
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxDynamicTestMakePriorityCenter();
+		_notifier = FxGripDynamicTestMakePriorityCenter();
 	}
 	return self;
 }
@@ -235,8 +230,8 @@ static NSError *FxDynamicTestError(void)
 #pragma mark - Tests
 
 @interface FxGripDynamicParameterAPITests : XCTestCase
-@property (nonatomic, strong) FxDynamicTestStubEffect *effect;
-@property (nonatomic, strong) FxDynamicTestStubAPI *hostAPI;
+@property (nonatomic, strong) FxGripDynamicTestStubEffect *effect;
+@property (nonatomic, strong) FxGripDynamicTestStubAPI *hostAPI;
 @property (nonatomic, strong) NSMutableArray<NSNotification *> *posted;
 // The notifier holds its observers weakly, so every token is retained for the test.
 @property (nonatomic, strong) NSMutableArray *observerTokens;
@@ -247,8 +242,8 @@ static NSError *FxDynamicTestError(void)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxDynamicTestStubEffect.alloc init];
-	self.hostAPI = [FxDynamicTestStubAPI.alloc init];
+	self.effect = [FxGripDynamicTestStubEffect.alloc init];
+	self.hostAPI = [FxGripDynamicTestStubAPI.alloc init];
 	self.posted = NSMutableArray.new;
 	self.observerTokens = NSMutableArray.new;
 	for (NSNotificationName name in self.recordedNotificationNames) {
@@ -274,16 +269,16 @@ static NSError *FxDynamicTestError(void)
 
 - (NSArray<NSNotificationName> *)recordedNotificationNames
 {
-	return @[FxNotifyAPI_ParameterRemoveName,
-			 FxNotifyAPI_ParameterGetNameName,
-			 FxNotifyAPI_ParameterSetNamePreName,
-			 FxNotifyAPI_ParameterSetNameName,
-			 FxNotifyAPI_ParameterGetTypeName,
-			 FxNotifyAPI_ParameterSetFloatBoundsName,
-			 FxNotifyAPI_ParameterSetIntBoundsName,
-			 FxNotifyAPI_ParameterGetMenuName,
-			 FxNotifyAPI_ParameterSetMenuPreName,
-			 FxNotifyAPI_ParameterSetMenuName];
+	return @[FxGripNotifyAPI_ParameterRemoveName,
+			 FxGripNotifyAPI_ParameterGetNameName,
+			 FxGripNotifyAPI_ParameterSetNamePreName,
+			 FxGripNotifyAPI_ParameterSetNameName,
+			 FxGripNotifyAPI_ParameterGetTypeName,
+			 FxGripNotifyAPI_ParameterSetFloatBoundsName,
+			 FxGripNotifyAPI_ParameterSetIntBoundsName,
+			 FxGripNotifyAPI_ParameterGetMenuName,
+			 FxGripNotifyAPI_ParameterSetMenuPreName,
+			 FxGripNotifyAPI_ParameterSetMenuName];
 }
 
 - (void)observeName:(NSNotificationName)name usingBlock:(void (^)(NSNotification *notification))block
@@ -335,9 +330,14 @@ static NSError *FxDynamicTestError(void)
 	return [FxGripDynamicParameterAPI_v3.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
 }
 
-- (FxGripDynamicParameterAPI_v4 *)apiV4
+- (FxGripParameterInfoAPI_v1 *)apiInfo
 {
-	return [FxGripDynamicParameterAPI_v4.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
+	return [FxGripParameterInfoAPI_v1.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
+}
+
+- (FxGripParameterBoundsAPI_v1 *)apiBounds
+{
+	return [FxGripParameterBoundsAPI_v1.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
 }
 
 #pragma mark v3 pass-through
@@ -362,7 +362,7 @@ static NSError *FxDynamicTestError(void)
 {
 	NSError *error = nil;
 
-	XCTAssertTrue([self.apiV3 setAsDefaultsAtTime:FxDynamicTestTime() withError:&error]);
+	XCTAssertTrue([self.apiV3 setAsDefaultsAtTime:FxGripDynamicTestTime() withError:&error]);
 
 	XCTAssertNil(error);
 	XCTAssertEqual(self.hostAPI.lastDefaultsTime.value, (int64_t)4);
@@ -374,9 +374,9 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.defaultsSucceed = NO;
 	NSError *error = nil;
 
-	XCTAssertFalse([self.apiV3 setAsDefaultsAtTime:FxDynamicTestTime() withError:&error]);
+	XCTAssertFalse([self.apiV3 setAsDefaultsAtTime:FxGripDynamicTestTime() withError:&error]);
 
-	XCTAssertEqualObjects(error.domain, @"FxDynamicTest");
+	XCTAssertEqualObjects(error.domain, @"FxGripDynamicTest");
 }
 
 #pragma mark v3 removeParameter:
@@ -386,8 +386,8 @@ static NSError *FxDynamicTestError(void)
 	XCTAssertNil([self.apiV3 removeParameter:kDynamicTestParameter]);
 
 	XCTAssertEqualObjects(self.hostMethods, @[@"remove"]);
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterRemoveName]);
-	NSDictionary *userInfo = [self notificationNamed:FxNotifyAPI_ParameterRemoveName].userInfo;
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterRemoveName]);
+	NSDictionary *userInfo = [self notificationNamed:FxGripNotifyAPI_ParameterRemoveName].userInfo;
 	XCTAssertEqualObjects(userInfo[kFxParameterProperty_Id], @(kDynamicTestParameter));
 	XCTAssertEqualObjects(userInfo.fxParameter,
 						  @{kFxParameterProperty_Id: @(kDynamicTestParameter)});
@@ -395,9 +395,9 @@ static NSError *FxDynamicTestError(void)
 
 - (void)testAFailedRemovalReturnsTheHostErrorAndPostsNothing
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 
-	XCTAssertEqualObjects([self.apiV3 removeParameter:kDynamicTestParameter], FxDynamicTestError());
+	XCTAssertEqualObjects([self.apiV3 removeParameter:kDynamicTestParameter], FxGripDynamicTestError());
 
 	XCTAssertEqualObjects(self.posted, @[]);
 }
@@ -412,7 +412,7 @@ static NSError *FxDynamicTestError(void)
 	XCTAssertNil([self.apiV3 parameter:kDynamicTestParameter name:&name]);
 
 	XCTAssertEqualObjects(name, @"HostName");
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterGetNameName]);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterGetNameName]);
 }
 
 - (void)testANameReadTheHostAnswersWithNoNameAndNoErrorPostsNothing
@@ -428,10 +428,10 @@ static NSError *FxDynamicTestError(void)
 
 - (void)testAFailedNameReadReturnsTheHostErrorAndPostsNothing
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 	NSString *name = nil;
 
-	XCTAssertEqualObjects([self.apiV3 parameter:kDynamicTestParameter name:&name], FxDynamicTestError());
+	XCTAssertEqualObjects([self.apiV3 parameter:kDynamicTestParameter name:&name], FxGripDynamicTestError());
 
 	XCTAssertEqualObjects(self.posted, @[]);
 	XCTAssertNil(name);
@@ -444,34 +444,34 @@ static NSError *FxDynamicTestError(void)
 	XCTAssertNil([self.apiV3 setParameter:kDynamicTestParameter name:@"NewName"]);
 
 	XCTAssertEqualObjects([self hostCallNamed:@"setname"][@"name"], @"NewName");
-	XCTAssertEqualObjects(self.postedNames, (@[FxNotifyAPI_ParameterSetNamePreName,
-											   FxNotifyAPI_ParameterSetNameName]));
-	NSDictionary *payload = [self notificationNamed:FxNotifyAPI_ParameterSetNameName].userInfo.fxParameter;
+	XCTAssertEqualObjects(self.postedNames, (@[FxGripNotifyAPI_ParameterSetNamePreName,
+											   FxGripNotifyAPI_ParameterSetNameName]));
+	NSDictionary *payload = [self notificationNamed:FxGripNotifyAPI_ParameterSetNameName].userInfo.fxParameter;
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Id], @(kDynamicTestParameter));
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Name], @"NewName");
 }
 
 - (void)testAnObserverSettingAnErrorOnTheNamePreNotificationAbortsTheRename
 {
-	[self observeName:FxNotifyAPI_ParameterSetNamePreName usingBlock:^(NSNotification *notification) {
-		((NSMutableDictionary *)notification.userInfo).fxError = FxDynamicTestError();
+	[self observeName:FxGripNotifyAPI_ParameterSetNamePreName usingBlock:^(NSNotification *notification) {
+		((NSMutableDictionary *)notification.userInfo).fxError = FxGripDynamicTestError();
 	}];
 
 	XCTAssertEqualObjects([self.apiV3 setParameter:kDynamicTestParameter name:@"NewName"],
-						  FxDynamicTestError());
+						  FxGripDynamicTestError());
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterSetNamePreName]);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterSetNamePreName]);
 }
 
 - (void)testARenameTheHostRefusesPostsOnlyThePreNotification
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 
 	XCTAssertEqualObjects([self.apiV3 setParameter:kDynamicTestParameter name:@"NewName"],
-						  FxDynamicTestError());
+						  FxGripDynamicTestError());
 
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterSetNamePreName]);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterSetNamePreName]);
 }
 
 #pragma mark v3 bounds
@@ -490,7 +490,7 @@ static NSError *FxDynamicTestError(void)
 																	@"max": @1.0,
 																	@"slidermin": @(-0.5),
 																	@"slidermax": @0.5}));
-	NSDictionary *payload = [self notificationNamed:FxNotifyAPI_ParameterSetFloatBoundsName].userInfo.fxParameter;
+	NSDictionary *payload = [self notificationNamed:FxGripNotifyAPI_ParameterSetFloatBoundsName].userInfo.fxParameter;
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Minimum], @(-1.0));
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Maximum], @1.0);
 	XCTAssertEqualObjects(payload[kFxParameterProperty_SliderMinimum], @(-0.5));
@@ -499,7 +499,7 @@ static NSError *FxDynamicTestError(void)
 
 - (void)testFloatBoundsTheHostRefusesPostNothing
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 
 	XCTAssertNotNil([self.apiV3 setParameter:kDynamicTestParameter
 								floatMinimum:0 maximum:1 sliderMinimum:0 sliderMaximum:1]);
@@ -541,14 +541,14 @@ static NSError *FxDynamicTestError(void)
 																   @"max": @100,
 																   @"slidermin": @2,
 																   @"slidermax": @50}));
-	NSDictionary *payload = [self notificationNamed:FxNotifyAPI_ParameterSetIntBoundsName].userInfo.fxParameter;
+	NSDictionary *payload = [self notificationNamed:FxGripNotifyAPI_ParameterSetIntBoundsName].userInfo.fxParameter;
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Minimum], @1);
 	XCTAssertEqualObjects(payload[kFxParameterProperty_SliderMaximum], @50);
 }
 
 - (void)testIntBoundsTheHostRefusesPostNothing
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 
 	XCTAssertNotNil([self.apiV3 setParameter:kDynamicTestParameter
 								  intMinimum:0 maximum:1 sliderMinimum:0 sliderMaximum:1]);
@@ -581,7 +581,7 @@ static NSError *FxDynamicTestError(void)
 - (void)testSetPopupMenuPostsThePreNotificationCarryingTheEntriesAndDefault
 {
 	__block NSDictionary *seen = nil;
-	[self observeName:FxNotifyAPI_ParameterSetMenuPreName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterSetMenuPreName usingBlock:^(NSNotification *notification) {
 		seen = notification.userInfo.fxParameter.copy;
 	}];
 
@@ -602,38 +602,38 @@ static NSError *FxDynamicTestError(void)
 										   entries:entries
 									  defaultValue:1]);
 
-	XCTAssertEqualObjects(self.postedNames, (@[FxNotifyAPI_ParameterSetMenuPreName,
-											   FxNotifyAPI_ParameterSetMenuName]));
+	XCTAssertEqualObjects(self.postedNames, (@[FxGripNotifyAPI_ParameterSetMenuPreName,
+											   FxGripNotifyAPI_ParameterSetMenuName]));
 }
 
 - (void)testAnObserverSettingAnErrorOnTheMenuPreNotificationAbortsTheChange
 {
-	[self observeName:FxNotifyAPI_ParameterSetMenuPreName usingBlock:^(NSNotification *notification) {
-		((NSMutableDictionary *)notification.userInfo).fxError = FxDynamicTestError();
+	[self observeName:FxGripNotifyAPI_ParameterSetMenuPreName usingBlock:^(NSNotification *notification) {
+		((NSMutableDictionary *)notification.userInfo).fxError = FxGripDynamicTestError();
 	}];
 
 	XCTAssertEqualObjects([self.apiV3 setPopupMenuParameter:kDynamicTestParameter
 													entries:@[@"One"]
 											   defaultValue:0],
-						  FxDynamicTestError());
+						  FxGripDynamicTestError());
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }
 
 - (void)testAMenuChangeTheHostRefusesPostsOnlyThePreNotification
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 
 	XCTAssertNotNil([self.apiV3 setPopupMenuParameter:kDynamicTestParameter
 											  entries:@[@"One"]
 										 defaultValue:0]);
 
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterSetMenuPreName]);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterSetMenuPreName]);
 }
 
 /*!
 	DEFECT: setPopupMenuParameter:entries:defaultValue: reads the entries and the default
-	index back through the guarded NSDictionary(FxTileableEffect) accessors, which answer
+	index back through the guarded NSDictionary(FxGripTileableEffect) accessors, which answer
 	only for a payload carrying an ID, a type, and a name. The payload the method builds
 	carries an ID alone, so the host always receives nil entries and index 0. This test
 	states the intended forwarding and fails today.
@@ -656,19 +656,19 @@ static NSError *FxDynamicTestError(void)
 {
 	self.hostAPI.parameterIDs = @[@1, @(kDynamicTestParameter), @3];
 
-	XCTAssertTrue([self.apiV4 parameterExists:kDynamicTestParameter]);
+	XCTAssertTrue([self.apiInfo parameterExists:kDynamicTestParameter]);
 }
 
 - (void)testParameterExistsIsNOForAnIDTheHostDoesNotReport
 {
 	self.hostAPI.parameterIDs = @[@1, @2];
 
-	XCTAssertFalse([self.apiV4 parameterExists:kDynamicTestParameter]);
+	XCTAssertFalse([self.apiInfo parameterExists:kDynamicTestParameter]);
 }
 
 - (void)testParameterExistsIsNOWhenTheHostHasNoParameters
 {
-	XCTAssertFalse([self.apiV4 parameterExists:kDynamicTestParameter]);
+	XCTAssertFalse([self.apiInfo parameterExists:kDynamicTestParameter]);
 	XCTAssertEqualObjects(self.hostMethods, @[@"count"]);
 }
 
@@ -676,7 +676,7 @@ static NSError *FxDynamicTestError(void)
 {
 	self.hostAPI.parameterIDs = @[@(kDynamicTestParameter), @2, @3];
 
-	XCTAssertTrue([self.apiV4 parameterExists:kDynamicTestParameter]);
+	XCTAssertTrue([self.apiInfo parameterExists:kDynamicTestParameter]);
 	XCTAssertEqualObjects(self.hostMethods, (@[@"count", @"idatindex"]));
 }
 
@@ -684,41 +684,41 @@ static NSError *FxDynamicTestError(void)
 {
 	self.hostAPI.parameterIDs = @[@10, @20, @30];
 
-	XCTAssertEqualObjects([self.apiV4 allParameterIDs], (@[@10, @20, @30]));
+	XCTAssertEqualObjects([self.apiInfo allParameterIDs], (@[@10, @20, @30]));
 }
 
 - (void)testAllParameterIDsIsEmptyWhenTheHostHasNoParameters
 {
-	XCTAssertEqualObjects([self.apiV4 allParameterIDs], @[]);
+	XCTAssertEqualObjects([self.apiInfo allParameterIDs], @[]);
 }
 
 #pragma mark v4 parameterType:
 
 - (void)testParameterTypeIsNoneWhenNoObserverAnswers
 {
-	XCTAssertEqual([self.apiV4 parameterType:kDynamicTestParameter], FxParameterType_None);
-	XCTAssertEqualObjects(self.postedNames, @[FxNotifyAPI_ParameterGetTypeName]);
+	XCTAssertEqual([self.apiInfo parameterType:kDynamicTestParameter], FxParameterType_None);
+	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterGetTypeName]);
 }
 
 - (void)testParameterTypeReportsTheTypeAnObserverWrites
 {
-	[self observeName:FxNotifyAPI_ParameterGetTypeName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetTypeName usingBlock:^(NSNotification *notification) {
 		notification.userInfo.mutableFxParameter[kFxParameterProperty_Type] =
 			@(FxParameterType_Custom);
 	}];
 
-	XCTAssertEqual([self.apiV4 parameterType:kDynamicTestParameter], FxParameterType_Custom);
+	XCTAssertEqual([self.apiInfo parameterType:kDynamicTestParameter], FxParameterType_Custom);
 }
 
 - (void)testTheTypeQueryCarriesTheParameterIDAtBothLevelsAndAsksNoHost
 {
 	__block NSDictionary *seen = nil;
-	[self observeName:FxNotifyAPI_ParameterGetTypeName usingBlock:^(NSNotification *notification) {
+	[self observeName:FxGripNotifyAPI_ParameterGetTypeName usingBlock:^(NSNotification *notification) {
 		seen = @{@"outer": notification.userInfo[kFxParameterProperty_Id],
 				 @"nested": notification.userInfo.fxParameter[kFxParameterProperty_Id]};
 	}];
 
-	[self.apiV4 parameterType:kDynamicTestParameter];
+	[self.apiInfo parameterType:kDynamicTestParameter];
 
 	XCTAssertEqualObjects(seen, (@{@"outer": @(kDynamicTestParameter),
 								   @"nested": @(kDynamicTestParameter)}));
@@ -731,20 +731,20 @@ static NSError *FxDynamicTestError(void)
 {
 	NSArray<NSString *> *entries = nil;
 
-	XCTAssertNil([self.apiV4 parameter:kDynamicTestParameter entries:&entries]);
+	XCTAssertNil([self.apiInfo parameter:kDynamicTestParameter entries:&entries]);
 
 	XCTAssertEqualObjects(entries, @[]);
 }
 
 - (void)testMenuEntriesReportAnObserverError
 {
-	[self observeName:FxNotifyAPI_ParameterGetMenuName usingBlock:^(NSNotification *notification) {
-		((NSMutableDictionary *)notification.userInfo).fxError = FxDynamicTestError();
+	[self observeName:FxGripNotifyAPI_ParameterGetMenuName usingBlock:^(NSNotification *notification) {
+		((NSMutableDictionary *)notification.userInfo).fxError = FxGripDynamicTestError();
 	}];
 	NSArray<NSString *> *entries = nil;
 
-	XCTAssertEqualObjects([self.apiV4 parameter:kDynamicTestParameter entries:&entries],
-						  FxDynamicTestError());
+	XCTAssertEqualObjects([self.apiInfo parameter:kDynamicTestParameter entries:&entries],
+						  FxGripDynamicTestError());
 }
 
 #pragma mark v4 single-bound float setters
@@ -756,7 +756,7 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.floatSliderMinimum = -0.5;
 	self.hostAPI.floatSliderMaximum = 0.5;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter floatMinimum:-3]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter floatMinimum:-3]);
 
 	XCTAssertEqualObjects([self hostCallNamed:@"setfloatbounds"], (@{@"method": @"setfloatbounds",
 																	@"id": @(kDynamicTestParameter),
@@ -771,7 +771,7 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.floatMinimum = -1;
 	self.hostAPI.floatMaximum = 1;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter floatMaximum:5]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter floatMaximum:5]);
 
 	XCTAssertEqualObjects([self hostCallNamed:@"setfloatbounds"][@"min"], @(-1.0));
 	XCTAssertEqualObjects([self hostCallNamed:@"setfloatbounds"][@"max"], @5.0);
@@ -782,7 +782,7 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.floatSliderMinimum = -0.5;
 	self.hostAPI.floatSliderMaximum = 0.5;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter floatMinimum:-2 maximum:2]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter floatMinimum:-2 maximum:2]);
 
 	NSDictionary *call = [self hostCallNamed:@"setfloatbounds"];
 	XCTAssertEqualObjects(call[@"min"], @(-2.0));
@@ -796,9 +796,9 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.floatMinimum = -10;
 	self.hostAPI.floatMaximum = 10;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter floatSliderMinimum:-1]);
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter floatSliderMaximum:1]);
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter floatSliderMinimum:-2 sliderMaximum:2]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter floatSliderMinimum:-1]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter floatSliderMaximum:1]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter floatSliderMinimum:-2 sliderMaximum:2]);
 
 	NSDictionary *last = self.hostAPI.calls.lastObject;
 	XCTAssertEqualObjects(last[@"min"], @(-10.0));
@@ -809,10 +809,10 @@ static NSError *FxDynamicTestError(void)
 
 - (void)testAFailedBoundsReadSkipsTheBoundsWrite
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 
-	XCTAssertEqualObjects([self.apiV4 setParameter:kDynamicTestParameter floatMinimum:-3],
-						  FxDynamicTestError());
+	XCTAssertEqualObjects([self.apiBounds setParameter:kDynamicTestParameter floatMinimum:-3],
+						  FxGripDynamicTestError());
 
 	XCTAssertEqualObjects(self.hostMethods, @[@"getfloatbounds"]);
 }
@@ -826,7 +826,7 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.intSliderMinimum = 2;
 	self.hostAPI.intSliderMaximum = 50;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter intMinimum:0]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter intMinimum:0]);
 
 	XCTAssertEqualObjects([self hostCallNamed:@"setintbounds"], (@{@"method": @"setintbounds",
 																   @"id": @(kDynamicTestParameter),
@@ -841,7 +841,7 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.intMinimum = 1;
 	self.hostAPI.intMaximum = 100;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter intMaximum:7]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter intMaximum:7]);
 
 	XCTAssertEqualObjects([self hostCallNamed:@"setintbounds"][@"min"], @1);
 	XCTAssertEqualObjects([self hostCallNamed:@"setintbounds"][@"max"], @7);
@@ -852,7 +852,7 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.intSliderMinimum = 3;
 	self.hostAPI.intSliderMaximum = 30;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter intMinimum:0 maximum:9]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter intMinimum:0 maximum:9]);
 
 	NSDictionary *call = [self hostCallNamed:@"setintbounds"];
 	XCTAssertEqualObjects(call[@"min"], @0);
@@ -866,9 +866,9 @@ static NSError *FxDynamicTestError(void)
 	self.hostAPI.intMinimum = -100;
 	self.hostAPI.intMaximum = 100;
 
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter intSliderMinimum:-1]);
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter intSliderMaximum:1]);
-	XCTAssertNil([self.apiV4 setParameter:kDynamicTestParameter intSliderMinimum:-2 sliderMaximum:2]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter intSliderMinimum:-1]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter intSliderMaximum:1]);
+	XCTAssertNil([self.apiBounds setParameter:kDynamicTestParameter intSliderMinimum:-2 sliderMaximum:2]);
 
 	NSDictionary *last = self.hostAPI.calls.lastObject;
 	XCTAssertEqualObjects(last[@"min"], @(-100));
@@ -879,10 +879,10 @@ static NSError *FxDynamicTestError(void)
 
 - (void)testAFailedIntBoundsReadSkipsTheBoundsWrite
 {
-	self.hostAPI.nextError = FxDynamicTestError();
+	self.hostAPI.nextError = FxGripDynamicTestError();
 
-	XCTAssertEqualObjects([self.apiV4 setParameter:kDynamicTestParameter intMinimum:0],
-						  FxDynamicTestError());
+	XCTAssertEqualObjects([self.apiBounds setParameter:kDynamicTestParameter intMinimum:0],
+						  FxGripDynamicTestError());
 
 	XCTAssertEqualObjects(self.hostMethods, @[@"getintbounds"]);
 }

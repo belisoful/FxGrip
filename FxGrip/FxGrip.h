@@ -19,16 +19,16 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripErrors.h>
 #import <FxGrip/FxParameterFlags.h>
 
-#import <FxGrip/FxPluginData.h>
-#import <FxGrip/FxPluginGroupData.h>
-#import <FxGrip/FxRegisteredPlugin.h>
+#import <FxGrip/FxGripPluginData.h>
+#import <FxGrip/FxGripPluginGroupData.h>
+#import <FxGrip/FxGripRegisteredPlugin.h>
 #import <FxGrip/FxGripClassRegistrar.h>
 #import <FxGrip/FxGripConfigRegistrar.h>
 #import <FxGrip/FxGripDynamicRegistrar.h>
 #import <FxGrip/FxGripStaticRegistrar.h>
 
 
-#import <FxGrip/FxExtension.h>
+#import <FxGrip/FxGripExtension.h>
 #import <FxGrip/FxParameterExtension.h>
 #import <FxGrip/FxGripCustomExtension.h>
 #import <FxGrip/FxGripToggleExtension.h>
@@ -48,20 +48,22 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxMatrix+FxGrip.h>
 #import <FxGrip/FxGripEffectHost.h>
 #import <FxGrip/FxGripPluginHost.h>
-#import <FxGrip/FxTileableEffectBase.h>
-#import <FxGrip/FxTileableEffectBase+Analyze.h>
-#import <FxGrip/FxTileableEffectBase+ColorGamut.h>
-#import <FxGrip/FxTileableEffectBase+CustomUI.h>
-#import <FxGrip/FxTileableEffectBase+Extensions.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
-#import <FxGrip/FxTileableEffectBase+OOBParameterAccess.h>
-#import <FxGrip/FxTileableEffectBase+Parameters.h>
-#import <FxGrip/FxTileableEffectBase+PluginProperties.h>
-#import <FxGrip/FxTileableEffectBase+ProjectProperties.h>
-#import <FxGrip/FxTileableEffectBase+Timing.h>
-#import <FxGrip/FxTileableEffectBase+Versioning.h>
-#import <FxGrip/FxTileableGeneratorBase.h>
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripTileableEffect+Analyze.h>
+#import <FxGrip/FxGripTileableEffect+ColorGamut.h>
+#import <FxGrip/FxGripTileableEffect+CustomUI.h>
+#import <FxGrip/FxGripTileableEffect+Extensions.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
+#import <FxGrip/FxGripTileableEffect+OOBParameterAccess.h>
+#import <FxGrip/FxGripTileableEffect+Parameters.h>
+#import <FxGrip/FxGripTileableEffect+PluginProperties.h>
+#import <FxGrip/FxGripTileableEffect+ProjectProperties.h>
+#import <FxGrip/FxGripTileableEffect+Timing.h>
+#import <FxGrip/FxGripTileableEffect+Versioning.h>
+#import <FxGrip/FxGripTileableGenerator.h>
 #import <FxGrip/FxTileImage+FxGrip.h>
+#import <FxGrip/FxGripTextImage.h>
+#import <FxGrip/FxGripWatermark.h>
 
 #import <FxGrip/FxGripImageBuffer.h>
 #import <FxGrip/FxGripImageCompression.h>
@@ -75,7 +77,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripPrincipalDelegate.h>
 #import <FxGrip/NSArray+FxPlug.h>
 #import <FxGrip/NSCoder+FxPlug.h>
-#import <FxGrip/NSDictionary+FxTileableEffect.h>
+#import <FxGrip/NSDictionary+FxGripTileableEffect.h>
 
 #import <FxGrip/FxParameter.h>
 #import <FxGrip/NSView+FxGrip.h>
@@ -95,6 +97,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripPathParameter.h>
 #import <FxGrip/FxGripPercentParameter.h>
 #import <FxGrip/FxGripPointParameter.h>
+#import <FxGrip/FxGripPointOptions.h>
 #import <FxGrip/FxGripPresetsParameter.h>
 #import <FxGrip/FxGripPushButtonParameter.h>
 #import <FxGrip/FxGripRGBParameter.h>
@@ -118,9 +121,14 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripWebViewParameter.h>
 #import <FxGrip/FxGripVideoView.h>
 #import <FxGrip/FxGripVideoViewParameter.h>
+#import <FxGrip/FxGripLiveImage.h>
+#import <FxGrip/FxGripLiveFrame.h>
+#import <FxGrip/FxGripLiveImageParameter.h>
+#import <FxGrip/FxGripTrackingOpacityParameter.h>
+#import <FxGrip/FxGripAnalyzerParameter.h>
 
 
-#import <FxGrip/FxCustomDataClasses.h>
+#import <FxGrip/FxGripCustomDataClasses.h>
 #import <FxGrip/FxGripCustomCommonDelegate.h>
 #import <FxGrip/FxGripCustomViewData.h>
 #import <FxGrip/FxGripCustomViewDataDelegate.h>
@@ -138,8 +146,9 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripOOBParameterAccess.h>
 
 #import <FxGrip/FxGripOSCShaderTypes.h>
-#import <FxGrip/FxOnScreenControlBase.h>
+#import <FxGrip/FxGripOnScreenControl.h>
 #import <FxGrip/FxGripOSCPart.h>
+#import <FxGrip/FxGripPointOSC.h>
 
 #import <FxGrip/FxGripInferenceRequest.h>
 #import <FxGrip/FxGripInferenceResult.h>
@@ -152,11 +161,13 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripInferenceBridge.h>
 
 
-#import <FxGrip/FxAPINotifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripAPIAccessing.h>
 #import <FxGrip/FxGripCommonAPI.h>
 #import <FxGrip/FxGripDynamicParameterAPI_v3.h>
-#import <FxGrip/FxGripDynamicParameterAPI_v4.h>
+#import <FxGrip/FxGripParameterInfoAPI_v1.h>
+#import <FxGrip/FxGripParameterBoundsAPI_v1.h>
+#import <FxGrip/FxGripMetaAPI_v1.h>
 #import <FxGrip/FxGripParameterCreationAPI_v5.h>
 #import <FxGrip/FxGripParameterCreationAPI_v6.h>
 #import <FxGrip/FxGripParameterRetrievalAPI_v6.h>

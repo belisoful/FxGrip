@@ -11,7 +11,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxCustomDataClasses.h"
+#import "FxGripCustomDataClasses.h"
 #import "FxGripMutableParameter.h"
 
 
@@ -23,7 +23,7 @@
  				The various Types of FxPlug data can be set without needing to regard translation through NSNumber.
 				This also feeds various custom values to the Standard FxParameterRetrievalAPI-v6.
  */
-@interface FxGripSectionData : NSObject <NSSecureCoding, NSCopying, FxGripMutableParameter, FxCustomDataClasses>
+@interface FxGripSectionData : NSObject <NSSecureCoding, NSCopying, FxGripMutableParameter, FxGripCustomDataClasses>
 
 	// transform (none upper lower cap), alignment, font, weight, width, size, margin over, margin below, rgba
 

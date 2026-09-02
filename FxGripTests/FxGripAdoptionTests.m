@@ -3,14 +3,15 @@
 //  FxGripTests
 //
 //  Verifies the incremental-adoption contract: a plain FxPlug-style plug-in that does not use
-//  FxTileableEffectBase drives the parameter subsystem through the narrow FxGripEffectHost
+//  FxGripTileableEffect drives the parameter subsystem through the narrow FxGripEffectHost
 //  protocol, with only the two required members. The optional-member fallbacks (font default,
 //  gamut conversion, group recursion, preset meta) must degrade, not crash.
 //
 
 #import <XCTest/XCTest.h>
+#import <FxGrip/FxGripDictionary.h>
 #import <FxGrip/FxGripEffectHost.h>
-#import <FxGrip/FxTileableEffectBase.h>
+#import <FxGrip/FxGripTileableEffect.h>
 #import <FxGrip/FxGripPluginHost.h>
 #import <FxGrip/FxGripAllParameters.h>
 #import <FxGrip/FxGripStatusParameter.h>
@@ -18,18 +19,18 @@
 #import <FxGrip/FxGripAPIAccessing.h>
 #import <FxGrip/FxGripCustomCreationAPI_v1.h>
 #import <FxGrip/FxGripExtensionSystem.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
 #import "FxGripParameterClassTestSupport.h"
 
 #pragma mark - Minimal host
 
 /*! An "existing plug-in" host: the two required FxGripEffectHost members and nothing else. */
-@interface FxAdoptionMinimalHost : NSObject <FxGripEffectHost>
-@property (nonatomic, strong) FxParamClassTestAPIManager *manager;
+@interface FxGripAdoptionMinimalHost : NSObject <FxGripEffectHost>
+@property (nonatomic, strong) FxGripParamClassTestAPIManager *manager;
 @property (nonatomic, strong) NSNotificationCenter *center;
 @end
 
-@implementation FxAdoptionMinimalHost
+@implementation FxGripAdoptionMinimalHost
 
 - (id<FxGripAPIAccessing>)apiManager
 {
@@ -41,7 +42,7 @@
 	return (NSPriorityNotificationCenter *)self.center;
 }
 
-- (nullable FxTileableEffectBase *)effectBase
+- (nullable FxGripTileableEffect *)effectBase
 {
 	return nil;
 }
@@ -49,10 +50,10 @@
 @end
 
 /*! A bare PROAPIAccessing for the plugin-host wrapper. */
-@interface FxAdoptionStubPRO : NSObject <PROAPIAccessing>
+@interface FxGripAdoptionStubPRO : NSObject <PROAPIAccessing>
 @end
 
-@implementation FxAdoptionStubPRO
+@implementation FxGripAdoptionStubPRO
 - (id)apiForProtocol:(Protocol *)apiProtocol
 {
 	return nil;
@@ -64,10 +65,10 @@
 @end
 
 /*! A host that answers the identity and configuration attributes directly, with no effect base. */
-@interface FxAdoptionAttributedHost : FxAdoptionMinimalHost
+@interface FxGripAdoptionAttributedHost : FxGripAdoptionMinimalHost
 @end
 
-@implementation FxAdoptionAttributedHost
+@implementation FxGripAdoptionAttributedHost
 - (NSDictionary<NSString *, id> *)pluginProperties
 {
 	return @{ @"name": @"Attributed" };
@@ -81,7 +82,7 @@
 #pragma mark - Tests
 
 @interface FxGripAdoptionTests : XCTestCase
-@property (nonatomic, strong) FxAdoptionMinimalHost *host;
+@property (nonatomic, strong) FxGripAdoptionMinimalHost *host;
 @end
 
 @implementation FxGripAdoptionTests
@@ -89,15 +90,15 @@
 - (void)setUp
 {
 	[super setUp];
-	self.host = [FxAdoptionMinimalHost new];
-	self.host.manager = [FxParamClassTestAPIManager new];
-	self.host.manager.paramCreateAPIv5 = [FxParamClassTestCreationAPI new];
+	self.host = [FxGripAdoptionMinimalHost new];
+	self.host.manager = [FxGripParamClassTestAPIManager new];
+	self.host.manager.paramCreateAPIv5 = [FxGripParamClassTestCreationAPI new];
 	self.host.center = [NSNotificationCenter new];
 }
 
 - (void)testTheEffectBaseConformsToTheHostProtocol
 {
-	XCTAssertTrue([NSClassFromString(@"FxTileableEffectBase")
+	XCTAssertTrue([NSClassFromString(@"FxGripTileableEffect")
 					  conformsToProtocol:@protocol(FxGripEffectHost)],
 				  @"a subclassed effect satisfies every host-typed entry point");
 }
@@ -167,7 +168,7 @@
 
 - (void)testThePluginHostWrapsARawAPIManager
 {
-	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxAdoptionStubPRO new]];
+	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxGripAdoptionStubPRO new]];
 	XCTAssertTrue([host conformsToProtocol:@protocol(FxGripEffectHost)]);
 	XCTAssertNotNil(host.apiManager, @"the FxGrip API layer stands up over a bare PROAPIAccessing");
 	XCTAssertNotNil(host.notifier);
@@ -178,7 +179,7 @@
 - (void)testHostsWithoutABaseReportANilEffectBase
 {
 	XCTAssertNil(self.host.effectBase, @"a plain plug-in host has no effect base");
-	FxGripPluginHost *pluginHost = [[FxGripPluginHost alloc] initWithAPIManager:[FxAdoptionStubPRO new]];
+	FxGripPluginHost *pluginHost = [[FxGripPluginHost alloc] initWithAPIManager:[FxGripAdoptionStubPRO new]];
 	XCTAssertNil(pluginHost.effectBase);
 }
 
@@ -186,14 +187,14 @@
 {
 	// The API layer reads base-only members as host.effectBase.<member>; nil messaging makes a
 	// baseless host return nil instead of crashing.
-	FxTileableEffectBase *base = self.host.effectBase;
+	FxGripTileableEffect *base = self.host.effectBase;
 	XCTAssertNil(base.pluginProperties);
 	XCTAssertNil([base configurationForParameter:1]);
 }
 
 - (void)testTheHostAttributeHelpersPreferTheDirectMembers
 {
-	FxAdoptionAttributedHost *host = [FxAdoptionAttributedHost new];
+	FxGripAdoptionAttributedHost *host = [FxGripAdoptionAttributedHost new];
 	XCTAssertEqualObjects(FxGripHostPluginProperties(host)[@"name"], @"Attributed",
 						  @"the host's own attribute answers, no effect base involved");
 	XCTAssertEqualObjects(FxGripHostConfigurationForParameter(host, 7)[@"id"], @7);
@@ -211,7 +212,7 @@
 
 - (void)testThePluginHostAnswersThePluginUUIDFromItsManager
 {
-	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxAdoptionStubPRO new]];
+	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxGripAdoptionStubPRO new]];
 	XCTAssertEqualObjects(FxGripHostPluginUUID(host), @"ADOPTION-STUB-UUID",
 						  @"identity flows from the wrapped manager, so presets match on a plain host");
 }
@@ -228,6 +229,9 @@
 	XCTAssertTrue([api addRandomWithName:@"Seed" parameterID:203 defaultValue:7 minimum:1 maximum:100 step:1 parameterFlags:0]);
 	XCTAssertEqual(self.host.manager.paramCreateAPIv5.calls.count, 3u,
 				   @"each Apple-style call registered a custom control");
+	NSDictionary *statusDefault = self.host.manager.paramCreateAPIv5.calls.firstObject[@"default"];
+	XCTAssertEqualObjects(statusDefault[kCustomAPI_StringKey], @"Ready",
+						  @"the configuration carries a type, so the declared default reaches the control");
 
 	XCTAssertNil([[FxGripCustomCreationAPI_v1 alloc] initWithEffect:(id _Nonnull)nil],
 				 @"no effect host, no API");
@@ -235,8 +239,8 @@
 
 - (void)testThePluginHostVendsTheCustomCreationAPIThroughTheRoutingLayer
 {
-	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxAdoptionStubPRO new]];
-	FxGripCustomCreationAPI_v1 *api = host.apiManager.customCreationAPIv1;
+	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxGripAdoptionStubPRO new]];
+	FxGripCustomCreationAPI_v1 *api = (FxGripCustomCreationAPI_v1 *)host.apiManager.customCreationAPIv1;
 	XCTAssertNotNil(api, @"the routing layer vends the creation API over the plugin host");
 	XCTAssertEqual(api.effect, (id)host, @"the API registers against the host that owns the manager");
 }
@@ -246,14 +250,14 @@
 #pragma mark - Extension system
 
 /*! Records the lifecycle calls it observes and mutates the payloads it may. */
-@interface FxSysTestExtension : FxExtensionBase
+@interface FxGripSysTestExtension : FxGripExtensionBase
 @property (nonatomic, assign) NSUInteger propertiesCalls;
 @property (nonatomic, assign) NSUInteger addParametersCalls;
 @property (nonatomic, assign) NSUInteger flushCalls;
 @property (nonatomic, strong, nullable) NSNumber *changedParameterID;
 @end
 
-@implementation FxSysTestExtension
+@implementation FxGripSysTestExtension
 
 - (void)extProperties:(NSNotification *)notification
 {
@@ -269,7 +273,7 @@
 
 - (void)extParameterChanged:(NSNotification *)notification
 {
-	self.changedParameterID = notification.userInfo[FxTileableEffectParameterChangedIDKey];
+	self.changedParameterID = notification.userInfo[FxGripTileableEffectParameterChangedIDKey];
 }
 
 - (void)extFlush:(NSNotification *)notification
@@ -280,9 +284,9 @@
 @end
 
 @interface FxGripExtensionSystemTests : XCTestCase
-@property (nonatomic, strong) FxAdoptionMinimalHost *host;
+@property (nonatomic, strong) FxGripAdoptionMinimalHost *host;
 @property (nonatomic, strong) FxGripExtensionSystem *system;
-@property (nonatomic, strong) FxSysTestExtension *extension;
+@property (nonatomic, strong) FxGripSysTestExtension *extension;
 @end
 
 @implementation FxGripExtensionSystemTests
@@ -290,18 +294,18 @@
 - (void)setUp
 {
 	[super setUp];
-	self.host = [FxAdoptionMinimalHost new];
-	self.host.manager = [FxParamClassTestAPIManager new];
+	self.host = [FxGripAdoptionMinimalHost new];
+	self.host.manager = [FxGripParamClassTestAPIManager new];
 	// The extension dispatch uses the priority notification center's postBlock: variant.
 	self.host.center = [[NSClassFromString(@"NSPriorityNotificationCenter") alloc] init];
 	self.system = [[FxGripExtensionSystem alloc] initWithHost:self.host];
-	self.extension = [FxSysTestExtension new];
+	self.extension = [FxGripSysTestExtension new];
 	XCTAssertTrue([self.system loadExtension:self.extension]);
 }
 
 - (void)testTheSystemFindsALoadedExtensionByClass
 {
-	XCTAssertEqual([self.system extensionForClass:FxSysTestExtension.class], self.extension);
+	XCTAssertEqual([self.system extensionForClass:FxGripSysTestExtension.class], self.extension);
 	XCTAssertEqual(self.system.extensions.count, 1u);
 }
 

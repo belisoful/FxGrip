@@ -11,7 +11,7 @@
 #import <FxGrip/FxGripPassthroughBackend.h>
 #import <FxGrip/FxGripErrors.h>
 
-static CMTime FxMLTestTime(void)
+static CMTime FxGripMLTestTime(void)
 {
 	return (CMTime){ .value = 0, .timescale = 30, .flags = kCMTimeFlags_Valid };
 }
@@ -19,14 +19,14 @@ static CMTime FxMLTestTime(void)
 #pragma mark - Stub backend
 
 /*! A backend whose readiness and result are staged, recording the request it received. */
-@interface FxMLStubBackend : NSObject <FxGripInferenceBackend>
+@interface FxGripMLStubBackend : NSObject <FxGripInferenceBackend>
 @property (nonatomic, assign) BOOL ready;
 @property (nonatomic, strong, nullable) FxGripInferenceResult *stagedResult;
 @property (nonatomic, strong, nullable) FxGripInferenceRequest *lastRequest;
 @property (nonatomic, assign) NSUInteger runCount;
 @end
 
-@implementation FxMLStubBackend
+@implementation FxGripMLStubBackend
 
 - (instancetype)init
 {
@@ -52,13 +52,13 @@ static CMTime FxMLTestTime(void)
 #pragma mark - Test effect
 
 /*! Bypasses Metal: the source image is a sentinel string, and the written output is captured. */
-@interface FxMLTestEffect : FxGripMLImageEffect
+@interface FxGripMLTestEffect : FxGripMLImageEffect
 @property (nonatomic, strong) NSNotificationCenter *privateNotifier;
 @property (nonatomic, strong) id capturedOutput;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *stagedParameters;
 @end
 
-@implementation FxMLTestEffect
+@implementation FxGripMLTestEffect
 
 - (id)effectBase
 {
@@ -100,20 +100,20 @@ static CMTime FxMLTestTime(void)
 @end
 
 /*! Overrides the default-backend seam to prove the lazy default is customizable. */
-@interface FxMLDefaultOverrideEffect : FxMLTestEffect
+@interface FxGripMLDefaultOverrideEffect : FxGripMLTestEffect
 @end
 
-@implementation FxMLDefaultOverrideEffect
+@implementation FxGripMLDefaultOverrideEffect
 - (id<FxGripInferenceBackend>)defaultInferenceBackend
 {
-	return FxMLStubBackend.new;
+	return FxGripMLStubBackend.new;
 }
 @end
 
 #pragma mark - Tests
 
 @interface FxGripMLImageEffectTests : XCTestCase
-@property (nonatomic, strong) FxMLTestEffect *effect;
+@property (nonatomic, strong) FxGripMLTestEffect *effect;
 @end
 
 @implementation FxGripMLImageEffectTests
@@ -121,7 +121,7 @@ static CMTime FxMLTestTime(void)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxMLTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	self.effect = [FxGripMLTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	// These tests exercise pure orchestration; the cache has its own tests.
 	self.effect.cacheEnabled = NO;
 }
@@ -140,7 +140,7 @@ static CMTime FxMLTestTime(void)
 
 - (void)testOverridingTheDefaultBackendSeamChangesTheLazyDefault
 {
-	FxMLDefaultOverrideEffect *effect = [FxMLDefaultOverrideEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripMLDefaultOverrideEffect *effect = [FxGripMLDefaultOverrideEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertEqualObjects(effect.inferenceBackend.backendIdentifier, @"stub");
 }
 
@@ -155,7 +155,7 @@ static CMTime FxMLTestTime(void)
 - (void)testTheDefaultBackendEchoesTheSourceToTheDestination
 {
 	NSError *error = nil;
-	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxMLTestTime() error:&error];
+	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxGripMLTestTime() error:&error];
 	XCTAssertTrue(rendered);
 	XCTAssertNil(error);
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"SOURCE", @"passthrough routes the source straight through");
@@ -163,12 +163,12 @@ static CMTime FxMLTestTime(void)
 
 - (void)testANotReadyBackendRendersTheSourceUnchanged
 {
-	FxMLStubBackend *backend = FxMLStubBackend.new;
+	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
 	backend.ready = NO;
 	self.effect.inferenceBackend = backend;
 
 	NSError *error = nil;
-	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxMLTestTime() error:&error];
+	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxGripMLTestTime() error:&error];
 	XCTAssertTrue(rendered);
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"SOURCE");
 	XCTAssertNil(backend.lastRequest, @"a not-ready backend is not run");
@@ -176,24 +176,24 @@ static CMTime FxMLTestTime(void)
 
 - (void)testTheBackendOutputIsRoutedByOutputName
 {
-	FxMLStubBackend *backend = FxMLStubBackend.new;
+	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
 	backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"image": @"GENERATED" }];
 	self.effect.inferenceBackend = backend;
 
 	NSError *error = nil;
-	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxMLTestTime() error:&error];
+	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxGripMLTestTime() error:&error];
 	XCTAssertTrue(rendered);
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"GENERATED");
 }
 
 - (void)testAMissingOutputFailsTheRender
 {
-	FxMLStubBackend *backend = FxMLStubBackend.new;
+	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
 	backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"wrongName": @"GENERATED" }];
 	self.effect.inferenceBackend = backend;
 
 	NSError *error = nil;
-	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxMLTestTime() error:&error];
+	BOOL rendered = [self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxGripMLTestTime() error:&error];
 	XCTAssertFalse(rendered);
 	XCTAssertNotNil(error);
 	XCTAssertEqual(error.code, (NSInteger)kFxGripError_InferenceBackendFailure);
@@ -202,13 +202,13 @@ static CMTime FxMLTestTime(void)
 
 - (void)testTheImageInputAndParametersFlowToTheBackend
 {
-	FxMLStubBackend *backend = FxMLStubBackend.new;
+	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
 	backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"image": @"GENERATED" }];
 	self.effect.inferenceBackend = backend;
 	self.effect.stagedParameters = @{ @"seed": @7 };
 
 	NSError *error = nil;
-	[self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxMLTestTime() error:&error];
+	[self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxGripMLTestTime() error:&error];
 
 	XCTAssertEqualObjects([backend.lastRequest inputForKey:@"image"], @"SOURCE");
 	XCTAssertEqualObjects([backend.lastRequest parameterForKey:@"seed"], @7);
@@ -216,7 +216,7 @@ static CMTime FxMLTestTime(void)
 
 - (void)testSettingTheBackendToNilRestoresThePassthrough
 {
-	self.effect.inferenceBackend = FxMLStubBackend.new;
+	self.effect.inferenceBackend = FxGripMLStubBackend.new;
 	XCTAssertEqualObjects(self.effect.inferenceBackend.backendIdentifier, @"stub");
 	self.effect.inferenceBackend = nil;
 	XCTAssertEqualObjects(self.effect.inferenceBackend.backendIdentifier, @"passthrough");
@@ -227,7 +227,7 @@ static CMTime FxMLTestTime(void)
 #pragma mark - Cache tests
 
 /*! Replaces the FrameData/ImageBuffer storage with an in-memory store keyed by frame index. */
-@interface FxMLCacheTestEffect : FxGripMLImageEffect
+@interface FxGripMLCacheTestEffect : FxGripMLImageEffect
 @property (nonatomic, strong) NSNotificationCenter *privateNotifier;
 @property (nonatomic, strong) id capturedOutput;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *stagedParameters;
@@ -235,7 +235,7 @@ static CMTime FxMLTestTime(void)
 @property (nonatomic, copy, nullable) NSString *storedSignature;
 @end
 
-@implementation FxMLCacheTestEffect
+@implementation FxGripMLCacheTestEffect
 
 - (id)effectBase
 {
@@ -304,14 +304,14 @@ static CMTime FxMLTestTime(void)
 
 @end
 
-static CMTime FxMLCacheFrame(int64_t value)
+static CMTime FxGripMLCacheFrame(int64_t value)
 {
 	return (CMTime){ .value = value, .timescale = 30, .flags = kCMTimeFlags_Valid };
 }
 
 @interface FxGripMLCacheTests : XCTestCase
-@property (nonatomic, strong) FxMLCacheTestEffect *effect;
-@property (nonatomic, strong) FxMLStubBackend *backend;
+@property (nonatomic, strong) FxGripMLCacheTestEffect *effect;
+@property (nonatomic, strong) FxGripMLStubBackend *backend;
 @end
 
 @implementation FxGripMLCacheTests
@@ -319,15 +319,15 @@ static CMTime FxMLCacheFrame(int64_t value)
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxMLCacheTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
-	self.backend = FxMLStubBackend.new;
+	self.effect = [FxGripMLCacheTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	self.backend = FxGripMLStubBackend.new;
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"image": @"GEN" }];
 	self.effect.inferenceBackend = self.backend;
 }
 
 - (void)renderFrame:(int64_t)value
 {
-	[self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxMLCacheFrame(value) error:NULL];
+	[self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxGripMLCacheFrame(value) error:NULL];
 }
 
 - (void)testTheSameFrameRunsInferenceOnce

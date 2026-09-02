@@ -1,0 +1,39 @@
+//
+//  FxGripParameterSettingAPI_v5.h
+//  MetalFx ML Upscale
+//
+//  Created by ~ ~ on 2/29/24.
+//
+
+#ifndef FxGripParameterSettingAPI_v5_h
+#define FxGripParameterSettingAPI_v5_h
+
+#import <FxPlug/FxPlugSDK.h>
+#import "FxGripParameterInfoAPI_v1.h"
+#import "FxGripCommonAPI.h"
+
+/*!
+	@interface  FxGripParameterRetrievalAPI_v6:
+	@abstract   Initializes the API manager for your plug-in.
+	@discussion Accesses the apis with error checking.
+
+ */
+
+@interface FxGripParameterSettingAPI_v5 : FxGripCommonAPI<FxParameterSettingAPI_v5>
+
+	// The upgraded v6 also implements v5
+	@property (assign, readonly) id<FxParameterSettingAPI_v6> _Nullable api;
+	@property (strong, readonly) id<FxParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
+	@property (strong, readonly) id<FxParameterRetrievalAPI_v6> _Nullable paramGetAPIv6;
+
+
+- (nullable instancetype)initWithAPI:(id<FxParameterSettingAPI_v5> _Nonnull)api
+					   paramGetAPIv6:(id<FxParameterRetrievalAPI_v6>_Nullable)paramGetAPIv6
+				   parameterInfoAPIv1:(id<FxParameterInfoAPI_v1>_Nullable)parameterInfoAPIv1
+							  effect:(nonnull id<FxGripEffectHost>)effect;
+
+@end
+
+
+#endif /* FxGripParameterSettingAPI_v5_h */
+

@@ -18,21 +18,21 @@
 #import "NSArray+FxPlug.h"
 
 
-NSString * const Fx3DCoderFocalLengthKey = @"_fx3d_FocalLength";
-NSString * const Fx3DCoderModelMatrixKey = @"_fx3d_ModelMatrix";
-NSString * const Fx3DCoderViewMatrixKey = @"_fx3d_ViewMatrix";
-NSString * const Fx3DCoderProjectionMatrixKey = @"_fx3d_ProjectionMatrix";
-NSString * const Fx3DCoderFrustumLeftKey = @"_fx3d_FrustumLeft";
-NSString * const Fx3DCoderFrustumRightKey = @"_fx3d_FrustumRight";
-NSString * const Fx3DCoderFrustumBottomKey = @"_fx3d_FrustumBottom";
-NSString * const Fx3DCoderFrustumTopKey = @"_fx3d_FrustumTop";
-NSString * const Fx3DCoderFrustumNearKey = @"_fx3d_FrustumNear";
-NSString * const Fx3DCoderFrustumFarKey = @"_fx3d_FrustumFar";
+NSString * const FxGrip3DCoderFocalLengthKey = @"_fx3d_FocalLength";
+NSString * const FxGrip3DCoderModelMatrixKey = @"_fx3d_ModelMatrix";
+NSString * const FxGrip3DCoderViewMatrixKey = @"_fx3d_ViewMatrix";
+NSString * const FxGrip3DCoderProjectionMatrixKey = @"_fx3d_ProjectionMatrix";
+NSString * const FxGrip3DCoderFrustumLeftKey = @"_fx3d_FrustumLeft";
+NSString * const FxGrip3DCoderFrustumRightKey = @"_fx3d_FrustumRight";
+NSString * const FxGrip3DCoderFrustumBottomKey = @"_fx3d_FrustumBottom";
+NSString * const FxGrip3DCoderFrustumTopKey = @"_fx3d_FrustumTop";
+NSString * const FxGrip3DCoderFrustumNearKey = @"_fx3d_FrustumNear";
+NSString * const FxGrip3DCoderFrustumFarKey = @"_fx3d_FrustumFar";
 
-NSString * const FxLightingCoderLightCountKey = @"_fxlighting_LightCount";
-NSString * const FxLightingCoderLightingKey = @"_fxlighting";
+NSString * const FxGripLightingCoderLightCountKey = @"_fxlighting_LightCount";
+NSString * const FxGripLightingCoderLightingKey = @"_fxlighting";
 
-NSString * const Fx3DCoderCurrentTimeKey = @"_";
+NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 
 
 @implementation NSCoder (FxPlug)
@@ -108,30 +108,30 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 
 - (void)encodeFx3DAPI:(id<Fx3DAPI_v5>)api
 {
-	[self encodeFx3DAPI:api atTime:self.renderTime forKey:Fx3DCoderCurrentTimeKey];
+	[self encodeFx3DAPI:api atTime:self.renderTime forKey:FxGrip3DCoderCurrentTimeKey];
 }
 
 - (void)encodeFx3DAPI:(id<Fx3DAPI_v5>)api atTime:(CMTime)time forKey:(nonnull NSString *)key
 {
-	if ([key isEqualToString:Fx3DCoderCurrentTimeKey] && CMTimeCompare(self.renderTime, time)) {
+	if ([key isEqualToString:FxGrip3DCoderCurrentTimeKey] && CMTimeCompare(self.renderTime, time)) {
 		// If encoding current time but not the current time, skip
 		return;
 	}
 	NSError *error = nil;
 	
-	[self encodeFxMatrix44:[api layerMatrixAtTime:time error:&error] forKey:[key stringByAppendingString:Fx3DCoderModelMatrixKey]];
+	[self encodeFxMatrix44:[api layerMatrixAtTime:time error:&error] forKey:[key stringByAppendingString:FxGrip3DCoderModelMatrixKey]];
 	if (error) {
 		NSLog(@"Error: cannot retrieve the Fx3D API Layer/Model Matrix. %@", error);
 		return;
 	}
 	
-	[self encodeFxMatrix44:[api viewMatrixAtTime:time error:&error] forKey:[key stringByAppendingString:Fx3DCoderViewMatrixKey]];
+	[self encodeFxMatrix44:[api viewMatrixAtTime:time error:&error] forKey:[key stringByAppendingString:FxGrip3DCoderViewMatrixKey]];
 	if (error) {
 		NSLog(@"Error: cannot retrieve the Fx3D API View Matrix. %@", error);
 		return;
 	}
 	
-	[self encodeFxMatrix44:[api metalProjectionMatrixAtTime:time error:&error] forKey:[key stringByAppendingString:Fx3DCoderProjectionMatrixKey]];
+	[self encodeFxMatrix44:[api metalProjectionMatrixAtTime:time error:&error] forKey:[key stringByAppendingString:FxGrip3DCoderProjectionMatrixKey]];
 	if (error) {
 		NSLog(@"Error: cannot retrieve the Fx3D API Projection Matrix. %@", error);
 		return;
@@ -139,7 +139,7 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 	
 	
 	
-	[self encodeDouble:[api focalLengthAtTime:time error:&error] forKey:[key stringByAppendingString:Fx3DCoderFocalLengthKey]];
+	[self encodeDouble:[api focalLengthAtTime:time error:&error] forKey:[key stringByAppendingString:FxGrip3DCoderFocalLengthKey]];
 	if (error) {
 		NSLog(@"Error: cannot retrieve the Fx3D API Focal Length. %@", error);
 		return;
@@ -154,26 +154,26 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 		return;
 	}
 	
-	[self encodeDouble:left forKey:[key stringByAppendingString:Fx3DCoderFrustumLeftKey]];
-	[self encodeDouble:right forKey:[key stringByAppendingString:Fx3DCoderFrustumRightKey]];
-	[self encodeDouble:bottom forKey:[key stringByAppendingString:Fx3DCoderFrustumBottomKey]];
-	[self encodeDouble:top forKey:[key stringByAppendingString:Fx3DCoderFrustumTopKey]];
-	[self encodeDouble:near forKey:[key stringByAppendingString:Fx3DCoderFrustumNearKey]];
-	[self encodeDouble:far forKey:[key stringByAppendingString:Fx3DCoderFrustumFarKey]];
+	[self encodeDouble:left forKey:[key stringByAppendingString:FxGrip3DCoderFrustumLeftKey]];
+	[self encodeDouble:right forKey:[key stringByAppendingString:FxGrip3DCoderFrustumRightKey]];
+	[self encodeDouble:bottom forKey:[key stringByAppendingString:FxGrip3DCoderFrustumBottomKey]];
+	[self encodeDouble:top forKey:[key stringByAppendingString:FxGrip3DCoderFrustumTopKey]];
+	[self encodeDouble:near forKey:[key stringByAppendingString:FxGrip3DCoderFrustumNearKey]];
+	[self encodeDouble:far forKey:[key stringByAppendingString:FxGrip3DCoderFrustumFarKey]];
 }
 
 - (void)encodeFxLightingAPI:(nonnull id<FxLightingAPI_v3>)api
 {
-	[self encodeFxLightingAPI:api atTime:self.renderTime forKey:Fx3DCoderCurrentTimeKey];
+	[self encodeFxLightingAPI:api atTime:self.renderTime forKey:FxGrip3DCoderCurrentTimeKey];
 }
 
 - (void)encodeFxLightingAPI:(nonnull id<FxLightingAPI_v3>)api atTime:(CMTime)time forKey:(nonnull NSString *)key
 {
-	if ([key isEqualToString:Fx3DCoderCurrentTimeKey] && CMTimeCompare(self.renderTime, time)) {
+	if ([key isEqualToString:FxGrip3DCoderCurrentTimeKey] && CMTimeCompare(self.renderTime, time)) {
 		return; // if current time and current renderTime is not the passed time
 	}
 	long totalLights = [api numberOfLightsAtTime:time];
-	NSString *lightKey = [key stringByAppendingString:FxLightingCoderLightCountKey];
+	NSString *lightKey = [key stringByAppendingString:FxGripLightingCoderLightCountKey];
 	[self encodeInteger:totalLights forKey:lightKey];
 	
 	NSError *error = nil;
@@ -187,7 +187,7 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 			continue;
 		}
 		
-		lightKey = [key stringByAppendingFormat:@"%ld%@", index, FxLightingCoderLightingKey];
+		lightKey = [key stringByAppendingFormat:@"%ld%@", index, FxGripLightingCoderLightingKey];
 		[self encodeBytes:(void*)&light length:sizeof(light) forKey:lightKey];
 	}
 }
@@ -258,110 +258,110 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 
 
 - (double)decodeFx3DFocalLength {
-	return [self decodeFx3DFocalLength:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DFocalLength:FxGrip3DCoderCurrentTimeKey];
 }
 - (nullable Matrix44Data*)decodeFx3DModelMatrixData {
-	return [self decodeFx3DModelMatrixData:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DModelMatrixData:FxGrip3DCoderCurrentTimeKey];
 }
 - (nullable FxMatrix44*)decodeFx3DModelMatrix {
-	return [self decodeFx3DModelMatrix:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DModelMatrix:FxGrip3DCoderCurrentTimeKey];
 }
 - (nullable Matrix44Data*)decodeFx3DViewMatrixData {
-	return [self decodeFx3DViewMatrixData:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DViewMatrixData:FxGrip3DCoderCurrentTimeKey];
 }
 - (nullable FxMatrix44*)decodeFx3DViewMatrix {
-	return [self decodeFx3DViewMatrix:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DViewMatrix:FxGrip3DCoderCurrentTimeKey];
 }
 - (nullable Matrix44Data*)decodeFx3DProjectionMatrixData {
-	return [self decodeFx3DProjectionMatrixData:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DProjectionMatrixData:FxGrip3DCoderCurrentTimeKey];
 }
 - (nullable FxMatrix44*)decodeFx3DProjectionMatrix {
-	return [self decodeFx3DProjectionMatrix:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DProjectionMatrix:FxGrip3DCoderCurrentTimeKey];
 }
 - (double)decodeFx3DFrustumLeft {
-	return [self decodeFx3DFrustumLeft:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DFrustumLeft:FxGrip3DCoderCurrentTimeKey];
 }
 - (double)decodeFx3DFrustumRight {
-	return [self decodeFx3DFrustumRight:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DFrustumRight:FxGrip3DCoderCurrentTimeKey];
 }
 - (double)decodeFx3DFrustumBottom {
-	return [self decodeFx3DFrustumBottom:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DFrustumBottom:FxGrip3DCoderCurrentTimeKey];
 }
 - (double)decodeFx3DFrustumTop {
-	return [self decodeFx3DFrustumTop:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DFrustumTop:FxGrip3DCoderCurrentTimeKey];
 }
 - (double)decodeFx3DFrustumNear {
-	return [self decodeFx3DFrustumNear:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DFrustumNear:FxGrip3DCoderCurrentTimeKey];
 }
 - (double)decodeFx3DFrustumFar {
-	return [self decodeFx3DFrustumFar:Fx3DCoderCurrentTimeKey];
+	return [self decodeFx3DFrustumFar:FxGrip3DCoderCurrentTimeKey];
 }
 
 - (double)decodeFx3DFocalLength:(NSString *_Null_unspecified)key {
-	return [self decodeDoubleForKey:[key stringByAppendingString:Fx3DCoderFocalLengthKey]];
+	return [self decodeDoubleForKey:[key stringByAppendingString:FxGrip3DCoderFocalLengthKey]];
 }
 
 - (nullable Matrix44Data*)decodeFx3DModelMatrixData:(NSString *_Null_unspecified)key {
-	return [self decodeMatrix44Data:[key stringByAppendingString:Fx3DCoderModelMatrixKey]];
+	return [self decodeMatrix44Data:[key stringByAppendingString:FxGrip3DCoderModelMatrixKey]];
 }
 
 - (nullable FxMatrix44*)decodeFx3DModelMatrix:(NSString *_Null_unspecified)key {
-	return [self decodeFxMatrix44:[key stringByAppendingString:Fx3DCoderModelMatrixKey]];
+	return [self decodeFxMatrix44:[key stringByAppendingString:FxGrip3DCoderModelMatrixKey]];
 }
 
 - (nullable Matrix44Data*)decodeFx3DViewMatrixData:(NSString *_Null_unspecified)key {
-	return [self decodeMatrix44Data:[key stringByAppendingString:Fx3DCoderViewMatrixKey]];
+	return [self decodeMatrix44Data:[key stringByAppendingString:FxGrip3DCoderViewMatrixKey]];
 }
 
 - (nullable FxMatrix44*)decodeFx3DViewMatrix:(NSString *_Null_unspecified)key {
-	return [self decodeFxMatrix44:[key stringByAppendingString:Fx3DCoderViewMatrixKey]];
+	return [self decodeFxMatrix44:[key stringByAppendingString:FxGrip3DCoderViewMatrixKey]];
 }
 
 - (nullable Matrix44Data*)decodeFx3DProjectionMatrixData:(NSString *_Null_unspecified)key {
-	return [self decodeMatrix44Data:[key stringByAppendingString:Fx3DCoderProjectionMatrixKey]];
+	return [self decodeMatrix44Data:[key stringByAppendingString:FxGrip3DCoderProjectionMatrixKey]];
 }
 
 - (nullable FxMatrix44*)decodeFx3DProjectionMatrix:(NSString *_Null_unspecified)key {
-	return [self decodeFxMatrix44:[key stringByAppendingString:Fx3DCoderProjectionMatrixKey]];
+	return [self decodeFxMatrix44:[key stringByAppendingString:FxGrip3DCoderProjectionMatrixKey]];
 }
 
 - (double)decodeFx3DFrustumLeft:(NSString *_Null_unspecified)key {
-	return [self decodeDoubleForKey:[key stringByAppendingString:Fx3DCoderFrustumLeftKey]];
+	return [self decodeDoubleForKey:[key stringByAppendingString:FxGrip3DCoderFrustumLeftKey]];
 }
 
 - (double)decodeFx3DFrustumRight:(NSString *_Null_unspecified)key {
-	return [self decodeDoubleForKey:[key stringByAppendingString:Fx3DCoderFrustumRightKey]];
+	return [self decodeDoubleForKey:[key stringByAppendingString:FxGrip3DCoderFrustumRightKey]];
 }
 
 - (double)decodeFx3DFrustumBottom:(NSString *_Null_unspecified)key {
-	return [self decodeDoubleForKey:[key stringByAppendingString:Fx3DCoderFrustumBottomKey]];
+	return [self decodeDoubleForKey:[key stringByAppendingString:FxGrip3DCoderFrustumBottomKey]];
 }
 
 - (double)decodeFx3DFrustumTop:(NSString *_Null_unspecified)key {
-	return [self decodeDoubleForKey:[key stringByAppendingString:Fx3DCoderFrustumTopKey]];
+	return [self decodeDoubleForKey:[key stringByAppendingString:FxGrip3DCoderFrustumTopKey]];
 }
 
 - (double)decodeFx3DFrustumNear:(NSString *_Null_unspecified)key {
-	return [self decodeDoubleForKey:[key stringByAppendingString:Fx3DCoderFrustumNearKey]];
+	return [self decodeDoubleForKey:[key stringByAppendingString:FxGrip3DCoderFrustumNearKey]];
 }
 
 - (double)decodeFx3DFrustumFar:(NSString *_Null_unspecified)key {
-	return [self decodeDoubleForKey:[key stringByAppendingString:Fx3DCoderFrustumFarKey]];
+	return [self decodeDoubleForKey:[key stringByAppendingString:FxGrip3DCoderFrustumFarKey]];
 }
 
 - (long)decodeFxLightCount
 {
-	return [self decodeFxLightCount:Fx3DCoderCurrentTimeKey];
+	return [self decodeFxLightCount:FxGrip3DCoderCurrentTimeKey];
 }
 
 - (long)decodeFxLightCount:(NSString *_Null_unspecified)key {
-	NSString *lightKey = [key stringByAppendingString:FxLightingCoderLightCountKey];
+	NSString *lightKey = [key stringByAppendingString:FxGripLightingCoderLightCountKey];
 	return [self decodeIntegerForKey:lightKey];
 }
 
 - (struct FxLight *)decodeFxLight:(long)lightIndex
 {
-	return [self decodeFxLight:lightIndex forKey:Fx3DCoderCurrentTimeKey];
+	return [self decodeFxLight:lightIndex forKey:FxGrip3DCoderCurrentTimeKey];
 }
 
 - (struct FxLight *)decodeFxLight:(long)lightIndex forKey:(NSString *_Null_unspecified)key
@@ -372,8 +372,8 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 		return nil;
 	}
 
-	// Lights encode under <key><index><FxLightingCoderLightingKey>.
-	NSString *lightKey = [key stringByAppendingFormat:@"%ld%@", lightIndex, FxLightingCoderLightingKey];
+	// Lights encode under <key><index><FxGripLightingCoderLightingKey>.
+	NSString *lightKey = [key stringByAppendingFormat:@"%ld%@", lightIndex, FxGripLightingCoderLightingKey];
 	NSUInteger lengthp = 0;
 	FxLight *p = (FxLight*)[self decodeBytesForKey:lightKey returnedLength:&lengthp];
 	if (lengthp != sizeof(FxLight) || !p) {
@@ -384,7 +384,7 @@ NSString * const Fx3DCoderCurrentTimeKey = @"_";
 
 - (BOOL)decodeFxLight:(struct FxLight *)light index:(long)lightIndex
 {
-	return [self decodeFxLight:light forKey:Fx3DCoderCurrentTimeKey index:lightIndex];
+	return [self decodeFxLight:light forKey:FxGrip3DCoderCurrentTimeKey index:lightIndex];
 }
 
 - (BOOL)decodeFxLight:(struct FxLight *)light forKey:(NSString *_Null_unspecified)key index:(long)lightIndex

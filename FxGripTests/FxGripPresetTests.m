@@ -24,17 +24,17 @@ static const FxParameterId kPresetTestParamID = 42;
 
 // The test bundle links only FxGrip and XCTest, so CMTime values are built and compared
 // without the CoreMedia symbols.
-static CMTime FxPresetTestTime(void)
+static CMTime FxGripPresetTestTime(void)
 {
 	return (CMTime){.value = 3, .timescale = 30, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static CMTime FxPresetTestUnsetTime(void)
+static CMTime FxGripPresetTestUnsetTime(void)
 {
 	return (CMTime){.value = 0, .timescale = 0, .flags = 0, .epoch = 0};
 }
 
-static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
+static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
@@ -44,12 +44,12 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 // Stands in for the dynamic API the FxGrip setting wrapper exposes; supplies the
 // parameter type the primitives dispatch on.
-@interface FxPresetTestDynamicAPI : NSObject
+@interface FxGripPresetTestDynamicAPI : NSObject
 @property (nonatomic, assign) FxParameterType typeToReturn;
 @property (nonatomic, assign) FxParameterId lastParameterID;
 @end
 
-@implementation FxPresetTestDynamicAPI
+@implementation FxGripPresetTestDynamicAPI
 - (FxParameterType)parameterType:(FxParameterId)parameterID
 {
 	self.lastParameterID = parameterID;
@@ -58,7 +58,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 // Serves the get path and the custom-merge read-back.
-@interface FxPresetTestRetrievalAPI : NSObject
+@interface FxGripPresetTestRetrievalAPI : NSObject
 @property (nonatomic, assign) BOOL succeeds;
 @property (nonatomic, assign) double red;
 @property (nonatomic, assign) double green;
@@ -74,7 +74,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 @property (nonatomic, assign) NSUInteger customReadCount;
 @end
 
-@implementation FxPresetTestRetrievalAPI
+@implementation FxGripPresetTestRetrievalAPI
 
 - (instancetype)init
 {
@@ -171,10 +171,10 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 /*!
 	Records which setter the primitive chose and the arguments it passed. This root class
-	deliberately implements neither -paramGetAPIv6 nor -dynamicParamAPIv4, so it also stands
+	deliberately implements neither -paramGetAPIv6 nor -parameterInfoAPIv1, so it also stands
 	for a raw host API that carries no type source.
 */
-@interface FxPresetTestSetter : NSObject
+@interface FxGripPresetTestSetter : NSObject
 @property (nonatomic, copy) NSString *recordedSelector;
 @property (nonatomic, assign) NSUInteger callCount;
 @property (nonatomic, assign) FxParameterId recordedParameterID;
@@ -193,14 +193,14 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 @property (nonatomic, assign) BOOL setterResult;
 @end
 
-@implementation FxPresetTestSetter
+@implementation FxGripPresetTestSetter
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
 		_setterResult = YES;
-		_recordedTime = FxPresetTestUnsetTime();
+		_recordedTime = FxGripPresetTestUnsetTime();
 	}
 	return self;
 }
@@ -265,7 +265,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (BOOL)setStringParameterValue:(NSString *)string toParameter:(UInt32)parameterID
 {
-	[self recordSelector:_cmd parameter:parameterID time:FxPresetTestUnsetTime()];
+	[self recordSelector:_cmd parameter:parameterID time:FxGripPresetTestUnsetTime()];
 	self.recordedString = string;
 	return self.setterResult;
 }
@@ -281,11 +281,11 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 // Adds the retrieval API the custom merge and the get path read through.
-@interface FxPresetTestSetterWithGetter : FxPresetTestSetter
-@property (nonatomic, strong) FxPresetTestRetrievalAPI *retrievalAPI;
+@interface FxGripPresetTestSetterWithGetter : FxGripPresetTestSetter
+@property (nonatomic, strong) FxGripPresetTestRetrievalAPI *retrievalAPI;
 @end
 
-@implementation FxPresetTestSetterWithGetter
+@implementation FxGripPresetTestSetterWithGetter
 - (id)paramGetAPIv6
 {
 	return self.retrievalAPI;
@@ -293,12 +293,12 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 @end
 
 // Adds the dynamic API, matching the FxGrip setting wrapper that supplies the type.
-@interface FxPresetTestFullSetter : FxPresetTestSetterWithGetter
-@property (nonatomic, strong) FxPresetTestDynamicAPI *dynamicAPI;
+@interface FxGripPresetTestFullSetter : FxGripPresetTestSetterWithGetter
+@property (nonatomic, strong) FxGripPresetTestDynamicAPI *dynamicAPI;
 @end
 
-@implementation FxPresetTestFullSetter
-- (id)dynamicParamAPIv4
+@implementation FxGripPresetTestFullSetter
+- (id)parameterInfoAPIv1
 {
 	return self.dynamicAPI;
 }
@@ -311,15 +311,15 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @implementation FxGripPresetTests
 {
-	FxPresetTestFullSetter *_setter;
+	FxGripPresetTestFullSetter *_setter;
 }
 
 - (void)setUp
 {
 	[super setUp];
-	_setter = [[FxPresetTestFullSetter alloc] init];
-	_setter.dynamicAPI = [[FxPresetTestDynamicAPI alloc] init];
-	_setter.retrievalAPI = [[FxPresetTestRetrievalAPI alloc] init];
+	_setter = [[FxGripPresetTestFullSetter alloc] init];
+	_setter.dynamicAPI = [[FxGripPresetTestDynamicAPI alloc] init];
+	_setter.retrievalAPI = [[FxGripPresetTestRetrievalAPI alloc] init];
 }
 
 - (void)tearDown
@@ -332,7 +332,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	_setter.dynamicAPI.typeToReturn = type;
 	return [FxGripPreset setParameterValue:value toParameter:kPresetTestParamID
-									atTime:FxPresetTestTime() withAPI:(id)_setter];
+									atTime:FxGripPresetTestTime() withAPI:(id)_setter];
 }
 
 - (id)getValueWithType:(FxParameterType)type success:(BOOL*)success
@@ -340,7 +340,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	_setter.dynamicAPI.typeToReturn = type;
 	id value = nil;
 	BOOL result = [FxGripPreset getParameterValue:&value toParameter:kPresetTestParamID
-										   atTime:FxPresetTestTime() withAPI:(id)_setter];
+										   atTime:FxGripPresetTestTime() withAPI:(id)_setter];
 	if (success) {
 		*success = result;
 	}
@@ -355,7 +355,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(_setter.recordedSelector, @"setIntValue:toParameter:atTime:");
 	XCTAssertEqual(_setter.recordedInt, 7);
 	XCTAssertEqual(_setter.recordedParameterID, kPresetTestParamID);
-	XCTAssertTrue(FxPresetTestTimesEqual(_setter.recordedTime, FxPresetTestTime()));
+	XCTAssertTrue(FxGripPresetTestTimesEqual(_setter.recordedTime, FxGripPresetTestTime()));
 	XCTAssertEqual(_setter.callCount, 1u);
 	XCTAssertEqual(_setter.dynamicAPI.lastParameterID, kPresetTestParamID);
 }
@@ -379,7 +379,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue([self setValue:@0.25 withType:FxParameterType_Float]);
 	XCTAssertEqualObjects(_setter.recordedSelector, @"setFloatValue:toParameter:atTime:");
 	XCTAssertEqual(_setter.recordedFloat, 0.25);
-	XCTAssertTrue(FxPresetTestTimesEqual(_setter.recordedTime, FxPresetTestTime()));
+	XCTAssertTrue(FxGripPresetTestTimesEqual(_setter.recordedTime, FxGripPresetTestTime()));
 }
 
 - (void)testSetPercentTypeTakesTheDefaultFloatBranch
@@ -425,7 +425,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(_setter.recordedRed, 0.1);
 	XCTAssertEqual(_setter.recordedGreen, 0.2);
 	XCTAssertEqual(_setter.recordedBlue, 0.3);
-	XCTAssertTrue(FxPresetTestTimesEqual(_setter.recordedTime, FxPresetTestTime()));
+	XCTAssertTrue(FxGripPresetTestTimesEqual(_setter.recordedTime, FxGripPresetTestTime()));
 }
 
 - (void)testSetRGBATypeWithAlphaCallsFourComponentColorSetter
@@ -508,25 +508,25 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testSetInfersRGBAFromComponentKeysWhenNoDynamicAPI
 {
-	FxPresetTestSetterWithGetter *bare = [[FxPresetTestSetterWithGetter alloc] init];
+	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
 	NSDictionary *color = @{kFxParameterProperty_Red: @0.1,
 							kFxParameterProperty_Green: @0.2,
 							kFxParameterProperty_Blue: @0.3,
 							kFxParameterProperty_Alpha: @0.4};
 
 	XCTAssertTrue([FxGripPreset setParameterValue:color toParameter:kPresetTestParamID
-										   atTime:FxPresetTestTime() withAPI:(id)bare]);
+										   atTime:FxGripPresetTestTime() withAPI:(id)bare]);
 	XCTAssertEqualObjects(bare.recordedSelector, @"setRedValue:greenValue:blueValue:alphaValue:toParameter:atTime:");
 	XCTAssertEqual(bare.recordedAlpha, 0.4);
 }
 
 - (void)testSetInfersPointFromXYKeysWhenNoDynamicAPI
 {
-	FxPresetTestSetterWithGetter *bare = [[FxPresetTestSetterWithGetter alloc] init];
+	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
 	NSDictionary *point = @{kFxParameterProperty_X: @0.6, kFxParameterProperty_Y: @0.9};
 
 	XCTAssertTrue([FxGripPreset setParameterValue:point toParameter:kPresetTestParamID
-										   atTime:FxPresetTestTime() withAPI:(id)bare]);
+										   atTime:FxGripPresetTestTime() withAPI:(id)bare]);
 	XCTAssertEqualObjects(bare.recordedSelector, @"setXValue:YValue:toParameter:atTime:");
 	XCTAssertEqual(bare.recordedX, 0.6);
 	XCTAssertEqual(bare.recordedY, 0.9);
@@ -534,20 +534,20 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testSetInfersStringFromNSStringWhenNoDynamicAPI
 {
-	FxPresetTestSetterWithGetter *bare = [[FxPresetTestSetterWithGetter alloc] init];
+	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
 
 	XCTAssertTrue([FxGripPreset setParameterValue:@"inferred" toParameter:kPresetTestParamID
-										   atTime:FxPresetTestTime() withAPI:(id)bare]);
+										   atTime:FxGripPresetTestTime() withAPI:(id)bare]);
 	XCTAssertEqualObjects(bare.recordedSelector, @"setStringParameterValue:toParameter:");
 	XCTAssertEqualObjects(bare.recordedString, @"inferred");
 }
 
 - (void)testSetInfersFloatFromNSNumberWhenNoDynamicAPI
 {
-	FxPresetTestSetterWithGetter *bare = [[FxPresetTestSetterWithGetter alloc] init];
+	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
 
 	XCTAssertTrue([FxGripPreset setParameterValue:@2.5 toParameter:kPresetTestParamID
-										   atTime:FxPresetTestTime() withAPI:(id)bare]);
+										   atTime:FxGripPresetTestTime() withAPI:(id)bare]);
 	XCTAssertEqualObjects(bare.recordedSelector, @"setFloatValue:toParameter:atTime:");
 	XCTAssertEqual(bare.recordedFloat, 2.5);
 }
@@ -557,7 +557,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	_setter.dynamicAPI = nil;
 
 	XCTAssertTrue([FxGripPreset setParameterValue:@"inferred" toParameter:kPresetTestParamID
-										   atTime:FxPresetTestTime() withAPI:(id)_setter]);
+										   atTime:FxGripPresetTestTime() withAPI:(id)_setter]);
 	XCTAssertEqualObjects(_setter.recordedSelector, @"setStringParameterValue:toParameter:");
 }
 
@@ -578,7 +578,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 - (void)testSetRejectsNilSetterAPI
 {
 	XCTAssertFalse([FxGripPreset setParameterValue:@1 toParameter:kPresetTestParamID
-											atTime:FxPresetTestTime() withAPI:nil]);
+											atTime:FxGripPresetTestTime() withAPI:nil]);
 }
 
 - (void)testSetRejectsNonNumberForIntType
@@ -724,23 +724,23 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	_setter.dynamicAPI.typeToReturn = FxParameterType_Float;
 	XCTAssertFalse([FxGripPreset getParameterValue:NULL toParameter:kPresetTestParamID
-											atTime:FxPresetTestTime() withAPI:(id)_setter]);
+											atTime:FxGripPresetTestTime() withAPI:(id)_setter]);
 }
 
 - (void)testGetRejectsNilSetterAPI
 {
 	id value = nil;
 	XCTAssertFalse([FxGripPreset getParameterValue:&value toParameter:kPresetTestParamID
-											atTime:FxPresetTestTime() withAPI:nil]);
+											atTime:FxGripPresetTestTime() withAPI:nil]);
 	XCTAssertNil(value);
 }
 
 - (void)testGetRejectsASetterWithoutARetrievalAPI
 {
-	FxPresetTestSetter *bare = [[FxPresetTestSetter alloc] init];
+	FxGripPresetTestSetter *bare = [[FxGripPresetTestSetter alloc] init];
 	id value = nil;
 	XCTAssertFalse([FxGripPreset getParameterValue:&value toParameter:kPresetTestParamID
-											atTime:FxPresetTestTime() withAPI:(id)bare]);
+											atTime:FxGripPresetTestTime() withAPI:(id)bare]);
 	XCTAssertNil(value);
 }
 
@@ -749,7 +749,7 @@ static BOOL FxPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	_setter.retrievalAPI = nil;
 	id value = nil;
 	XCTAssertFalse([FxGripPreset getParameterValue:&value toParameter:kPresetTestParamID
-											atTime:FxPresetTestTime() withAPI:(id)_setter]);
+											atTime:FxGripPresetTestTime() withAPI:(id)_setter]);
 	XCTAssertNil(value);
 }
 

@@ -38,7 +38,7 @@ static CGPoint FxGripOSCRotateVector(CGPoint vector, double radians)
 }
 
 /*! Reads an angle parameter scaled by radiansPerUnit; parameterID 0 means angle 0. */
-static BOOL FxGripOSCReadAngle(FxOnScreenControlBase *control,
+static BOOL FxGripOSCReadAngle(FxGripOnScreenControl *control,
 							   FxParameterId parameterID,
 							   double radiansPerUnit,
 							   CMTime time,
@@ -57,7 +57,7 @@ static BOOL FxGripOSCReadAngle(FxOnScreenControlBase *control,
 }
 
 /*! The input bounds when they are usable, else NO. */
-static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *inputSize)
+static BOOL FxGripOSCReadInputSize(FxGripOnScreenControl *control, NSSize *inputSize)
 {
 	NSRect inputBounds = [control.apiManager.onScreenControlAPIv4 inputBounds];
 	if (inputBounds.size.width <= 0.0 || inputBounds.size.height <= 0.0) {
@@ -65,6 +65,15 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 	}
 	*inputSize = inputBounds.size;
 	return YES;
+}
+
+/*! Snaps a screen angle to the nearest 45° increment while the constrain modifier is held. */
+static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers)
+{
+	if (![FxGripEventModifiers isConstrainForFxModifiers:modifiers]) {
+		return radians;
+	}
+	return round(radians / M_PI_4) * M_PI_4;
 }
 
 @implementation FxGripOSCPart
@@ -114,6 +123,19 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 }
 
 - (BOOL)handlesOptionDrag
+{
+	return NO;
+}
+
+- (BOOL)handlesConstrainDrag
+{
+	return NO;
+}
+
+- (BOOL)mouseDoubleClickAtObjectPoint:(CGPoint)objectPoint
+						  canvasPoint:(CGPoint)canvasPoint
+							modifiers:(FxModifierKeys)modifiers
+							   atTime:(CMTime)time
 {
 	return NO;
 }
@@ -334,6 +356,13 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 
 @implementation FxGripOSCAngleDialPart
 
+// Shift snaps the written angle to 45° increments, so this part reads Shift itself instead of
+// letting the base constrain the pointer to an axis.
+- (BOOL)handlesConstrainDrag
+{
+	return YES;
+}
+
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 centerParameterID:(FxParameterId)centerParameterID
 				  angleParameterID:(FxParameterId)angleParameterID
@@ -401,7 +430,7 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 	if (dx == 0.0 && dy == 0.0) {
 		return NO;
 	}
-	double radians = atan2(dy, dx);
+	double radians = FxGripOSCConstrainedAngle(atan2(dy, dx), modifiers);
 	return [self.control setFloatValue:radians / self.radiansPerUnit
 						   toParameter:self.angleParameterID
 								atTime:time];
@@ -437,6 +466,53 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 #pragma mark - Rectangle corner
 
 @implementation FxGripOSCRectCornerPart
+
+// Shift locks the resize to the aspect ratio, so this part reads Shift itself instead of letting
+// the base constrain the pointer to an axis.
+- (BOOL)handlesConstrainDrag
+{
+	return YES;
+}
+
+// Option anchors the resize to the center, so this part reads Option itself instead of the base's
+// fine-drag.
+- (BOOL)handlesOptionDrag
+{
+	return YES;
+}
+
+/*! The fixed anchor, per-axis signs, and the anchor-to-corner extents for the dragged corner.
+	atCenter picks the rectangle center (Option: symmetric resize) over the opposite corner (the
+	default); the extents are the half diagonal from the center, or the full span from the opposite
+	corner. */
+- (void)fxResizeAnchor:(nonnull CGPoint *)anchor
+				 signX:(nonnull double *)signX
+				 signY:(nonnull double *)signY
+				 width:(nonnull double *)width
+				height:(nonnull double *)height
+			 lowerLeft:(CGPoint)ll
+			upperRight:(CGPoint)ur
+			  atCenter:(BOOL)atCenter
+{
+	CGPoint center = CGPointMake((ll.x + ur.x) / 2.0, (ll.y + ur.y) / 2.0);
+	double fullWidth = fabs(ur.x - ll.x), fullHeight = fabs(ur.y - ll.y);
+	switch (self.corner) {
+		case FxGripOSCRectCornerLowerLeft:
+			*anchor = atCenter ? center : ur; *signX = -1.0; *signY = -1.0;
+			break;
+		case FxGripOSCRectCornerLowerRight:
+			*anchor = atCenter ? center : CGPointMake(ll.x, ur.y); *signX = 1.0; *signY = -1.0;
+			break;
+		case FxGripOSCRectCornerUpperRight:
+			*anchor = atCenter ? center : ll; *signX = 1.0; *signY = 1.0;
+			break;
+		case FxGripOSCRectCornerUpperLeft:
+			*anchor = atCenter ? center : CGPointMake(ur.x, ll.y); *signX = -1.0; *signY = 1.0;
+			break;
+	}
+	*width = atCenter ? fullWidth / 2.0 : fullWidth;
+	*height = atCenter ? fullHeight / 2.0 : fullHeight;
+}
 
 + (nonnull instancetype)partWithID:(NSInteger)partID
 							corner:(FxGripOSCRectCorner)corner
@@ -537,20 +613,46 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 		offset = FxGripOSCObjectVector(FxGripOSCRotateVector(FxGripOSCPixelVector(offset, inputSize), -radians), inputSize);
 		objectPoint = CGPointMake(center.x + offset.x, center.y + offset.y);
 	}
+	BOOL anchorCenter = (modifiers & kFxModifierKey_OPTION) != 0;
+	CGPoint anchor = CGPointZero;
+	double signX = 1.0, signY = 1.0, width = 0.0, height = 0.0;
+	[self fxResizeAnchor:&anchor signX:&signX signY:&signY width:&width height:&height
+			   lowerLeft:ll upperRight:ur atCenter:anchorCenter];
+	if ([FxGripEventModifiers isConstrainForFxModifiers:modifiers] && width > 0.0 && height > 0.0) {
+		double scale = fmax(fabs(objectPoint.x - anchor.x) / width, fabs(objectPoint.y - anchor.y) / height);
+		objectPoint = CGPointMake(anchor.x + signX * scale * width, anchor.y + signY * scale * height);
+	}
+	// Option resizes symmetrically: the opposite corner mirrors the dragged one through the center.
+	CGPoint center = CGPointMake((ll.x + ur.x) / 2.0, (ll.y + ur.y) / 2.0);
+	CGPoint opposite = CGPointMake(2.0 * center.x - objectPoint.x, 2.0 * center.y - objectPoint.y);
 	switch (self.corner) {
 		case FxGripOSCRectCornerLowerLeft:
 			ll = objectPoint;
+			if (anchorCenter) {
+				ur = opposite;
+			}
 			break;
 		case FxGripOSCRectCornerLowerRight:
 			ur.x = objectPoint.x;
 			ll.y = objectPoint.y;
+			if (anchorCenter) {
+				ll.x = opposite.x;
+				ur.y = opposite.y;
+			}
 			break;
 		case FxGripOSCRectCornerUpperRight:
 			ur = objectPoint;
+			if (anchorCenter) {
+				ll = opposite;
+			}
 			break;
 		case FxGripOSCRectCornerUpperLeft:
 			ll.x = objectPoint.x;
 			ur.y = objectPoint.y;
+			if (anchorCenter) {
+				ur.x = opposite.x;
+				ll.y = opposite.y;
+			}
 			break;
 	}
 	BOOL movedLL = [self.control setObjectPoint:ll toParameter:self.lowerLeftParameterID atTime:time];
@@ -960,6 +1062,13 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 
 @implementation FxGripOSCRotationHandlePart
 
+// Shift snaps the written angle to 45° increments, so this part reads Shift itself instead of
+// letting the base constrain the pointer to an axis.
+- (BOOL)handlesConstrainDrag
+{
+	return YES;
+}
+
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 centerParameterID:(FxParameterId)centerParameterID
 				 radiusParameterID:(FxParameterId)radiusParameterID
@@ -1036,7 +1145,7 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 	if (dx == 0.0 && dy == 0.0) {
 		return NO;
 	}
-	double radians = atan2(dy, dx);
+	double radians = FxGripOSCConstrainedAngle(atan2(dy, dx), modifiers);
 	return [self.control setFloatValue:radians / self.radiansPerUnit
 						   toParameter:self.angleParameterID
 								atTime:time];
@@ -1138,10 +1247,22 @@ static BOOL FxGripOSCReadInputSize(FxOnScreenControlBase *control, NSSize *input
 	}
 	if (options & FxGripOSCShapeOptionVertexHandles) {
 		for (NSUInteger index = 0; index < count; index++) {
-			[parts addObject:[FxGripOSCBezierVertexHandlePart partWithID:partID++
-													   vertexParameterID:(FxParameterId)pointParameterIDs[index].unsignedIntValue
-													inTangentParameterID:(FxParameterId)inTangentParameterIDs[index].unsignedIntValue
-												   outTangentParameterID:(FxParameterId)outTangentParameterIDs[index].unsignedIntValue]];
+			FxGripOSCBezierVertexHandlePart *handle =
+				[FxGripOSCBezierVertexHandlePart partWithID:partID++
+										  vertexParameterID:(FxParameterId)pointParameterIDs[index].unsignedIntValue
+									   inTangentParameterID:(FxParameterId)inTangentParameterIDs[index].unsignedIntValue
+									  outTangentParameterID:(FxParameterId)outTangentParameterIDs[index].unsignedIntValue];
+			// The neighbors let a double-click regenerate a smooth tangent; endpoints of an
+			// open chain keep a 0 on the missing side.
+			if (closed || index > 0) {
+				NSUInteger prev = (index == 0) ? count - 1 : index - 1;
+				handle.previousVertexParameterID = (FxParameterId)pointParameterIDs[prev].unsignedIntValue;
+			}
+			if (closed || index + 1 < count) {
+				NSUInteger next = (index + 1) % count;
+				handle.nextVertexParameterID = (FxParameterId)pointParameterIDs[next].unsignedIntValue;
+			}
+			[parts addObject:handle];
 		}
 	}
 	if (options & FxGripOSCShapeOptionTangentHandles) {
@@ -1460,6 +1581,90 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 	return moved;
 }
 
+// A tangent within this object-space distance of its vertex counts as retracted, so the
+// side is linear.
+static const double kFxGripOSCTangentRetractedEpsilon = 1e-6;
+
+/*! YES when the tangent sits on the vertex, or the side has no tangent parameter. */
+- (BOOL)fxTangent:(FxParameterId)tangentParameterID isRetractedFromVertex:(CGPoint)vertex atTime:(CMTime)time
+{
+	if (tangentParameterID == 0) {
+		return YES;
+	}
+	CGPoint tangent = CGPointZero;
+	if (![self.control getObjectPoint:&tangent fromParameter:tangentParameterID atTime:time]) {
+		return YES;
+	}
+	return fabs(tangent.x - vertex.x) <= kFxGripOSCTangentRetractedEpsilon
+		&& fabs(tangent.y - vertex.y) <= kFxGripOSCTangentRetractedEpsilon;
+}
+
+/*! Writes a tangent parameter, treating an ID of 0 as a side that is absent. */
+- (BOOL)fxSetTangent:(FxParameterId)tangentParameterID toObjectPoint:(CGPoint)point atTime:(CMTime)time
+{
+	if (tangentParameterID == 0) {
+		return YES;
+	}
+	return [self.control setObjectPoint:point toParameter:tangentParameterID atTime:time];
+}
+
+/*! Retracts both tangents onto the vertex, so its segments run straight. */
+- (BOOL)fxMakeCornerAtVertex:(CGPoint)vertex atTime:(CMTime)time
+{
+	BOOL in = [self fxSetTangent:self.inTangentParameterID toObjectPoint:vertex atTime:time];
+	BOOL out = [self fxSetTangent:self.outTangentParameterID toObjectPoint:vertex atTime:time];
+	return in && out;
+}
+
+/*! Regenerates smooth tangents along the neighbor axis; NO when no neighbor gives a direction. */
+- (BOOL)fxMakeSmoothAroundVertex:(CGPoint)vertex atTime:(CMTime)time
+{
+	CGPoint previous = vertex, next = vertex;
+	BOOL havePrevious = self.previousVertexParameterID != 0
+		&& [self.control getObjectPoint:&previous fromParameter:self.previousVertexParameterID atTime:time];
+	BOOL haveNext = self.nextVertexParameterID != 0
+		&& [self.control getObjectPoint:&next fromParameter:self.nextVertexParameterID atTime:time];
+	NSSize inputSize = NSZeroSize;
+	if ((!havePrevious && !haveNext) || !FxGripOSCReadInputSize(self.control, &inputSize)) {
+		return NO;
+	}
+	// The smooth axis runs from the previous vertex to the next; an endpoint falls back to the
+	// vertex on its missing side.
+	CGPoint from = havePrevious ? previous : vertex;
+	CGPoint to = haveNext ? next : vertex;
+	CGPoint axis = FxGripOSCPixelVector(CGPointMake(to.x - from.x, to.y - from.y), inputSize);
+	double axisLength = sqrt(axis.x * axis.x + axis.y * axis.y);
+	if (axisLength < 1e-9) {
+		return NO;
+	}
+	// A sixth of the neighbor span is the Catmull-Rom smooth default.
+	CGPoint offset = FxGripOSCObjectVector(CGPointMake(axis.x / 6.0, axis.y / 6.0), inputSize);
+	BOOL out = [self fxSetTangent:self.outTangentParameterID
+					toObjectPoint:CGPointMake(vertex.x + offset.x, vertex.y + offset.y)
+						   atTime:time];
+	BOOL in = [self fxSetTangent:self.inTangentParameterID
+				  toObjectPoint:CGPointMake(vertex.x - offset.x, vertex.y - offset.y)
+						 atTime:time];
+	return out && in;
+}
+
+- (BOOL)mouseDoubleClickAtObjectPoint:(CGPoint)objectPoint
+						  canvasPoint:(CGPoint)canvasPoint
+							modifiers:(FxModifierKeys)modifiers
+							   atTime:(CMTime)time
+{
+	CGPoint vertex = CGPointZero;
+	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]) {
+		return NO;
+	}
+	BOOL corner = [self fxTangent:self.inTangentParameterID isRetractedFromVertex:vertex atTime:time]
+		&& [self fxTangent:self.outTangentParameterID isRetractedFromVertex:vertex atTime:time];
+	if (corner) {
+		return [self fxMakeSmoothAroundVertex:vertex atTime:time];
+	}
+	return [self fxMakeCornerAtVertex:vertex atTime:time];
+}
+
 - (void)drawSelected:(BOOL)selected
 		  canvasSize:(CGSize)canvasSize
 	  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder
@@ -1515,10 +1720,31 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 	return dx * dx + dy * dy <= self.hitRadius * self.hitRadius;
 }
 
-// Option breaks the tangent's mirror here, so the base leaves Option to this part (no fine-drag).
+// Option breaks the mirror and Shift snaps the angle here, so the base leaves both to this part.
 - (BOOL)handlesOptionDrag
 {
 	return YES;
+}
+
+- (BOOL)handlesConstrainDrag
+{
+	return YES;
+}
+
+- (BOOL)mouseDownAtObjectPoint:(CGPoint)objectPoint
+				   canvasPoint:(CGPoint)canvasPoint
+					 modifiers:(FxModifierKeys)modifiers
+						atTime:(CMTime)time
+{
+	// Command-click retracts the tangent onto its vertex, making that side linear.
+	if (![FxGripEventModifiers isDeleteClickForFxModifiers:modifiers]) {
+		return NO;
+	}
+	CGPoint vertex = CGPointZero;
+	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]) {
+		return NO;
+	}
+	return [self.control setObjectPoint:vertex toParameter:self.tangentParameterID atTime:time];
 }
 
 - (BOOL)dragToObjectPoint:(CGPoint)objectPoint
@@ -1526,30 +1752,50 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 				modifiers:(FxModifierKeys)modifiers
 				   atTime:(CMTime)time
 {
-	BOOL moved = [self.control setObjectPoint:objectPoint toParameter:self.tangentParameterID atTime:time];
+	CGPoint vertex = CGPointZero;
+	NSSize inputSize = NSZeroSize;
+	BOOL haveFrame = [self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]
+		&& FxGripOSCReadInputSize(self.control, &inputSize);
+
+	// Command holds the tangent retracted on its vertex for the whole gesture.
+	if (haveFrame && [FxGripEventModifiers isDeleteClickForFxModifiers:modifiers]) {
+		return [self.control setObjectPoint:vertex toParameter:self.tangentParameterID atTime:time];
+	}
+
+	// Shift snaps the handle's angle about the vertex to 45° increments, keeping its length.
+	CGPoint tangentPoint = objectPoint;
+	if (haveFrame && [FxGripEventModifiers isConstrainForFxModifiers:modifiers]) {
+		CGPoint offset = FxGripOSCPixelVector(CGPointMake(objectPoint.x - vertex.x, objectPoint.y - vertex.y), inputSize);
+		double length = sqrt(offset.x * offset.x + offset.y * offset.y);
+		if (length >= 1e-9) {
+			double snapped = round(atan2(offset.y, offset.x) / (M_PI_4)) * M_PI_4;
+			CGPoint snappedOffset = FxGripOSCObjectVector(CGPointMake(cos(snapped) * length, sin(snapped) * length), inputSize);
+			tangentPoint = CGPointMake(vertex.x + snappedOffset.x, vertex.y + snappedOffset.y);
+		}
+	}
+
+	BOOL moved = [self.control setObjectPoint:tangentPoint toParameter:self.tangentParameterID atTime:time];
 	// Option gives this part its own gesture (break the mirror), declared via handlesOptionDrag.
-	if (!moved || self.oppositeTangentParameterID == 0 || (modifiers & kFxModifierKey_OPTION)) {
+	if (!moved || !haveFrame || self.oppositeTangentParameterID == 0 || (modifiers & kFxModifierKey_OPTION)) {
 		return moved;
 	}
 
-	// Aligned mirroring: the opposite tangent rotates to stay collinear through
-	// the vertex, keeping its own length, measured in the input-pixel frame.
-	CGPoint vertex = CGPointZero, opposite = CGPointZero;
-	NSSize inputSize = NSZeroSize;
-	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]
-		|| ![self.control getObjectPoint:&opposite fromParameter:self.oppositeTangentParameterID atTime:time]
-		|| !FxGripOSCReadInputSize(self.control, &inputSize)) {
+	// The opposite tangent rotates to stay collinear through the vertex. Aligned mirroring keeps
+	// its own length; symmetric mirroring matches the dragged length. Measured in the pixel frame.
+	CGPoint opposite = CGPointZero;
+	if (![self.control getObjectPoint:&opposite fromParameter:self.oppositeTangentParameterID atTime:time]) {
 		return moved;
 	}
-	CGPoint dragged = FxGripOSCPixelVector(CGPointMake(objectPoint.x - vertex.x, objectPoint.y - vertex.y), inputSize);
+	CGPoint dragged = FxGripOSCPixelVector(CGPointMake(tangentPoint.x - vertex.x, tangentPoint.y - vertex.y), inputSize);
 	double draggedLength = sqrt(dragged.x * dragged.x + dragged.y * dragged.y);
 	if (draggedLength < 1e-9) {
 		return moved;
 	}
 	CGPoint oppositeOffset = FxGripOSCPixelVector(CGPointMake(opposite.x - vertex.x, opposite.y - vertex.y), inputSize);
 	double oppositeLength = sqrt(oppositeOffset.x * oppositeOffset.x + oppositeOffset.y * oppositeOffset.y);
-	CGPoint mirrored = FxGripOSCObjectVector(CGPointMake(-dragged.x / draggedLength * oppositeLength,
-														 -dragged.y / draggedLength * oppositeLength), inputSize);
+	double magnitude = (self.mirroring == FxGripOSCTangentMirroringSymmetric) ? draggedLength : oppositeLength;
+	CGPoint mirrored = FxGripOSCObjectVector(CGPointMake(-dragged.x / draggedLength * magnitude,
+														 -dragged.y / draggedLength * magnitude), inputSize);
 	return [self.control setObjectPoint:CGPointMake(vertex.x + mirrored.x, vertex.y + mirrored.y)
 							toParameter:self.oppositeTangentParameterID
 								 atTime:time] && moved;
@@ -1589,6 +1835,13 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 #pragma mark - Rectangle rotation handle
 
 @implementation FxGripOSCRectRotationHandlePart
+
+// Shift snaps the written angle to 45° increments, so this part reads Shift itself instead of
+// letting the base constrain the pointer to an axis.
+- (BOOL)handlesConstrainDrag
+{
+	return YES;
+}
 
 + (nonnull instancetype)partWithID:(NSInteger)partID
 			  lowerLeftParameterID:(FxParameterId)lowerLeftParameterID
@@ -1660,7 +1913,7 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 	if (dx == 0.0 && dy == 0.0) {
 		return NO;
 	}
-	double radians = atan2(dy, dx);
+	double radians = FxGripOSCConstrainedAngle(atan2(dy, dx), modifiers);
 	return [self.control setFloatValue:radians / self.radiansPerUnit
 						   toParameter:self.angleParameterID
 								atTime:time];
@@ -1704,7 +1957,7 @@ typedef struct FxGripOSCBoxGeometry {
 	NSSize	inputSize;
 } FxGripOSCBoxGeometry;
 
-static BOOL FxGripOSCReadBoxGeometry(FxOnScreenControlBase *control,
+static BOOL FxGripOSCReadBoxGeometry(FxGripOnScreenControl *control,
 									 FxParameterId centerID,
 									 FxParameterId widthID,
 									 FxParameterId heightID,
@@ -1903,6 +2156,20 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 
 @implementation FxGripOSCBoxCornerPart
 
+// Shift locks the resize to the box's aspect ratio, so this part reads Shift itself instead of
+// letting the base constrain the pointer to an axis.
+- (BOOL)handlesConstrainDrag
+{
+	return YES;
+}
+
+// Option anchors the resize to the center, so this part reads Option itself instead of the base's
+// fine-drag.
+- (BOOL)handlesOptionDrag
+{
+	return YES;
+}
+
 + (nonnull instancetype)partWithID:(NSInteger)partID
 							corner:(FxGripOSCRectCorner)corner
 				 centerParameterID:(FxParameterId)centerParameterID
@@ -1959,16 +2226,56 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	if (![self readGeometry:&geometry atTime:time]) {
 		return NO;
 	}
-	// Resize about the fixed center: the pointer's local frame position gives the
-	// new half sizes; the center and angle stay put.
+	// The pointer and the corner signs live in the box's local pixel frame.
 	CGPoint local = FxGripOSCBoxLocalPoint(objectPoint, &geometry);
-	BOOL setWidth = [self.control setFloatValue:2.0 * fabs(local.x)
+	double signX = (self.corner == FxGripOSCRectCornerLowerRight
+					|| self.corner == FxGripOSCRectCornerUpperRight) ? 1.0 : -1.0;
+	double signY = (self.corner == FxGripOSCRectCornerUpperRight
+					|| self.corner == FxGripOSCRectCornerUpperLeft) ? 1.0 : -1.0;
+	BOOL aspectLock = [FxGripEventModifiers isConstrainForFxModifiers:modifiers]
+		&& geometry.halfWidth > 0.0 && geometry.halfHeight > 0.0;
+	BOOL anchorCenter = (modifiers & kFxModifierKey_OPTION) != 0;
+
+	double halfWidth = 0.0, halfHeight = 0.0;
+	CGPoint newCenter = geometry.center;
+	if (anchorCenter) {
+		// Option resizes symmetrically about the fixed center; the half sizes are the pointer's
+		// local extent.
+		halfWidth = fabs(local.x);
+		halfHeight = fabs(local.y);
+		if (aspectLock) {
+			double scale = fmax(halfWidth / geometry.halfWidth, halfHeight / geometry.halfHeight);
+			halfWidth = scale * geometry.halfWidth;
+			halfHeight = scale * geometry.halfHeight;
+		}
+	} else {
+		// The default anchors the diagonally opposite corner in object space; the center shifts.
+		CGPoint opposite = CGPointMake(-signX * geometry.halfWidth, -signY * geometry.halfHeight);
+		CGPoint dragged = local;
+		if (aspectLock) {
+			double scale = fmax(fabs(local.x - opposite.x) / (2.0 * geometry.halfWidth),
+								fabs(local.y - opposite.y) / (2.0 * geometry.halfHeight));
+			halfWidth = scale * geometry.halfWidth;
+			halfHeight = scale * geometry.halfHeight;
+			dragged = CGPointMake(opposite.x + signX * 2.0 * halfWidth,
+								  opposite.y + signY * 2.0 * halfHeight);
+		} else {
+			halfWidth = fabs(local.x - opposite.x) / 2.0;
+			halfHeight = fabs(local.y - opposite.y) / 2.0;
+		}
+		CGPoint localCenter = CGPointMake((dragged.x + opposite.x) / 2.0, (dragged.y + opposite.y) / 2.0);
+		newCenter = FxGripOSCBoxObjectPoint(localCenter, &geometry);
+	}
+
+	BOOL setWidth = [self.control setFloatValue:2.0 * halfWidth
 									toParameter:self.widthParameterID
 										 atTime:time];
-	BOOL setHeight = [self.control setFloatValue:2.0 * fabs(local.y)
+	BOOL setHeight = [self.control setFloatValue:2.0 * halfHeight
 									 toParameter:self.heightParameterID
 										  atTime:time];
-	return setWidth && setHeight;
+	BOOL setCenter = anchorCenter
+		|| [self.control setObjectPoint:newCenter toParameter:self.centerParameterID atTime:time];
+	return setWidth && setHeight && setCenter;
 }
 
 - (void)drawSelected:(BOOL)selected

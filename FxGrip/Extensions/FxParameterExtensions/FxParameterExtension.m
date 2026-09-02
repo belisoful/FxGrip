@@ -6,18 +6,12 @@
 //
 
 #import "FxParameterExtension.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 #import "NSCoder+FxPlug.h"
 #import "FxGrip_ARC.h"
-/*
-#import <CoreMedia/CoreMedia.h>
-#import "GuruFxTileableEffect.h"
-#import "GuruFxTileableEffect+Extensions.h"
-#import "FxGripInterpolatingDictionary.h"
-#import "NSCoder+FxPlug.h"*/
 
 
 #pragma mark -
@@ -82,14 +76,14 @@
 	}
 }
 
-- (BOOL)extLoadWithEffect:(nonnull id<FxTileableEffectBase>)effect
+- (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect
 {
 	BOOL success = [super extLoadWithEffect:effect];
 	if (success && self.extActive) {
 		// this tags the parameter with the extension if it matches.
 		_parameterNotifier = NARC_RETAIN(self.effect.notifier);
 		__weak typeof(self) weakSelf = self;
-		_parameterAddObserver = [_parameterNotifier addObserverForName:FxNotifyAPI_ParameterAddPreName object:effect priority:-18 queue:nil usingBlock:^(NSNotification *note) {
+		_parameterAddObserver = [_parameterNotifier addObserverForName:FxGripNotifyAPI_ParameterAddPreName object:effect priority:-18 queue:nil usingBlock:^(NSNotification *note) {
 			// Registration is underway: the parameter ID is frozen from the first add on.
 			weakSelf.sawParameterAdd = YES;
 			//Adds the extension key to the parameter

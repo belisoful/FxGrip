@@ -4,8 +4,8 @@
 //
 
 #import "FxGripExtensionSystem.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "FxAPINotifications.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "FxGripAPINotifications.h"
 #import "FxGripParameterUtility.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxGrip_ARC.h"
@@ -13,7 +13,7 @@
 @implementation FxGripExtensionSystem
 {
 	id<FxGripEffectHost> _host;
-	NSMutableArray<id<FxExtension>> *_extensions;
+	NSMutableArray<id<FxGripExtension>> *_extensions;
 }
 
 - (instancetype)initWithHost:(id<FxGripEffectHost>)host
@@ -37,12 +37,12 @@
 	return _host;
 }
 
-- (NSArray<id<FxExtension>> *)extensions
+- (NSArray<id<FxGripExtension>> *)extensions
 {
 	return [_extensions copy];
 }
 
-- (BOOL)loadExtension:(id<FxExtension>)extension
+- (BOOL)loadExtension:(id<FxGripExtension>)extension
 {
 	// The extensions bind to an effect; the host stands in for one, as it does for the
 	// parameter classes.
@@ -53,9 +53,9 @@
 	return loaded;
 }
 
-- (nullable id<FxExtension>)extensionForClass:(Class)extensionClass
+- (nullable id<FxGripExtension>)extensionForClass:(Class)extensionClass
 {
-	for (id<FxExtension> extension in _extensions) {
+	for (id<FxGripExtension> extension in _extensions) {
 		if ([extension isKindOfClass:extensionClass]) {
 			return extension;
 		}
@@ -65,21 +65,21 @@
 
 #pragma mark Lifecycle dispatch
 
-/*! The payloads and names below mirror FxTileableEffectBase's posts, so an extension cannot
+/*! The payloads and names below mirror FxGripTileableEffect's posts, so an extension cannot
 	tell the subsystem from the effect base. */
 
 - (void)dispatchInit
 {
-	[_host.notifier postNotificationName:FxTileableEffectInitName
+	[_host.notifier postNotificationName:FxGripTileableEffectInitName
 								  object:_host
-								userInfo:@{FxTileableEffectInitAPIManagerKey: _host.apiManager}];
+								userInfo:@{FxGripTileableEffectInitAPIManagerKey: _host.apiManager}];
 }
 
 - (NSMutableDictionary *)dispatchProperties:(NSDictionary *)properties
 {
 	NSMutableDictionary *props = [NSMutableDictionary dictionaryWithDictionary:properties ?: @{}];
-	NSMutableDictionary *userInfo = @{FxTileableEffectPropertiesKey: props}.mutableCopy;
-	[_host.notifier postNotificationName:FxTileableEffectPropertiesName object:_host userInfo:userInfo];
+	NSMutableDictionary *userInfo = @{FxGripTileableEffectPropertiesKey: props}.mutableCopy;
+	[_host.notifier postNotificationName:FxGripTileableEffectPropertiesName object:_host userInfo:userInfo];
 	NSMutableDictionary *result = userInfo.fxEffectProperties;
 	return [result isKindOfClass:NSMutableDictionary.class] ? result : props;
 }
@@ -87,8 +87,8 @@
 - (NSMutableArray *)dispatchAddParameters:(NSArray *)parameters
 {
 	NSMutableArray *mutable = [NSMutableArray arrayWithArray:parameters ?: @[]];
-	NSMutableDictionary *userInfo = @{FxTileableEffectParametersKey: mutable}.mutableCopy;
-	[_host.notifier postNotificationName:FxTileableEffectAddParametersName
+	NSMutableDictionary *userInfo = @{FxGripTileableEffectParametersKey: mutable}.mutableCopy;
+	[_host.notifier postNotificationName:FxGripTileableEffectAddParametersName
 								  object:_host
 								userInfo:userInfo
 							   postBlock:^(NSNotification * _Nonnull notification) {
@@ -100,43 +100,43 @@
 
 - (void)dispatchFinishInitialSetup
 {
-	[_host.notifier postNotificationName:FxTileableEffectFinishInitialSetupName
+	[_host.notifier postNotificationName:FxGripTileableEffectFinishInitialSetupName
 								  object:_host
 								userInfo:@{}.mutableCopy];
 }
 
 - (void)dispatchAddedToDocument
 {
-	[_host.notifier postNotificationName:FxTileableEffectAddedToDocumentName object:_host];
+	[_host.notifier postNotificationName:FxGripTileableEffectAddedToDocumentName object:_host];
 }
 
 - (void)dispatchParameterChanged:(UInt32)parameterID atTime:(CMTime)time
 {
 	NSMutableDictionary *userInfo = @{}.mutableCopy;
-	userInfo[FxTileableEffectParameterChangedIDKey] = @(parameterID);
+	userInfo[FxGripTileableEffectParameterChangedIDKey] = @(parameterID);
 	NSDictionary *timeDict = (__bridge_transfer NSDictionary *)CMTimeCopyAsDictionary(time, kCFAllocatorDefault);
 	if (timeDict) {
-		userInfo[FxTileableEffectParameterChangedAtTimeKey] = timeDict;
+		userInfo[FxGripTileableEffectParameterChangedAtTimeKey] = timeDict;
 	}
-	[_host.notifier postNotificationName:FxTileableEffectParameterChangedName object:_host userInfo:userInfo];
+	[_host.notifier postNotificationName:FxGripTileableEffectParameterChangedName object:_host userInfo:userInfo];
 }
 
 - (void)dispatchParameterClicked:(UInt32)parameterID
 {
-	NSMutableDictionary *userInfo = @{FxTileableEffectParameterClickedIDKey: @(parameterID)}.mutableCopy;
-	[_host.notifier postNotificationName:FxTileableEffectParameterClickedName object:_host userInfo:userInfo];
+	NSMutableDictionary *userInfo = @{FxGripTileableEffectParameterClickedIDKey: @(parameterID)}.mutableCopy;
+	[_host.notifier postNotificationName:FxGripTileableEffectParameterClickedName object:_host userInfo:userInfo];
 }
 
 - (void)dispatchPluginStateWithCoder:(NSCoder *)coder
 {
-	NSMutableDictionary *userInfo = @{FxTileableEffectPluginStateCoderKey: coder}.mutableCopy;
-	[_host.notifier postNotificationName:FxTileableEffectPluginStateName object:_host userInfo:userInfo];
+	NSMutableDictionary *userInfo = @{FxGripTileableEffectPluginStateCoderKey: coder}.mutableCopy;
+	[_host.notifier postNotificationName:FxGripTileableEffectPluginStateName object:_host userInfo:userInfo];
 }
 
 - (nullable NSError *)flush
 {
 	NSMutableDictionary *userInfo = @{}.mutableCopy;
-	[_host.notifier postNotificationName:FxTileableEffectFlushName object:_host userInfo:userInfo];
+	[_host.notifier postNotificationName:FxGripTileableEffectFlushName object:_host userInfo:userInfo];
 	NSError *error = userInfo.fxError;
 	return [error isKindOfClass:NSError.class] ? error : nil;
 }

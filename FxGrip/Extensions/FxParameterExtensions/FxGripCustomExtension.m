@@ -6,16 +6,12 @@
 //
 
 #import "FxGripCustomExtension.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Notifications.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Notifications.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripInterpolatingDictionary.h"
 #import "NSCoder+FxPlug.h"
 
-/*
-#import <CoreMedia/CoreMedia.h>
-#import "GuruFxTileableEffect.h"
-#import "GuruFxTileableEffect+Extensions.h"  */
 
 
 #pragma mark -

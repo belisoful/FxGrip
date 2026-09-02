@@ -33,7 +33,7 @@
 
 
 // Forward declaration
-@protocol FxTileableEffectBase;
+@protocol FxGripTileableEffect;
 
 
 

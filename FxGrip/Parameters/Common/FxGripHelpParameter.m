@@ -7,8 +7,8 @@
 //
 
 #import "FxGripHelpParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripParameterUtility.h"
 
 @implementation FxGripHelpParameter
@@ -40,7 +40,7 @@
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The host registers the synthesized selector encoding the parameter ID; clicks
-	// dispatch through -[FxTileableEffectBase parameterClicked:]. Without a
+	// dispatch through -[FxGripTileableEffect parameterClicked:]. Without a
 	// configuration-declared "selector" hook the click falls through to
 	// defaultParameterAction, which opens the help book.
 	NSString *declaredSelector = parameter.parameterSelector;

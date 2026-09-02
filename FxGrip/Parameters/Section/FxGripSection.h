@@ -37,9 +37,14 @@ typedef NS_ENUM(NSInteger, FxGripSectionTransform) {
 #define kFxGripSectionKey_MarginTop		@"marginTop"
 #define kFxGripSectionKey_MarginBottom	@"marginBottom"
 
+// Opacity is a dedicated 0…1 float multiplied into the resolved color's alpha, so the
+// title can be dimmed while the color stays at its inherited default (Color set to none).
+#define kFxGripSectionKey_Opacity		@"opacity"
+
 // Layout defaults, in view points, matching the FCP section-header look.
 #define kFxGripSectionDefaultSize		(12.0)
 #define kFxGripSectionDefaultMarginTop	(3)
 #define kFxGripSectionDefaultMarginBot	(0)
+#define kFxGripSectionDefaultOpacity	(1.0)
 
 #endif

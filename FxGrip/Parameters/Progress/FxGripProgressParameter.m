@@ -4,8 +4,8 @@
 //
 
 #import "FxGripProgressParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripDictionary.h"
 #import "FxGrip_ARC.h"
 #import <BEFoundation/BEDotView.h>

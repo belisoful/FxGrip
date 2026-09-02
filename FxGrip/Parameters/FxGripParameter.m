@@ -7,9 +7,9 @@
 //
 
 #import "FxParameter.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripAPIAccessing.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 #import "NSCoder+AtIndex.h"
 
 #pragma mark -
@@ -127,7 +127,7 @@
 			}
 			[paramTagsAPI setTags:paramTags toParameter:parameterID];
 		} else {
-			NSLog(@"GuruFxTileableEffect(%llu)::generateParameters ERROR - Parameter (#%d) could not get the ParamTagsAPI", _apiManager.sessionID, parameterID);
+			NSLog(@"FxGripTileableEffect(%llu)::generateParameters ERROR - Parameter (#%d) could not get the ParamTagsAPI", _apiManager.sessionID, parameterID);
 			
 		}
 	}*/

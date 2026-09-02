@@ -20,17 +20,18 @@
 #import <FxFactory/FxFactory.h>
 #import "FxGripFxFactory.h"
 #import "FxGripOOBParameterAccess.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Extensions.h"
-#import "FxTileableEffectBase+Versioning.h"
-#import "FxTileableEffectBase+Notifications.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Extensions.h"
+#import "FxGripTileableEffect+Versioning.h"
+#import "FxGripTileableEffect+Notifications.h"
 #import "FxGripParameter.h"
 #import "FxGripRegression.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import "NSDictionary+FxTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import <BEFoundation/CIImage+BExtension.h>
 
 #import "FxGripMTLDeviceCache.h"
+#import "FxGripWatermark.h"
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import <MetalKit/MetalKit.h>
 //#import <MetalFX/MetalFX.h>
@@ -85,9 +86,9 @@
 	SUPER_DEALLOC();
 }
 
-// The base types `effect` as id<FxTileableEffectBase>; the class-level accessors and the
-// (FxFactory) category this file uses live on FxTileableEffectBase, so route through a cast.
-- (FxTileableEffectBase *)fxEffect
+// The base types `effect` as id<FxGripTileableEffect>; the class-level accessors and the
+// (FxFactory) category this file uses live on FxGripTileableEffect, so route through a cast.
+- (FxGripTileableEffect *)fxEffect
 {
 	return self.effect.effectBase;
 }
@@ -198,7 +199,7 @@
 			
 			
 			// Product may have gone from unlicensed to licensed, or vice versa
-			[(FxTileableEffectBase*)((FxGripFxFactory*)context).effect onFxFactoryRegisterLicensingStatusChange:status];
+			[(FxGripTileableEffect*)((FxGripFxFactory*)context).effect onFxFactoryRegisterLicensingStatusChange:status];
 			
 			[self.effect.notifier postNotificationName:kFxFactoryBroadcastProductLicenseChange object:(FxGripFxFactory*)context userInfo:@{kFxFactoryBroadcastProductLicenseStatus: @(status)}];
 		}];
@@ -508,7 +509,7 @@
 }
 
 
-- (BOOL)extLoadWithEffect:(id<FxTileableEffectBase> _Nonnull)effect
+- (BOOL)extLoadWithEffect:(id<FxGripTileableEffect> _Nonnull)effect
 {
 	[super extLoadWithEffect:effect];
 
@@ -519,7 +520,7 @@
 
 
 	//Run regression if installed
-	if ([(FxTileableEffectBase*)effect hasExtensionClass:FxGripRegression.class]) {
+	if ([(FxGripTileableEffect*)effect hasExtensionClass:FxGripRegression.class]) {
 		[self fxFactoryRegression];
 	}
 
@@ -577,7 +578,7 @@
 		return;
 	}
 
-	NSNumber *pidNumber = notification.userInfo[FxTileableEffectParameterChangedIDKey];
+	NSNumber *pidNumber = notification.userInfo[FxGripTileableEffectParameterChangedIDKey];
 	if (!pidNumber) {
 		return;
 	}
@@ -612,7 +613,7 @@
 	if (!self.fxFactoryWaterMarkUnlicensed || self.pluginIsLicensed) {
 		return;
 	}
-	FxImageTile *destinationImage = notification.userInfo[FxTileableEffectRenderDestinationImageKey];
+	FxImageTile *destinationImage = notification.userInfo[FxGripTileableEffectRenderDestinationImageKey];
 	if (destinationImage == nil) {
 		return;
 	}
@@ -620,70 +621,23 @@
 	[self renderWatermarkOntoImage:destinationImage error:&renderError];
 }
 
-// The Metal compositing is isolated behind this seam so the watermark DECISION (unlicensed
+// The watermark render is isolated behind this seam so the watermark DECISION (unlicensed
 // and watermarking enabled) is testable with a mock that records the call; the GPU work
-// itself is verified in a live host.
+// itself lives in FxGripWatermark and is verified in a live host.
 - (BOOL)renderWatermarkOntoImage:(nonnull FxImageTile *)destinationImage error:(NSError *_Nullable *_Nullable)outError
 {
-	FxGripMTLDeviceCache*  deviceCache     = [FxGripMTLDeviceCache deviceCache];
-	FxGripMTLDeviceCacheItem* destDevice = [deviceCache deviceWithRegistryID:destinationImage.deviceRegistryID];
-	
-	CGColorSpaceRef colorSpace = (CGColorSpaceRef)nil;
-	colorSpace = [NSColorSpace sRGBColorSpace].CGColorSpace;
-	id<MTLTexture> outputTexture   = [destinationImage metalTextureForDevice:destDevice.gpuDevice];
-	CIImage *inImage = [CIImage imageWithMTLTexture:outputTexture options:@{kCIImageColorSpace: (__bridge id)colorSpace}];
-	
-	
-	CIImage *topImage = [CIImage createImageText:self.fxEffect.pluginDisplayName
-										fontName:@"Helvetica"
-										fontSize:99
-										   angle:10.0
-										   color:NSColor.whiteColor
-											blur:0
-										position:(CGPoint){0,0}];
-	CIImage *bottomImage = [CIImage createImageText:self.fxEffect.pluginDisplayName
-										   fontName:@"Helvetica"
-										   fontSize:99
-											  angle:10.0
-											  color:NSColor.blueColor
-											   blur:10
-										   position:(CGPoint){0,0}];
-	CIImage *watermark = [CIImage combineImage:topImage alpha:1.0 withImage:bottomImage ];
-	
-	
-	inImage = [CIImage combineImage:watermark alpha:0.73 withImage:inImage ];
-	
-	
-	CIContext *ciContext = [CIContext contextWithMTLDevice:destDevice.gpuDevice];
-	CGImageRef cgImage = [ciContext createCGImage:inImage fromRect:CGRectFromFxRect(destinationImage.tilePixelBounds)];//CGRectMake(destTileRect.left, destTileRect.bottom, destTileRect.right -  destTileRect.left, destTileRect.top -  destTileRect.bottom)]; // fromRect:inImage.extent
-	
-	
-	// Step 6: CGImage to MTLTexture
-	MTKTextureLoader	*mtlLoader = [MTKTextureLoader.alloc initWithDevice:destDevice.gpuDevice];
-	id<MTLTexture> 		inTexture = [mtlLoader newTextureWithCGImage:cgImage
-																  options:@{MTKTextureLoaderOptionSRGB: @(YES),
-																		  MTKTextureLoaderOptionOrigin: MTKTextureLoaderOriginBottomLeft}
-																	error:outError];
+	FxGripWatermarkConfiguration *configuration =
+		[FxGripWatermarkConfiguration configurationWithText:self.fxEffect.pluginDisplayName];
+	configuration.style = FxGripWatermarkStyleSingle;
+	configuration.fontSize = 99.0;
+	configuration.angleDegrees = 10.0;
+	configuration.color = NSColor.whiteColor;
+	configuration.shadowColor = NSColor.blueColor;
+	configuration.blur = 10.0;
+	configuration.opacity = 0.73;
 
-	id<MTLCommandQueue> 	commandQueue = [destDevice getNextFreeCommandQueue];
-	id<MTLCommandBuffer>    commandBuffer   = [commandQueue commandBuffer];
-
-	MPSImageScale *scaleEncoder = [MPSImageBilinearScale.alloc init];
-	[scaleEncoder encodeToCommandBuffer:commandBuffer sourceTexture:inTexture destinationTexture:outputTexture];
-
-	// Without a commit the encoded scale never runs and the unlicensed watermark never
-	// reaches the output. Wait so the source texture outlives the GPU work.
-	[commandBuffer commit];
-	[commandBuffer waitUntilCompleted];
-	[destDevice returnCommandQueue:commandQueue];
-
-	CGImageRelease(cgImage);
-	inTexture = nil;
-	mtlLoader = nil;
-
-	// colorSpace comes from [NSColorSpace sRGBColorSpace].CGColorSpace, an unowned +0
-	// reference, so it must not be released here.
-	return YES;
+	FxGripWatermark *watermark = [FxGripWatermark watermarkWithConfiguration:configuration];
+	return [watermark renderOntoImageTile:destinationImage error:outError];
 }
 
 #pragma mark -
@@ -1158,7 +1112,7 @@
 
 #pragma mark -
 
-@implementation FxTileableEffectBase (FxFactory)
+@implementation FxGripTileableEffect (FxFactory)
 
 // Subclass this method to be informed when the user buys or refunds.
 

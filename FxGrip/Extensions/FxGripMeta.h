@@ -10,7 +10,7 @@
 
 #import "FxGripCustomExtension.h"
 #import "FxGripMetaManager.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 
 /*!
 	@class      FxGripMeta
@@ -40,7 +40,7 @@
 @end
 
 
-@interface FxTileableEffectBase (Meta)
+@interface FxGripTileableEffect (Meta)
 
 /*! The meta manager of the loaded FxGripMeta extension; nil when meta is not managed. */
 @property (readonly, nullable, nonatomic) FxGripMetaManager *meta;

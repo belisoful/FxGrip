@@ -27,7 +27,7 @@ static const FxParameterId kColorTestAlphaParameter = 32;
 static const double kColorTestGamma = 2.2;
 
 @interface FxGripColorParameterTests : XCTestCase
-@property (nonatomic, strong) FxParamClassTestEffect *effect;
+@property (nonatomic, strong) FxGripParamClassTestEffect *effect;
 @end
 
 @implementation FxGripColorParameterTests
@@ -35,7 +35,7 @@ static const double kColorTestGamma = 2.2;
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxParamClassTestEffect.alloc init];
+	self.effect = [FxGripParamClassTestEffect.alloc init];
 }
 
 - (void)tearDown
@@ -53,7 +53,7 @@ static const double kColorTestGamma = 2.2;
 
 - (BOOL)add:(Class)parameterClass type:(NSString *)type extra:(NSDictionary *)extra
 {
-	NSDictionary *config = FxParamClassTestConfig(kColorTestParameter, type, @"Tint", extra);
+	NSDictionary *config = FxGripParamClassTestConfig(kColorTestParameter, type, @"Tint", extra);
 	return [parameterClass addParameter:config toEffect:(id)self.effect];
 }
 
@@ -173,20 +173,20 @@ static const double kColorTestGamma = 2.2;
 
 - (FxGripColorParameter *)makeColorParameter
 {
-	NSDictionary *config = FxParamClassTestConfig(kColorTestParameter, kFxParameterType_RGBA, @"Tint", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kColorTestParameter, kFxParameterType_RGBA, @"Tint", nil);
 	return [FxGripColorParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
 - (void)testColorValueAtTimeReadsFourComponentsFromTheRetrievalAPI
 {
 	FxGripColorParameter *parameter = [self makeColorParameter];
-	FxParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
+	FxGripParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
 	retrieval.red = 0.1;
 	retrieval.green = 0.2;
 	retrieval.blue = 0.3;
 	retrieval.alpha = 0.4;
 
-	FxGripColor color = [parameter valueAtTime:FxParamClassTestTime(7, 30)];
+	FxGripColor color = [parameter valueAtTime:FxGripParamClassTestTime(7, 30)];
 
 	XCTAssertEqual(color.red, 0.1);
 	XCTAssertEqual(color.green, 0.2);
@@ -202,7 +202,7 @@ static const double kColorTestGamma = 2.2;
 	FxGripColorParameter *parameter = [self makeColorParameter];
 	FxGripColor color = { .red = 0.1, .green = 0.2, .blue = 0.3, .alpha = 0.4 };
 
-	[parameter setValue:&color atTime:FxParamClassTestTime(0, 1)];
+	[parameter setValue:&color atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite,
 						  (@{@"accessor": @"rgba",
@@ -217,7 +217,7 @@ static const double kColorTestGamma = 2.2;
 {
 	FxGripColorParameter *parameter = [self makeColorParameter];
 
-	[parameter setValue:NULL atTime:FxParamClassTestTime(0, 1)];
+	[parameter setValue:NULL atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.writes, @[]);
 }
@@ -228,7 +228,7 @@ static const double kColorTestGamma = 2.2;
 	FxGripColorParameter *parameter = [self makeColorParameter];
 	self.effect.apiManager.paramGetAPIv6.alpha = 0.25;
 
-	[parameter setRedValue:0.6 greenValue:0.7 blueValue:0.8 atTime:FxParamClassTestTime(0, 1)];
+	[parameter setRedValue:0.6 greenValue:0.7 blueValue:0.8 atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"alpha"], @0.25);
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"red"], @0.6);
@@ -239,7 +239,7 @@ static const double kColorTestGamma = 2.2;
 	FxGripColorParameter *parameter = [self makeColorParameter];
 	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
 
-	[parameter setRedValue:0.6 greenValue:0.7 blueValue:0.8 atTime:FxParamClassTestTime(0, 1)];
+	[parameter setRedValue:0.6 greenValue:0.7 blueValue:0.8 atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.writes, @[]);
 }
@@ -312,13 +312,13 @@ static const double kColorTestGamma = 2.2;
 
 - (FxGripRGBParameter *)makeRGBParameter
 {
-	NSDictionary *config = FxParamClassTestConfig(kColorTestParameter, kFxParameterType_RGB, @"Tint", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kColorTestParameter, kFxParameterType_RGB, @"Tint", nil);
 	return [FxGripRGBParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
 - (id)makeFloatParameterWithID:(FxParameterId)parameterID
 {
-	NSDictionary *config = FxParamClassTestConfig(parameterID, kFxParameterType_Float, @"Opacity", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(parameterID, kFxParameterType_Float, @"Opacity", nil);
 	return [FxGripFloatParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
@@ -334,13 +334,13 @@ static const double kColorTestGamma = 2.2;
 - (void)testRGBValueAtTimeReadsThreeComponentsAndLeavesAlphaAlone
 {
 	FxGripRGBParameter *parameter = [self makeRGBParameter];
-	FxParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
+	FxGripParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
 	retrieval.red = 0.1;
 	retrieval.green = 0.2;
 	retrieval.blue = 0.3;
 	parameter.alpha = 0.9;
 
-	FxGripColor color = [parameter valueAtTime:FxParamClassTestTime(3, 30)];
+	FxGripColor color = [parameter valueAtTime:FxGripParamClassTestTime(3, 30)];
 
 	XCTAssertEqual(color.red, 0.1);
 	XCTAssertEqual(color.alpha, 0.9);
@@ -351,10 +351,10 @@ static const double kColorTestGamma = 2.2;
 {
 	FxGripRGBParameter *parameter = [self makeRGBParameter];
 	parameter.alphaParameter = kColorTestAlphaParameter;
-	FxParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
+	FxGripParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
 	retrieval.floatValue = 0.45;
 
-	FxGripColor color = [parameter valueAtTime:FxParamClassTestTime(0, 1)];
+	FxGripColor color = [parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(color.alpha, 0.45);
 	XCTAssertEqualObjects(retrieval.reads.firstObject[@"accessor"], @"float");
@@ -366,7 +366,7 @@ static const double kColorTestGamma = 2.2;
 	FxGripRGBParameter *parameter = [self makeRGBParameter];
 	FxGripColor color = { .red = 0.1, .green = 0.2, .blue = 0.3, .alpha = 0.4 };
 
-	[parameter setValue:&color atTime:FxParamClassTestTime(0, 1)];
+	[parameter setValue:&color atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite,
 						  (@{@"accessor": @"rgb",
@@ -381,7 +381,7 @@ static const double kColorTestGamma = 2.2;
 	FxGripRGBParameter *parameter = [self makeRGBParameter];
 	FxGripColor color = { .red = 0.1, .green = 0.2, .blue = 0.3, .alpha = 0.4 };
 
-	[parameter setRGBAValue:&color atTime:FxParamClassTestTime(0, 1)];
+	[parameter setRGBAValue:&color atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(parameter.alpha, 0.4);
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"accessor"], @"rgb");
@@ -413,7 +413,7 @@ static const double kColorTestGamma = 2.2;
 {
 	FxGripRGBParameter *parameter = [self makeRGBParameter];
 	parameter.alphaParameter = kColorTestAlphaParameter;
-	NSDictionary *config = FxParamClassTestConfig(kColorTestAlphaParameter, kFxParameterType_String, @"Label", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kColorTestAlphaParameter, kFxParameterType_String, @"Label", nil);
 	self.effect.parameters[@(kColorTestAlphaParameter)] =
 		[FxGripStringParameter.alloc initWithDictionary:config effect:(id)self.effect];
 
@@ -512,7 +512,7 @@ static const double kColorTestGamma = 2.2;
 
 - (FxGripPointParameter *)makePointParameter
 {
-	NSDictionary *config = FxParamClassTestConfig(kColorTestParameter, kFxParameterType_Point, @"Center", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kColorTestParameter, kFxParameterType_Point, @"Center", nil);
 	return [FxGripPointParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
@@ -522,7 +522,7 @@ static const double kColorTestGamma = 2.2;
 	self.effect.apiManager.paramGetAPIv6.x = 0.3;
 	self.effect.apiManager.paramGetAPIv6.y = 0.6;
 
-	FxGripPoint point = [parameter valueAtTime:FxParamClassTestTime(5, 30)];
+	FxGripPoint point = [parameter valueAtTime:FxGripParamClassTestTime(5, 30)];
 
 	XCTAssertEqual(point.x, 0.3);
 	XCTAssertEqual(point.y, 0.6);
@@ -535,7 +535,7 @@ static const double kColorTestGamma = 2.2;
 	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
 	self.effect.apiManager.paramGetAPIv6.x = 0.3;
 
-	FxGripPoint point = [parameter valueAtTime:FxParamClassTestTime(0, 1)];
+	FxGripPoint point = [parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(point.x, 0.0);
 	XCTAssertEqual(point.y, 0.0);
@@ -546,7 +546,7 @@ static const double kColorTestGamma = 2.2;
 	FxGripPointParameter *parameter = [self makePointParameter];
 	FxGripPoint point = { .x = 0.2, .y = 0.8 };
 
-	[parameter setValue:&point atTime:FxParamClassTestTime(0, 1)];
+	[parameter setValue:&point atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite,
 						  (@{@"accessor": @"point",
@@ -559,7 +559,7 @@ static const double kColorTestGamma = 2.2;
 {
 	FxGripPointParameter *parameter = [self makePointParameter];
 
-	[parameter setValue:NULL atTime:FxParamClassTestTime(0, 1)];
+	[parameter setValue:NULL atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.writes, @[]);
 }
@@ -568,7 +568,7 @@ static const double kColorTestGamma = 2.2;
 {
 	FxGripPointParameter *parameter = [self makePointParameter];
 
-	[parameter setXValue:0.4 YValue:0.9 atTime:FxParamClassTestTime(0, 1)];
+	[parameter setXValue:0.4 YValue:0.9 atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"x"], @0.4);
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"y"], @0.9);

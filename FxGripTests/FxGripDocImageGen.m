@@ -23,6 +23,9 @@
 #import <FxGrip/FxGripWebView.h>
 #import <FxGrip/FxGripVideoViewParameter.h>
 #import <FxGrip/FxGripVideoView.h>
+#import <FxGrip/FxGripLiveImageParameter.h>
+#import <FxGrip/FxGripLiveImage.h>
+#import <FxGrip/FxGripLiveFrame.h>
 #import <FxGrip/FxGripStatusParameter.h>
 #import <FxGrip/FxGripProgressParameter.h>
 #import <FxGrip/FxGripBannerParameter.h>
@@ -41,7 +44,7 @@
 static NSString *FxGripDocImageMarkerPath = @"/tmp/fxgrip-gen-doc";
 
 /*! NSEvent's synthetic-mouse factory, reached by name so the bundle links no AppKit. */
-@protocol FxDocEventFactory <NSObject>
+@protocol FxGripDocEventFactory <NSObject>
 + (nullable id)mouseEventWithType:(NSEventType)type
 						 location:(NSPoint)location
 					modifierFlags:(NSEventModifierFlags)flags
@@ -344,7 +347,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 - (void)selectPointIndex:(NSUInteger)index inEditor:(FxGripCurveEditorView *)view
 {
 	NSPoint at = [view viewPointForCurvePoint:[view.curve pointAtIndex:index]];
-	id<FxDocEventFactory> factory = (id<FxDocEventFactory>)NSClassFromString(@"NSEvent");
+	id<FxGripDocEventFactory> factory = (id<FxGripDocEventFactory>)NSClassFromString(@"NSEvent");
 	NSEvent *down = [factory mouseEventWithType:NSEventTypeLeftMouseDown location:at modifierFlags:0
 									 timestamp:0 windowNumber:0 context:nil eventNumber:0 clickCount:1 pressure:1.0];
 	[view mouseDown:down];
@@ -521,6 +524,42 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 		 "<div class='bar'><div class='track'><div class='fill'></div></div>"
 		 "<div class='time'>0:34 / 1:30</div></div></div></body></html>";
 	[self captureEmbedInView:view size:NSMakeSize(320, 180) html:html named:@"video"];
+}
+
+#pragma mark Live image
+
+/*! An RGBA8 frame shading a horizontal ramp of the tint over a vertical luminance ramp, so
+	each slot reads as a distinct picture. */
+- (FxGripLiveFrame *)liveFrameWithWidth:(NSUInteger)width height:(NSUInteger)height tint:(NSUInteger)tint
+{
+	NSMutableData *pixels = [NSMutableData dataWithLength:width * height * 4];
+	uint8_t *bytes = pixels.mutableBytes;
+	for (NSUInteger y = 0; y < height; y++) {
+		for (NSUInteger x = 0; x < width; x++) {
+			uint8_t *pixel = bytes + (y * width + x) * 4;
+			uint8_t ramp = (uint8_t)(255 * x / (width - 1));
+			uint8_t shade = (uint8_t)(255 - 200 * y / (height - 1));
+			pixel[0] = (uint8_t)((tint & 1) ? shade : ramp / 3);
+			pixel[1] = (uint8_t)((tint & 2) ? shade : ramp / 2);
+			pixel[2] = (uint8_t)((tint & 4) ? shade : ramp);
+			pixel[3] = 255;
+		}
+	}
+	return [FxGripLiveFrame frameWithBytes:pixels.bytes rowBytes:width * 4 width:width height:height
+							   pixelFormat:MTLPixelFormatRGBA8Unorm];
+}
+
+- (void)testLiveImage
+{
+	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSZeroRect];
+	[view updateFromCustomData:[FxGripDictionary dictionaryWithDictionary:@{
+		kFxGripLiveImageKey_Labels: @[@"Channel A", @"Channel B", @"Channel C", @"Channel D"],
+		kFxGripLiveImageKey_Height: @96.0,
+	}]];
+	[view showFrame:[self liveFrameWithWidth:160 height:90 tint:1] inSlot:0];
+	[view showFrame:[self liveFrameWithWidth:160 height:90 tint:2] inSlot:1];
+	[view showFrame:[self liveFrameWithWidth:90 height:90 tint:4] inSlot:2];
+	[self renderView:view size:NSMakeSize(360, 96) named:@"liveimage"];
 }
 
 @end

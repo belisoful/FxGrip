@@ -6,10 +6,9 @@
 //
 
 #import "FxGripAPIAccessing.h"
-#import "FxTileableEffectBase+Notifications.h"
+#import "FxGripTileableEffect+Notifications.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxGripOOBParameterAccess.h"
-//#import "GuruFxTileableEffect+Extensions.h"
 #import "FxGrip_ARC.h"
 
 /**
@@ -181,7 +180,7 @@
 		// The flush is announced on the host's notifier; the extensions observe it there, which is
 		// exactly what the effect base's extensionsFlush did.
 		NSMutableDictionary *userInfo = @{}.mutableCopy;
-		[_effect.notifier postNotificationName:FxTileableEffectFlushName object:_effect userInfo:userInfo];
+		[_effect.notifier postNotificationName:FxGripTileableEffectFlushName object:_effect userInfo:userInfo];
 	}
 	[_customParameterActionAPIv4 endAction:self];
 	_active = NO;

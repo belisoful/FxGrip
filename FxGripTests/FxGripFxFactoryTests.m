@@ -5,7 +5,7 @@
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
 
 // FxGripFxFactory.h is not a public framework header (it imports the third-party FxFactory
 // SDK), so the surface under test is redeclared locally. The implementation comes from the
@@ -171,9 +171,9 @@
 	// Without an FxFactory settings object or an FxFactoryActive property the extension is
 	// inactive and contributes nothing to the parameter list.
 	NSMutableArray<NSMutableDictionary *> *parameters = NSMutableArray.new;
-	NSNotification *note = [NSNotification notificationWithName:FxTileableEffectAddParametersName
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectAddParametersName
 														object:nil
-													  userInfo:@{FxTileableEffectParametersKey: parameters}];
+													  userInfo:@{FxGripTileableEffectParametersKey: parameters}];
 
 	XCTAssertNoThrow([self.factory extAddParameters:note]);
 	XCTAssertEqual(parameters.count, (NSUInteger)0);
@@ -181,7 +181,7 @@
 
 - (void)testParameterChangedIgnoresANotificationWithoutAParameterID
 {
-	NSNotification *note = [NSNotification notificationWithName:FxTileableEffectParameterChangedName
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
 														object:nil
 													  userInfo:@{}];
 	XCTAssertNoThrow([self.factory extParameterChanged:note]);
@@ -189,7 +189,7 @@
 
 - (void)testRenderIgnoresANotificationWithoutADestinationImage
 {
-	NSNotification *note = [NSNotification notificationWithName:FxTileableEffectRenderDestinationImageName
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectRenderDestinationImageName
 														object:nil
 													  userInfo:@{}];
 	XCTAssertNoThrow([self.factory extRenderDestinationImage:note]);
@@ -302,7 +302,7 @@
 	// records the call rather than touching the GPU.
 	NSNotification *note = [NSNotification notificationWithName:@"render"
 														object:nil
-													  userInfo:@{FxTileableEffectRenderDestinationImageKey: NSObject.new}];
+													  userInfo:@{FxGripTileableEffectRenderDestinationImageKey: NSObject.new}];
 	[mock extRenderDestinationImage:note];
 	return mock.renderCount;
 }

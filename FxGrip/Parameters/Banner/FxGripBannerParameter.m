@@ -5,8 +5,8 @@
 
 #import "FxGripBannerParameter.h"
 #import "FxGripBanner.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripDictionary.h"
 #import "FxGrip_ARC.h"
 
@@ -15,12 +15,19 @@ static const CGFloat kFxGripBannerPaddingX = 8.0;
 static const CGFloat kFxGripBannerPaddingY = 6.0;
 static const CGFloat kFxGripBannerTitleGap = 2.0;
 
+// The companion action button is a small square in the top-right corner.
+static const CGFloat kFxGripBannerButtonSize = 18.0;
+
 @implementation FxGripBannerView
 {
+	NSImageView *_imageView;
 	NSTextField *_title;
 	NSTextField *_subtitle;
+	NSButton *_actionButton;
 	NSColor *_fillColor;
 	CGFloat _cornerRadius;
+	NSSize _imageDisplaySize;
+	NSURL *_linkURL;
 }
 
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect
@@ -29,6 +36,13 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 	if (self != nil) {
 		_fillColor = NSColor.controlAccentColor;
 		_cornerRadius = kFxGripBannerSquareCorners;
+		_imageDisplaySize = NSZeroSize;
+
+		_imageView = [NSImageView.alloc initWithFrame:NSZeroRect];
+		_imageView.imageScaling = NSImageScaleProportionallyUpOrDown;
+		_imageView.imageAlignment = NSImageAlignLeft;
+		_imageView.hidden = YES;
+		[self addSubview:_imageView];
 
 		_title = [NSTextField labelWithString:@""];
 		_title.font = [NSFont boldSystemFontOfSize:kFxGripBannerDefaultFontSize];
@@ -43,6 +57,14 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 		_subtitle.hidden = YES;
 		[self addSubview:_subtitle];
 
+		_actionButton = [NSButton.alloc initWithFrame:NSZeroRect];
+		_actionButton.bezelStyle = NSBezelStyleHelpButton;
+		_actionButton.title = @"";
+		_actionButton.target = self;
+		_actionButton.action = @selector(openLink:);
+		_actionButton.hidden = YES;
+		[self addSubview:_actionButton];
+
 		[self layoutContents];
 	}
 	return self;
@@ -53,11 +75,33 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 	return YES;
 }
 
+- (BOOL)hasImage
+{
+	return !_imageView.isHidden && _imageDisplaySize.height > 0.0;
+}
+
+- (BOOL)hasTitle
+{
+	return _title.stringValue.length > 0;
+}
+
 - (CGFloat)contentHeight
 {
-	CGFloat height = ceil(_title.intrinsicContentSize.height);
+	CGFloat height = 0.0;
+	if ([self hasImage]) {
+		height += _imageDisplaySize.height;
+	}
+	if ([self hasTitle]) {
+		if (height > 0.0) {
+			height += kFxGripBannerTitleGap;
+		}
+		height += ceil(_title.intrinsicContentSize.height);
+	}
 	if (!_subtitle.isHidden) {
-		height += kFxGripBannerTitleGap + ceil(_subtitle.intrinsicContentSize.height);
+		if (height > 0.0) {
+			height += kFxGripBannerTitleGap;
+		}
+		height += ceil(_subtitle.intrinsicContentSize.height);
 	}
 	return height;
 }
@@ -66,14 +110,34 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 {
 	CGFloat width = self.bounds.size.width;
 	CGFloat innerWidth = MAX(0, width - 2.0 * kFxGripBannerPaddingX);
+	CGFloat y = kFxGripBannerPaddingY;
 
-	CGFloat titleHeight = ceil(_title.intrinsicContentSize.height);
-	_title.frame = NSMakeRect(kFxGripBannerPaddingX, kFxGripBannerPaddingY, innerWidth, titleHeight);
+	if ([self hasImage]) {
+		_imageView.frame = NSMakeRect(kFxGripBannerPaddingX, y,
+									  MIN(_imageDisplaySize.width, innerWidth), _imageDisplaySize.height);
+		y += _imageDisplaySize.height;
+	}
+	if ([self hasTitle]) {
+		if (y > kFxGripBannerPaddingY) {
+			y += kFxGripBannerTitleGap;
+		}
+		CGFloat titleHeight = ceil(_title.intrinsicContentSize.height);
+		_title.frame = NSMakeRect(kFxGripBannerPaddingX, y, innerWidth, titleHeight);
+		y += titleHeight;
+	} else {
+		_title.frame = NSMakeRect(kFxGripBannerPaddingX, y, innerWidth, 0);
+	}
 	if (!_subtitle.isHidden) {
+		if (y > kFxGripBannerPaddingY) {
+			y += kFxGripBannerTitleGap;
+		}
 		CGFloat subHeight = ceil(_subtitle.intrinsicContentSize.height);
-		_subtitle.frame = NSMakeRect(kFxGripBannerPaddingX,
-									 kFxGripBannerPaddingY + titleHeight + kFxGripBannerTitleGap,
-									 innerWidth, subHeight);
+		_subtitle.frame = NSMakeRect(kFxGripBannerPaddingX, y, innerWidth, subHeight);
+	}
+
+	if (!_actionButton.isHidden) {
+		_actionButton.frame = NSMakeRect(width - kFxGripBannerPaddingX - kFxGripBannerButtonSize,
+										 kFxGripBannerPaddingY, kFxGripBannerButtonSize, kFxGripBannerButtonSize);
 	}
 
 	CGFloat totalHeight = [self contentHeight] + 2.0 * kFxGripBannerPaddingY;
@@ -89,6 +153,30 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 - (NSSize)intrinsicContentSize
 {
 	return NSMakeSize(NSViewNoIntrinsicMetric, [self contentHeight] + 2.0 * kFxGripBannerPaddingY);
+}
+
+/*! Opens the banner's link. Wired to the companion button and to a click on the banner. */
+- (void)openLink:(id)sender
+{
+	if (_linkURL != nil) {
+		[NSWorkspace.sharedWorkspace openURL:_linkURL];
+	}
+}
+
+- (void)mouseDown:(NSEvent *)event
+{
+	if (_linkURL != nil) {
+		[self openLink:self];
+	} else {
+		[super mouseDown:event];
+	}
+}
+
+- (void)resetCursorRects
+{
+	if (_linkURL != nil) {
+		[self addCursorRect:self.bounds cursor:NSCursor.pointingHandCursor];
+	}
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize
@@ -112,6 +200,34 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 		return [NSColor colorWithSRGBRed:red green:green blue:blue alpha:alpha];
 	}
 	return nil;
+}
+
+/*! Resolves a banner image name. A named AppKit image is tried first, then a file at the
+	path; the plugin bundle registers its named assets, so the name lookup finds them. */
+- (nullable NSImage *)imageForName:(NSString *)name
+{
+	if (name.length == 0) {
+		return nil;
+	}
+	NSImage *image = [NSImage imageNamed:name];
+	if (image == nil && [NSFileManager.defaultManager fileExistsAtPath:name]) {
+		image = [NSImage.alloc initWithContentsOfFile:name];
+	}
+	return image;
+}
+
+/*! Sizes the image for display within the width and the FxFactory max-width constraint. */
+- (NSSize)displaySizeForImage:(NSImage *)image
+{
+	NSSize size = image.size;
+	if (size.width <= 0.0 || size.height <= 0.0) {
+		return NSZeroSize;
+	}
+	CGFloat innerWidth = MAX(0, self.bounds.size.width - 2.0 * kFxGripBannerPaddingX);
+	CGFloat maxWidth = MIN(kFxGripBannerMaxImageWidth, innerWidth > 0 ? innerWidth : kFxGripBannerMaxImageWidth);
+	CGFloat displayWidth = MIN(size.width, maxWidth);
+	CGFloat scale = displayWidth / size.width;
+	return NSMakeSize(displayWidth, ceil(size.height * scale));
 }
 
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
@@ -142,11 +258,35 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 	if ([data getStringParameterValue:&title forKey:kFxGripBannerKey_Title]) {
 		_title.stringValue = title ?: @"";
 	}
+	_title.hidden = _title.stringValue.length == 0;
 	NSString *subtitle = nil;
 	if ([data getStringParameterValue:&subtitle forKey:kFxGripBannerKey_Subtitle]) {
 		_subtitle.stringValue = subtitle ?: @"";
 		_subtitle.hidden = subtitle.length == 0;
 	}
+
+	NSString *imageName = nil;
+	if ([data getStringParameterValue:&imageName forKey:kFxGripBannerKey_ImageName]) {
+		NSImage *image = [self imageForName:imageName];
+		BOOL isTemplate = NO;
+		[data getBoolValue:&isTemplate forKey:kFxGripBannerKey_TemplateImage];
+		image.template = isTemplate;
+		_imageView.image = image;
+		// A template image draws tinted by the text color so a black graphic reads on any UI.
+		_imageView.contentTintColor = isTemplate ? _title.textColor : nil;
+		_imageDisplaySize = image != nil ? [self displaySizeForImage:image] : NSZeroSize;
+		_imageView.hidden = image == nil;
+	}
+
+	NSString *link = nil;
+	if ([data getStringParameterValue:&link forKey:kFxGripBannerKey_LinkURL]) {
+		_linkURL = link.length ? [NSURL URLWithString:link] : nil;
+	}
+	BOOL showActionButton = NO;
+	if ([data getBoolValue:&showActionButton forKey:kFxGripBannerKey_ActionButton]) {
+		_actionButton.hidden = !(showActionButton && _linkURL != nil);
+	}
+	[self.window invalidateCursorRectsForView:self];
 
 	[self layoutContents];
 }
@@ -179,9 +319,13 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 	NSDictionary *config = [declared isKindOfClass:NSDictionary.class] ? declared : @{};
 	FxGripDictionary *defaultValue = [FxGripDictionary dictionaryWithDictionary:config];
 
-	// A configuration without an explicit title falls back to the parameter name.
+	// A text banner without an explicit title falls back to the parameter name. An image
+	// banner takes no title fallback, so a graphic can stand alone.
 	NSString *title = nil;
-	if (![defaultValue getStringParameterValue:&title forKey:kFxGripBannerKey_Title]) {
+	NSString *imageName = nil;
+	BOOL hasImage = [defaultValue getStringParameterValue:&imageName forKey:kFxGripBannerKey_ImageName]
+		&& imageName.length > 0;
+	if (![defaultValue getStringParameterValue:&title forKey:kFxGripBannerKey_Title] && !hasImage) {
 		[defaultValue setStringParameterValue:parameter.parameterName ?: @"" forKey:kFxGripBannerKey_Title];
 	}
 

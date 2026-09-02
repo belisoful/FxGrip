@@ -15,30 +15,30 @@
 // (the shared requestWithInputs:parameters: factory, the outputs accessor, and the backend
 // selectors), so the adapter path is exercised without the framework present.
 
-@interface FxBridgeKitResult : NSObject
+@interface FxGripBridgeKitResult : NSObject
 @property (nonatomic, copy, nullable) NSDictionary<NSString *, id> *outputs;
 @end
-@implementation FxBridgeKitResult
+@implementation FxGripBridgeKitResult
 @end
 
-@interface FxBridgeKitRequest : NSObject
+@interface FxGripBridgeKitRequest : NSObject
 @property (nonatomic, copy, nullable) NSDictionary<NSString *, id> *inputs;
 @property (nonatomic, copy, nullable) NSDictionary<NSString *, id> *parameters;
 + (instancetype)requestWithInputs:(NSDictionary<NSString *, id> *)inputs
 					   parameters:(NSDictionary<NSString *, id> *)parameters;
 @end
-@implementation FxBridgeKitRequest
+@implementation FxGripBridgeKitRequest
 + (instancetype)requestWithInputs:(NSDictionary<NSString *, id> *)inputs
 					   parameters:(NSDictionary<NSString *, id> *)parameters
 {
-	FxBridgeKitRequest *request = [self new];
+	FxGripBridgeKitRequest *request = [self new];
 	request.inputs = inputs;
 	request.parameters = parameters;
 	return request;
 }
 @end
 
-@interface FxBridgeKitBackend : NSObject
+@interface FxGripBridgeKitBackend : NSObject
 @property (nonatomic) BOOL ready;
 @property (nonatomic) NSInteger runCount;
 @property (nonatomic, strong, nullable) id lastRequest;
@@ -46,7 +46,7 @@
 @property (nonatomic, strong, nullable) NSError *errorToReturn;
 @property (nonatomic) BOOL prepareCalled;
 @end
-@implementation FxBridgeKitBackend
+@implementation FxGripBridgeKitBackend
 - (BOOL)isReady { return self.ready; }
 - (NSString *)backendIdentifier { return @"test-kit"; }
 - (id)runInferenceForRequest:(id)request error:(NSError **)error
@@ -59,7 +59,7 @@
 		}
 		return nil;
 	}
-	FxBridgeKitResult *result = [FxBridgeKitResult new];
+	FxGripBridgeKitResult *result = [FxGripBridgeKitResult new];
 	result.outputs = self.outputsToReturn ?: @{};
 	return result;
 }
@@ -104,17 +104,17 @@
 
 - (void)testPublicBridgeIsANoOpWithoutInferKit
 {
-	FxBridgeKitBackend *backend = [FxBridgeKitBackend new];
+	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
 	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:backend]);
 	XCTAssertNil([FxGripInferenceBridge backendWithInferKitBackendClassNamed:@"NFKPassthroughBackend"]);
 }
 
 - (void)testBridgingRejectsNilAndNonBackends
 {
-	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:nil requestClass:FxBridgeKitRequest.class]);
-	FxBridgeKitBackend *backend = [FxBridgeKitBackend new];
+	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:nil requestClass:FxGripBridgeKitRequest.class]);
+	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
 	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:Nil]);
-	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:[NSObject new] requestClass:FxBridgeKitRequest.class],
+	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:[NSObject new] requestClass:FxGripBridgeKitRequest.class],
 				 @"an object without runInferenceForRequest:error: is not bridged");
 }
 
@@ -122,10 +122,10 @@
 
 - (void)testBridgedBackendForwardsReadinessAndIdentity
 {
-	FxBridgeKitBackend *backend = [FxBridgeKitBackend new];
+	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
 	backend.ready = YES;
 	id<FxGripInferenceBackend> bridged =
-		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxBridgeKitRequest.class];
+		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxGripBridgeKitRequest.class];
 	XCTAssertNotNil(bridged);
 	XCTAssertTrue(bridged.isReady);
 	XCTAssertEqualObjects(bridged.backendIdentifier, @"test-kit");
@@ -133,12 +133,12 @@
 
 - (void)testBridgedRunConvertsRequestAndResult
 {
-	FxBridgeKitBackend *backend = [FxBridgeKitBackend new];
+	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
 	backend.ready = YES;
 	id sentinel = [NSObject new];
 	backend.outputsToReturn = @{ @"image": sentinel };
 	id<FxGripInferenceBackend> bridged =
-		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxBridgeKitRequest.class];
+		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxGripBridgeKitRequest.class];
 
 	id inputTexture = [NSObject new];
 	FxGripInferenceRequest *request = [FxGripInferenceRequest requestWithInputs:@{ @"image": inputTexture }
@@ -151,17 +151,17 @@
 	XCTAssertEqual(backend.runCount, 1);
 	XCTAssertEqualObjects([result outputForKey:@"image"], sentinel, @"the InferKit output flows back");
 
-	FxBridgeKitRequest *forwarded = (FxBridgeKitRequest *)backend.lastRequest;
+	FxGripBridgeKitRequest *forwarded = (FxGripBridgeKitRequest *)backend.lastRequest;
 	XCTAssertEqualObjects(forwarded.inputs[@"image"], inputTexture, @"inputs pass through unchanged");
 	XCTAssertEqualObjects(forwarded.parameters[@"seed"], @7, @"parameters pass through unchanged");
 }
 
 - (void)testBridgedRunPropagatesBackendFailure
 {
-	FxBridgeKitBackend *backend = [FxBridgeKitBackend new];
+	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
 	backend.errorToReturn = [NSError errorWithDomain:@"test" code:123 userInfo:nil];
 	id<FxGripInferenceBackend> bridged =
-		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxBridgeKitRequest.class];
+		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxGripBridgeKitRequest.class];
 	NSError *error = nil;
 	FxGripInferenceResult *result = [bridged runInferenceForRequest:[FxGripInferenceRequest requestWithInputs:@{}]
 															 error:&error];
@@ -172,9 +172,9 @@
 
 - (void)testBridgedPrepareForwardsToBackend
 {
-	FxBridgeKitBackend *backend = [FxBridgeKitBackend new];
+	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
 	id<FxGripInferenceBackend> bridged =
-		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxBridgeKitRequest.class];
+		[FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:FxGripBridgeKitRequest.class];
 	XCTAssertTrue([bridged respondsToSelector:@selector(prepareWithError:)]);
 	NSError *error = nil;
 	XCTAssertTrue([bridged prepareWithError:&error]);

@@ -7,8 +7,8 @@
 //
 
 #import "FxGripMenuParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 
 @implementation FxGripMenuParameter
 

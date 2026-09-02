@@ -11,12 +11,12 @@
 #import <FxGrip/FxGripRect.h>
 
 /*! A stand-in for FxMatrix44 applying p → (scale·x + offset.x, scale·y + offset.y). */
-@interface FxTileGeoStubMatrix : NSObject
+@interface FxGripTileGeoStubMatrix : NSObject
 @property (nonatomic, assign) CGFloat scale;
 @property (nonatomic, assign) CGPoint offset;
 @end
 
-@implementation FxTileGeoStubMatrix
+@implementation FxGripTileGeoStubMatrix
 
 - (instancetype)init
 {
@@ -41,7 +41,7 @@
 
 - (void)testPixelBoundsForImageRectTransformsCornersAndRoundsOutward
 {
-	FxTileGeoStubMatrix *transform = FxTileGeoStubMatrix.new;
+	FxGripTileGeoStubMatrix *transform = FxGripTileGeoStubMatrix.new;
 	transform.scale = 2.0;
 	transform.offset = CGPointMake(10, 20);
 
@@ -55,7 +55,7 @@
 
 - (void)testPixelBoundsRoundsAFractionalTransformOutward
 {
-	FxTileGeoStubMatrix *transform = FxTileGeoStubMatrix.new;
+	FxGripTileGeoStubMatrix *transform = FxGripTileGeoStubMatrix.new;
 	transform.scale = 1.0;
 	transform.offset = CGPointMake(0.4, 0.6);
 
@@ -69,7 +69,7 @@
 - (void)testImageRectForPixelBoundsInvertsThroughTheTransform
 {
 	// Inverse of (scale 2, offset 10/20): p → ((x-10)/2, (y-20)/2).
-	FxTileGeoStubMatrix *inverse = FxTileGeoStubMatrix.new;
+	FxGripTileGeoStubMatrix *inverse = FxGripTileGeoStubMatrix.new;
 	inverse.scale = 0.5;
 	inverse.offset = CGPointMake(-5, -10);
 

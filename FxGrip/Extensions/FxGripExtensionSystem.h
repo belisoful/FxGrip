@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreMedia/CoreMedia.h>
-#import "FxExtension.h"
+#import "FxGripExtension.h"
 #import "FxGripEffectHost.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripExtensionSystem
 	@abstract   Runs FxGrip extensions inside an FxPlug plug-in that does not use the effect base.
-	@discussion Introduced in FxGrip 1.0. FxTileableEffectBase drives its extensions by posting
+	@discussion Introduced in FxGrip 1.0. FxGripTileableEffect drives its extensions by posting
 				lifecycle notifications; this class posts the same notifications, with the same
 				payloads, over an effect host, so the extension machinery runs as a self-contained
 				subsystem. The plug-in loads the extensions it wants and forwards each FxPlug
@@ -42,13 +42,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly, nonnull, assign) id<FxGripEffectHost> host;
 
 /*! The loaded extensions, in load order. */
-@property (readonly, nonnull) NSArray<id<FxExtension>> *extensions;
+@property (readonly, nonnull) NSArray<id<FxGripExtension>> *extensions;
 
 /*! Loads an extension against the host; returns the extension's own load result. */
-- (BOOL)loadExtension:(id<FxExtension>)extension;
+- (BOOL)loadExtension:(id<FxGripExtension>)extension;
 
 /*! The first loaded extension of a class, or nil. */
-- (nullable id<FxExtension>)extensionForClass:(Class)extensionClass;
+- (nullable id<FxGripExtension>)extensionForClass:(Class)extensionClass;
 
 /*! Announces the host to the loaded extensions; call once after loading them. */
 - (void)dispatchInit;

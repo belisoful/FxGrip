@@ -33,7 +33,7 @@
 static const FxParameterId kChoiceTestParameter = 41;
 
 @interface FxGripChoiceParameterTests : XCTestCase
-@property (nonatomic, strong) FxParamClassTestEffect *effect;
+@property (nonatomic, strong) FxGripParamClassTestEffect *effect;
 @end
 
 @implementation FxGripChoiceParameterTests
@@ -41,7 +41,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxParamClassTestEffect.alloc init];
+	self.effect = [FxGripParamClassTestEffect.alloc init];
 }
 
 - (void)tearDown
@@ -59,13 +59,13 @@ static const FxParameterId kChoiceTestParameter = 41;
 
 - (BOOL)add:(Class)parameterClass type:(NSString *)type extra:(NSDictionary *)extra
 {
-	NSDictionary *config = FxParamClassTestConfig(kChoiceTestParameter, type, @"Mode", extra);
+	NSDictionary *config = FxGripParamClassTestConfig(kChoiceTestParameter, type, @"Mode", extra);
 	return [parameterClass addParameter:config toEffect:(id)self.effect];
 }
 
 - (id)makeParameter:(Class)parameterClass type:(NSString *)type
 {
-	NSDictionary *config = FxParamClassTestConfig(kChoiceTestParameter, type, @"Mode", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kChoiceTestParameter, type, @"Mode", nil);
 	return [[parameterClass alloc] initWithDictionary:config effect:(id)self.effect];
 }
 
@@ -142,7 +142,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 - (void)testTheInitializerCapturesTheItemList
 {
 	NSArray *items = @[@"One", @"Two"];
-	NSDictionary *config = FxParamClassTestConfig(kChoiceTestParameter, kFxParameterType_Menu, @"Mode",
+	NSDictionary *config = FxGripParamClassTestConfig(kChoiceTestParameter, kFxParameterType_Menu, @"Mode",
 												  @{kFxParameterProperty_MenuItems: items});
 
 	FxGripMenuParameter *parameter = [FxGripMenuParameter.alloc initWithDictionary:config effect:(id)self.effect];
@@ -154,7 +154,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 
 - (void)testTheInitializerLeavesTheItemListEmptyForAMenuWithoutEntries
 {
-	NSDictionary *config = FxParamClassTestConfig(kChoiceTestParameter, kFxParameterType_Menu, @"Mode", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kChoiceTestParameter, kFxParameterType_Menu, @"Mode", nil);
 
 	FxGripMenuParameter *parameter = [FxGripMenuParameter.alloc initWithDictionary:config effect:(id)self.effect];
 
@@ -198,7 +198,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 													   type:kFxParameterType_FontMenu];
 	self.effect.apiManager.paramGetAPIv6.fontName = @"Baskerville";
 
-	XCTAssertEqualObjects([parameter valueAtTime:FxParamClassTestTime(4, 30)], @"Baskerville");
+	XCTAssertEqualObjects([parameter valueAtTime:FxGripParamClassTestTime(4, 30)], @"Baskerville");
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"font");
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @4);
 }
@@ -210,7 +210,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
 	self.effect.apiManager.paramGetAPIv6.fontName = @"Baskerville";
 
-	XCTAssertNil([parameter valueAtTime:FxParamClassTestTime(0, 1)]);
+	XCTAssertNil([parameter valueAtTime:FxGripParamClassTestTime(0, 1)]);
 }
 
 #pragma mark String creation
@@ -254,7 +254,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 /*! The base class declares no creation; the abstract implementation refuses. */
 - (void)testTheStringBaseClassHasNoCreationOfItsOwn
 {
-	NSDictionary *config = FxParamClassTestConfig(kChoiceTestParameter, kFxParameterType_String, @"Mode", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kChoiceTestParameter, kFxParameterType_String, @"Mode", nil);
 
 	XCTAssertThrowsSpecificNamed([FxGripStringParameterBase addParameter:config toEffect:(id)self.effect],
 								 NSException,
@@ -283,7 +283,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 	FxGripStringParameter *parameter = [self makeStringParameter];
 	self.effect.apiManager.paramGetAPIv6.stringValue = @"Caption";
 
-	XCTAssertEqualObjects([parameter valueAtTime:FxParamClassTestTime(9, 30)], @"Caption");
+	XCTAssertEqualObjects([parameter valueAtTime:FxGripParamClassTestTime(9, 30)], @"Caption");
 }
 
 - (void)testSettingTheStringValueWritesThroughTheSettingAPI
@@ -311,7 +311,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 {
 	FxGripStringParameter *parameter = [self makeStringParameter];
 
-	[parameter setValue:@"Caption" atTime:FxParamClassTestTime(0, 1)];
+	[parameter setValue:@"Caption" atTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @"Caption");
 }
@@ -364,7 +364,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 	FxGripToggleParameter *parameter = [self makeToggleParameter];
 	self.effect.apiManager.paramGetAPIv6.boolValue = YES;
 
-	XCTAssertTrue([parameter valueAtTime:FxParamClassTestTime(6, 30)]);
+	XCTAssertTrue([parameter valueAtTime:FxGripParamClassTestTime(6, 30)]);
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"bool");
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @6);
 }
@@ -375,7 +375,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 	self.effect.apiManager.paramGetAPIv6.boolValue = YES;
 	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
 
-	XCTAssertFalse([parameter valueAtTime:FxParamClassTestTime(0, 1)]);
+	XCTAssertFalse([parameter valueAtTime:FxGripParamClassTestTime(0, 1)]);
 }
 
 - (void)testTheToggleBoolValueReadsAtTheZeroTime
@@ -404,7 +404,7 @@ static const FxParameterId kChoiceTestParameter = 41;
 {
 	FxGripToggleParameter *parameter = [self makeToggleParameter];
 
-	[parameter setValue:NO atTime:FxParamClassTestTime(12, 30)];
+	[parameter setValue:NO atTime:FxGripParamClassTestTime(12, 30)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @NO);
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"timevalue"], @12);

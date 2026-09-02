@@ -18,7 +18,7 @@
 
 /*!
 	@class      FxGripPluginInfo
-	@discussion This class keeps track of all the instances of the GuruFxTileableEffect plug-in. It figures out the start time
+	@discussion This class keeps track of all the instances of the FxGripTileableEffect plug-in. It figures out the start time
 				of each instance and can return the start time of the previous or next instance given an instance. This
 				allows you to determine where to move the playhead to get to the next one.
  				This mimics behavior of loading the pluginGroups and PluginList from the Info.plist.

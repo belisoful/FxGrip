@@ -42,25 +42,25 @@ static const FxParameterPresetFlags kTagsTestIgnoreTagBoundary = (1 << 1);
 
 // The test bundle links only FxGrip and XCTest, so CMTime values are built without the
 // CoreMedia symbols.
-static CMTime FxTagsTestTime(void)
+static CMTime FxGripTagsTestTime(void)
 {
 	return (CMTime){.value = 5, .timescale = 30, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
-static BOOL FxTagsTestTimesEqual(CMTime lhs, CMTime rhs)
+static BOOL FxGripTagsTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
 }
 
 /*! One recorded side effect: the section that produced it and the parameter it touched. */
-static NSString *FxTagsTestEvent(NSString *section, FxParameterId parameterID)
+static NSString *FxGripTagsTestEvent(NSString *section, FxParameterId parameterID)
 {
 	return [NSString stringWithFormat:@"%@:%u", section, parameterID];
 }
 
 /*! A one-section preset entry, so which entry a definition selected is readable by name. */
-static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *name)
+static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSString *name)
 {
 	return @{kFxParameterProperty_TargetPresetNames: @{@(parameterID).stringValue: name}};
 }
@@ -69,7 +69,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 // Serves both paramSetAPIv5 (preset values) and paramSetAPIv6 (preset flags). It does not
 // vend a dynamic API, so FxGripPreset dispatches on the encoded value's own shape.
-@interface FxTagsTestSettingAPI : NSObject
+@interface FxGripTagsTestSettingAPI : NSObject
 @property (nonatomic, strong, nonnull) NSMutableArray<NSString *> *events;
 @property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, id> *values;
 @property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSNumber *> *flags;
@@ -78,7 +78,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 @property (nonatomic, assign) CMTime lastValueTime;
 @end
 
-@implementation FxTagsTestSettingAPI
+@implementation FxGripTagsTestSettingAPI
 
 - (instancetype)init
 {
@@ -95,7 +95,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 - (BOOL)setFloatValue:(double)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	[self.events addObject:FxTagsTestEvent(kFxParameterProperty_TargetPresetValues, parameterID)];
+	[self.events addObject:FxGripTagsTestEvent(kFxParameterProperty_TargetPresetValues, parameterID)];
 	self.lastValueTime = time;
 	if ([self.failingValueParameters containsObject:@(parameterID)]) {
 		return NO;
@@ -106,7 +106,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 - (BOOL)setStringParameterValue:(NSString *)string toParameter:(UInt32)parameterID
 {
-	[self.events addObject:FxTagsTestEvent(kFxParameterProperty_TargetPresetValues, parameterID)];
+	[self.events addObject:FxGripTagsTestEvent(kFxParameterProperty_TargetPresetValues, parameterID)];
 	if ([self.failingValueParameters containsObject:@(parameterID)]) {
 		return NO;
 	}
@@ -116,7 +116,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 - (BOOL)setParameterFlags:(FxParameterFlags)flags toParameter:(UInt32)parameterID
 {
-	[self.events addObject:FxTagsTestEvent(kFxParameterProperty_TargetPresetFlags, parameterID)];
+	[self.events addObject:FxGripTagsTestEvent(kFxParameterProperty_TargetPresetFlags, parameterID)];
 	if ([self.failingFlagParameters containsObject:@(parameterID)]) {
 		return NO;
 	}
@@ -126,14 +126,14 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 @end
 
-// Serves dynamicParamAPIv4 for the names section.
-@interface FxTagsTestDynamicAPI : NSObject
+// Serves dynamicParamAPIv3 for the names section.
+@interface FxGripTagsTestDynamicAPI : NSObject
 @property (nonatomic, strong, nonnull) NSMutableArray<NSString *> *events;
 @property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSString *> *names;
 @property (nonatomic, strong, nonnull) NSMutableSet<NSNumber *> *failingParameters;
 @end
 
-@implementation FxTagsTestDynamicAPI
+@implementation FxGripTagsTestDynamicAPI
 
 - (instancetype)init
 {
@@ -148,9 +148,9 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 - (NSError *)setParameter:(UInt32)parameterID name:(NSString *)newName
 {
-	[self.events addObject:FxTagsTestEvent(kFxParameterProperty_TargetPresetNames, parameterID)];
+	[self.events addObject:FxGripTagsTestEvent(kFxParameterProperty_TargetPresetNames, parameterID)];
 	if ([self.failingParameters containsObject:@(parameterID)]) {
-		return [NSError errorWithDomain:@"FxTagsTest" code:1 userInfo:nil];
+		return [NSError errorWithDomain:@"FxGripTagsTest" code:1 userInfo:nil];
 	}
 	self.names[@(parameterID)] = newName;
 	return nil;
@@ -160,7 +160,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 // Serves paramGetAPIv6: the current value of the Menu or Toggle parameter whose target
 // preset is applied.
-@interface FxTagsTestRetrievalAPI : NSObject
+@interface FxGripTagsTestRetrievalAPI : NSObject
 @property (nonatomic, strong, nonnull) NSMutableArray<NSNumber *> *requestedParameters;
 @property (nonatomic, assign) int intValue;
 @property (nonatomic, assign) BOOL boolValue;
@@ -168,7 +168,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 @property (nonatomic, assign) CMTime lastTime;
 @end
 
-@implementation FxTagsTestRetrievalAPI
+@implementation FxGripTagsTestRetrievalAPI
 
 - (instancetype)init
 {
@@ -204,13 +204,13 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 @end
 
-@interface FxTagsTestAPIManager : NSObject
-@property (nonatomic, strong, nullable) FxTagsTestSettingAPI *settingAPI;
-@property (nonatomic, strong, nullable) FxTagsTestDynamicAPI *dynamicAPI;
-@property (nonatomic, strong, nullable) FxTagsTestRetrievalAPI *retrievalAPI;
+@interface FxGripTagsTestAPIManager : NSObject
+@property (nonatomic, strong, nullable) FxGripTagsTestSettingAPI *settingAPI;
+@property (nonatomic, strong, nullable) FxGripTagsTestDynamicAPI *dynamicAPI;
+@property (nonatomic, strong, nullable) FxGripTagsTestRetrievalAPI *retrievalAPI;
 @end
 
-@implementation FxTagsTestAPIManager
+@implementation FxGripTagsTestAPIManager
 
 - (id)paramSetAPIv5
 {
@@ -227,7 +227,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 	return self.retrievalAPI;
 }
 
-- (id)dynamicParamAPIv4
+- (id)dynamicParamAPIv3
 {
 	return self.dynamicAPI;
 }
@@ -236,12 +236,12 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 // Supplies the current flags the flags, tags, and meta sections read, and the live menu
 // entries the name-keyed definition lookup consults.
-@interface FxTagsTestParameterData : NSObject
+@interface FxGripTagsTestParameterData : NSObject
 @property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSNumber *> *flagsByParameter;
 @property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *menusByParameter;
 @end
 
-@implementation FxTagsTestParameterData
+@implementation FxGripTagsTestParameterData
 
 - (instancetype)init
 {
@@ -266,21 +266,21 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 @end
 
 // A real meta manager that also reports the order of the tag and meta writes.
-@interface FxTagsTestMetaManager : FxGripMetaManager
+@interface FxGripTagsTestMetaManager : FxGripMetaManager
 @property (nonatomic, strong, nonnull) NSMutableArray<NSString *> *events;
 @end
 
-@implementation FxTagsTestMetaManager
+@implementation FxGripTagsTestMetaManager
 
 - (NSError *)addTag:(NSString *)tag toParameter:(FxParameterId)parameterID
 {
-	[self.events addObject:FxTagsTestEvent(kFxParameterProperty_TargetPresetTags, parameterID)];
+	[self.events addObject:FxGripTagsTestEvent(kFxParameterProperty_TargetPresetTags, parameterID)];
 	return [super addTag:tag toParameter:parameterID];
 }
 
 - (NSError *)removeTag:(NSString *)tag fromParameter:(FxParameterId)parameterID
 {
-	[self.events addObject:FxTagsTestEvent(kFxParameterProperty_TargetPresetTags, parameterID)];
+	[self.events addObject:FxGripTagsTestEvent(kFxParameterProperty_TargetPresetTags, parameterID)];
 	return [super removeTag:tag fromParameter:parameterID];
 }
 
@@ -288,25 +288,25 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 		 forKey:(NSString *)key
 	toParameter:(FxParameterId)parameterID
 {
-	[self.events addObject:FxTagsTestEvent(kFxParameterProperty_TargetPresetMeta, parameterID)];
+	[self.events addObject:FxGripTagsTestEvent(kFxParameterProperty_TargetPresetMeta, parameterID)];
 	return [super setMeta:value forKey:key toParameter:parameterID];
 }
 
 @end
 
-// FxTileableEffectBase's designated initializer registers into the process-wide
+// FxGripTileableEffect's designated initializer registers into the process-wide
 // notification center, so the API wrapper is exercised against a stub exposing the
 // members the preset resolution reads.
-@interface FxTagsTestStubEffect : NSObject
+@interface FxGripTagsTestStubEffect : NSObject
 @property (nonatomic, strong, nullable) NSDictionary<NSString *, id> *pluginProperties;
 @property (nonatomic, assign) BOOL hasMeta;
 @property (nonatomic, strong, nullable) FxGripMetaManager *meta;
-@property (nonatomic, strong, nullable) FxTagsTestAPIManager *apiManager;
-@property (nonatomic, strong, nullable) FxTagsTestParameterData *parameterData;
+@property (nonatomic, strong, nullable) FxGripTagsTestAPIManager *apiManager;
+@property (nonatomic, strong, nullable) FxGripTagsTestParameterData *parameterData;
 @property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSDictionary *> *configurations;
 @end
 
-@implementation FxTagsTestStubEffect
+@implementation FxGripTagsTestStubEffect
 
 - (id)effectBase
 {
@@ -334,13 +334,13 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 #pragma mark - Tests
 
 @interface FxGripParameterTagsAPI_v1Tests : XCTestCase
-@property (nonatomic, strong) FxTagsTestStubEffect *effect;
+@property (nonatomic, strong) FxGripTagsTestStubEffect *effect;
 @property (nonatomic, strong) NSMutableArray<NSString *> *events;
-@property (nonatomic, strong) FxTagsTestMetaManager *metaManager;
-@property (nonatomic, strong) FxTagsTestParameterData *parameterData;
-@property (nonatomic, strong) FxTagsTestSettingAPI *settingAPI;
-@property (nonatomic, strong) FxTagsTestDynamicAPI *dynamicAPI;
-@property (nonatomic, strong) FxTagsTestRetrievalAPI *retrievalAPI;
+@property (nonatomic, strong) FxGripTagsTestMetaManager *metaManager;
+@property (nonatomic, strong) FxGripTagsTestParameterData *parameterData;
+@property (nonatomic, strong) FxGripTagsTestSettingAPI *settingAPI;
+@property (nonatomic, strong) FxGripTagsTestDynamicAPI *dynamicAPI;
+@property (nonatomic, strong) FxGripTagsTestRetrievalAPI *retrievalAPI;
 @end
 
 @implementation FxGripParameterTagsAPI_v1Tests
@@ -348,7 +348,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxTagsTestStubEffect.alloc init];
+	self.effect = [FxGripTagsTestStubEffect.alloc init];
 }
 
 - (void)tearDown
@@ -370,14 +370,14 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 /*!
 	A plist-shaped plugin properties dictionary carrying one presets table entry. The
-	NSDictionary(FxTileableEffect) accessors resolve only for a dictionary that also carries
+	NSDictionary(FxGripTileableEffect) accessors resolve only for a dictionary that also carries
 	the plugin identity triple, so every entry is present.
 */
 - (void)installPresetDefinition:(NSDictionary *)definition forTag:(NSString *)tag
 {
 	self.effect.pluginProperties = @{
 		kProPlugPlugIn_UuidProperty: @"00000000-0000-0000-0000-000000000001",
-		kProPlugPlugIn_ClassNameProperty: @"FxTagsTestEffect",
+		kProPlugPlugIn_ClassNameProperty: @"FxGripTagsTestEffect",
 		kProPlugPlugIn_GroupUUIDProperty: @"00000000-0000-0000-0000-000000000002",
 		kProPlugPlugInX_PresetsProperty: @{tag: definition}
 	};
@@ -563,7 +563,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 {
 	self.events = NSMutableArray.new;
 
-	FxTagsTestMetaManager *manager = [FxTagsTestMetaManager.alloc initWithEffect:nil];
+	FxGripTagsTestMetaManager *manager = [FxGripTagsTestMetaManager.alloc initWithEffect:nil];
 	manager.events = self.events;
 	for (NSNumber *parameterID in parameterIDs) {
 		[manager addParameter:parameterID.unsignedIntValue];
@@ -572,16 +572,16 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 	self.effect.meta = manager;
 	self.effect.hasMeta = YES;
 
-	self.parameterData = FxTagsTestParameterData.new;
+	self.parameterData = FxGripTagsTestParameterData.new;
 	self.effect.parameterData = self.parameterData;
 
-	self.settingAPI = FxTagsTestSettingAPI.new;
+	self.settingAPI = FxGripTagsTestSettingAPI.new;
 	self.settingAPI.events = self.events;
-	self.dynamicAPI = FxTagsTestDynamicAPI.new;
+	self.dynamicAPI = FxGripTagsTestDynamicAPI.new;
 	self.dynamicAPI.events = self.events;
-	self.retrievalAPI = FxTagsTestRetrievalAPI.new;
+	self.retrievalAPI = FxGripTagsTestRetrievalAPI.new;
 
-	FxTagsTestAPIManager *apiManager = FxTagsTestAPIManager.new;
+	FxGripTagsTestAPIManager *apiManager = FxGripTagsTestAPIManager.new;
 	apiManager.settingAPI = self.settingAPI;
 	apiManager.dynamicAPI = self.dynamicAPI;
 	apiManager.retrievalAPI = self.retrievalAPI;
@@ -629,7 +629,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (NSError *)applyDefinition:(NSDictionary *)preset options:(FxGripPresetOptions)options
 {
 	return [self.tagsAPI applyPreset:preset
-							  atTime:FxTagsTestTime()
+							  atTime:FxGripTagsTestTime()
 							 options:options
 						 presetFlags:0
 							  source:FxGripPresetSourcePlugin
@@ -757,7 +757,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
 
 	[self.tagsAPI applyPreset:[self allSectionsPresetForParameter:kTagsTestParam]
-					   atTime:FxTagsTestTime()
+					   atTime:FxGripTagsTestTime()
 					  options:FxGripPresetAll
 				  presetFlags:0
 					   source:FxGripPresetSourcePlugin
@@ -774,7 +774,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 	[self.tagsAPI applyPreset:[self allSectionsPresetKeyedBy:@[@(kTagsTestParam).stringValue,
 															   @(kTagsTestOtherParam).stringValue]]
-					   atTime:FxTagsTestTime()
+					   atTime:FxGripTagsTestTime()
 					  options:FxGripPresetAll
 				  presetFlags:0
 					   source:FxGripPresetSourceFile
@@ -782,7 +782,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 	NSMutableArray<NSString *> *expected = NSMutableArray.new;
 	for (NSString *section in self.allSectionsInOrder) {
-		[expected addObject:FxTagsTestEvent(section, kTagsTestParam)];
+		[expected addObject:FxGripTagsTestEvent(section, kTagsTestParam)];
 	}
 	XCTAssertEqualObjects(self.events, expected, @"the boundary filters all five sections");
 }
@@ -792,7 +792,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
 
 	[self.tagsAPI applyPreset:[self allSectionsPresetForParameter:kTagsTestParam]
-					   atTime:FxTagsTestTime()
+					   atTime:FxGripTagsTestTime()
 					  options:FxGripPresetAll
 				  presetFlags:kTagsTestIgnoreTagBoundary
 					   source:FxGripPresetSourceFile
@@ -807,15 +807,15 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 	[self.tagsAPI applyPreset:[self allSectionsPresetKeyedBy:@[@(kTagsTestParam).stringValue,
 															   @(kTagsTestOtherParam).stringValue]]
-					   atTime:FxTagsTestTime()
+					   atTime:FxGripTagsTestTime()
 					  options:FxGripPresetAll
 				  presetFlags:0
 					   source:FxGripPresetSourceFile
 						  tag:nil];
 
 	for (NSString *section in self.allSectionsInOrder) {
-		XCTAssertTrue([self.events containsObject:FxTagsTestEvent(section, kTagsTestParam)]);
-		XCTAssertTrue([self.events containsObject:FxTagsTestEvent(section, kTagsTestOtherParam)]);
+		XCTAssertTrue([self.events containsObject:FxGripTagsTestEvent(section, kTagsTestParam)]);
+		XCTAssertTrue([self.events containsObject:FxGripTagsTestEvent(section, kTagsTestOtherParam)]);
 	}
 }
 
@@ -830,7 +830,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 	[self applyDefinition:preset options:FxGripPresetValues];
 
 	XCTAssertEqualObjects(self.settingAPI.values[@(kTagsTestParam)], @0.25);
-	XCTAssertTrue(FxTagsTestTimesEqual(self.settingAPI.lastValueTime, FxTagsTestTime()));
+	XCTAssertTrue(FxGripTagsTestTimesEqual(self.settingAPI.lastValueTime, FxGripTagsTestTime()));
 }
 
 #pragma mark applyPreset: flags section
@@ -1018,7 +1018,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 	XCTAssertEqualObjects(self.settingAPI.values[@(kTagsTestOtherParam)], @0.75,
 						  @"the section continues past the failure");
 	XCTAssertTrue([self.events containsObject:
-				   FxTagsTestEvent(kFxParameterProperty_TargetPresetNames, kTagsTestOtherParam)],
+				   FxGripTagsTestEvent(kFxParameterProperty_TargetPresetNames, kTagsTestOtherParam)],
 				  @"the later sections still run");
 }
 
@@ -1123,15 +1123,15 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (BOOL)applyTargetPresetForParameter:(FxParameterId)parameterID options:(FxGripPresetOptions)options
 {
 	return [self.tagsAPI applyTargetPresetForParameter:parameterID
-												atTime:FxTagsTestTime()
+												atTime:FxGripTagsTestTime()
 											   options:options];
 }
 
 /*! Two entries a Menu or Toggle value indexes, each renaming the parameter distinctly. */
 - (NSArray *)twoEntryDefinition
 {
-	return @[FxTagsTestNamesEntry(kTagsTestParam, @"Zero"),
-			 FxTagsTestNamesEntry(kTagsTestParam, @"One")];
+	return @[FxGripTagsTestNamesEntry(kTagsTestParam, @"Zero"),
+			 FxGripTagsTestNamesEntry(kTagsTestParam, @"One")];
 }
 
 #pragma mark applyTargetPresetForParameter: gating
@@ -1216,7 +1216,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (void)testApplyTargetPresetResolvesADefinitionByMenuEntryName
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
-	[self installTargetPresetDefinition:@{@"Advanced": FxTagsTestNamesEntry(kTagsTestParam, @"ByName")}
+	[self installTargetPresetDefinition:@{@"Advanced": FxGripTagsTestNamesEntry(kTagsTestParam, @"ByName")}
 								 ofType:kFxParameterType_Menu];
 	self.parameterData.menusByParameter[@(kTagsTestParam)] = @[@"Basic", @"Advanced"];
 	self.retrievalAPI.intValue = 1;
@@ -1228,7 +1228,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (void)testANameKeyedDefinitionFollowsTheEntryWhenEntriesAreAppendedBefore
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
-	[self installTargetPresetDefinition:@{@"Advanced": FxTagsTestNamesEntry(kTagsTestParam, @"ByName")}
+	[self installTargetPresetDefinition:@{@"Advanced": FxGripTagsTestNamesEntry(kTagsTestParam, @"ByName")}
 								 ofType:kFxParameterType_Menu];
 	// "Advanced" moved to index 2 by an inserted entry; the name still resolves it.
 	self.parameterData.menusByParameter[@(kTagsTestParam)] = @[@"Basic", @"Custom", @"Advanced"];
@@ -1241,8 +1241,8 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (void)testANameKeyedDefinitionTakesPrecedenceOverTheIndexEntry
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
-	[self installTargetPresetDefinition:@{@"Advanced": FxTagsTestNamesEntry(kTagsTestParam, @"ByName"),
-										  @1: FxTagsTestNamesEntry(kTagsTestParam, @"ByIndex")}
+	[self installTargetPresetDefinition:@{@"Advanced": FxGripTagsTestNamesEntry(kTagsTestParam, @"ByName"),
+										  @1: FxGripTagsTestNamesEntry(kTagsTestParam, @"ByIndex")}
 								 ofType:kFxParameterType_Menu];
 	self.parameterData.menusByParameter[@(kTagsTestParam)] = @[@"Basic", @"Advanced"];
 	self.retrievalAPI.intValue = 1;
@@ -1281,7 +1281,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (void)testApplyTargetPresetResolvesADictionaryDefinitionByNumberKey
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
-	[self installTargetPresetDefinition:@{@1: FxTagsTestNamesEntry(kTagsTestParam, @"One")}
+	[self installTargetPresetDefinition:@{@1: FxGripTagsTestNamesEntry(kTagsTestParam, @"One")}
 								 ofType:kFxParameterType_Menu];
 	self.retrievalAPI.intValue = 1;
 
@@ -1292,7 +1292,7 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (void)testApplyTargetPresetResolvesADictionaryDefinitionByStringKey
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
-	[self installTargetPresetDefinition:@{@"1": FxTagsTestNamesEntry(kTagsTestParam, @"One")}
+	[self installTargetPresetDefinition:@{@"1": FxGripTagsTestNamesEntry(kTagsTestParam, @"One")}
 								 ofType:kFxParameterType_Menu];
 	self.retrievalAPI.intValue = 1;
 
@@ -1303,9 +1303,9 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 - (void)testApplyTargetPresetFallsBackToTheDefaultEntryWhenTheIndexIsAbsent
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
-	[self installTargetPresetDefinition:@{@"0": FxTagsTestNamesEntry(kTagsTestParam, @"Zero"),
+	[self installTargetPresetDefinition:@{@"0": FxGripTagsTestNamesEntry(kTagsTestParam, @"Zero"),
 										  kFxParameterProperty_Default:
-											  FxTagsTestNamesEntry(kTagsTestParam, @"Fallback")}
+											  FxGripTagsTestNamesEntry(kTagsTestParam, @"Fallback")}
 								 ofType:kFxParameterType_Menu];
 	self.retrievalAPI.intValue = 7;
 
@@ -1379,8 +1379,8 @@ static NSDictionary *FxTagsTestNamesEntry(FxParameterId parameterID, NSString *n
 
 	XCTAssertTrue([self applyTargetPresetForParameter:kTagsTestParam options:FxGripPresetValues]);
 
-	XCTAssertTrue(FxTagsTestTimesEqual(self.retrievalAPI.lastTime, FxTagsTestTime()));
-	XCTAssertTrue(FxTagsTestTimesEqual(self.settingAPI.lastValueTime, FxTagsTestTime()));
+	XCTAssertTrue(FxGripTagsTestTimesEqual(self.retrievalAPI.lastTime, FxGripTagsTestTime()));
+	XCTAssertTrue(FxGripTagsTestTimesEqual(self.settingAPI.lastValueTime, FxGripTagsTestTime()));
 }
 
 - (void)testApplyTargetPresetReturnsNOWhenTheApplicationFails

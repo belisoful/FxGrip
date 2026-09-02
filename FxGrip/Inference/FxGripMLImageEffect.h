@@ -7,7 +7,7 @@
 #define FxGripMLImageEffect_h
 
 #import <Metal/Metal.h>
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 #import "FxGripInferenceBackend.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 				as safe to run per frame with a heavy model until that caching is in place.
  @todo this should support one or multiple prior frames, or have that feature in a separate class (or sub class)
 */
-@interface FxGripMLImageEffect : FxTileableEffectBase
+@interface FxGripMLImageEffect : FxGripTileableEffect
 
 /*! The engine that runs the model. Defaults to defaultInferenceBackend; setting nil restores that
 	default. */

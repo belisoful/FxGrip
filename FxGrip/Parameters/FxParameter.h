@@ -17,7 +17,7 @@
 //#import "NSCoder+FxPlug.h"
 
 // Forward declaration
-@protocol FxTileableEffectBase;
+@protocol FxGripTileableEffect;
 
 
 
@@ -142,7 +142,7 @@
 /*!
 	@method     defaultParameterAction
 	@abstract   The parameter's built-in click behavior.
-	@discussion Introduced in FxGrip 1.0. `FxTileableEffectBase parameterClicked:` performs
+	@discussion Introduced in FxGrip 1.0. `FxGripTileableEffect parameterClicked:` performs
 				this when the effect subclass implements no configuration-declared click
 				selector for the parameter.
 */

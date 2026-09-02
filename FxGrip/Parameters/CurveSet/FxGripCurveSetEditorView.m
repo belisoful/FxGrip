@@ -5,7 +5,7 @@
 
 #import "FxGripCurveSetEditorView.h"
 #import "FxGripOOBParameterAccess.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripTileableEffect.h"
 #import "FxGrip_ARC.h"
 
 static const CGFloat kFxGripCurveStripHeight = 72.0;
@@ -28,6 +28,7 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 		_curveSet = NARC_RETAIN([FxGripCurveSetData.alloc init]);
 		_editors = NARC_RETAIN([NSMutableArray array]);
 		_slowDragScale = kFxGripCurveSlowDragScaleDefault;
+		_lineWidth = kFxGripCurveLineWidthDefault;
 		self.autoresizingMask = NSViewWidthSizable;
 	}
 	return self;
@@ -56,6 +57,15 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 	_slowDragScale = scale < 0.01 ? 0.01 : (scale > 1.0 ? 1.0 : scale);
 	for (FxGripCurveEditorView *editor in _editors) {
 		editor.slowDragScale = _slowDragScale;
+	}
+}
+
+- (void)setLineWidth:(CGFloat)lineWidth
+{
+	// The strip owns the clamp; the composite stores the same clamped value it hands out.
+	_lineWidth = lineWidth < 0.1 ? 0.1 : (lineWidth > 8.0 ? 8.0 : lineWidth);
+	for (FxGripCurveEditorView *editor in _editors) {
+		editor.lineWidth = _lineWidth;
 	}
 }
 
@@ -89,6 +99,7 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 	editor.mappingKey = key;
 	editor.delegate = self;
 	editor.slowDragScale = self.slowDragScale;
+	editor.lineWidth = self.lineWidth;
 	editor.autoresizingMask = NSViewWidthSizable;
 	[self addSubview:editor];
 	NARC_RELEASE_RAW(editor);
@@ -136,7 +147,7 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 		[_curveSet setCurve:curve forKey:editor.mappingKey];
 	}
 
-	FxTileableEffectBase *effect = (FxTileableEffectBase*)self.parameterEffect;
+	FxGripTileableEffect *effect = (FxGripTileableEffect*)self.parameterEffect;
 	if (effect == nil) {
 		return;
 	}

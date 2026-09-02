@@ -39,7 +39,7 @@
 	return [NSPriorityNotificationCenter defaultCenter];
 }
 
-- (nullable FxTileableEffectBase *)effectBase
+- (nullable FxGripTileableEffect *)effectBase
 {
 	return nil;
 }

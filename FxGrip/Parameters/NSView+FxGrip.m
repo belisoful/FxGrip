@@ -12,17 +12,17 @@
 
 @implementation NSView (FxGrip)
 
-static char *FxViewParameterID = "FxParameterId";
+static char *FxGripViewParameterID = "FxParameterId";
 
 - (void)setParameterID:(FxParameterId)paramID
 {
-	objc_setAssociatedObject(self, FxViewParameterID, [NSNumber numberWithInt:paramID], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+	objc_setAssociatedObject(self, FxGripViewParameterID, [NSNumber numberWithInt:paramID], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
 }
 
 - (FxParameterId)parameterID
 {
-	NSNumber *pid = (NSNumber*)objc_getAssociatedObject(self, FxViewParameterID);
+	NSNumber *pid = (NSNumber*)objc_getAssociatedObject(self, FxGripViewParameterID);
 	if (pid != nil)
 		return pid.intValue;
 	return kFxParameterId_None;

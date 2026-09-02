@@ -12,6 +12,7 @@
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripPushButtonParameter.h>
 #import <FxGrip/FxGripHelpParameter.h>
+#import <FxGrip/FxGripAnalyzerParameter.h>
 #import <FxGrip/FxGripParameterUtility.h>
 
 // The single-argument initializer is implemented but absent from the public header.
@@ -22,7 +23,7 @@
 static const FxParameterId kButtonTestParameter = 61;
 
 @interface FxGripButtonParameterTests : XCTestCase
-@property (nonatomic, strong) FxParamClassTestEffect *effect;
+@property (nonatomic, strong) FxGripParamClassTestEffect *effect;
 @end
 
 @implementation FxGripButtonParameterTests
@@ -30,7 +31,7 @@ static const FxParameterId kButtonTestParameter = 61;
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxParamClassTestEffect.alloc init];
+	self.effect = [FxGripParamClassTestEffect.alloc init];
 }
 
 - (void)tearDown
@@ -49,7 +50,7 @@ static const FxParameterId kButtonTestParameter = 61;
 - (BOOL)add:(Class)parameterClass type:(NSString *)type declaredSelector:(NSString *)declaredSelector
 {
 	NSDictionary *extra = declaredSelector ? @{kFxParameterProperty_Selector: declaredSelector} : nil;
-	NSDictionary *config = FxParamClassTestConfig(kButtonTestParameter, type, @"Reset", extra);
+	NSDictionary *config = FxGripParamClassTestConfig(kButtonTestParameter, type, @"Reset", extra);
 	return [parameterClass addParameter:config toEffect:(id)self.effect];
 }
 
@@ -139,8 +140,8 @@ static const FxParameterId kButtonTestParameter = 61;
 
 - (void)testEveryPushButtonRegistersItsOwnSelector
 {
-	NSDictionary *first = FxParamClassTestConfig(7, kFxParameterType_PushButton, @"First", nil);
-	NSDictionary *second = FxParamClassTestConfig(8, kFxParameterType_PushButton, @"Second", nil);
+	NSDictionary *first = FxGripParamClassTestConfig(7, kFxParameterType_PushButton, @"First", nil);
+	NSDictionary *second = FxGripParamClassTestConfig(8, kFxParameterType_PushButton, @"Second", nil);
 
 	XCTAssertTrue([FxGripPushButtonParameter addParameter:first toEffect:(id)self.effect]);
 	XCTAssertTrue([FxGripPushButtonParameter addParameter:second toEffect:(id)self.effect]);
@@ -193,7 +194,7 @@ static const FxParameterId kButtonTestParameter = 61;
 - (void)testAHelpButtonCarriesTheConfiguredFlags
 {
 	NSArray *declared = @[kParameterFlagString_DISABLED];
-	NSDictionary *config = FxParamClassTestConfig(kButtonTestParameter, kFxParameterType_Help, @"Help",
+	NSDictionary *config = FxGripParamClassTestConfig(kButtonTestParameter, kFxParameterType_Help, @"Help",
 												  @{kFxParameterProperty_Flags: declared});
 
 	XCTAssertTrue([FxGripHelpParameter addParameter:config toEffect:(id)self.effect]);
@@ -201,11 +202,67 @@ static const FxParameterId kButtonTestParameter = 61;
 	XCTAssertEqualObjects(self.call[@"flags"], @(kFxParameterFlag_DISABLED));
 }
 
+#pragma mark Analyzer button creation
+
+- (void)testTheAnalyzerButtonReportsItsFxPlugTypeAndTypeString
+{
+	XCTAssertEqual(FxGripAnalyzerParameter.parameterType, FxParameterType_Analyzer);
+	XCTAssertEqualObjects(FxGripAnalyzerParameter.parameterTypeString, kFxParameterType_Analyzer);
+}
+
+- (void)testTheAnalyzerButtonRegistersAPushButtonUsingItsParameterNameAsTheTitle
+{
+	XCTAssertTrue([self add:FxGripAnalyzerParameter.class type:kFxParameterType_Analyzer declaredSelector:nil]);
+
+	XCTAssertEqualObjects(self.call, (@{@"method": @"button",
+										@"name": @"Reset",
+										@"id": @(kButtonTestParameter),
+										@"selector": self.synthesizedSelectorName,
+										@"flags": @(kFxParameterFlag_DEFAULT)}));
+}
+
+- (void)testTheAnalyzerButtonPrefersTheConfiguredButtonTitle
+{
+	NSDictionary *config = FxGripParamClassTestConfig(kButtonTestParameter, kFxParameterType_Analyzer, @"Reset",
+													  @{kFxParameterProperty_ButtonTitle: @"Detect Motion"});
+
+	XCTAssertTrue([FxGripAnalyzerParameter addParameter:config toEffect:(id)self.effect]);
+
+	XCTAssertEqualObjects(self.call[@"name"], @"Detect Motion");
+}
+
+- (void)testTheAnalyzerButtonFallsBackToAnalyzeWhenNoNameOrTitleIsGiven
+{
+	NSDictionary *config = @{kFxParameterProperty_Id: @(kButtonTestParameter),
+							 kFxParameterProperty_Type: kFxParameterType_Analyzer};
+
+	XCTAssertTrue([FxGripAnalyzerParameter addParameter:config toEffect:(id)self.effect]);
+
+	XCTAssertEqualObjects(self.call[@"name"], kFxGripAnalyzerDefaultTitle);
+}
+
+- (void)testTheAnalyzerButtonRefusesADeclaredSelectorWithoutTheClickPrefix
+{
+	XCTAssertFalse([self add:FxGripAnalyzerParameter.class type:kFxParameterType_Analyzer declaredSelector:@"runAnalysis"]);
+
+	XCTAssertEqualObjects(self.effect.creationCalls, @[]);
+}
+
+/*! The click hook is a no-op when the host is not an FxGrip effect that conforms to
+	FxAnalyzer, so a misconfigured analyzer button never throws. */
+- (void)testTheAnalyzerActionIsSafeOnAHostWithoutAnAnalysisPass
+{
+	NSDictionary *config = FxGripParamClassTestConfig(kButtonTestParameter, kFxParameterType_Analyzer, @"Analyze", nil);
+	FxGripAnalyzerParameter *parameter = [FxGripAnalyzerParameter.alloc initWithDictionary:config effect:(id)self.effect];
+
+	XCTAssertNoThrow([parameter defaultParameterAction]);
+}
+
 #pragma mark Selector capture
 
 - (void)testThePushButtonInitializerCapturesTheDeclaredSelector
 {
-	NSDictionary *config = FxParamClassTestConfig(kButtonTestParameter, kFxParameterType_PushButton, @"Reset",
+	NSDictionary *config = FxGripParamClassTestConfig(kButtonTestParameter, kFxParameterType_PushButton, @"Reset",
 												  @{kFxParameterProperty_Selector: @"clickReset"});
 
 	FxGripPushButtonParameter *parameter = [FxGripPushButtonParameter.alloc initWithDictionary:config effect:(id)self.effect];
@@ -216,7 +273,7 @@ static const FxParameterId kButtonTestParameter = 61;
 
 - (void)testThePushButtonInitializerLeavesTheSelectorEmptyWithoutADeclaration
 {
-	NSDictionary *config = FxParamClassTestConfig(kButtonTestParameter, kFxParameterType_PushButton, @"Reset", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kButtonTestParameter, kFxParameterType_PushButton, @"Reset", nil);
 
 	FxGripPushButtonParameter *parameter = [FxGripPushButtonParameter.alloc initWithDictionary:config effect:(id)self.effect];
 

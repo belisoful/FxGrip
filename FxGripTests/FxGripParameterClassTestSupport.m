@@ -4,8 +4,11 @@
 //
 
 #import "FxGripParameterClassTestSupport.h"
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
+#import <FxGrip/FxGripAPINotifications.h>
+#import <FxGrip/NSDictionary+FxGripTileableEffect.h>
 
-NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
+NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
@@ -13,7 +16,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Creation API
 
-@implementation FxParamClassTestCreationAPI
+@implementation FxGripParamClassTestCreationAPI
 
 - (instancetype)init
 {
@@ -295,7 +298,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Retrieval / setting / dynamic APIs
 
-@implementation FxParamClassTestRetrievalAPI
+@implementation FxGripParamClassTestRetrievalAPI
 
 - (instancetype)init
 {
@@ -522,15 +525,15 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 
 @end
 
-@implementation FxParamClassTestTimingAPI
+@implementation FxGripParamClassTestTimingAPI
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
 		_queries = NSMutableArray.new;
-		_startTime = FxParamClassTestTime(0, 1);
-		_durationTime = FxParamClassTestTime(0, 1);
+		_startTime = FxGripParamClassTestTime(0, 1);
+		_durationTime = FxGripParamClassTestTime(0, 1);
 	}
 	return self;
 }
@@ -557,7 +560,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 							  @"id": @(parameterID),
 							  @"timevalue": @(time.value)}];
 	if (timelineTime) {
-		*timelineTime = FxParamClassTestTime(time.value * 2, time.timescale);
+		*timelineTime = FxGripParamClassTestTime(time.value * 2, time.timescale);
 	}
 }
 
@@ -567,13 +570,13 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 							  @"id": @(parameterID),
 							  @"timevalue": @(time.value)}];
 	if (imageTime) {
-		*imageTime = FxParamClassTestTime(time.value / 2, time.timescale);
+		*imageTime = FxGripParamClassTestTime(time.value / 2, time.timescale);
 	}
 }
 
 @end
 
-@implementation FxParamClassTestSettingAPI
+@implementation FxGripParamClassTestSettingAPI
 
 - (instancetype)init
 {
@@ -676,7 +679,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 
 @end
 
-@implementation FxParamClassTestDynamicAPI
+@implementation FxGripParamClassTestDynamicAPI
 
 - (instancetype)init
 {
@@ -706,19 +709,19 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 
 #pragma mark - API manager
 
-@implementation FxParamClassTestAPIManager
+@implementation FxGripParamClassTestAPIManager
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
 		_sessionID = 1;
-		_paramCreateAPIv5 = [FxParamClassTestCreationAPI.alloc init];
-		_paramGetAPIv6 = [FxParamClassTestRetrievalAPI.alloc init];
-		_paramSetAPIv5 = [FxParamClassTestSettingAPI.alloc init];
+		_paramCreateAPIv5 = [FxGripParamClassTestCreationAPI.alloc init];
+		_paramGetAPIv6 = [FxGripParamClassTestRetrievalAPI.alloc init];
+		_paramSetAPIv5 = [FxGripParamClassTestSettingAPI.alloc init];
 		_paramSetAPIv6 = _paramSetAPIv5;
-		_dynamicParamAPIv3 = [FxParamClassTestDynamicAPI.alloc init];
-		_timingAPIv4 = [FxParamClassTestTimingAPI.alloc init];
+		_dynamicParamAPIv3 = [FxGripParamClassTestDynamicAPI.alloc init];
+		_timingAPIv4 = [FxGripParamClassTestTimingAPI.alloc init];
 	}
 	return self;
 }
@@ -727,7 +730,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Effect
 
-@implementation FxParamClassTestEffect
+@implementation FxGripParamClassTestEffect
 
 - (id)effectBase
 {
@@ -739,15 +742,74 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 {
 	self = [super init];
 	if (self) {
-		_apiManager = [FxParamClassTestAPIManager.alloc init];
-		_notifier = FxParamClassTestMakePriorityCenter();
+		_apiManager = [FxGripParamClassTestAPIManager.alloc init];
+		_notifier = FxGripParamClassTestMakePriorityCenter();
 		_defaultFontName = @"Helvetica";
 		_addedGroupIDs = NSMutableArray.new;
 		_creationOrder = NSMutableArray.new;
 		_groupRecursionSucceeds = YES;
 		_parameters = NSMutableDictionary.new;
+		[self attachHostObservers];
 	}
 	return self;
+}
+
+/*! Mirrors the effect base's policy and group observers, driven by this stub's own properties,
+	so the notification-seam flows are what the tests exercise. */
+- (void)attachHostObservers
+{
+	__weak typeof(self) weakSelf = self;
+	[self.notifier addObserverForName:FxGripTileableEffectParameterPolicyName object:self queue:nil
+						   usingBlock:^(NSNotification *note) {
+		NSMutableDictionary *config = note.userInfo[FxGripNotifyAPI_ParameterKey];
+		if (![config isKindOfClass:NSMutableDictionary.class]) {
+			return;
+		}
+		FxParameterType type = config.parameterType;
+		if (type == FxParameterType_FontMenu) {
+			NSString *font = config[kFxParameterProperty_Default];
+			if (![font isKindOfClass:NSString.class] || font.length == 0
+				|| [font isEqualToString:kFxParameterType_FontNameDefault]) {
+				config[kFxParameterProperty_Default] = weakSelf.defaultFontName;
+			}
+			return;
+		}
+		if (type == FxParameterType_RGBA || type == FxParameterType_RGB) {
+			NSMutableDictionary *colors = config[kFxParameterProperty_Default];
+			if (![colors isKindOfClass:NSMutableDictionary.class]) {
+				return;
+			}
+			NSNumber *space = colors[kFxParameterProperty_ColorSpace];
+			if (space == nil) {
+				return;
+			}
+			int convertGamma = 0;
+			if (space.intValue == 1 && weakSelf.isLinearColorParameters) {
+				convertGamma = -1;
+			} else if (space.intValue == 0 && weakSelf.isGammaColorParameters) {
+				convertGamma = 1;
+			}
+			if (convertGamma == 0) {
+				return;
+			}
+			const double gamma = 2.2;
+			double exponent = convertGamma > 0 ? gamma : 1.0 / gamma;
+			for (NSString *key in @[kFxParameterProperty_Red, kFxParameterProperty_Green, kFxParameterProperty_Blue]) {
+				NSNumber *component = colors[key];
+				if ([component isKindOfClass:NSNumber.class]) {
+					colors[key] = @(pow(component.doubleValue, exponent));
+				}
+			}
+		}
+	}];
+	[self.notifier addObserverForName:FxGripTileableEffectAddGroupParametersName object:self queue:nil
+						   usingBlock:^(NSNotification *note) {
+		NSNumber *groupID = note.userInfo[FxGripTileableEffectGroupIDKey];
+		NSError *error = nil;
+		if (![weakSelf addParametersWithGroupID:groupID.unsignedIntValue error:&error] && error != nil) {
+			((NSMutableDictionary *)note.userInfo).fxError = error;
+		}
+	}];
 }
 
 - (BOOL)addParametersWithGroupID:(FxParameterId)groupID error:(NSError *_Nullable *_Nullable)error
@@ -787,7 +849,7 @@ NSNotificationCenter *FxParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Configuration helper
 
-NSMutableDictionary *FxParamClassTestConfig(FxParameterId parameterID,
+NSMutableDictionary *FxGripParamClassTestConfig(FxParameterId parameterID,
 										   NSString *type,
 										   NSString *name,
 										   NSDictionary *extra)
@@ -800,7 +862,7 @@ NSMutableDictionary *FxParamClassTestConfig(FxParameterId parameterID,
 	return config;
 }
 
-CMTime FxParamClassTestTime(int64_t value, int32_t timescale)
+CMTime FxGripParamClassTestTime(int64_t value, int32_t timescale)
 {
 	CMTime time = { .value = value, .timescale = timescale, .flags = kCMTimeFlags_Valid, .epoch = 0 };
 	return time;

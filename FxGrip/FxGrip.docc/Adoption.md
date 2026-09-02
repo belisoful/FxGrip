@@ -23,7 +23,7 @@ directly from any code:
 
 ``FxGripAPIAccessing`` wraps the `PROAPIAccessing` manager FxPlug hands every plug-in, and vends
 the versioned host APIs plus FxGrip's additions (the tags and presets wrappers) from one place.
-``FxOnScreenControlBase`` and its parts build on the same wrapper and bind directly to a raw
+``FxGripOnScreenControl`` and its parts build on the same wrapper and bind directly to a raw
 API manager, so a plug-in adopts FxGrip's on-screen controls without any effect-base code.
 
 ### Level 3: The parameter subsystem, through a host
@@ -45,8 +45,8 @@ _gripHost = [[FxGripPluginHost alloc] initWithAPIManager:apiManager];
 } toEffect:_gripHost];
 ```
 
-The host carries a nullable `effectBase`: the full ``FxTileableEffectBase`` behind it, when
-there is one. FxTileableEffectBase returns itself and a plain host returns nil, so the API
+The host carries a nullable `effectBase`: the full ``FxGripTileableEffect`` behind it, when
+there is one. FxGripTileableEffect returns itself and a plain host returns nil, so the API
 layer holds only the host and reads base-only members as `host.effectBase.member`, which nil
 messaging turns into a safe no-op on a baseless host. Nothing in FxGrip casts a host to the
 base class.
@@ -76,7 +76,7 @@ payloads mirror the effect base's, so an extension cannot tell the difference.
 ### Level 4: Composition
 
 An existing plug-in that wants a subsystem the host protocol does not carry — the extensions,
-the analysis pass, the plist configuration walk — owns an ``FxTileableEffectBase`` instance
+the analysis pass, the plist configuration walk — owns an ``FxGripTileableEffect`` instance
 instead of subclassing it, and forwards the FxPlug lifecycle calls it cares about
 (-addParameters, -pluginState, parameter changes, rendering) to the inner effect. The inner
 effect conforms to every host-typed entry point, loads its extensions, and posts the lifecycle
@@ -84,7 +84,7 @@ notifications they observe.
 
 ### Level 5: The effect base
 
-Subclass ``FxTileableEffectBase`` (or ``FxTileableGeneratorBase``) and the whole framework is
+Subclass ``FxGripTileableEffect`` (or ``FxGripTileableGenerator``) and the whole framework is
 active: the registrars, the plist parameter configuration, the extensions, meta and tags,
 presets, analysis, and the ML effect templates.
 
@@ -99,5 +99,5 @@ presets, analysis, and the ML effect templates.
 
 ### The full base
 
-- ``FxTileableEffectBase``
-- ``FxTileableGeneratorBase``
+- ``FxGripTileableEffect``
+- ``FxGripTileableGenerator``

@@ -53,13 +53,13 @@
 				
 				[self.effect initializeCustomData:&customDefaultValue parameterID:self.parameterID];
 			} else {
-				NSLog(@"GuruFxTileableEffect(%llu)::__func__ - ERROR: Custom Class \"%@\" does not conform to NSCopying", self.effect.apiManager.sessionID, customClassStr);
+				NSLog(@"FxGripTileableEffect(%llu)::__func__ - ERROR: Custom Class \"%@\" does not conform to NSCopying", self.effect.apiManager.sessionID, customClassStr);
 			}
 		} else {
-			NSLog(@"GuruFxTileableEffect(%llu)::__func__ - ERROR: Custom Class \"%@\" does not conform to NSSecureCoding", self.effect.apiManager.sessionID, customClassStr);
+			NSLog(@"FxGripTileableEffect(%llu)::__func__ - ERROR: Custom Class \"%@\" does not conform to NSSecureCoding", self.effect.apiManager.sessionID, customClassStr);
 		}
 	} else {
-		NSLog(@"GuruFxTileableEffect(%llu)::__func__ - ERROR: Custom Class \"%@\" was not found", self.effect.apiManager.sessionID, customClassStr);
+		NSLog(@"FxGripTileableEffect(%llu)::__func__ - ERROR: Custom Class \"%@\" was not found", self.effect.apiManager.sessionID, customClassStr);
 	}
    */
 	

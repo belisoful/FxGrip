@@ -15,11 +15,12 @@
 #import <FxGrip/FxGripPercentParameter.h>
 #import <FxGrip/FxGripIntParameter.h>
 #import <FxGrip/FxGripAngleParameter.h>
+#import <FxGrip/FxGripTrackingOpacityParameter.h>
 
 static const FxParameterId kScalarTestParameter = 21;
 
 @interface FxGripScalarParameterTests : XCTestCase
-@property (nonatomic, strong) FxParamClassTestEffect *effect;
+@property (nonatomic, strong) FxGripParamClassTestEffect *effect;
 @end
 
 @implementation FxGripScalarParameterTests
@@ -27,7 +28,7 @@ static const FxParameterId kScalarTestParameter = 21;
 - (void)setUp
 {
 	[super setUp];
-	self.effect = [FxParamClassTestEffect.alloc init];
+	self.effect = [FxGripParamClassTestEffect.alloc init];
 }
 
 - (void)tearDown
@@ -45,7 +46,7 @@ static const FxParameterId kScalarTestParameter = 21;
 
 - (BOOL)add:(Class)parameterClass type:(NSString *)type extra:(NSDictionary *)extra
 {
-	NSDictionary *config = FxParamClassTestConfig(kScalarTestParameter, type, @"Amount", extra);
+	NSDictionary *config = FxGripParamClassTestConfig(kScalarTestParameter, type, @"Amount", extra);
 	return [parameterClass addParameter:config toEffect:(id)self.effect];
 }
 
@@ -68,7 +69,7 @@ static const FxParameterId kScalarTestParameter = 21;
 
 - (void)testAnInstanceReportsTheClassTypeThroughTheInstanceAccessor
 {
-	NSDictionary *config = FxParamClassTestConfig(kScalarTestParameter, kFxParameterType_Float, @"Amount", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kScalarTestParameter, kFxParameterType_Float, @"Amount", nil);
 	FxGripFloatParameter *parameter = [FxGripFloatParameter.alloc initWithDictionary:config
 																			  effect:(id)self.effect];
 
@@ -303,7 +304,7 @@ static const FxParameterId kScalarTestParameter = 21;
 
 - (FxGripIntParameter *)makeIntParameter
 {
-	NSDictionary *config = FxParamClassTestConfig(kScalarTestParameter, kFxParameterType_Integer, @"Count", nil);
+	NSDictionary *config = FxGripParamClassTestConfig(kScalarTestParameter, kFxParameterType_Integer, @"Count", nil);
 	return [FxGripIntParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
@@ -403,10 +404,61 @@ static const FxParameterId kScalarTestParameter = 21;
 	XCTAssertFalse([self add:FxGripAngleParameter.class type:kFxParameterType_Angle extra:nil]);
 }
 
+#pragma mark Tracking Opacity
+
+- (void)testTrackingOpacityReportsItsFxPlugTypeAndTypeString
+{
+	XCTAssertEqual(FxGripTrackingOpacityParameter.parameterType, FxParameterType_TrackingOpacity);
+	XCTAssertEqualObjects(FxGripTrackingOpacityParameter.parameterTypeString, kFxParameterType_TrackingOpacity);
+}
+
+- (void)testTrackingOpacityRestsAtFullOpacityAndDisablesEditingAndKeyframing
+{
+	XCTAssertTrue([self add:FxGripTrackingOpacityParameter.class type:kFxParameterType_TrackingOpacity extra:nil]);
+
+	XCTAssertEqualObjects(self.call, (@{@"method": @"percent",
+										@"name": @"Amount",
+										@"id": @(kScalarTestParameter),
+										@"default": @1.0,
+										@"min": @0.0,
+										@"max": @1.0,
+										@"slidermin": @0.0,
+										@"slidermax": @1.0,
+										@"delta": @0.01,
+										@"flags": @(kFxParameterFlag_DEFAULT | kFxParameterFlag_DISABLED
+													| kFxParameterFlag_NOT_ANIMATABLE)}));
+}
+
+- (void)testTrackingOpacityLetsADeclaredDefaultLowerTheRestingValue
+{
+	NSDictionary *extra = @{kFxParameterProperty_Default: @0.5};
+
+	XCTAssertTrue([self add:FxGripTrackingOpacityParameter.class type:kFxParameterType_TrackingOpacity extra:extra]);
+
+	XCTAssertEqualObjects(self.call[@"default"], @0.5);
+}
+
+- (void)testTrackingOpacityAddsItsDrivenFlagsOnTopOfTheConfiguredFlags
+{
+	NSDictionary *extra = @{kFxParameterProperty_Flags: @[kParameterFlagString_HIDDEN]};
+
+	XCTAssertTrue([self add:FxGripTrackingOpacityParameter.class type:kFxParameterType_TrackingOpacity extra:extra]);
+
+	XCTAssertEqualObjects(self.call[@"flags"],
+						  @(kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED | kFxParameterFlag_NOT_ANIMATABLE));
+}
+
+- (void)testTrackingOpacityReportsAHostRefusal
+{
+	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
+
+	XCTAssertFalse([self add:FxGripTrackingOpacityParameter.class type:kFxParameterType_TrackingOpacity extra:nil]);
+}
+
 #pragma mark Incomplete configurations
 
 /*!
-	The NSDictionary+FxTileableEffect accessors answer only for a record carrying "id",
+	The NSDictionary+FxGripTileableEffect accessors answer only for a record carrying "id",
 	"type", and "name". A configuration missing the name reads back as an unnamed parameter
 	whose every property is the fallback, which is what the host then receives.
 */

@@ -5,8 +5,8 @@
 
 #import "FxGripFrameData.h"
 #import "FxGripImageBuffer.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+ProjectProperties.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+ProjectProperties.h"
 #import "FxGrip_ARC.h"
 
 
@@ -54,7 +54,7 @@
 {
 	NSURL *mediaFolder = nil;
 	if ([effect respondsToSelector:@selector(projectMediaFolder)]) {
-		mediaFolder = ((FxTileableEffectBase*)effect).projectMediaFolder;
+		mediaFolder = ((FxGripTileableEffect*)effect).projectMediaFolder;
 	}
 	self.cacheURL = mediaFolder;
 	return mediaFolder != nil;

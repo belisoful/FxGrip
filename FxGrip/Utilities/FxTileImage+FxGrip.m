@@ -7,7 +7,14 @@
 
 #import "FxTileImage+FxGrip.h"
 #import "FxGripRect.h"
+#import "FxGripErrors.h"
+#import "FxGripTextImage.h"
+#import "FxGripMTLDeviceCache.h"
 #import <objc/runtime.h>
+#import <AppKit/AppKit.h>
+#import <MetalKit/MetalKit.h>
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
+#import <BEFoundation/CIImage+BExtension.h>
 #import "FxGrip_ARC.h"
 
 CGRect FxGripImageRectForPixelBounds(FxRect pixelBounds, FxMatrix44 *inverseTransform)
@@ -140,6 +147,93 @@ FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *transform)
 - (CGRect)imageRectForPixelBounds:(FxRect)pixelBounds
 {
 	return FxGripImageRectForPixelBounds(pixelBounds, self.inversePixelTransform);
+}
+
+@end
+
+
+@implementation FxImageTile (FxGripText)
+
+- (BOOL)fxg_compositeCIImage:(CIImage *)overlay
+					 opacity:(CGFloat)opacity
+					   error:(NSError *_Nullable *_Nullable)outError
+{
+	if (overlay == nil) {
+		return YES;
+	}
+	id<MTLDevice> gpuDevice = self.device;
+	id<MTLTexture> outputTexture = gpuDevice ? [self metalTextureForDevice:gpuDevice] : nil;
+	if (gpuDevice == nil || outputTexture == nil) {
+		if (outError != NULL) {
+			*outError = [NSError errorWithDomain:FxGripPlugErrorDomain
+											code:kFxGripError_WatermarkNoDevice
+										userInfo:@{ NSLocalizedDescriptionKey:
+														@"the tile has no backing Metal device" }];
+		}
+		return NO;
+	}
+
+	CGColorSpaceRef colorSpace = [NSColorSpace sRGBColorSpace].CGColorSpace;
+	CIImage *base = [CIImage imageWithMTLTexture:outputTexture
+										 options:@{ kCIImageColorSpace: (__bridge id)colorSpace }];
+	CIImage *combined = [CIImage combineImage:overlay alpha:opacity withImage:base];
+
+	CIContext *ciContext = [CIContext contextWithMTLDevice:gpuDevice];
+	CGRect extent = CGRectMake(0, 0, outputTexture.width, outputTexture.height);
+	CGImageRef cgImage = [ciContext createCGImage:combined fromRect:extent];
+	if (cgImage == NULL) {
+		if (outError != NULL) {
+			*outError = [NSError errorWithDomain:FxGripPlugErrorDomain
+											code:kFxGripError_WatermarkRender
+										userInfo:@{ NSLocalizedDescriptionKey:
+														@"the composite produced no image" }];
+		}
+		return NO;
+	}
+
+	MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:gpuDevice];
+	id<MTLTexture> sourceTexture = [loader newTextureWithCGImage:cgImage
+														options:@{ MTKTextureLoaderOptionSRGB: @(YES),
+																   MTKTextureLoaderOptionOrigin: MTKTextureLoaderOriginBottomLeft }
+														  error:outError];
+	CGImageRelease(cgImage);
+	if (sourceTexture == nil) {
+		return NO;
+	}
+
+	id<MTLCommandQueue> commandQueue = [FxGripMTLDeviceCache commandQueueForImageTile:self];
+	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+	MPSImageBilinearScale *scaleEncoder = [[MPSImageBilinearScale alloc] initWithDevice:gpuDevice];
+	[scaleEncoder encodeToCommandBuffer:commandBuffer sourceTexture:sourceTexture destinationTexture:outputTexture];
+	// Wait so the source texture outlives the GPU work before the loader is released.
+	[commandBuffer commit];
+	[commandBuffer waitUntilCompleted];
+	[FxGripMTLDeviceCache returnCommandQueue:commandQueue];
+
+	return YES;
+}
+
+- (BOOL)fxg_drawText:(NSString *)text
+		 attributes:(NSDictionary<NSAttributedStringKey, id> *)attributes
+	   atPixelPoint:(CGPoint)pixelPoint
+			  error:(NSError *_Nullable *_Nullable)outError
+{
+	NSAttributedString *attributed = [[NSAttributedString alloc] initWithString:text attributes:attributes];
+	id<MTLTexture> textTexture = [FxGripTextImage textureForAttributedString:attributed padding:0 device:self.device];
+	if (textTexture == nil) {
+		if (outError != NULL) {
+			*outError = [NSError errorWithDomain:FxGripPlugErrorDomain
+											code:kFxGripError_WatermarkRender
+										userInfo:@{ NSLocalizedDescriptionKey:
+														@"the text produced no image" }];
+		}
+		return NO;
+	}
+	CGColorSpaceRef colorSpace = [NSColorSpace sRGBColorSpace].CGColorSpace;
+	CIImage *textImage = [CIImage imageWithMTLTexture:textTexture
+											 options:@{ kCIImageColorSpace: (__bridge id)colorSpace }];
+	textImage = [textImage imageByApplyingTransform:CGAffineTransformMakeTranslation(pixelPoint.x, pixelPoint.y)];
+	return [self fxg_compositeCIImage:textImage opacity:1.0 error:outError];
 }
 
 @end

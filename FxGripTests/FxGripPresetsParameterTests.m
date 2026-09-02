@@ -31,10 +31,10 @@
 #import <FxGrip/FxGripPresetsAPI_v1.h>
 #import <FxGrip/FxGripPreset.h>
 #import <FxGrip/FxGripMetaManager.h>
-#import <FxGrip/FxAPINotifications.h>
-#import <FxGrip/FxTileableEffectBase.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
-#import <FxGrip/FxTileableEffectBase+Parameters.h>
+#import <FxGrip/FxGripAPINotifications.h>
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
+#import <FxGrip/FxGripTileableEffect+Parameters.h>
 
 // Implemented on FxGripPresetsParameter and its base but absent from the public headers.
 @interface FxGripPresetsParameter (FxGripPresetsParameterTests)
@@ -59,7 +59,7 @@ static NSString *const kPresetsParamTestPluginUuid = @"11111111-2222-3333-4444-5
 	test bundle, so the encoder is read from the loaded images; the literal keys stand in
 	when the symbol is absent.
 */
-static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
+static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 {
 	CFDictionaryRef (*copyAsDictionary)(CMTime, CFAllocatorRef) =
 		(CFDictionaryRef (*)(CMTime, CFAllocatorRef))dlsym(RTLD_DEFAULT, "CMTimeCopyAsDictionary");
@@ -75,13 +75,13 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 #pragma mark - Test doubles
 
 /*! Records the two action entries instead of reaching Finder and the save panel. */
-@interface FxPresetsParamTestParameter : FxGripPresetsParameter
+@interface FxGripPresetsParamTestParameter : FxGripPresetsParameter
 @property (nonatomic, assign) NSUInteger revealCount;
 @property (nonatomic, assign) NSUInteger saveCount;
 @property (nonatomic, assign) CMTime actionTime;
 @end
 
-@implementation FxPresetsParamTestParameter
+@implementation FxGripPresetsParamTestParameter
 
 - (void)revealUserPresetsAtTime:(CMTime)time
 {
@@ -102,7 +102,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	capture and the save answer with the staged results, so the save action reaches no
 	panel; -saveHandler stands in for what the panel writes to disk.
 */
-@interface FxPresetsParamTestPresetsAPI : FxGripPresetsAPI_v1
+@interface FxGripPresetsParamTestPresetsAPI : FxGripPresetsAPI_v1
 @property (nonatomic, strong) NSURL *userFolderURL;
 @property (nonatomic, strong) NSURL *pluginFolderURL;
 @property (nonatomic, assign) NSUInteger applyCount;
@@ -121,7 +121,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 @property (nonatomic, copy) void (^saveHandler)(FxGripPreset *preset);
 @end
 
-@implementation FxPresetsParamTestPresetsAPI
+@implementation FxGripPresetsParamTestPresetsAPI
 
 - (NSURL *)userPresetURL
 {
@@ -165,13 +165,13 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 @end
 
 /*! Records the menu rebuilds the live refresh pushes, and answers with the staged error. */
-@interface FxPresetsParamTestDynamicAPI : FxParamClassTestDynamicAPI
+@interface FxGripPresetsParamTestDynamicAPI : FxGripParamClassTestDynamicAPI
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *menuCalls;
 @property (nonatomic, strong) NSError *menuError;
 @property (nonatomic, readonly) NSDictionary *lastMenuCall;
 @end
 
-@implementation FxPresetsParamTestDynamicAPI
+@implementation FxGripPresetsParamTestDynamicAPI
 
 - (instancetype)init
 {
@@ -200,34 +200,34 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 @end
 
 // The parameter class reaches the preset layer through -presetsAPIv1 alone.
-@class FxPresetsParamTestEffect;
+@class FxGripPresetsParamTestEffect;
 
 /*! Counts out-of-band contexts: FxGripOOBParameterAccess asks the manager for this API. */
-@interface FxPresetsParamTestActionAPI : NSObject
-@property (nonatomic, weak) FxPresetsParamTestEffect *effect;
+@interface FxGripPresetsParamTestActionAPI : NSObject
+@property (nonatomic, weak) FxGripPresetsParamTestEffect *effect;
 @end
 
-@interface FxPresetsParamTestAPIManager : NSObject
-@property (nonatomic, strong, nullable) FxPresetsParamTestActionAPI *customParameterActionAPIv4;
+@interface FxGripPresetsParamTestAPIManager : NSObject
+@property (nonatomic, strong, nullable) FxGripPresetsParamTestActionAPI *customParameterActionAPIv4;
 @property (nonatomic, assign) unsigned long long sessionID;
-@property (nonatomic, strong, nullable) FxParamClassTestCreationAPI *paramCreateAPIv5;
-@property (nonatomic, strong, nullable) FxParamClassTestRetrievalAPI *paramGetAPIv6;
-@property (nonatomic, strong, nullable) FxParamClassTestSettingAPI *paramSetAPIv5;
-@property (nonatomic, strong, nullable) FxPresetsParamTestDynamicAPI *dynamicParamAPIv3;
+@property (nonatomic, strong, nullable) FxGripParamClassTestCreationAPI *paramCreateAPIv5;
+@property (nonatomic, strong, nullable) FxGripParamClassTestRetrievalAPI *paramGetAPIv6;
+@property (nonatomic, strong, nullable) FxGripParamClassTestSettingAPI *paramSetAPIv5;
+@property (nonatomic, strong, nullable) FxGripPresetsParamTestDynamicAPI *dynamicParamAPIv3;
 @property (nonatomic, strong, nullable) id presetsAPIv1;
 @end
 
-@implementation FxPresetsParamTestAPIManager
+@implementation FxGripPresetsParamTestAPIManager
 
 - (instancetype)init
 {
 	self = [super init];
 	if (self) {
 		_sessionID = 1;
-		_paramCreateAPIv5 = [FxParamClassTestCreationAPI.alloc init];
-		_paramGetAPIv6 = [FxParamClassTestRetrievalAPI.alloc init];
-		_paramSetAPIv5 = [FxParamClassTestSettingAPI.alloc init];
-		_dynamicParamAPIv3 = [FxPresetsParamTestDynamicAPI.alloc init];
+		_paramCreateAPIv5 = [FxGripParamClassTestCreationAPI.alloc init];
+		_paramGetAPIv6 = [FxGripParamClassTestRetrievalAPI.alloc init];
+		_paramSetAPIv5 = [FxGripParamClassTestSettingAPI.alloc init];
+		_dynamicParamAPIv3 = [FxGripPresetsParamTestDynamicAPI.alloc init];
 	}
 	return self;
 }
@@ -235,11 +235,11 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 @end
 
 /*! Supplies the live menu the index resolution consults. */
-@interface FxPresetsParamTestParameterData : NSObject
+@interface FxGripPresetsParamTestParameterData : NSObject
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *menusByParameter;
 @end
 
-@implementation FxPresetsParamTestParameterData
+@implementation FxGripPresetsParamTestParameterData
 
 - (instancetype)init
 {
@@ -258,13 +258,13 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 @end
 
 /*!
-	FxTileableEffectBase's designated initializer needs a live host, so the parameter is
+	FxGripTileableEffect's designated initializer needs a live host, so the parameter is
 	exercised against a stub answering the members it reads.
 */
-@interface FxPresetsParamTestEffect : NSObject
-@property (nonatomic, strong) FxPresetsParamTestAPIManager *apiManager;
+@interface FxGripPresetsParamTestEffect : NSObject
+@property (nonatomic, strong) FxGripPresetsParamTestAPIManager *apiManager;
 @property (nonatomic, strong) NSNotificationCenter *notifier;
-@property (nonatomic, strong) FxPresetsParamTestParameterData *parameterData;
+@property (nonatomic, strong) FxGripPresetsParamTestParameterData *parameterData;
 @property (nonatomic, assign) BOOL hasMeta;
 @property (nonatomic, strong) FxGripMetaManager *meta;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *pluginProperties;
@@ -278,7 +278,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (nullable id)startContext;
 @end
 
-@implementation FxPresetsParamTestActionAPI
+@implementation FxGripPresetsParamTestActionAPI
 - (void)startAction:(id)sender
 {
 	self.effect.startContextCount += 1;
@@ -293,7 +293,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 }
 @end
 
-@implementation FxPresetsParamTestEffect
+@implementation FxGripPresetsParamTestEffect
 
 - (id)effectBase
 {
@@ -305,11 +305,11 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 {
 	self = [super init];
 	if (self) {
-		_apiManager = [FxPresetsParamTestAPIManager.alloc init];
-		_apiManager.customParameterActionAPIv4 = [FxPresetsParamTestActionAPI.alloc init];
+		_apiManager = [FxGripPresetsParamTestAPIManager.alloc init];
+		_apiManager.customParameterActionAPIv4 = [FxGripPresetsParamTestActionAPI.alloc init];
 		_apiManager.customParameterActionAPIv4.effect = self;
-		_notifier = FxParamClassTestMakePriorityCenter();
-		_parameterData = [FxPresetsParamTestParameterData.alloc init];
+		_notifier = FxGripParamClassTestMakePriorityCenter();
+		_parameterData = [FxGripPresetsParamTestParameterData.alloc init];
 		_parameters = NSMutableDictionary.new;
 		_pluginProperties = @{};
 		_pluginUUID = kPresetsParamTestPluginUuid;
@@ -336,11 +336,11 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 @end
 
 /*! A real effect, for the parameter type map its initializer loads. */
-@interface FxPresetsParamTestHostEffect : FxTileableEffectBase
+@interface FxGripPresetsParamTestHostEffect : FxGripTileableEffect
 @property (nonatomic, strong) NSNotificationCenter *privateNotifier;
 @end
 
-@implementation FxPresetsParamTestHostEffect
+@implementation FxGripPresetsParamTestHostEffect
 
 - (id)effectBase
 {
@@ -363,8 +363,8 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 #pragma mark - Tests
 
 @interface FxGripPresetsParameterTests : XCTestCase
-@property (nonatomic, strong) FxPresetsParamTestEffect *effect;
-@property (nonatomic, strong) FxPresetsParamTestPresetsAPI *presetsAPI;
+@property (nonatomic, strong) FxGripPresetsParamTestEffect *effect;
+@property (nonatomic, strong) FxGripPresetsParamTestPresetsAPI *presetsAPI;
 @property (nonatomic, strong) NSURL *sandboxURL;
 // The notifier holds its observers weakly, so every parameter under test is retained.
 @property (nonatomic, strong) NSMutableArray *retainedParameters;
@@ -383,8 +383,8 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 											attributes:nil
 												 error:NULL];
 
-	self.effect = [FxPresetsParamTestEffect.alloc init];
-	self.presetsAPI = [FxPresetsParamTestPresetsAPI.alloc initWithAPI:nil effect:(id)self.effect];
+	self.effect = [FxGripPresetsParamTestEffect.alloc init];
+	self.presetsAPI = [FxGripPresetsParamTestPresetsAPI.alloc initWithAPI:nil effect:(id)self.effect];
 	self.presetsAPI.userFolderURL = [self.sandboxURL URLByAppendingPathComponent:@"user" isDirectory:YES];
 	self.presetsAPI.pluginFolderURL = [self.sandboxURL URLByAppendingPathComponent:@"bundled" isDirectory:YES];
 	self.effect.apiManager.presetsAPIv1 = self.presetsAPI;
@@ -410,7 +410,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 
 - (NSMutableDictionary *)configWithExtra:(NSDictionary *)extra
 {
-	NSMutableDictionary *config = FxParamClassTestConfig(kPresetsParamTestParameter,
+	NSMutableDictionary *config = FxGripParamClassTestConfig(kPresetsParamTestParameter,
 														kFxParameterType_Presets,
 														@"Preset",
 														extra);
@@ -422,10 +422,10 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	return [self configWithExtra:@{kFxParameterProperty_Tags: @[kPresetsParamTestTag]}];
 }
 
-- (FxPresetsParamTestParameter *)makeParameter
+- (FxGripPresetsParamTestParameter *)makeParameter
 {
-	FxPresetsParamTestParameter *parameter =
-		[FxPresetsParamTestParameter.alloc initWithDictionary:[self taggedConfig] effect:(id)self.effect];
+	FxGripPresetsParamTestParameter *parameter =
+		[FxGripPresetsParamTestParameter.alloc initWithDictionary:[self taggedConfig] effect:(id)self.effect];
 	XCTAssertNotNil(parameter);
 	[self.retainedParameters addObject:parameter];
 	return parameter;
@@ -441,7 +441,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	return parameter;
 }
 
-- (FxPresetsParamTestDynamicAPI *)dynamicAPI
+- (FxGripPresetsParamTestDynamicAPI *)dynamicAPI
 {
 	return self.effect.apiManager.dynamicParamAPIv3;
 }
@@ -537,9 +537,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)postChangeForParameter:(FxParameterId)parameterID atTime:(CMTime)time
 {
 	NSMutableDictionary *userInfo = NSMutableDictionary.new;
-	userInfo[FxTileableEffectParameterChangedIDKey] = @(parameterID);
-	userInfo[FxTileableEffectParameterChangedAtTimeKey] = FxPresetsParamTestTimeDictionary(time);
-	[self.effect.notifier postNotificationName:FxTileableEffectParameterChangedName
+	userInfo[FxGripTileableEffectParameterChangedIDKey] = @(parameterID);
+	userInfo[FxGripTileableEffectParameterChangedAtTimeKey] = FxGripPresetsParamTestTimeDictionary(time);
+	[self.effect.notifier postNotificationName:FxGripTileableEffectParameterChangedName
 										object:self.effect
 									  userInfo:userInfo];
 }
@@ -547,9 +547,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 /*! The payload without the time entry, so the handler falls back to time zero. */
 - (void)postUntimedChangeForParameter:(FxParameterId)parameterID
 {
-	[self.effect.notifier postNotificationName:FxTileableEffectParameterChangedName
+	[self.effect.notifier postNotificationName:FxGripTileableEffectParameterChangedName
 										object:self.effect
-									  userInfo:@{FxTileableEffectParameterChangedIDKey: @(parameterID)}];
+									  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @(parameterID)}];
 }
 
 /*! Stages the selected index the handler reads and posts the change. */
@@ -561,7 +561,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 
 - (void)selectIndex:(int)index
 {
-	[self selectIndex:index atTime:FxParamClassTestTime(9, 30)];
+	[self selectIndex:index atTime:FxGripParamClassTestTime(9, 30)];
 }
 
 - (NSString *)recordedSelectionOfParameter:(FxParameterId)parameterID
@@ -783,7 +783,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 
 - (void)testTheEffectResolvesThePresetsTypeToThePresetsParameterClass
 {
-	FxPresetsParamTestHostEffect *effect = [FxPresetsParamTestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripPresetsParamTestHostEffect *effect = [FxGripPresetsParamTestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertNotNil(effect);
 
 	XCTAssertEqualObjects([effect parameterClassWithTypeString:kFxParameterType_Presets],
@@ -801,7 +801,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	[self makeParameter];
 	self.effect.apiManager.paramGetAPIv6.intValue = 2;
 
-	[self postChangeForParameter:kPresetsParamTestOtherParameter atTime:FxParamClassTestTime(9, 30)];
+	[self postChangeForParameter:kPresetsParamTestOtherParameter atTime:FxGripParamClassTestTime(9, 30)];
 
 	XCTAssertEqual(self.presetsAPI.applyCount, (NSUInteger)0);
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
@@ -813,9 +813,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	[self makeParameter];
 	self.effect.apiManager.paramGetAPIv6.intValue = 2;
 
-	[self.effect.notifier postNotificationName:FxTileableEffectParameterChangedName
+	[self.effect.notifier postNotificationName:FxGripTileableEffectParameterChangedName
 										object:self.effect
-									  userInfo:@{FxTileableEffectParameterChangedIDKey: @"71"}];
+									  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @"71"}];
 
 	XCTAssertEqual(self.presetsAPI.applyCount, (NSUInteger)0,
 				   @"the identifier must be a number, not a string spelling the same value");
@@ -826,7 +826,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 {
 	[self makeParameter];
 
-	[self selectIndex:0 atTime:FxParamClassTestTime(13, 30)];
+	[self selectIndex:0 atTime:FxGripParamClassTestTime(13, 30)];
 
 	NSDictionary *read = self.effect.apiManager.paramGetAPIv6.lastRead;
 	XCTAssertEqualObjects(read[@"accessor"], @"int");
@@ -904,7 +904,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	FxGripPreset *written = [self writeUserPresetNamed:@"Ambient"];
 	[self makeParameter];
 
-	[self selectIndex:2 atTime:FxParamClassTestTime(13, 30)];
+	[self selectIndex:2 atTime:FxGripParamClassTestTime(13, 30)];
 
 	XCTAssertEqual(self.presetsAPI.applyCount, (NSUInteger)1);
 	XCTAssertEqualObjects(self.presetsAPI.appliedPreset.name, @"Ambient");
@@ -975,8 +975,8 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testAConfigurationWithoutATagResolvesNoPreset
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter =
-		[FxPresetsParamTestParameter.alloc initWithDictionary:[self configWithExtra:nil] effect:(id)self.effect];
+	FxGripPresetsParamTestParameter *parameter =
+		[FxGripPresetsParamTestParameter.alloc initWithDictionary:[self configWithExtra:nil] effect:(id)self.effect];
 	[self.retainedParameters addObject:parameter];
 	[self stageStoredMenu:@[kFxPresetsMenuEntry_Default, kFxPresetsMenuEntry_Separator, @"Ambient",
 							kFxPresetsMenuEntry_Separator, kFxPresetsMenuEntry_Reveal, kFxPresetsMenuEntry_Save]];
@@ -1006,7 +1006,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testTheEntriesAreRebuiltWhenNoMenuWasStored
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
 	XCTAssertEqualObjects([parameter menuEntryNameAtIndex:2], @"Ambient");
 }
@@ -1014,7 +1014,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testANonArrayStoredMenuFallsBackToARebuild
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	self.effect.parameterData.menusByParameter[@(kPresetsParamTestParameter)] = (id)@"not a menu";
 
 	XCTAssertEqualObjects([parameter menuEntryNameAtIndex:2], @"Ambient");
@@ -1024,9 +1024,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 
 - (void)testTheRevealEntryRunsTheRevealActionAtTheNotificationTime
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
-	[self selectIndex:2 atTime:FxParamClassTestTime(13, 30)];
+	[self selectIndex:2 atTime:FxGripParamClassTestTime(13, 30)];
 
 	XCTAssertEqual(parameter.revealCount, (NSUInteger)1);
 	XCTAssertEqual(parameter.saveCount, (NSUInteger)0);
@@ -1036,9 +1036,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 
 - (void)testTheSaveEntryRunsTheSaveActionAtTheNotificationTime
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
-	[self selectIndex:3 atTime:FxParamClassTestTime(13, 30)];
+	[self selectIndex:3 atTime:FxGripParamClassTestTime(13, 30)];
 
 	XCTAssertEqual(parameter.saveCount, (NSUInteger)1);
 	XCTAssertEqual(parameter.revealCount, (NSUInteger)0);
@@ -1062,12 +1062,12 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 {
 	[self writeUserPresetNamed:@"Ambient"];
 	[self writeUserPresetNamed:@"Cool"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self stageStoredMenu:@[kFxPresetsMenuEntry_Default, kFxPresetsMenuEntry_Separator, @"Zeta", @"Ambient", @"Cool",
 							kFxPresetsMenuEntry_Separator, kFxPresetsMenuEntry_Reveal, kFxPresetsMenuEntry_Save]];
 	[self recordSelection:@"Cool"];
 
-	[parameter restoreSelectionAtTime:FxParamClassTestTime(13, 30)];
+	[parameter restoreSelectionAtTime:FxGripParamClassTestTime(13, 30)];
 
 	NSDictionary *write = self.effect.apiManager.paramSetAPIv5.lastWrite;
 	XCTAssertEqualObjects(write[@"accessor"], @"int");
@@ -1080,10 +1080,10 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 {
 	[self writeUserPresetNamed:@"Ambient"];
 	[self writeUserPresetNamed:@"Cool"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self recordSelection:@"Cool"];
 
-	[parameter restoreSelectionAtTime:FxParamClassTestTime(0, 1)];
+	[parameter restoreSelectionAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @3);
 }
@@ -1091,9 +1091,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testTheDefaultEntryIsRestoredWhenNothingWasRecorded
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
-	[parameter restoreSelectionAtTime:FxParamClassTestTime(0, 1)];
+	[parameter restoreSelectionAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
@@ -1101,20 +1101,20 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testTheDefaultEntryIsRestoredWhenTheRecordedNameLeftTheMenu
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self recordSelection:@"Removed"];
 
-	[parameter restoreSelectionAtTime:FxParamClassTestTime(0, 1)];
+	[parameter restoreSelectionAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
 
 - (void)testTheDefaultEntryIsRestoredForAnEffectWithoutMeta
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	self.effect.hasMeta = NO;
 
-	[parameter restoreSelectionAtTime:FxParamClassTestTime(0, 1)];
+	[parameter restoreSelectionAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
@@ -1148,17 +1148,17 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 
 - (void)testThePriorityOfTheChangeNotificationFollowsTheMetaTrigger
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
-	XCTAssertEqual([parameter ncPriority:FxTileableEffectParameterChangedName], (NSInteger)-8);
+	XCTAssertEqual([parameter ncPriority:FxGripTileableEffectParameterChangedName], (NSInteger)-8);
 }
 
 - (void)testEveryOtherNotificationKeepsTheBasePriority
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
-	XCTAssertEqual([parameter ncPriority:FxNotifyAPI_ParameterGetFlagsPreName], (NSInteger)-17);
-	XCTAssertEqual([parameter ncPriority:FxNotifyAPI_ParameterSetFlagsName], (NSInteger)-19);
+	XCTAssertEqual([parameter ncPriority:FxGripNotifyAPI_ParameterGetFlagsPreName], (NSInteger)-17);
+	XCTAssertEqual([parameter ncPriority:FxGripNotifyAPI_ParameterSetFlagsName], (NSInteger)-19);
 	XCTAssertEqual([parameter ncPriority:nil], (NSInteger)-19);
 }
 
@@ -1167,8 +1167,8 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 {
 	NSMutableDictionary *config = [self taggedConfig];
 	config[kFxParameterProperty_Flags] = @(kFxParameterFlag_CACHE | kFxParameterFlag_HIDDEN);
-	FxPresetsParamTestParameter *parameter =
-		[FxPresetsParamTestParameter.alloc initWithDictionary:config effect:(id)self.effect];
+	FxGripPresetsParamTestParameter *parameter =
+		[FxGripPresetsParamTestParameter.alloc initWithDictionary:config effect:(id)self.effect];
 	[self.retainedParameters addObject:parameter];
 
 	NSMutableDictionary *nested = NSMutableDictionary.new;
@@ -1178,7 +1178,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	userInfo[kFxParameterProperty_Id] = @(kPresetsParamTestParameter);
 	userInfo.fxParameter = nested;
 
-	[self.effect.notifier postNotificationName:FxNotifyAPI_ParameterGetFlagsPreName
+	[self.effect.notifier postNotificationName:FxGripNotifyAPI_ParameterGetFlagsPreName
 										object:self.effect
 									  userInfo:userInfo];
 
@@ -1190,7 +1190,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testRemovingTheObserversEndsTheSelectionHandling
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
 	[parameter removeObservers];
 	[self selectIndex:2];
@@ -1204,14 +1204,14 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 {
 	[self createUserTagFolder];
 
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
 	XCTAssertNotNil([self watcherOfParameter:parameter]);
 }
 
 - (void)testNoWatcherAttachesWhileTheUserPresetFolderIsAbsent
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
 	XCTAssertNil([self watcherOfParameter:parameter]);
 }
@@ -1230,7 +1230,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 /*! The reveal and save actions attach after creating the folder. */
 - (void)testTheWatcherAttachesOnceTheFolderAppears
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	XCTAssertNil([self watcherOfParameter:parameter]);
 
 	[self createUserTagFolder];
@@ -1242,7 +1242,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testASecondAttachKeepsTheFirstWatcher
 {
 	[self createUserTagFolder];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	id watcher = [self watcherOfParameter:parameter];
 
 	[parameter attachUserPresetWatcher];
@@ -1253,7 +1253,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testRemovingTheObserversReleasesTheWatcher
 {
 	[self createUserTagFolder];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	XCTAssertNotNil([self watcherOfParameter:parameter]);
 
 	[parameter removeObservers];
@@ -1264,7 +1264,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testAFolderChangeAfterTheObserversAreRemovedRefreshesNothing
 {
 	[self createUserTagFolder];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[parameter removeObservers];
 
 	[self writeUserPresetNamed:@"Cool"];
@@ -1278,7 +1278,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testTheWatcherFollowsAFolderThatIsRemovedAndRecreated
 {
 	[self createUserTagFolder];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	XCTAssertTrue([NSFileManager.defaultManager removeItemAtURL:[self userTagFolderURL] error:NULL]);
 	// The removal is itself a change, and it reaches the menu before the folder returns.
 	[self waitForMenuRefreshWithin:2.0];
@@ -1298,10 +1298,10 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testARefreshPushesTheCurrentEntriesToTheHost
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self writeUserPresetNamed:@"Cool"];
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(0, 1)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(self.dynamicAPI.menuCalls.count, (NSUInteger)1);
 	NSDictionary *call = self.dynamicAPI.lastMenuCall;
@@ -1317,9 +1317,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 
 - (void)testARefreshRunsInsideAnOutOfBandAccessContext
 {
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(0, 1)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(self.effect.startContextCount, (NSUInteger)1);
 }
@@ -1327,11 +1327,11 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testARefreshRestoresTheRecordedSelectionAtItsNewIndex
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self recordSelection:@"Ambient"];
 	[self writeUserPresetNamed:@"Aaa"];
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(0, 1)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.dynamicAPI.lastMenuCall[@"items"][2], @"Aaa");
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @3,
@@ -1342,12 +1342,12 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 {
 	[self writeUserPresetNamed:@"Ambient"];
 	[self writeUserPresetNamed:@"Cool"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self stageStoredMenu:@[kFxPresetsMenuEntry_Default, kFxPresetsMenuEntry_Separator, @"Zeta", @"Ambient", @"Cool",
 							kFxPresetsMenuEntry_Separator, kFxPresetsMenuEntry_Reveal, kFxPresetsMenuEntry_Save]];
 	[self recordSelection:@"Cool"];
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(0, 1)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @4,
 						  @"the rebuilt menu would place Cool at index 3");
@@ -1356,9 +1356,9 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testARefreshRestoresTheDefaultEntryWhenNothingWasRecorded
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(0, 1)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
@@ -1366,13 +1366,13 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testARefreshRestoresTheDefaultEntryWhenTheRecordedNameLeftTheMenu
 {
 	FxGripPreset *preset = [self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self recordSelection:@"Ambient"];
 	NSString *fileName = [preset.name stringByAppendingPathExtension:kFxPreset_Extension];
 	XCTAssertTrue([NSFileManager.defaultManager
 				   removeItemAtURL:[[self userTagFolderURL] URLByAppendingPathComponent:fileName] error:NULL]);
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(0, 1)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertFalse([self.dynamicAPI.lastMenuCall[@"items"] containsObject:@"Ambient"]);
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
@@ -1381,10 +1381,10 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testARefreshRestoresTheSelectionAtTheGivenTime
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self recordSelection:@"Ambient"];
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(13, 30)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(13, 30)];
 
 	NSDictionary *write = self.effect.apiManager.paramSetAPIv5.lastWrite;
 	XCTAssertEqualObjects(write[@"accessor"], @"int");
@@ -1395,11 +1395,11 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testAHostRefusalOfTheMenuRebuildLeavesTheSelectionUntouched
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	[self recordSelection:@"Ambient"];
 	self.dynamicAPI.menuError = [NSError errorWithDomain:@"FxGripPresetsParameterTest" code:9 userInfo:nil];
 
-	[parameter refreshMenuEntriesAtTime:FxParamClassTestTime(0, 1)];
+	[parameter refreshMenuEntriesAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(self.dynamicAPI.menuCalls.count, (NSUInteger)1);
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.writes, @[]);
@@ -1410,7 +1410,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testAFolderChangeRefreshesTheMenuOnTheMainQueue
 {
 	[self writeUserPresetNamed:@"Ambient"];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 
 	[parameter userPresetFolderChanged:nil];
 
@@ -1425,7 +1425,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 - (void)testWritingAPresetIntoTheWatchedFolderRefreshesTheMenu
 {
 	[self createUserTagFolder];
-	FxPresetsParamTestParameter *parameter = [self makeParameter];
+	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
 	XCTAssertNotNil([self watcherOfParameter:parameter]);
 
 	[self writeUserPresetNamed:@"Cool"];
@@ -1449,7 +1449,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 		[weakSelf writeUserPresetNamed:preset.name];
 	};
 
-	[parameter saveCurrentStateAsPresetAtTime:FxParamClassTestTime(0, 1)];
+	[parameter saveCurrentStateAsPresetAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertNotNil([self watcherOfParameter:parameter]);
 	XCTAssertEqual(self.dynamicAPI.menuCalls.count, (NSUInteger)1);
@@ -1467,7 +1467,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	};
 	[self recordSelection:@"Fresh"];
 
-	[parameter saveCurrentStateAsPresetAtTime:FxParamClassTestTime(0, 1)];
+	[parameter saveCurrentStateAsPresetAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(self.effect.apiManager.paramSetAPIv5.writes.count, (NSUInteger)1,
 				   @"the refresh restores the selection, and the save adds no second restore");
@@ -1480,7 +1480,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	self.presetsAPI.generatedPreset = [self presetNamed:@"Fresh"];
 	self.presetsAPI.saveSucceeds = NO;
 
-	[parameter saveCurrentStateAsPresetAtTime:FxParamClassTestTime(0, 1)];
+	[parameter saveCurrentStateAsPresetAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(self.presetsAPI.generateCount, (NSUInteger)1);
 	XCTAssertEqualObjects(self.presetsAPI.generatedLabel, @"Preset");
@@ -1495,7 +1495,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	self.presetsAPI.saveSucceeds = NO;
 	[self recordSelection:@"Ambient"];
 
-	[parameter saveCurrentStateAsPresetAtTime:FxParamClassTestTime(0, 1)];
+	[parameter saveCurrentStateAsPresetAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(self.presetsAPI.saveCount, (NSUInteger)1);
 	XCTAssertEqual(self.dynamicAPI.menuCalls.count, (NSUInteger)0);
@@ -1508,7 +1508,7 @@ static NSDictionary *FxPresetsParamTestTimeDictionary(CMTime time)
 	FxGripPresetsParameter *parameter = [self makeUnwrappedParameter];
 	self.presetsAPI.generateError = [NSError errorWithDomain:@"FxGripPresetsParameterTest" code:5 userInfo:nil];
 
-	[parameter saveCurrentStateAsPresetAtTime:FxParamClassTestTime(0, 1)];
+	[parameter saveCurrentStateAsPresetAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertEqual(self.presetsAPI.saveCount, (NSUInteger)0);
 	XCTAssertEqual(self.dynamicAPI.menuCalls.count, (NSUInteger)0);

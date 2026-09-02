@@ -5,12 +5,12 @@
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxTileableEffectBase+Notifications.h>
+#import <FxGrip/FxGripTileableEffect+Notifications.h>
 #import <FxGrip/FxGripGoogleAnalytics.h>
 
 // FxGripGoogleAnalytics.h publishes the rule API without the capture path; the members the
 // tests drive are declared here. The implementations come from the linked framework.
-@interface FxGripGoogleAnalytics (FxGATestAccess)
+@interface FxGripGoogleAnalytics (FxGripGATestAccess)
 - (void)captureEvent:(nonnull NSNotification *)notification;
 - (void)logWithName:(nonnull NSString *)eventName parameters:(nullable NSDictionary *)parameters;
 - (nonnull NSPredicate *)addCaptureEvent:(nonnull NSNotificationName)name;
@@ -18,11 +18,11 @@
 
 // Records the events the deny-by-default decision would send, so the decision is observable
 // without a linked Firebase.
-@interface FxGATestRecordingAnalytics : FxGripGoogleAnalytics
+@interface FxGripGATestRecordingAnalytics : FxGripGoogleAnalytics
 @property (nonatomic, strong) NSMutableArray<NSString *> *loggedEvents;
 @end
 
-@implementation FxGATestRecordingAnalytics
+@implementation FxGripGATestRecordingAnalytics
 - (instancetype)init
 {
 	self = [super init];
@@ -37,7 +37,7 @@
 }
 @end
 
-static NSNotificationCenter *FxGATestMakePriorityCenter(void)
+static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 {
 	Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
 	return [[cls alloc] init];
@@ -45,14 +45,14 @@ static NSNotificationCenter *FxGATestMakePriorityCenter(void)
 
 // The capture path reads the plugin identity from the effect; a stub supplies only what it
 // reads, because the real effect's designated init registers into the process-wide center.
-@interface FxGATestStubEffect : NSObject
+@interface FxGripGATestStubEffect : NSObject
 @property (nonatomic, assign) BOOL addedToDocument;
 @property (nonatomic, strong) NSNotificationCenter *notifier;
 @property (nonatomic, copy) NSString *pluginUUID;
 @property (nonatomic, copy) NSString *pluginDisplayName;
 @end
 
-@implementation FxGATestStubEffect
+@implementation FxGripGATestStubEffect
 
 - (id)effectBase
 {
@@ -64,7 +64,7 @@ static NSNotificationCenter *FxGATestMakePriorityCenter(void)
 {
 	self = [super init];
 	if (self) {
-		_notifier = FxGATestMakePriorityCenter();
+		_notifier = FxGripGATestMakePriorityCenter();
 		_pluginUUID = @"44444444-4444-4444-4444-444444444444";
 		_pluginDisplayName = @"Test Plugin";
 	}
@@ -73,8 +73,8 @@ static NSNotificationCenter *FxGATestMakePriorityCenter(void)
 @end
 
 @interface FxGripGoogleAnalyticsTests : XCTestCase
-@property (nonatomic, strong) FxGATestRecordingAnalytics *analytics;
-@property (nonatomic, strong) FxGATestStubEffect *effect;
+@property (nonatomic, strong) FxGripGATestRecordingAnalytics *analytics;
+@property (nonatomic, strong) FxGripGATestStubEffect *effect;
 @end
 
 @implementation FxGripGoogleAnalyticsTests
@@ -82,8 +82,8 @@ static NSNotificationCenter *FxGATestMakePriorityCenter(void)
 - (void)setUp
 {
 	[super setUp];
-	self.analytics = [FxGATestRecordingAnalytics.alloc init];
-	self.effect = [FxGATestStubEffect.alloc init];
+	self.analytics = [FxGripGATestRecordingAnalytics.alloc init];
+	self.effect = [FxGripGATestStubEffect.alloc init];
 	[self.analytics extLoadWithEffect:(id)self.effect];
 }
 
@@ -112,7 +112,7 @@ static NSNotificationCenter *FxGATestMakePriorityCenter(void)
 {
 	XCTAssertEqual(self.analytics.captureRules.count, (NSUInteger)0, @"no rules before init");
 
-	[self.effect.notifier postNotificationName:FxTileableEffectInitName object:self.effect userInfo:nil];
+	[self.effect.notifier postNotificationName:FxGripTileableEffectInitName object:self.effect userInfo:nil];
 
 	XCTAssertGreaterThan(self.analytics.captureRules.count, (NSUInteger)0,
 						 @"extInit: runs when the init notification posts and installs the default rules");

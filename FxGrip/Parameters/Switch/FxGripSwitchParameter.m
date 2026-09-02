@@ -4,8 +4,8 @@
 //
 
 #import "FxGripSwitchParameter.h"
-#import "FxTileableEffectBase.h"
-#import "NSDictionary+FxTileableEffect.h"
+#import "FxGripTileableEffect.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripDictionary.h"
 #import "FxGripOOBParameterAccess.h"
 #import "FxGrip_ARC.h"
@@ -27,7 +27,7 @@
 	access context. */
 - (void)fxSwitchToggled:(nullable id)sender
 {
-	FxTileableEffectBase *effect = (FxTileableEffectBase*)self.parameterEffect;
+	FxGripTileableEffect *effect = (FxGripTileableEffect*)self.parameterEffect;
 	if (effect == nil) {
 		return;
 	}

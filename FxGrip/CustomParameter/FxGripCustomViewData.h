@@ -14,7 +14,7 @@
 #import "FxGripCustomViewDataDelegate.h"
 #import "FxGripEffectHost.h"
 
-@protocol FxTileableEffectBase;
+@protocol FxGripTileableEffect;
 
 
 // This is the protocol for Custom Data to hijack the standard api get/set bool, int, float, string, etc.

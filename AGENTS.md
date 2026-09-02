@@ -4,7 +4,7 @@
 
 **FxGrip** is a macOS Objective-C framework for Apple's **FxPlug 4 SDK** that provides advanced features and functionality not built into Apple's implementation. It wraps the standard FxPlug API protocols and adds its own APIs (e.g. `FxPresetsAPI_v1`, `FxParameterTagsAPI_v1`), plugin registrars, parameter management, and host-integration extensions for Final Cut Pro and Motion plugins. The project uses Xcode for building and XCTest for unit testing.
 
-The framework is **macOS-only** (FxPlug hosts are macOS applications). Two primary base classes are `FxTileableEffectBase` and `FxTileableGeneratorBase` (see `FxGrip/FxGrip.docc`).
+The framework is **macOS-only** (FxPlug hosts are macOS applications). Two primary base classes are `FxGripTileableEffect` and `FxGripTileableGenerator` (see `FxGrip/FxGrip.docc`).
 
 ## Build & Test Commands
 
@@ -44,7 +44,7 @@ Code is commit-ready only when every check below passes.
 ## Project Structure
 
 - `FxGrip/` — Framework source (synchronized folder groups: files added on disk are picked up by Xcode automatically)
-  - Root: umbrella header `FxGrip.h`, types, errors, registrars, `GuruFxMetaManager`, `GuruFxTileableEffect` (+ `Analyze`, `Parameters`, `Timing`, `Versioning` categories)
+  - Root: umbrella header `FxGrip.h`, types, errors, registrars, `FxGripMetaManager`, `FxGripTileableEffect` (+ `Analyze`, `Parameters`, `Timing`, `Versioning` categories)
   - `FxGripAPIAccessing/` — wrappers around FxPlug host API protocols plus FxGrip-added APIs (`FxGripCommonAPI`, versioned parameter creation/retrieval/setting/grouping/tags/timing APIs, `FxGripPresetsAPI_v1`)
   - `FxGripParameters/` — parameter model (`FxParameter`, `FxGripParameter`, flags, parameter libraries)
   - `FxGripCustom/` — custom parameter data classes and delegates for custom views

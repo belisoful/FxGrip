@@ -11,7 +11,7 @@
 #import <FxGrip/FxGripWindow.h>
 #import <FxGrip/FxGripErrors.h>
 
-static NSView *FxWindowTestView(void)
+static NSView *FxGripWindowTestView(void)
 {
 	return [[NSClassFromString(@"NSView") alloc] initWithFrame:NSMakeRect(0, 0, 320, 200)];
 }
@@ -20,7 +20,7 @@ static NSView *FxWindowTestView(void)
 
 /*! A remote-window API stub: replies synchronously with a staged parent view or error, and
 	counts calls. Which protocol versions it admits to is configured per test. */
-@interface FxWindowStubAPI : NSObject
+@interface FxGripWindowStubAPI : NSObject
 @property (nonatomic, strong, nullable) NSView *stagedParentView;
 @property (nonatomic, strong, nullable) NSError *stagedError;
 @property (nonatomic, assign) NSUInteger fixedRequests;
@@ -30,7 +30,7 @@ static NSView *FxWindowTestView(void)
 @property (nonatomic, assign) CGSize lastMaxSize;
 @end
 
-@implementation FxWindowStubAPI
+@implementation FxGripWindowStubAPI
 
 - (void)remoteWindowOfSize:(CGSize)contentSize reply:(void (^)(NSView *, NSError *))reply
 {
@@ -57,24 +57,24 @@ static NSView *FxWindowTestView(void)
 @end
 
 /*! The API-manager stub: vends the window stub at the versions a test enables. */
-@interface FxWindowStubAPIManager : NSObject
-@property (nonatomic, strong, nullable) FxWindowStubAPI *windowAPI;
+@interface FxGripWindowStubAPIManager : NSObject
+@property (nonatomic, strong, nullable) FxGripWindowStubAPI *windowAPI;
 @property (nonatomic, assign) BOOL vendsV2;
 @property (nonatomic, assign) BOOL vendsV3;
 @end
 
-@implementation FxWindowStubAPIManager
+@implementation FxGripWindowStubAPIManager
 - (id)remoteWindowAPIv1 { return self.windowAPI; }
 - (id)remoteWindowAPIv2 { return self.vendsV2 ? self.windowAPI : nil; }
 - (id)remoteWindowAPIv3 { return self.vendsV3 ? self.windowAPI : nil; }
 @end
 
 /*! The effect stub: only the apiManager the extension reaches. */
-@interface FxWindowStubEffect : NSObject
-@property (nonatomic, strong) FxWindowStubAPIManager *manager;
+@interface FxGripWindowStubEffect : NSObject
+@property (nonatomic, strong) FxGripWindowStubAPIManager *manager;
 @end
 
-@implementation FxWindowStubEffect
+@implementation FxGripWindowStubEffect
 
 - (id)effectBase
 {
@@ -89,8 +89,8 @@ static NSView *FxWindowTestView(void)
 
 @interface FxGripWindowTests : XCTestCase
 @property (nonatomic, strong) FxGripWindow *window;
-@property (nonatomic, strong) FxWindowStubEffect *effect;
-@property (nonatomic, strong) FxWindowStubAPI *api;
+@property (nonatomic, strong) FxGripWindowStubEffect *effect;
+@property (nonatomic, strong) FxGripWindowStubAPI *api;
 @end
 
 @implementation FxGripWindowTests
@@ -98,9 +98,9 @@ static NSView *FxWindowTestView(void)
 - (void)setUp
 {
 	[super setUp];
-	self.api = [FxWindowStubAPI new];
-	self.effect = [FxWindowStubEffect new];
-	self.effect.manager = [FxWindowStubAPIManager new];
+	self.api = [FxGripWindowStubAPI new];
+	self.effect = [FxGripWindowStubEffect new];
+	self.effect.manager = [FxGripWindowStubAPIManager new];
 	self.effect.manager.windowAPI = self.api;
 	self.window = [FxGripWindow new];
 	[self.window extLoadWithEffect:(id)self.effect];
@@ -120,8 +120,8 @@ static NSView *FxWindowTestView(void)
 
 - (void)testPresentingStoresTheParentAndInstallsTheContent
 {
-	NSView *parent = FxWindowTestView();
-	NSView *content = FxWindowTestView();
+	NSView *parent = FxGripWindowTestView();
+	NSView *content = FxGripWindowTestView();
 	self.api.stagedParentView = parent;
 	self.window.contentView = content;
 
@@ -170,7 +170,7 @@ static NSView *FxWindowTestView(void)
 - (void)testARangedPresentUsesV2WhenVended
 {
 	self.effect.manager.vendsV2 = YES;
-	self.api.stagedParentView = FxWindowTestView();
+	self.api.stagedParentView = FxGripWindowTestView();
 
 	[self.window presentWindowWithMinimumSize:CGSizeMake(200, 100)
 								  maximumSize:CGSizeMake(800, 600)
@@ -185,7 +185,7 @@ static NSView *FxWindowTestView(void)
 - (void)testARangedPresentFallsBackToAFixedV1Window
 {
 	self.effect.manager.vendsV2 = NO;
-	self.api.stagedParentView = FxWindowTestView();
+	self.api.stagedParentView = FxGripWindowTestView();
 
 	[self.window presentWindowWithMinimumSize:CGSizeMake(200, 100)
 								  maximumSize:CGSizeMake(800, 600)
@@ -198,14 +198,14 @@ static NSView *FxWindowTestView(void)
 
 - (void)testSettingTheContentViewWhilePresentedSwapsIt
 {
-	NSView *parent = FxWindowTestView();
+	NSView *parent = FxGripWindowTestView();
 	self.api.stagedParentView = parent;
-	NSView *first = FxWindowTestView();
+	NSView *first = FxGripWindowTestView();
 	self.window.contentView = first;
 	[self.window presentWindowOfSize:CGSizeMake(320, 200) completion:nil];
 	XCTAssertEqual(first.superview, parent);
 
-	NSView *second = FxWindowTestView();
+	NSView *second = FxGripWindowTestView();
 	self.window.contentView = second;
 	XCTAssertNil(first.superview, @"the old content leaves the window");
 	XCTAssertEqual(second.superview, parent, @"the new content installs in place");
@@ -214,8 +214,8 @@ static NSView *FxWindowTestView(void)
 - (void)testCloseUsesV3AndClearsState
 {
 	self.effect.manager.vendsV3 = YES;
-	self.api.stagedParentView = FxWindowTestView();
-	NSView *content = FxWindowTestView();
+	self.api.stagedParentView = FxGripWindowTestView();
+	NSView *content = FxGripWindowTestView();
 	self.window.contentView = content;
 	[self.window presentWindowOfSize:CGSizeMake(320, 200) completion:nil];
 
@@ -229,7 +229,7 @@ static NSView *FxWindowTestView(void)
 - (void)testCloseWithoutV3ClearsStateAndReturnsNO
 {
 	self.effect.manager.vendsV3 = NO;
-	self.api.stagedParentView = FxWindowTestView();
+	self.api.stagedParentView = FxGripWindowTestView();
 	[self.window presentWindowOfSize:CGSizeMake(320, 200) completion:nil];
 
 	XCTAssertFalse([self.window closeWindow]);
@@ -239,7 +239,7 @@ static NSView *FxWindowTestView(void)
 
 - (void)testNoteWindowClosedResetsForTheNextPresent
 {
-	self.api.stagedParentView = FxWindowTestView();
+	self.api.stagedParentView = FxGripWindowTestView();
 	[self.window presentWindowOfSize:CGSizeMake(320, 200) completion:nil];
 	XCTAssertTrue(self.window.isWindowPresented);
 

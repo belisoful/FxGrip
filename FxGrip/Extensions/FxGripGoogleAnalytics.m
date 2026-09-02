@@ -7,9 +7,9 @@
 
 #import "FxGripGoogleAnalytics.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import "FxTileableEffectBase+Notifications.h"
+#import "FxGripTileableEffect+Notifications.h"
 #import <BEFoundation/BEPredicateRule.h>
-#import "FxTileableEffectBase+Extensions.h"
+#import "FxGripTileableEffect+Extensions.h"
 #import "FxGrip_ARC.h"
 
 //@import FirebaseCore;
@@ -116,12 +116,12 @@
 // argument); a zero-argument extInit is never invoked.
 - (void)extInit:(nonnull NSNotification *)notification
 {
-	[self addCaptureEvent:FxTileableEffectFinishInitialSetupName];
-	[self addCaptureEvent:FxTileableEffectAddedToDocumentName];
-	[self addCaptureEvent:FxTileableEffectRemovedFromDocumentName];
+	[self addCaptureEvent:FxGripTileableEffectFinishInitialSetupName];
+	[self addCaptureEvent:FxGripTileableEffectAddedToDocumentName];
+	[self addCaptureEvent:FxGripTileableEffectRemovedFromDocumentName];
 	
 	[self addCaptureEvent:kFxGripGoogleAnalyticsSelfRemovePredicate priority:32000];
-	[self addCaptureEvent:@"-FxNotify*" priority:32001];
+	[self addCaptureEvent:@"-FxGripNotify*" priority:32001];
 	[self addCaptureEvent:@"-*" priority:32700];
 	
 	[self.effect.notifier addObserver:self selector:@selector(captureEvent:) name:nil object:self.effect];
@@ -185,7 +185,7 @@
 
 
 
-@implementation FxTileableEffectBase (GoogleAnalytics)
+@implementation FxGripTileableEffect (GoogleAnalytics)
 
 - (BOOL)isGoogleAnalyticsInstalled
 {

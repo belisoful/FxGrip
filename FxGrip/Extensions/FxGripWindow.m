@@ -4,8 +4,8 @@
 //
 
 #import "FxGripWindow.h"
-#import "FxTileableEffectBase.h"
-#import "FxTileableEffectBase+Extensions.h"
+#import "FxGripTileableEffect.h"
+#import "FxGripTileableEffect+Extensions.h"
 #import "FxGripAPIAccessing.h"
 #import "FxGripErrors.h"
 #import "FxGrip_ARC.h"
@@ -153,7 +153,7 @@ NSString * const FxGripWindowExtensionKey = @"FxGripWindow";
 @end
 
 
-@implementation FxTileableEffectBase (Window)
+@implementation FxGripTileableEffect (Window)
 
 - (nullable FxGripWindow *)windowExtension
 {

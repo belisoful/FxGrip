@@ -9,41 +9,41 @@
 #define FxGripInstanceTracker_h
 
 #import "FxGripTypes.h"
-#import "FxExtension.h"
-#import "FxTileableEffectBase.h"
+#import "FxGripExtension.h"
+#import "FxGripTileableEffect.h"
 
 #define kInstanceTrackerKey @"instanceTracker"
 
 
-@interface FxGripInstanceTracker : FxExtension
+@interface FxGripInstanceTracker : FxGripExtension
 
 - (nullable id)init;
 
-@property (readonly, nonnull) NSArray<id<FxTileableEffectBase>> *instances;
+@property (readonly, nonnull) NSArray<id<FxGripTileableEffect>> *instances;
 
 - (void)extAddedToDocument:(nonnull NSNotification*)notification;
 - (void)extRemovedFromDocument:(nonnull NSNotification*)notification;
 
-- (CMTime)startTimeOfNextEffect:(id<FxTileableEffectBase> _Nonnull)effect;
-- (CMTime)startTimeOfPreviousEffect:(id<FxTileableEffectBase> _Nonnull)effect;
+- (CMTime)startTimeOfNextEffect:(id<FxGripTileableEffect> _Nonnull)effect;
+- (CMTime)startTimeOfPreviousEffect:(id<FxGripTileableEffect> _Nonnull)effect;
 
 @end
 
 
 
 
-@interface FxTileableEffectBase (InstanceTracker)
+@interface FxGripTileableEffect (InstanceTracker)
 
 - (nullable FxGripInstanceTracker*)newFxInstanceTracker;
 
 @property (readonly) BOOL isTrackingInstances;
 @property (readonly, nullable, nonatomic) FxGripInstanceTracker *instanceTracker;
 
-// Cast arr[i].pointerValue into id<FxTileableEffect> or GuruFxTileableEffect to retrieve the effect object.
-@property (readonly) NSArray<id<FxTileableEffectBase>>*_Nonnull instances;
+// Cast arr[i].pointerValue into id<FxTileableEffect> or FxGripTileableEffect to retrieve the effect object.
+@property (readonly) NSArray<id<FxGripTileableEffect>>*_Nonnull instances;
 
 - (NSUInteger)instanceCount;
-- (nullable id<FxTileableEffectBase>)instanceAtIndex:(int)index;
+- (nullable id<FxGripTileableEffect>)instanceAtIndex:(int)index;
 
 
 @end
