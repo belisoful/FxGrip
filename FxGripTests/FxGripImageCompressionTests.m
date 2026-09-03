@@ -581,4 +581,118 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqual(FxGripCompressionIsAvailable(FxGripCompressionAVIF), first);
 }
 
+#pragma mark Compression envelope
+
+- (void)testEnvelopeRoundTripsCompressibleDataThroughEveryCodec
+{
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
+	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
+		FxGripCompression codec = kCompressionTestCodecs[index];
+		NSData *envelope = FxGripEnvelopeCompressedData(original, codec, 0);
+		XCTAssertLessThan(envelope.length, original.length, @"codec %ld should wrap a smaller payload", (long)codec);
+
+		NSError *error = nil;
+		NSData *restored = FxGripEnvelopeDecompressedData(envelope, &error);
+		XCTAssertNil(error);
+		XCTAssertEqualObjects(restored, original, @"codec %ld should restore the original", (long)codec);
+	}
+}
+
+- (void)testEnvelopeLeavesDataBelowTheThresholdUncompressed
+{
+	NSData *original = FxGripCompressionTestCompressibleData(4096);
+	NSData *result = FxGripEnvelopeCompressedData(original, FxGripCompressionLZFSE, 8192);
+
+	XCTAssertEqualObjects(result, original, @"a payload below the threshold passes through unchanged");
+}
+
+- (void)testEnvelopeCompressesDataAtOrAboveTheThreshold
+{
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
+	NSData *result = FxGripEnvelopeCompressedData(original, FxGripCompressionLZFSE, 8192);
+
+	XCTAssertLessThan(result.length, original.length);
+	XCTAssertNotEqualObjects(result, original);
+}
+
+- (void)testEnvelopeLeavesIncompressibleDataUncompressed
+{
+	NSData *noise = FxGripCompressionTestIncompressibleData(8192);
+	NSData *result = FxGripEnvelopeCompressedData(noise, FxGripCompressionLZFSE, 0);
+
+	XCTAssertEqualObjects(result, noise, @"noise the codec cannot shrink stays raw with no envelope");
+}
+
+- (void)testEnvelopeLeavesDataUncompressedForNoneAndLossyCodecs
+{
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
+
+	XCTAssertEqualObjects(FxGripEnvelopeCompressedData(original, FxGripCompressionNone, 0), original);
+	XCTAssertEqualObjects(FxGripEnvelopeCompressedData(original, FxGripCompressionJPEG, 0), original);
+}
+
+/*! A raw payload has no envelope signature, so the decoder returns it untouched. */
+- (void)testEnvelopeDecompressPassesThroughUnwrappedData
+{
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
+
+	NSError *error = nil;
+	NSData *result = FxGripEnvelopeDecompressedData(original, &error);
+	XCTAssertNil(error);
+	XCTAssertEqualObjects(result, original);
+}
+
+/*! A binary property list begins with "bplist00"; it must not be read as an envelope. */
+- (void)testEnvelopeDecompressPassesThroughABinaryPropertyList
+{
+	NSDictionary *root = @{ @"key" : @"value" };
+	NSError *error = nil;
+	NSData *plist = [NSPropertyListSerialization dataWithPropertyList:root
+															  format:NSPropertyListBinaryFormat_v1_0
+															 options:0
+															   error:&error];
+	XCTAssertNotNil(plist);
+
+	NSData *result = FxGripEnvelopeDecompressedData(plist, &error);
+	XCTAssertNil(error);
+	XCTAssertEqualObjects(result, plist);
+}
+
+- (void)testEnvelopeDecompressReportsAnErrorOnACorruptPayload
+{
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
+	NSMutableData *envelope = [FxGripEnvelopeCompressedData(original, FxGripCompressionLZFSE, 0) mutableCopy];
+	XCTAssertGreaterThan(envelope.length, 16u);
+	// Corrupt a payload byte past the 14-byte header.
+	((uint8_t *)envelope.mutableBytes)[envelope.length - 1] ^= 0xFF;
+
+	NSError *error = nil;
+	NSData *result = FxGripEnvelopeDecompressedData(envelope, &error);
+	XCTAssertNil(result);
+	XCTAssertNotNil(error);
+	XCTAssertEqualObjects(error.domain, FxGripCompressionErrorDomain);
+}
+
+- (void)testEnvelopeDecompressReportsAnErrorOnAnUnknownVersion
+{
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
+	NSMutableData *envelope = [FxGripEnvelopeCompressedData(original, FxGripCompressionLZFSE, 0) mutableCopy];
+	((uint8_t *)envelope.mutableBytes)[4] = 0xFE;
+
+	NSError *error = nil;
+	NSData *result = FxGripEnvelopeDecompressedData(envelope, &error);
+	XCTAssertNil(result);
+	XCTAssertNotNil(error);
+	XCTAssertEqualObjects(error.domain, FxGripCompressionErrorDomain);
+}
+
+- (void)testEnvelopeDecompressToleratesANullErrorOnCorruptData
+{
+	NSData *original = FxGripCompressionTestCompressibleData(8192);
+	NSMutableData *envelope = [FxGripEnvelopeCompressedData(original, FxGripCompressionLZFSE, 0) mutableCopy];
+	((uint8_t *)envelope.mutableBytes)[envelope.length - 1] ^= 0xFF;
+
+	XCTAssertNil(FxGripEnvelopeDecompressedData(envelope, NULL));
+}
+
 @end

@@ -6,6 +6,17 @@
 #import "FxGripImageCompression.h"
 #import <ImageIO/ImageIO.h>
 #import <compression.h>
+#import <libkern/OSByteOrder.h>
+
+NSString *const FxGripCompressionErrorDomain = @"FxGripCompressionErrorDomain";
+const NSUInteger FxGripCompressionEnvelopeThresholdDefault = 4096;
+
+// Envelope: 4-byte signature, 1-byte version, 1-byte codec, 8-byte little-endian
+// uncompressed length, then the compressed payload. The signature cannot begin a binary
+// property list ("bplist00"), so a raw pluginState blob is never mistaken for an envelope.
+static const uint8_t kFxGripEnvelopeSignature[4] = { 'F', 'x', 'G', 'z' };
+static const uint8_t kFxGripEnvelopeVersion = 1;
+static const NSUInteger kFxGripEnvelopeHeaderLength = 14;
 
 NSUInteger FxGripPixelFormatComponents(FxGripPixelFormat format)
 {
@@ -154,4 +165,55 @@ NSData *FxGripDecompressedData(NSData *data, FxGripCompression compression, NSUI
 	}
 	destination.length = uncompressedLength;
 	return destination;
+}
+
+NSData *FxGripEnvelopeCompressedData(NSData *data, FxGripCompression compression, NSUInteger minimumLength)
+{
+	if (data.length < minimumLength || FxGripCompressionIsLossy(compression)) {
+		return data;
+	}
+	NSData *compressed = FxGripCompressedData(data, compression);
+	if (compressed == nil) {
+		return data;
+	}
+	NSMutableData *envelope = [NSMutableData dataWithCapacity:kFxGripEnvelopeHeaderLength + compressed.length];
+	uint8_t header[kFxGripEnvelopeHeaderLength];
+	memcpy(header, kFxGripEnvelopeSignature, sizeof(kFxGripEnvelopeSignature));
+	header[4] = kFxGripEnvelopeVersion;
+	header[5] = (uint8_t)compression;
+	OSWriteLittleInt64(header, 6, (uint64_t)data.length);
+	[envelope appendBytes:header length:sizeof(header)];
+	[envelope appendData:compressed];
+	return envelope;
+}
+
+static NSData *FxGripEnvelopeError(NSError **error, NSString *description)
+{
+	if (error) {
+		*error = [NSError errorWithDomain:FxGripCompressionErrorDomain
+									 code:-1
+								 userInfo:@{ NSLocalizedDescriptionKey : description }];
+	}
+	return nil;
+}
+
+NSData *FxGripEnvelopeDecompressedData(NSData *data, NSError **error)
+{
+	if (data.length < kFxGripEnvelopeHeaderLength
+		|| memcmp(data.bytes, kFxGripEnvelopeSignature, sizeof(kFxGripEnvelopeSignature)) != 0) {
+		return data;
+	}
+	const uint8_t *header = data.bytes;
+	if (header[4] != kFxGripEnvelopeVersion) {
+		return FxGripEnvelopeError(error, [NSString stringWithFormat:@"Unsupported compression envelope version %u", header[4]]);
+	}
+	FxGripCompression compression = (FxGripCompression)header[5];
+	uint64_t uncompressedLength = OSReadLittleInt64(header, 6);
+	NSData *payload = [data subdataWithRange:NSMakeRange(kFxGripEnvelopeHeaderLength,
+														 data.length - kFxGripEnvelopeHeaderLength)];
+	NSData *restored = FxGripDecompressedData(payload, compression, (NSUInteger)uncompressedLength);
+	if (restored == nil) {
+		return FxGripEnvelopeError(error, @"Corrupt compression envelope payload");
+	}
+	return restored;
 }

@@ -20,6 +20,7 @@
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripErrors.h>
 #import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripImageCompression.h>
 
 static NSString *FxGripRenderPathExpectedErrorDomain(void)
 {
@@ -464,6 +465,102 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 
 	XCTAssertTrue(ok);
 	XCTAssertNil(requests, @"an untouched out-parameter keeps the host's default input delivery");
+}
+
+#pragma mark Plugin-state compression
+
+/*! A large, compressible pluginState blob that still carries the "probe" key the render
+	sites read back, so the envelope demonstrably shrinks it and still round-trips. */
+static NSData *FxGripRenderPathLargeState(void)
+{
+	NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+	[archiver encodeObject:@"probe" forKey:@"probe"];
+	[archiver encodeObject:[@"" stringByPaddingToLength:16384 withString:@"A" startingAtIndex:0]
+					forKey:@"filler"];
+	[archiver finishEncoding];
+	return archiver.encodedData;
+}
+
+- (void)testPluginStateCompressionDefaultsToNone
+{
+	FxGripRenderPathTestEffect *effect = [self makeEffectOfClass:FxGripRenderPathTestEffect.class];
+
+	XCTAssertEqual(effect.pluginStateCompression, FxGripCompressionNone);
+	XCTAssertEqual(effect.pluginStateCompressionThreshold, FxGripCompressionEnvelopeThresholdDefault);
+}
+
+- (void)testTheRenderPathDecodesACompressedPluginState
+{
+	FxGripRenderPathCoderEffect *effect =
+		(FxGripRenderPathCoderEffect *)[self makeEffectOfClass:FxGripRenderPathCoderEffect.class];
+
+	NSData *raw = FxGripRenderPathLargeState();
+	NSData *compressed = FxGripEnvelopeCompressedData(raw, FxGripCompressionLZFSE, 0);
+	XCTAssertLessThan(compressed.length, raw.length, @"the fixture must actually compress");
+
+	FxRect rect = { 0, 0, 0, 0 };
+	NSError *error = nil;
+	BOOL ok = [effect destinationImageRect:&rect
+							  sourceImages:@[FxGripRenderPathTile(0, 0, 50, 50)]
+						  destinationImage:(FxImageTile *)FxGripRenderPathTile(0, 0, 50, 50)
+							   pluginState:compressed
+									atTime:FxGripRenderPathTime(1, 24)
+									 error:&error];
+
+	XCTAssertTrue(ok, @"the render side must decompress the enveloped blob: %@", error);
+	XCTAssertTrue(effect.destinationCoderCalled);
+}
+
+- (void)testTheRenderPathRejectsACorruptCompressedPluginState
+{
+	FxGripRenderPathCoderEffect *effect =
+		(FxGripRenderPathCoderEffect *)[self makeEffectOfClass:FxGripRenderPathCoderEffect.class];
+
+	NSMutableData *compressed =
+		[FxGripEnvelopeCompressedData(FxGripRenderPathLargeState(), FxGripCompressionLZFSE, 0) mutableCopy];
+	((uint8_t *)compressed.mutableBytes)[compressed.length - 1] ^= 0xFF;
+
+	FxRect rect = { 0, 0, 0, 0 };
+	NSError *error = nil;
+	BOOL ok = [effect destinationImageRect:&rect
+							  sourceImages:@[FxGripRenderPathTile(0, 0, 50, 50)]
+						  destinationImage:(FxImageTile *)FxGripRenderPathTile(0, 0, 50, 50)
+							   pluginState:compressed
+									atTime:FxGripRenderPathTime(1, 24)
+									 error:&error];
+
+	XCTAssertFalse(ok);
+	XCTAssertNotNil(error);
+}
+
+/*! A blob produced with compression enabled decodes on the render side unchanged, whether
+	the size gate compressed it or passed it through. */
+- (void)testPluginStateRoundTripsWithCompressionEnabled
+{
+	FxGripRenderPathCoderEffect *effect =
+		(FxGripRenderPathCoderEffect *)[self makeEffectOfClass:FxGripRenderPathCoderEffect.class];
+	effect.pluginStateCompression = FxGripCompressionLZFSE;
+	effect.pluginStateCompressionThreshold = 0;
+
+	NSData *state = nil;
+	NSError *error = nil;
+	BOOL encoded = [effect pluginState:&state
+							   atTime:FxGripRenderPathTime(1, 24)
+							  quality:kFxQuality_HIGH
+								error:&error];
+	XCTAssertTrue(encoded, @"%@", error);
+	XCTAssertNotNil(state);
+
+	FxRect rect = { 0, 0, 0, 0 };
+	BOOL ok = [effect destinationImageRect:&rect
+							  sourceImages:@[FxGripRenderPathTile(0, 0, 50, 50)]
+						  destinationImage:(FxImageTile *)FxGripRenderPathTile(0, 0, 50, 50)
+							   pluginState:state
+									atTime:FxGripRenderPathTime(1, 24)
+									 error:&error];
+
+	XCTAssertTrue(ok, @"%@", error);
+	XCTAssertTrue(effect.destinationCoderCalled);
 }
 
 @end

@@ -62,6 +62,8 @@
 @synthesize drawsInScreenSpace = _drawsInScreenSpace;
 @synthesize desiredProcessingColorInfo = _desiredProcessingColorInfo;
 @synthesize pixelTransformSupport = _pixelTransformSupport;
+@synthesize pluginStateCompression = _pluginStateCompression;
+@synthesize pluginStateCompressionThreshold = _pluginStateCompressionThreshold;
 
 @synthesize extensions = _extensions;
 @synthesize parameters = _parameters;
@@ -110,6 +112,8 @@
 		_drawsInScreenSpace = NO;
 		_desiredProcessingColorInfo = kFxImageColorInfo_RGB_LINEAR;
 		_pixelTransformSupport = kFxPixelTransform_ScaleTranslate;
+		_pluginStateCompression = FxGripCompressionNone;
+		_pluginStateCompressionThreshold = FxGripCompressionEnvelopeThresholdDefault;
 		
 		_addedParameters = NO;
 		_finishedSetup = NO;
@@ -786,6 +790,18 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 //	@required
 //---------------------------------------------------------
 
+/*! Builds a reading unarchiver for a pluginState blob, decompressing an FxGrip compression
+	envelope first when the blob carries one. A blob without an envelope reads directly, so
+	an effect that leaves pluginStateCompression at None is unaffected. */
+- (nullable NSKeyedUnarchiver *)fxg_unarchiverForPluginState:(NSData *)pluginState error:(NSError **)error
+{
+	NSData *decoded = FxGripEnvelopeDecompressedData(pluginState, error);
+	if (decoded == nil) {
+		return nil;
+	}
+	return NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:decoded error:error]);
+}
+
 - (BOOL)pluginState:(NSData**)pluginState
              atTime:(CMTime)renderTime
             quality:(FxQuality)qualityLevel
@@ -824,8 +840,10 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	}
 	
 	[state finishEncoding];
-	*pluginState = state.encodedData;
-	
+	*pluginState = FxGripEnvelopeCompressedData(state.encodedData,
+											   self.pluginStateCompression,
+											   self.pluginStateCompressionThreshold);
+
 	return pluginState != nil && !(error && *error);
 }
 
@@ -858,8 +876,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 		return NO;
 	}
 	
-	NSKeyedUnarchiver *state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
-																		 error:error]);
+	NSKeyedUnarchiver *state = [self fxg_unarchiverForPluginState:pluginState error:error];
 	if (*error || !state) {
 		return NO;
 	}
@@ -988,8 +1005,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	*destinationImageRect = [self fxImageSpaceUnionOfImages:sourceImages
 												   fallback:destinationImage];
 
-	NSKeyedUnarchiver *state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
-																		 error:error]);
+	NSKeyedUnarchiver *state = [self fxg_unarchiverForPluginState:pluginState error:error];
 	if (*error || !state) {
 		return NO;
 	}
@@ -1075,8 +1091,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 		sourceTileRect->top = ur.y;
 	}
 
-	NSKeyedUnarchiver *state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
-																		 error:error]);
+	NSKeyedUnarchiver *state = [self fxg_unarchiverForPluginState:pluginState error:error];
 	if (*error || !state) {
 		return NO;
 	}
@@ -1157,8 +1172,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	BOOL success = YES;
 	NSKeyedUnarchiver *state = nil;
 	if ([self conformsToProtocol:@protocol(FxGripTileableEffectCoderState)]) {
-		state = NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:pluginState
-																			  error:error]);
+		state = [self fxg_unarchiverForPluginState:pluginState error:error];
 		if (*error || !state) {
 			return NO;
 		}

@@ -14,6 +14,7 @@
 #import <FxGrip/FxGripExtension.h>
 #import <FxGrip/FxGripParameterUtility.h>
 #import <FxGrip/FxGripAPIAccessing.h>
+#import <FxGrip/FxGripImageCompression.h>
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 
 #ifndef FxParameterId
@@ -233,6 +234,31 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 @property (assign, readwrite, nonatomic) BOOL usesNonmatchingTextureLayout;
 @property (assign, readwrite, nonatomic) BOOL drawsInScreenSpace;
 @property (assign, readwrite, nonatomic) FxPixelTransformSupport pixelTransformSupport;
+
+/*!
+	@property   pluginStateCompression
+	@abstract   The lossless codec applied to the render-time pluginState blob.
+	@discussion Introduced in FxGrip 1.0. The default FxGripCompressionNone leaves the blob
+				uncompressed, matching the pre-1.0 wire format. Setting a lossless codec
+				(LZFSE, LZ4, zlib, LZMA) enables size-gated compression: the encoded state is
+				compressed only when it reaches pluginStateCompressionThreshold and the codec
+				shrinks it, and it passes through uncompressed otherwise. The render side
+				detects the codec from the blob and decompresses without further
+				configuration, so the setting is safe to change per instance. A lossy codec is
+				treated as FxGripCompressionNone, since the blob is not an image.
+*/
+@property (assign, readwrite, nonatomic) FxGripCompression pluginStateCompression;
+
+/*!
+	@property   pluginStateCompressionThreshold
+	@abstract   The byte count below which pluginState is left uncompressed.
+	@discussion Introduced in FxGrip 1.0. Defaults to
+				FxGripCompressionEnvelopeThresholdDefault. A small blob's compression saving
+				does not repay the codec's per-call cost on the per-frame render path, so it
+				passes through uncompressed. Has no effect while pluginStateCompression is
+				FxGripCompressionNone.
+*/
+@property (assign, readwrite, nonatomic) NSUInteger pluginStateCompressionThreshold;
 
 // Stack Location
 @property (assign, readonly) BOOL addingParameters;

@@ -153,4 +153,44 @@ NSData *_Nullable FxGripCompressedData(NSData *_Nonnull data, FxGripCompression 
 */
 NSData *_Nullable FxGripDecompressedData(NSData *_Nonnull data, FxGripCompression compression, NSUInteger uncompressedLength);
 
+/*! The error domain for a malformed FxGrip compression envelope. */
+extern NSString *_Nonnull const FxGripCompressionErrorDomain;
+
+/*!
+	@const      FxGripCompressionEnvelopeThresholdDefault
+	@abstract   The default byte count below which FxGripEnvelopeCompressedData leaves data
+				uncompressed.
+	@discussion Introduced in FxGrip 1.0. A lossless codec's per-call cost outweighs its
+				saving on a small payload, so data shorter than this passes through raw.
+*/
+extern const NSUInteger FxGripCompressionEnvelopeThresholdDefault;
+
+/*!
+	@function   FxGripEnvelopeCompressedData
+	@abstract   Wraps data in a self-describing FxGrip compression envelope when a lossless
+				codec shrinks it, and returns the data unchanged otherwise.
+	@discussion Introduced in FxGrip 1.0. The envelope records the codec and the exact
+				uncompressed length, so FxGripEnvelopeDecompressedData restores the original
+				with no out-of-band metadata. Compression is attempted only when every
+				condition holds:
+				- `compression` is a lossless codec (LZFSE, LZ4, zlib, LZMA),
+				- `data.length` is at least `minimumLength`,
+				- the codec produces a strictly smaller payload.
+				When any condition fails the original data is returned with no envelope. A
+				consumer that never compresses stays byte-identical to its input, so an
+				uncompressed payload matches a pre-envelope one on the wire.
+*/
+NSData *_Nonnull FxGripEnvelopeCompressedData(NSData *_Nonnull data, FxGripCompression compression, NSUInteger minimumLength);
+
+/*!
+	@function   FxGripEnvelopeDecompressedData
+	@abstract   Restores data wrapped by FxGripEnvelopeCompressedData.
+	@discussion Introduced in FxGrip 1.0. The envelope signature is detected in the leading
+				bytes, and the recorded codec decompresses the payload. Data that lacks the
+				signature is returned unchanged, so an uncompressed or pre-envelope payload
+				passes through. A truncated or corrupt envelope returns nil and sets `error`
+				in FxGripCompressionErrorDomain.
+*/
+NSData *_Nullable FxGripEnvelopeDecompressedData(NSData *_Nonnull data, NSError *_Nullable *_Nullable error);
+
 #endif /* FxGripImageCompression_h */
