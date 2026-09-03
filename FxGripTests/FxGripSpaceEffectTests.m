@@ -7,6 +7,7 @@
 #import <SceneKit/SceneKit.h>
 #import <FxGrip/FxGripSpaceEffect.h>
 #import <FxGrip/FxGripSpaceBackend.h>
+#import <FxGrip/FxGripSceneKitPhysicsBackend.h>
 
 #pragma mark - Stub backend
 
@@ -167,6 +168,27 @@
 	BOOL ok = [self.effect encodeSceneParametersIntoCoder:coder atTime:kCMTimeZero error:&error];
 	XCTAssertTrue(ok);
 	XCTAssertNil(error);
+}
+
+- (void)testPhysicsBakeDisabledByDefaultUsesPlainMetalBackend
+{
+	XCTAssertFalse(self.effect.physicsBakeEnabled);
+	XCTAssertFalse([self.effect.spaceBackend isKindOfClass:FxGripSceneKitPhysicsBackend.class]);
+	XCTAssertEqualObjects(self.effect.spaceBackend.backendIdentifier, @"scenekit-metal");
+}
+
+- (void)testEnablingPhysicsBakeUpgradesTheDefaultBackend
+{
+	self.effect.physicsBakeEnabled = YES;
+	XCTAssertTrue([self.effect.spaceBackend isKindOfClass:FxGripSceneKitPhysicsBackend.class]);
+}
+
+- (void)testEnablingPhysicsBakeKeepsAUserSetBackend
+{
+	FxGripSpaceStubBackend *stub = [FxGripSpaceStubBackend.alloc init];
+	self.effect.spaceBackend = stub;
+	self.effect.physicsBakeEnabled = YES;
+	XCTAssertEqualObjects(self.effect.spaceBackend, stub, @"a plugin's own backend is not replaced");
 }
 
 - (void)testSceneTemplateSerializesAndRecreatesAnIndependentCopy

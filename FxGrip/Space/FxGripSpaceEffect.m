@@ -5,6 +5,8 @@
 
 #import "FxGripSpaceEffect.h"
 #import "FxGripSceneKitMetalBackend.h"
+#import "FxGripSceneKitPhysicsBackend.h"
+#import "FxGripPhysicsBake.h"
 #import "SCNCamera+FxGrip.h"
 #import "SCNLight+FxGrip.h"
 #import "NSCoder+FxPlug.h"
@@ -32,6 +34,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 @implementation FxGripSpaceEffect
 {
 	id<FxGripSpaceBackend> _spaceBackend;
+	BOOL _userSetBackend;
 
 	// Versioned cache of the archived scene template, so a static template serializes once.
 	NSLock *_templateLock;
@@ -71,16 +74,42 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 
 - (id<FxGripSpaceBackend>)defaultSpaceBackend
 {
+	if (self.physicsBakeEnabled) {
+		return [FxGripSceneKitPhysicsBackend backend];
+	}
 	return [FxGripSceneKitMetalBackend backend];
 }
 
 - (void)setSpaceBackend:(nullable id<FxGripSpaceBackend>)spaceBackend
 {
+	_userSetBackend = (spaceBackend != nil);
 	id<FxGripSpaceBackend> replacement = spaceBackend ?: [self defaultSpaceBackend];
 	if (_spaceBackend != replacement) {
 		NARC_RELEASE(_spaceBackend);
 		_spaceBackend = NARC_RETAIN(replacement);
 	}
+}
+
+- (void)setPhysicsBakeEnabled:(BOOL)physicsBakeEnabled
+{
+	if (_physicsBakeEnabled == physicsBakeEnabled) {
+		return;
+	}
+	_physicsBakeEnabled = physicsBakeEnabled;
+	// Refresh the default backend to match, but never replace one the plugin set itself.
+	if (!_userSetBackend) {
+		NARC_RELEASE(_spaceBackend);
+		_spaceBackend = NARC_RETAIN([self defaultSpaceBackend]);
+	}
+}
+
+- (NSMutableArray<id<FxGripExtension>> *)loadExtensions
+{
+	NSMutableArray<id<FxGripExtension>> *extensions = [super loadExtensions];
+	if (self.physicsBakeEnabled) {
+		[extensions addObject:(id<FxGripExtension>)[self newPhysicsBakeExtension]];
+	}
+	return extensions;
 }
 
 #pragma mark Capture (state pass)

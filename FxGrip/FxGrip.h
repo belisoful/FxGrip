@@ -167,6 +167,10 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripSpaceMotion.h>
 #import <FxGrip/FxGripSpaceBackend.h>
 #import <FxGrip/FxGripSceneKitMetalBackend.h>
+#import <FxGrip/FxGripPhysicsSimulationStore.h>
+#import <FxGrip/FxGripSceneKitPhysicsBackend.h>
+#import <FxGrip/FxGripPhysicsBake.h>
+#import <FxGrip/FxGripParticleSystem.h>
 #import <FxGrip/FxGripSpaceEffect.h>
 #import <FxGrip/SCNCamera+FxGrip.h>
 #import <FxGrip/SCNLight+FxGrip.h>

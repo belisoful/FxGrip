@@ -743,6 +743,7 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 #define kFxParameterId_TopLevelGroup		0
 
 
+#define kFxParameterId_PhysicsBake			(9992)
 #define kFxParameterId_MLCache				(9993)
 #define kFxParameterId_AnalysisData			(9994)
 #define kFxParameterId_InstanceMeta			(9995)

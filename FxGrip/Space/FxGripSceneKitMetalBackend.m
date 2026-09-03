@@ -49,6 +49,12 @@
 	return @"scenekit-metal";
 }
 
+- (void)advanceSimulationForScene:(SCNScene *)scene
+						renderer:(SCNRenderer *)renderer
+						  toTime:(CFTimeInterval)seconds
+{
+}
+
 - (SCNRenderer *)borrowRendererForDevice:(id<MTLDevice>)device
 {
 	NSNumber *key = @(device.registryID);
@@ -136,6 +142,8 @@
 	SCNRenderer *renderer = [self borrowRendererForDevice:device];
 	renderer.scene = scene;
 	renderer.pointOfView = pointOfView;
+
+	[self advanceSimulationForScene:scene renderer:renderer toTime:seconds];
 
 	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
 	[renderer renderAtTime:seconds

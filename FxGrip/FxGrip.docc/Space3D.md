@@ -93,9 +93,26 @@ Two models drive change over time.
 
 The render time is the effect's clip time, which follows trims and retiming. The project timeline
 time comes from `timelineTime:fromInputTime:`, which reads the timing API and is valid only in the
-capture pass, so a project-anchored animation captures its time into plugin state. Physics and
-particle systems integrate state forward and do not reproduce an arbitrary frame; bake them to
-per-frame values instead.
+capture pass, so a project-anchored animation captures its time into plugin state.
+
+### Deterministic physics
+
+Physics integrates state forward, so a naive per-render step does not reproduce an arbitrary or
+re-rendered frame. ``FxGripSceneKitPhysicsBackend`` makes it deterministic by fixed-step catch-up:
+for a frame it simulates from the start to that frame in fixed `timeStep` increments on the render's
+own physics world, driving `updateAtTime:` (the Metal render path does not step a simulation on its
+own). The same frame reproduces in any order.
+
+Three modes trade cost against storage. `Recompute` runs the whole catch-up on every render.
+`SessionCache` memoizes each step's body transforms and replays them, so the simulation runs once
+per step. Adding the ``FxGripPhysicsBake`` extension swaps the session store for one backed by an
+`FxGripFrameData`, so the bake fills lazily as frames render and persists with the document; the
+records are a transform per dynamic body per frame and stay inline with no media-folder spill. A
+body is cached by its node name, so name any body to bake.
+
+Particle systems are not made deterministic this way. `SCNParticleSystem` has no random seed, so a
+re-simulation does not reproduce the same frame. A deterministic particle effect uses a stateless
+analytic emitter whose particle positions are a closed-form function of time.
 
 ### Camera velocity and focus
 

@@ -61,6 +61,17 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL rendersSourceLayerPlane;
 
 /*!
+	@property   physicsBakeEnabled
+	@abstract   Runs a deterministic physics simulation and persists the bake with the document.
+	@discussion Defaults to NO. Set at setup, before rendering. When set, `defaultSpaceBackend`
+				becomes an `FxGripSceneKitPhysicsBackend` in session-cache mode, and the effect loads an
+				`FxGripPhysicsBake` extension that backs the backend's store with the document, so the
+				simulation fills lazily as frames render and survives a reopen. A custom `spaceBackend`
+				that the plugin set is left in place; the bake applies only to a physics backend.
+*/
+@property (nonatomic, assign) BOOL physicsBakeEnabled;
+
+/*!
 	@method     encodeSceneParametersIntoCoder:atTime:error:
 	@abstract   A subclass hook, run in the capture pass, that serializes the plugin's own per-frame
 				parameters into plugin state.
