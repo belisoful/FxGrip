@@ -10,6 +10,7 @@
 #import "FxGripAnalysis.h"
 #import "FxGripAPIAccessing.h"
 #import "FxGripMTLDeviceCache.h"
+#import "FxGripObjectTrackerParameter.h"
 #import <CoreImage/CoreImage.h>
 
 @implementation FxGripTileableEffect (Analyze)
@@ -33,6 +34,8 @@
 {
 	// The frame duration converts a time to an absolute frame index at analysis and at
 	// render, so it is stored with the frame data.
+	[self beginObjectTrackerAnalysisWithFrameDuration:frameDuration];
+
 	FxGripFrameData *data = self.analysisData;
 	if (data == nil) {
 		return YES;
@@ -57,11 +60,13 @@
 	if (record != nil) {
 		[self.analysisData setRecord:record atIndex:frameIndex];
 	}
+	[self analyzeObjectTrackersWithTile:frame atFrame:frameIndex];
 	return YES;
 }
 
 - (BOOL)cleanupAnalysis:(NSError * _Nullable * _Nullable)error
 {
+	[self endObjectTrackerAnalysis];
 	[self saveAnalysisData];
 	return YES;
 }
@@ -185,6 +190,64 @@
 		return 0.0;
 	}
 	return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+#pragma mark Object trackers
+
+- (NSArray<FxGripObjectTrackerParameter *> *)objectTrackerParameters
+{
+	NSMutableArray<FxGripObjectTrackerParameter *> *trackers = [NSMutableArray array];
+	for (id<FxParameter> parameter in self.parameters.allValues) {
+		if ([parameter isKindOfClass:FxGripObjectTrackerParameter.class]) {
+			[trackers addObject:(FxGripObjectTrackerParameter *)parameter];
+		}
+	}
+	return trackers;
+}
+
+- (void)beginObjectTrackerAnalysisWithFrameDuration:(CMTime)frameDuration
+{
+	for (FxGripObjectTrackerParameter *tracker in [self objectTrackerParameters]) {
+		[tracker beginObjectTrackingAnalysisWithFrameDuration:frameDuration];
+	}
+}
+
+- (void)analyzeObjectTrackersWithTile:(FxImageTile *)tile atFrame:(NSInteger)frameIndex
+{
+	NSArray<FxGripObjectTrackerParameter *> *trackers = [self objectTrackerParameters];
+	if (trackers.count == 0) {
+		return;
+	}
+	IOSurfaceRef surface = (__bridge IOSurfaceRef)tile.ioSurface;
+	if (surface == NULL) {
+		return;
+	}
+	CIImage *image = [CIImage imageWithIOSurface:surface];
+	if (image == nil) {
+		return;
+	}
+	for (FxGripObjectTrackerParameter *tracker in trackers) {
+		[tracker analyzeObjectTrackingImage:image atFrame:frameIndex];
+	}
+}
+
+- (void)endObjectTrackerAnalysis
+{
+	for (FxGripObjectTrackerParameter *tracker in [self objectTrackerParameters]) {
+		[tracker endObjectTrackingAnalysis];
+	}
+}
+
+- (BOOL)objectTrackerTransform:(FxGripObjectTrackerTransform *)outTransform
+				  forParameter:(FxParameterId)parameterID
+						atTime:(CMTime)time
+{
+	id<FxParameter> parameter = self.parameters[@(parameterID)];
+	if (![parameter isKindOfClass:FxGripObjectTrackerParameter.class]) {
+		return NO;
+	}
+	NSInteger frameIndex = [self analysisFrameIndexForTime:time];
+	return [(FxGripObjectTrackerParameter *)parameter transform:outTransform atFrame:frameIndex];
 }
 
 @end

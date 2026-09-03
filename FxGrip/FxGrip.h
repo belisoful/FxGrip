@@ -126,6 +126,10 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripLiveImageParameter.h>
 #import <FxGrip/FxGripTrackingOpacityParameter.h>
 #import <FxGrip/FxGripAnalyzerParameter.h>
+#import <FxGrip/FxGripObjectTracker.h>
+#import <FxGrip/FxGripObjectTrackerData.h>
+#import <FxGrip/FxGripObjectTrackerParameter.h>
+#import <FxGrip/FxGripObjectTrackerOSC.h>
 
 
 #import <FxGrip/FxGripCustomDataClasses.h>
@@ -159,6 +163,13 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripMLImageGenerator.h>
 #import <FxGrip/FxGripMLVideoGenerator.h>
 #import <FxGrip/FxGripInferenceBridge.h>
+
+#import <FxGrip/FxGripSpaceMotion.h>
+#import <FxGrip/FxGripSpaceBackend.h>
+#import <FxGrip/FxGripSceneKitMetalBackend.h>
+#import <FxGrip/FxGripSpaceEffect.h>
+#import <FxGrip/SCNCamera+FxGrip.h>
+#import <FxGrip/SCNLight+FxGrip.h>
 
 
 #import <FxGrip/FxGripAPINotifications.h>

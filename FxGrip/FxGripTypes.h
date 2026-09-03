@@ -723,6 +723,7 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 	FxParameterType_LiveImage	= 131,	// shows images published from the render pass.
 	FxParameterType_TrackingOpacity = 132,	// read-only percent driven to 0% during analysis.
 	FxParameterType_Analyzer	= 133,	// button that starts the frame-analysis pass.
+	FxParameterType_ObjectTracker = 134,	// canvas object/point tracker state object.
 	// https://developers.google.com/youtube/player_parameters
 	
 	//
@@ -803,6 +804,7 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 #define kFxParameterType_LiveImage	@"liveimage"
 #define kFxParameterType_TrackingOpacity	@"trackingopacity"
 #define kFxParameterType_Analyzer	@"analyzer"
+#define kFxParameterType_ObjectTracker	@"objecttracker"
 
 
 

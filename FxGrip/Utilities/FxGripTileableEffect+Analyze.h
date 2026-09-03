@@ -11,6 +11,7 @@
 #import <FxPlug/FxPlugSDK.h>
 #import "FxGripTileableEffect.h"
 #import "FxGripFrameData.h"
+#import "FxGripObjectTrackerData.h"
 
 /*!
 	@category   FxGripTileableEffect (Analyze)
@@ -48,6 +49,14 @@
 /*! The stored record for a time: the latest at or before its frame index, or nil when none.
 	Valid to call where the parameter API is available (e.g. pluginState:atTime:). */
 - (nullable id<NSSecureCoding, NSCopying>)analysisRecordAtTime:(CMTime)time;
+
+/*! The tracked transform of an object-tracker parameter at a time, resolved from the samples
+	the pass stored. Returns NO when the parameter is not an object tracker, or has no sample
+	at or before the time. The pass runs each object-tracker parameter automatically; an
+	effect reads the result here at render. */
+- (BOOL)objectTrackerTransform:(nonnull FxGripObjectTrackerTransform *)outTransform
+				  forParameter:(FxParameterId)parameterID
+						atTime:(CMTime)time;
 
 /*! Persists the frame data into its hidden parameter. Called from cleanupAnalysis:. */
 - (void)saveAnalysisData;

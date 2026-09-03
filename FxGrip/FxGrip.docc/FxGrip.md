@@ -30,6 +30,11 @@ This puts a wrapper around the standard FxPlug API Protocols and adds its own AP
 
 - <doc:CustomControls>
 - <doc:WebContent>
+- <doc:ObjectTracking>
+
+### 3D Space
+
+- <doc:Space3D>
 
 ### FxGripExtension
 

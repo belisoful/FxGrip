@@ -9,6 +9,7 @@
 #import "FxGripTileableEffect+Extensions.h"
 #import "FxGripTileableEffect+Parameters.h"
 #import "FxGripAllParameters.h"
+#import "FxGripObjectTrackerParameter.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 
 #pragma mark -
@@ -119,6 +120,7 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 	[self registerParameterType:FxGripLiveImageParameter.class];
 	[self registerParameterType:FxGripTrackingOpacityParameter.class];
 	[self registerParameterType:FxGripAnalyzerParameter.class];
+	[self registerParameterType:FxGripObjectTrackerParameter.class];
 }
 
 

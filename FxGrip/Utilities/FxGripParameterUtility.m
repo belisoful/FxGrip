@@ -51,6 +51,9 @@
 		kFxParameterType_WebView: @(FxParameterType_WebView),
 		kFxParameterType_VideoView: @(FxParameterType_VideoView),
 		kFxParameterType_LiveImage: @(FxParameterType_LiveImage),
+		kFxParameterType_TrackingOpacity: @(FxParameterType_TrackingOpacity),
+		kFxParameterType_Analyzer: @(FxParameterType_Analyzer),
+		kFxParameterType_ObjectTracker: @(FxParameterType_ObjectTracker),
 
 	};
 	return typeMap;

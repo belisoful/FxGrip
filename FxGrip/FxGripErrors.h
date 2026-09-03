@@ -36,4 +36,7 @@
 #define kFxGripError_WatermarkNoDevice		(kFxError_ThirdPartyDeveloperStart + 34000)
 #define kFxGripError_WatermarkRender		(kFxError_ThirdPartyDeveloperStart + 34001)
 
+#define kFxGripError_SpaceMissingScene		(kFxError_ThirdPartyDeveloperStart + 35000)
+#define kFxGripError_SpaceRenderFailure		(kFxError_ThirdPartyDeveloperStart + 35001)
+
 #endif
