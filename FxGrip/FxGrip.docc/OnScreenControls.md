@@ -97,8 +97,25 @@ parameters the parts bind to are the effect's ordinary point, float, and angle
 parameters — position parameters in normalized object space, pixel sizes as
 float sliders, angles in radians (the FxPlug angle-slider convention).
 
+## Editable paths
+
+``FxGripOSCPathPart`` is one part that draws and edits a whole path of FxPlug
+`FxVertex` vertices: a `location`, an `inTangent` and `outTangent` held as
+vectors from the location, an `xSplineWeight`, and an `interpStyle`. It reads and
+writes its vertices through one of two backings. The custom-data backing stores
+the whole path in one ``FxGripPathData`` parameter, so the vertex count changes
+at runtime and the `Editable` option can insert and delete vertices. The
+per-parameter backing stores each field in its own host parameter, individually
+keyframeable, at a fixed count. ``FxGripOSCPathOptions`` selects which
+interactions are live: vertex handles, tangent handles, editing, and dragging the
+body. Drawing and hit-testing convert every `interpStyle` to cubic segments
+through ``FxGripPathData/copyCubicSegmentsToBuffer:capacity:``.
+
 ## Conventions the parts share
 
+- **Canvas space** has its origin at the lower left with y increasing upward, the
+  FxPlug convention; the framework flips y only when handing coordinates to the
+  y-down Metal texture.
 - **Position parameters** are object-space points (`getXValue:YValue:`);
   normalized 0-1 over the input image.
 - **Sizes** (circle radius, box width and height) are input-image pixels.
@@ -108,6 +125,9 @@ float sliders, angles in radians (the FxPlug angle-slider convention).
   zoom.
 - **Rotation** is rigid in the input-pixel frame; rotated shapes keep their
   angles on non-square images.
+- **Shadows** are per part: `shadowColor`, `shadowDistance`, and `shadowBlur` on
+  ``FxGripOSCPart``. The control renders every part's shadow beneath the crisp
+  control, one offscreen blur pass per distinct radius, punched out by each shape.
 - Setting `angleParameterID` to `0` (the default) leaves a shape axis-aligned,
   and flag constructors omit rotation handles.
 
@@ -132,15 +152,15 @@ float sliders, angles in radians (the FxPlug angle-slider convention).
 - ``FxGripOSCLinePart``
 - ``FxGripOSCAngleDialPart``
 - ``FxGripOSCPolylinePart``
-- ``FxGripOSCBezierVertexHandlePart``
-- ``FxGripOSCTangentHandlePart``
+
+### Editable path
+
+- ``FxGripOSCPathPart``
+- ``FxGripOSCPathOptions``
+- ``FxGripPathData``
+- ``FxGripCubicSegment``
 
 ### Display and readout parts
 
 - ``FxGripOSCCurvePart``
 - ``FxGripOSCHUDPart``
-
-### Editable polygon
-
-- ``FxGripOSCEditablePolygonPart``
-- ``FxGripPointListData``

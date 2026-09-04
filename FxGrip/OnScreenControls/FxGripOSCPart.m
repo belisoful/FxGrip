@@ -4,7 +4,6 @@
 //
 
 #import "FxGripOSCPart.h"
-#import "FxGripPointListData.h"
 #import "FxGripEventModifiers.h"
 #import "FxGrip_ARC.h"
 
@@ -83,8 +82,16 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	self = [super init];
 	if (self != nil) {
 		_partID = partID;
+		_shadowColor = kFxGripOSCShadowColor;
+		_shadowDistance = 1.0;
+		_shadowBlur = 0.0;
 	}
 	return self;
+}
+
+- (BOOL)castsShadow
+{
+	return _shadowColor.w > 0.0 && (_shadowDistance != 0.0 || _shadowBlur > 0.0);
 }
 
 - (BOOL)hitTestObjectPoint:(CGPoint)objectPoint canvasPoint:(CGPoint)canvasPoint atTime:(CMTime)time
@@ -728,8 +735,10 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 		offset = FxGripOSCObjectVector(local, inputSize);
 		objectPoint = CGPointMake(center.x + offset.x, center.y + offset.y);
 	}
-	return ll.x <= objectPoint.x && objectPoint.x <= ur.x
-		&& ll.y <= objectPoint.y && objectPoint.y <= ur.y;
+	// The corner parameters are not normalized: a corner dragged past its opposite inverts the
+	// rectangle, so test against the min/max span rather than assuming lower-left < upper-right.
+	return fmin(ll.x, ur.x) <= objectPoint.x && objectPoint.x <= fmax(ll.x, ur.x)
+		&& fmin(ll.y, ur.y) <= objectPoint.y && objectPoint.y <= fmax(ll.y, ur.y);
 }
 
 - (BOOL)dragToObjectPoint:(CGPoint)objectPoint
@@ -1229,69 +1238,6 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	return parts;
 }
 
-+ (nonnull NSArray<FxGripOSCPart *> *)bezierPartsWithOptions:(FxGripOSCShapeOptions)options
-												 firstPartID:(NSInteger)firstPartID
-										   pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
-									   inTangentParameterIDs:(nonnull NSArray<NSNumber *> *)inTangentParameterIDs
-									  outTangentParameterIDs:(nonnull NSArray<NSNumber *> *)outTangentParameterIDs
-													  closed:(BOOL)closed
-{
-	NSUInteger count = pointParameterIDs.count;
-	NSMutableArray<FxGripOSCPart *> *parts = [NSMutableArray arrayWithCapacity:1 + 3 * count];
-	NSInteger partID = firstPartID;
-	if (options & FxGripOSCShapeOptionBody) {
-		FxGripOSCPolylinePart *body = [self partWithID:partID++ pointParameterIDs:pointParameterIDs closed:closed];
-		body.inTangentParameterIDs = inTangentParameterIDs;
-		body.outTangentParameterIDs = outTangentParameterIDs;
-		[parts addObject:body];
-	}
-	if (options & FxGripOSCShapeOptionVertexHandles) {
-		for (NSUInteger index = 0; index < count; index++) {
-			FxGripOSCBezierVertexHandlePart *handle =
-				[FxGripOSCBezierVertexHandlePart partWithID:partID++
-										  vertexParameterID:(FxParameterId)pointParameterIDs[index].unsignedIntValue
-									   inTangentParameterID:(FxParameterId)inTangentParameterIDs[index].unsignedIntValue
-									  outTangentParameterID:(FxParameterId)outTangentParameterIDs[index].unsignedIntValue];
-			// The neighbors let a double-click regenerate a smooth tangent; endpoints of an
-			// open chain keep a 0 on the missing side.
-			if (closed || index > 0) {
-				NSUInteger prev = (index == 0) ? count - 1 : index - 1;
-				handle.previousVertexParameterID = (FxParameterId)pointParameterIDs[prev].unsignedIntValue;
-			}
-			if (closed || index + 1 < count) {
-				NSUInteger next = (index + 1) % count;
-				handle.nextVertexParameterID = (FxParameterId)pointParameterIDs[next].unsignedIntValue;
-			}
-			[parts addObject:handle];
-		}
-	}
-	if (options & FxGripOSCShapeOptionTangentHandles) {
-		for (NSUInteger index = 0; index < count; index++) {
-			FxParameterId vertexID = (FxParameterId)pointParameterIDs[index].unsignedIntValue;
-			FxParameterId inID = (FxParameterId)inTangentParameterIDs[index].unsignedIntValue;
-			FxParameterId outID = (FxParameterId)outTangentParameterIDs[index].unsignedIntValue;
-			// An open chain's first in tangent and last out tangent shape no segment.
-			BOOL includeIn = closed || index > 0;
-			BOOL includeOut = closed || index + 1 < count;
-			if (includeIn) {
-				FxGripOSCTangentHandlePart *handle = [FxGripOSCTangentHandlePart partWithID:partID++
-																		  vertexParameterID:vertexID
-																		 tangentParameterID:inID];
-				handle.oppositeTangentParameterID = outID;
-				[parts addObject:handle];
-			}
-			if (includeOut) {
-				FxGripOSCTangentHandlePart *handle = [FxGripOSCTangentHandlePart partWithID:partID++
-																		  vertexParameterID:vertexID
-																		 tangentParameterID:outID];
-				handle.oppositeTangentParameterID = inID;
-				[parts addObject:handle];
-			}
-		}
-	}
-	return parts;
-}
-
 - (nonnull instancetype)initWithPartID:(NSInteger)partID
 {
 	self = [super initWithPartID:partID];
@@ -1305,18 +1251,13 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 - (void)dealloc
 {
 	NARC_RELEASE(_pointParameterIDs);
-	NARC_RELEASE(_inTangentParameterIDs);
-	NARC_RELEASE(_outTangentParameterIDs);
 	SUPER_DEALLOC();
 }
 
-/*! Reads a parameter array's points into canvasPoints; NO when any refuses. */
-- (BOOL)fxReadCanvasPoints:(nonnull CGPoint *)canvasPoints
-			 forParameters:(nonnull NSArray<NSNumber *> *)parameterIDs
-					atTime:(CMTime)time
+- (BOOL)readCanvasPoints:(nonnull CGPoint *)canvasPoints atTime:(CMTime)time
 {
 	NSUInteger index = 0;
-	for (NSNumber *parameterID in parameterIDs) {
+	for (NSNumber *parameterID in self.pointParameterIDs) {
 		CGPoint objectPoint = CGPointZero;
 		if (![self.control getObjectPoint:&objectPoint
 							fromParameter:(FxParameterId)parameterID.unsignedIntValue
@@ -1326,71 +1267,6 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 		canvasPoints[index++] = [self.control canvasPointFromObjectPoint:objectPoint];
 	}
 	return YES;
-}
-
-- (BOOL)readCanvasPoints:(nonnull CGPoint *)canvasPoints atTime:(CMTime)time
-{
-	return [self fxReadCanvasPoints:canvasPoints forParameters:self.pointParameterIDs atTime:time];
-}
-
-/*! The chain curves when both tangent arrays pair one parameter per vertex. */
-- (BOOL)fxIsBezier
-{
-	NSUInteger count = self.pointParameterIDs.count;
-	return count > 0
-		&& self.inTangentParameterIDs.count == count
-		&& self.outTangentParameterIDs.count == count;
-}
-
-// Bézier segments flatten into line subdivisions for hit testing and drawing;
-// conversion to canvas space is affine, so the cubic evaluates on canvas points.
-static const NSUInteger kFxGripOSCBezierFlattening = 16;
-
-static CGPoint FxGripOSCCubicPoint(CGPoint p0, CGPoint c1, CGPoint c2, CGPoint p1, double t)
-{
-	double u = 1.0 - t;
-	double b0 = u * u * u, b1 = 3.0 * u * u * t, b2 = 3.0 * u * t * t, b3 = t * t * t;
-	return CGPointMake(b0 * p0.x + b1 * c1.x + b2 * c2.x + b3 * p1.x,
-					   b0 * p0.y + b1 * c1.y + b2 * c2.y + b3 * p1.y);
-}
-
-/*! The curved chain flattened to canvas points; malloc'd, freed by the caller.
-	A closed chain's flattening ends back at its first point. */
-- (nullable CGPoint *)fxFlattenedCanvasPointsWithCount:(nonnull NSUInteger *)outCount atTime:(CMTime)time
-{
-	NSUInteger count = self.pointParameterIDs.count;
-	NSUInteger segments = self.closed ? count : count - 1;
-	NSUInteger flatCount = segments * kFxGripOSCBezierFlattening + 1;
-
-	CGPoint *vertices = malloc(count * sizeof(CGPoint));
-	CGPoint *inTangents = malloc(count * sizeof(CGPoint));
-	CGPoint *outTangents = malloc(count * sizeof(CGPoint));
-	CGPoint *flattened = malloc(flatCount * sizeof(CGPoint));
-	BOOL ready = vertices != NULL && inTangents != NULL && outTangents != NULL && flattened != NULL
-		&& [self fxReadCanvasPoints:vertices forParameters:self.pointParameterIDs atTime:time]
-		&& [self fxReadCanvasPoints:inTangents forParameters:self.inTangentParameterIDs atTime:time]
-		&& [self fxReadCanvasPoints:outTangents forParameters:self.outTangentParameterIDs atTime:time];
-	if (ready) {
-		NSUInteger flatIndex = 0;
-		flattened[flatIndex++] = vertices[0];
-		for (NSUInteger segment = 0; segment < segments; segment++) {
-			NSUInteger next = (segment + 1) % count;
-			for (NSUInteger step = 1; step <= kFxGripOSCBezierFlattening; step++) {
-				double t = (double)step / (double)kFxGripOSCBezierFlattening;
-				flattened[flatIndex++] = FxGripOSCCubicPoint(vertices[segment], outTangents[segment],
-															 inTangents[next], vertices[next], t);
-			}
-		}
-		*outCount = flatCount;
-	}
-	free(vertices);
-	free(inTangents);
-	free(outTangents);
-	if (!ready) {
-		free(flattened);
-		return NULL;
-	}
-	return flattened;
 }
 
 static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b)
@@ -1413,26 +1289,17 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 	if (count < 2) {
 		return NO;
 	}
-	CGPoint *points = NULL;
-	BOOL closedChain = self.closed;
-	if (self.fxIsBezier) {
-		// The flattening already walks the wrap segment of a closed chain.
-		if ((points = [self fxFlattenedCanvasPointsWithCount:&count atTime:time]) == NULL) {
-			return NO;
-		}
-		closedChain = NO;
-	} else {
-		if ((points = malloc(count * sizeof(CGPoint))) == NULL) {
-			return NO;
-		}
-		if (![self readCanvasPoints:points atTime:time]) {
-			free(points);
-			return NO;
-		}
+	CGPoint *points = malloc(count * sizeof(CGPoint));
+	if (points == NULL) {
+		return NO;
+	}
+	if (![self readCanvasPoints:points atTime:time]) {
+		free(points);
+		return NO;
 	}
 	BOOL hit = NO;
 	CGFloat radiusSquared = self.hitRadius * self.hitRadius;
-	NSUInteger segments = closedChain ? count : count - 1;
+	NSUInteger segments = self.closed ? count : count - 1;
 	for (NSUInteger index = 0; index < segments && !hit; index++) {
 		hit = FxGripOSCDistanceSquaredToSegment(canvasPoint,
 												points[index],
@@ -1442,13 +1309,13 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 	return hit;
 }
 
-/*! Moves every parameter in the array by the delta; NO on any refused access. */
-- (BOOL)fxMoveParameters:(nonnull NSArray<NSNumber *> *)parameterIDs
-				 byDelta:(CGPoint)objectDelta
-				  atTime:(CMTime)time
+- (BOOL)dragToObjectPoint:(CGPoint)objectPoint
+			  objectDelta:(CGPoint)objectDelta
+				modifiers:(FxModifierKeys)modifiers
+				   atTime:(CMTime)time
 {
-	BOOL moved = parameterIDs.count > 0;
-	for (NSNumber *parameterID in parameterIDs) {
+	BOOL moved = self.pointParameterIDs.count > 0;
+	for (NSNumber *parameterID in self.pointParameterIDs) {
 		FxParameterId pid = (FxParameterId)parameterID.unsignedIntValue;
 		CGPoint point = CGPointZero;
 		if (![self.control getObjectPoint:&point fromParameter:pid atTime:time]) {
@@ -1457,19 +1324,6 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 		point.x += objectDelta.x;
 		point.y += objectDelta.y;
 		moved = [self.control setObjectPoint:point toParameter:pid atTime:time] && moved;
-	}
-	return moved;
-}
-
-- (BOOL)dragToObjectPoint:(CGPoint)objectPoint
-			  objectDelta:(CGPoint)objectDelta
-				modifiers:(FxModifierKeys)modifiers
-				   atTime:(CMTime)time
-{
-	BOOL moved = [self fxMoveParameters:self.pointParameterIDs byDelta:objectDelta atTime:time];
-	if (moved && self.fxIsBezier) {
-		moved = [self fxMoveParameters:self.inTangentParameterIDs byDelta:objectDelta atTime:time]
-			&& [self fxMoveParameters:self.outTangentParameterIDs byDelta:objectDelta atTime:time];
 	}
 	return moved;
 }
@@ -1483,350 +1337,22 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 	if (count < 2) {
 		return;
 	}
-	CGPoint *points = NULL;
-	BOOL closedChain = self.closed;
-	if (self.fxIsBezier) {
-		if ((points = [self fxFlattenedCanvasPointsWithCount:&count atTime:time]) == NULL) {
-			return;
-		}
-		closedChain = NO;
-	} else {
-		if ((points = malloc(count * sizeof(CGPoint))) == NULL) {
-			return;
-		}
-		if (![self readCanvasPoints:points atTime:time]) {
-			free(points);
-			return;
-		}
+	CGPoint *points = malloc(count * sizeof(CGPoint));
+	if (points == NULL) {
+		return;
+	}
+	if (![self readCanvasPoints:points atTime:time]) {
+		free(points);
+		return;
 	}
 	[self.control strokeCanvasPoints:points
 							   count:count
-							  closed:closedChain
+							  closed:self.closed
 							   color:(selected ? kFxGripOSCSelectedFillColor : kFxGripOSCOutlineColor)
 						  withShadow:YES
 						  canvasSize:canvasSize
 					  commandEncoder:commandEncoder];
 	free(points);
-}
-
-@end
-
-
-#pragma mark - Bézier vertex handle
-
-@implementation FxGripOSCBezierVertexHandlePart
-
-+ (nonnull instancetype)partWithID:(NSInteger)partID
-				 vertexParameterID:(FxParameterId)vertexParameterID
-			  inTangentParameterID:(FxParameterId)inTangentParameterID
-			 outTangentParameterID:(FxParameterId)outTangentParameterID
-{
-	FxGripOSCBezierVertexHandlePart *part = [[self alloc] initWithPartID:partID];
-	part.vertexParameterID = vertexParameterID;
-	part.inTangentParameterID = inTangentParameterID;
-	part.outTangentParameterID = outTangentParameterID;
-	return NARC_AUTORELEASE(part);
-}
-
-- (nonnull instancetype)initWithPartID:(NSInteger)partID
-{
-	self = [super initWithPartID:partID];
-	if (self != nil) {
-		_hitRadius = 10.0;
-		_handleRadius = 4.0;
-	}
-	return self;
-}
-
-- (BOOL)hitTestObjectPoint:(CGPoint)objectPoint canvasPoint:(CGPoint)canvasPoint atTime:(CMTime)time
-{
-	CGPoint vertex = CGPointZero;
-	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]) {
-		return NO;
-	}
-	CGPoint canvasVertex = [self.control canvasPointFromObjectPoint:vertex];
-	CGFloat dx = canvasPoint.x - canvasVertex.x;
-	CGFloat dy = canvasPoint.y - canvasVertex.y;
-	return dx * dx + dy * dy <= self.hitRadius * self.hitRadius;
-}
-
-/*! Moves a tangent by the vertex's delta; a parameter ID of 0 is no tangent. */
-- (BOOL)fxCarryTangent:(FxParameterId)tangentParameterID byDelta:(CGPoint)delta atTime:(CMTime)time
-{
-	if (tangentParameterID == 0) {
-		return YES;
-	}
-	CGPoint tangent = CGPointZero;
-	if (![self.control getObjectPoint:&tangent fromParameter:tangentParameterID atTime:time]) {
-		return NO;
-	}
-	tangent.x += delta.x;
-	tangent.y += delta.y;
-	return [self.control setObjectPoint:tangent toParameter:tangentParameterID atTime:time];
-}
-
-- (BOOL)dragToObjectPoint:(CGPoint)objectPoint
-			  objectDelta:(CGPoint)objectDelta
-				modifiers:(FxModifierKeys)modifiers
-				   atTime:(CMTime)time
-{
-	CGPoint vertex = CGPointZero;
-	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]) {
-		return NO;
-	}
-	CGPoint delta = CGPointMake(objectPoint.x - vertex.x, objectPoint.y - vertex.y);
-	BOOL moved = [self.control setObjectPoint:objectPoint toParameter:self.vertexParameterID atTime:time];
-	moved = [self fxCarryTangent:self.inTangentParameterID byDelta:delta atTime:time] && moved;
-	moved = [self fxCarryTangent:self.outTangentParameterID byDelta:delta atTime:time] && moved;
-	return moved;
-}
-
-// A tangent within this object-space distance of its vertex counts as retracted, so the
-// side is linear.
-static const double kFxGripOSCTangentRetractedEpsilon = 1e-6;
-
-/*! YES when the tangent sits on the vertex, or the side has no tangent parameter. */
-- (BOOL)fxTangent:(FxParameterId)tangentParameterID isRetractedFromVertex:(CGPoint)vertex atTime:(CMTime)time
-{
-	if (tangentParameterID == 0) {
-		return YES;
-	}
-	CGPoint tangent = CGPointZero;
-	if (![self.control getObjectPoint:&tangent fromParameter:tangentParameterID atTime:time]) {
-		return YES;
-	}
-	return fabs(tangent.x - vertex.x) <= kFxGripOSCTangentRetractedEpsilon
-		&& fabs(tangent.y - vertex.y) <= kFxGripOSCTangentRetractedEpsilon;
-}
-
-/*! Writes a tangent parameter, treating an ID of 0 as a side that is absent. */
-- (BOOL)fxSetTangent:(FxParameterId)tangentParameterID toObjectPoint:(CGPoint)point atTime:(CMTime)time
-{
-	if (tangentParameterID == 0) {
-		return YES;
-	}
-	return [self.control setObjectPoint:point toParameter:tangentParameterID atTime:time];
-}
-
-/*! Retracts both tangents onto the vertex, so its segments run straight. */
-- (BOOL)fxMakeCornerAtVertex:(CGPoint)vertex atTime:(CMTime)time
-{
-	BOOL in = [self fxSetTangent:self.inTangentParameterID toObjectPoint:vertex atTime:time];
-	BOOL out = [self fxSetTangent:self.outTangentParameterID toObjectPoint:vertex atTime:time];
-	return in && out;
-}
-
-/*! Regenerates smooth tangents along the neighbor axis; NO when no neighbor gives a direction. */
-- (BOOL)fxMakeSmoothAroundVertex:(CGPoint)vertex atTime:(CMTime)time
-{
-	CGPoint previous = vertex, next = vertex;
-	BOOL havePrevious = self.previousVertexParameterID != 0
-		&& [self.control getObjectPoint:&previous fromParameter:self.previousVertexParameterID atTime:time];
-	BOOL haveNext = self.nextVertexParameterID != 0
-		&& [self.control getObjectPoint:&next fromParameter:self.nextVertexParameterID atTime:time];
-	NSSize inputSize = NSZeroSize;
-	if ((!havePrevious && !haveNext) || !FxGripOSCReadInputSize(self.control, &inputSize)) {
-		return NO;
-	}
-	// The smooth axis runs from the previous vertex to the next; an endpoint falls back to the
-	// vertex on its missing side.
-	CGPoint from = havePrevious ? previous : vertex;
-	CGPoint to = haveNext ? next : vertex;
-	CGPoint axis = FxGripOSCPixelVector(CGPointMake(to.x - from.x, to.y - from.y), inputSize);
-	double axisLength = sqrt(axis.x * axis.x + axis.y * axis.y);
-	if (axisLength < 1e-9) {
-		return NO;
-	}
-	// A sixth of the neighbor span is the Catmull-Rom smooth default.
-	CGPoint offset = FxGripOSCObjectVector(CGPointMake(axis.x / 6.0, axis.y / 6.0), inputSize);
-	BOOL out = [self fxSetTangent:self.outTangentParameterID
-					toObjectPoint:CGPointMake(vertex.x + offset.x, vertex.y + offset.y)
-						   atTime:time];
-	BOOL in = [self fxSetTangent:self.inTangentParameterID
-				  toObjectPoint:CGPointMake(vertex.x - offset.x, vertex.y - offset.y)
-						 atTime:time];
-	return out && in;
-}
-
-- (BOOL)mouseDoubleClickAtObjectPoint:(CGPoint)objectPoint
-						  canvasPoint:(CGPoint)canvasPoint
-							modifiers:(FxModifierKeys)modifiers
-							   atTime:(CMTime)time
-{
-	CGPoint vertex = CGPointZero;
-	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]) {
-		return NO;
-	}
-	BOOL corner = [self fxTangent:self.inTangentParameterID isRetractedFromVertex:vertex atTime:time]
-		&& [self fxTangent:self.outTangentParameterID isRetractedFromVertex:vertex atTime:time];
-	if (corner) {
-		return [self fxMakeSmoothAroundVertex:vertex atTime:time];
-	}
-	return [self fxMakeCornerAtVertex:vertex atTime:time];
-}
-
-- (void)drawSelected:(BOOL)selected
-		  canvasSize:(CGSize)canvasSize
-	  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder
-			  atTime:(CMTime)time
-{
-	CGPoint vertex = CGPointZero;
-	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]) {
-		return;
-	}
-	[self fxDrawHandleAtCanvasPoint:[self.control canvasPointFromObjectPoint:vertex]
-						   halfSide:self.handleRadius
-						   selected:selected
-						 canvasSize:canvasSize
-					 commandEncoder:commandEncoder];
-}
-
-@end
-
-
-#pragma mark - Tangent handle
-
-@implementation FxGripOSCTangentHandlePart
-
-+ (nonnull instancetype)partWithID:(NSInteger)partID
-				 vertexParameterID:(FxParameterId)vertexParameterID
-				tangentParameterID:(FxParameterId)tangentParameterID
-{
-	FxGripOSCTangentHandlePart *part = [[self alloc] initWithPartID:partID];
-	part.vertexParameterID = vertexParameterID;
-	part.tangentParameterID = tangentParameterID;
-	return NARC_AUTORELEASE(part);
-}
-
-- (nonnull instancetype)initWithPartID:(NSInteger)partID
-{
-	self = [super initWithPartID:partID];
-	if (self != nil) {
-		_hitRadius = 8.0;
-		_handleRadius = 3.0;
-	}
-	return self;
-}
-
-- (BOOL)hitTestObjectPoint:(CGPoint)objectPoint canvasPoint:(CGPoint)canvasPoint atTime:(CMTime)time
-{
-	CGPoint tangent = CGPointZero;
-	if (![self.control getObjectPoint:&tangent fromParameter:self.tangentParameterID atTime:time]) {
-		return NO;
-	}
-	CGPoint canvasTangent = [self.control canvasPointFromObjectPoint:tangent];
-	CGFloat dx = canvasPoint.x - canvasTangent.x;
-	CGFloat dy = canvasPoint.y - canvasTangent.y;
-	return dx * dx + dy * dy <= self.hitRadius * self.hitRadius;
-}
-
-// Option breaks the mirror and Shift snaps the angle here, so the base leaves both to this part.
-- (BOOL)handlesOptionDrag
-{
-	return YES;
-}
-
-- (BOOL)handlesConstrainDrag
-{
-	return YES;
-}
-
-- (BOOL)mouseDownAtObjectPoint:(CGPoint)objectPoint
-				   canvasPoint:(CGPoint)canvasPoint
-					 modifiers:(FxModifierKeys)modifiers
-						atTime:(CMTime)time
-{
-	// Command-click retracts the tangent onto its vertex, making that side linear.
-	if (![FxGripEventModifiers isDeleteClickForFxModifiers:modifiers]) {
-		return NO;
-	}
-	CGPoint vertex = CGPointZero;
-	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]) {
-		return NO;
-	}
-	return [self.control setObjectPoint:vertex toParameter:self.tangentParameterID atTime:time];
-}
-
-- (BOOL)dragToObjectPoint:(CGPoint)objectPoint
-			  objectDelta:(CGPoint)objectDelta
-				modifiers:(FxModifierKeys)modifiers
-				   atTime:(CMTime)time
-{
-	CGPoint vertex = CGPointZero;
-	NSSize inputSize = NSZeroSize;
-	BOOL haveFrame = [self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]
-		&& FxGripOSCReadInputSize(self.control, &inputSize);
-
-	// Command holds the tangent retracted on its vertex for the whole gesture.
-	if (haveFrame && [FxGripEventModifiers isDeleteClickForFxModifiers:modifiers]) {
-		return [self.control setObjectPoint:vertex toParameter:self.tangentParameterID atTime:time];
-	}
-
-	// Shift snaps the handle's angle about the vertex to 45° increments, keeping its length.
-	CGPoint tangentPoint = objectPoint;
-	if (haveFrame && [FxGripEventModifiers isConstrainForFxModifiers:modifiers]) {
-		CGPoint offset = FxGripOSCPixelVector(CGPointMake(objectPoint.x - vertex.x, objectPoint.y - vertex.y), inputSize);
-		double length = sqrt(offset.x * offset.x + offset.y * offset.y);
-		if (length >= 1e-9) {
-			double snapped = round(atan2(offset.y, offset.x) / (M_PI_4)) * M_PI_4;
-			CGPoint snappedOffset = FxGripOSCObjectVector(CGPointMake(cos(snapped) * length, sin(snapped) * length), inputSize);
-			tangentPoint = CGPointMake(vertex.x + snappedOffset.x, vertex.y + snappedOffset.y);
-		}
-	}
-
-	BOOL moved = [self.control setObjectPoint:tangentPoint toParameter:self.tangentParameterID atTime:time];
-	// Option gives this part its own gesture (break the mirror), declared via handlesOptionDrag.
-	if (!moved || !haveFrame || self.oppositeTangentParameterID == 0 || (modifiers & kFxModifierKey_OPTION)) {
-		return moved;
-	}
-
-	// The opposite tangent rotates to stay collinear through the vertex. Aligned mirroring keeps
-	// its own length; symmetric mirroring matches the dragged length. Measured in the pixel frame.
-	CGPoint opposite = CGPointZero;
-	if (![self.control getObjectPoint:&opposite fromParameter:self.oppositeTangentParameterID atTime:time]) {
-		return moved;
-	}
-	CGPoint dragged = FxGripOSCPixelVector(CGPointMake(tangentPoint.x - vertex.x, tangentPoint.y - vertex.y), inputSize);
-	double draggedLength = sqrt(dragged.x * dragged.x + dragged.y * dragged.y);
-	if (draggedLength < 1e-9) {
-		return moved;
-	}
-	CGPoint oppositeOffset = FxGripOSCPixelVector(CGPointMake(opposite.x - vertex.x, opposite.y - vertex.y), inputSize);
-	double oppositeLength = sqrt(oppositeOffset.x * oppositeOffset.x + oppositeOffset.y * oppositeOffset.y);
-	double magnitude = (self.mirroring == FxGripOSCTangentMirroringSymmetric) ? draggedLength : oppositeLength;
-	CGPoint mirrored = FxGripOSCObjectVector(CGPointMake(-dragged.x / draggedLength * magnitude,
-														 -dragged.y / draggedLength * magnitude), inputSize);
-	return [self.control setObjectPoint:CGPointMake(vertex.x + mirrored.x, vertex.y + mirrored.y)
-							toParameter:self.oppositeTangentParameterID
-								 atTime:time] && moved;
-}
-
-- (void)drawSelected:(BOOL)selected
-		  canvasSize:(CGSize)canvasSize
-	  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder
-			  atTime:(CMTime)time
-{
-	CGPoint vertex = CGPointZero, tangent = CGPointZero;
-	if (![self.control getObjectPoint:&vertex fromParameter:self.vertexParameterID atTime:time]
-		|| ![self.control getObjectPoint:&tangent fromParameter:self.tangentParameterID atTime:time]) {
-		return;
-	}
-	CGPoint stem[2] = {
-		[self.control canvasPointFromObjectPoint:vertex],
-		[self.control canvasPointFromObjectPoint:tangent],
-	};
-	[self.control strokeCanvasPoints:stem
-							   count:2
-							  closed:NO
-							   color:kFxGripOSCOutlineColor
-						  withShadow:YES
-						  canvasSize:canvasSize
-					  commandEncoder:commandEncoder];
-	[self fxDrawHandleAtCanvasPoint:stem[1]
-						   halfSide:self.handleRadius
-						   selected:selected
-						 canvasSize:canvasSize
-					 commandEncoder:commandEncoder];
 }
 
 @end
@@ -2041,9 +1567,13 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 										  heightParameterID:heightParameterID
 										   angleParameterID:angleParameterID]];
 	}
-	[parts addObject:[FxGripOSCAngleDialPart partWithID:rotationHandleID
-									  centerParameterID:centerParameterID
-									   angleParameterID:angleParameterID]];
+	// A box with no angle parameter is axis-aligned; the dial would never read a value, so omit
+	// it, matching the flag-form constructor.
+	if (angleParameterID != 0) {
+		[parts addObject:[FxGripOSCAngleDialPart partWithID:rotationHandleID
+										  centerParameterID:centerParameterID
+										   angleParameterID:angleParameterID]];
+	}
 	return parts;
 }
 
@@ -2387,7 +1917,7 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 
 static const NSUInteger kFxGripOSCCurveFlattening = 16;
 
-// Uniform Catmull-Rom: the curve passes through p1 and p2, shaped by neighbours p0 and p3.
+// Uniform Catmull-Rom: the curve passes through p1 and p2, shaped by neighbors p0 and p3.
 static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPoint p3, double t)
 {
 	double t2 = t * t;
@@ -2419,7 +1949,6 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 	if (self != nil) {
 		_pointParameterIDs = @[];
 		_color = kFxGripOSCOutlineColor;
-		_shadowed = YES;
 	}
 	return self;
 }
@@ -2466,7 +1995,7 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 	NSUInteger flatIndex = 0;
 	flattened[flatIndex++] = points[0];
 	for (NSUInteger segment = 0; segment < segments; segment++) {
-		// The two neighbours shape the segment; open ends clamp to the endpoints so the curve
+		// The two neighbors shape the segment; open ends clamp to the endpoints so the curve
 		// stays anchored, closed chains wrap.
 		NSInteger i0 = self.closed ? ((NSInteger)segment - 1 + (NSInteger)count) % (NSInteger)count
 								   : MAX((NSInteger)0, (NSInteger)segment - 1);
@@ -2483,7 +2012,7 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 							   count:flatIndex
 							  closed:NO
 							   color:self.color
-						  withShadow:self.shadowed
+						  withShadow:YES
 						  canvasSize:canvasSize
 					  commandEncoder:commandEncoder];
 	free(flattened);
@@ -2585,11 +2114,12 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 
 	CGFloat width = (CGFloat)texture.width;
 	CGFloat height = (CGFloat)texture.height;
-	// Canvas space is top-left origin, y down: the anchor is the panel's upper-left corner.
+	// Canvas y increases upward (the FxPlug convention): the anchor is the panel's upper-left
+	// corner, and the text extends downward to lower y.
 	CGPoint ul = anchor;
 	CGPoint ur = CGPointMake(anchor.x + width, anchor.y);
-	CGPoint lr = CGPointMake(anchor.x + width, anchor.y + height);
-	CGPoint ll = CGPointMake(anchor.x, anchor.y + height);
+	CGPoint lr = CGPointMake(anchor.x + width, anchor.y - height);
+	CGPoint ll = CGPointMake(anchor.x, anchor.y - height);
 
 	if (self.backgroundColor.w > 0.0) {
 		[self.control fillCanvasQuadLL:ll lr:lr ur:ur ul:ul
@@ -2602,220 +2132,6 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 								color:(simd_float4){ 1.0, 1.0, 1.0, 1.0 }
 						   canvasSize:canvasSize
 					   commandEncoder:commandEncoder];
-}
-
-@end
-
-@implementation FxGripOSCEditablePolygonPart
-{
-	NSInteger _selectedVertexIndex;
-	NSInteger _lastHitVertexIndex;
-	NSInteger _lastHitSegmentIndex;
-}
-
-+ (nonnull instancetype)partWithID:(NSInteger)partID pointListParameterID:(FxParameterId)pointListParameterID
-{
-	FxGripOSCEditablePolygonPart *part = [[self alloc] initWithPartID:partID];
-	part.pointListParameterID = pointListParameterID;
-	return NARC_AUTORELEASE(part);
-}
-
-- (nonnull instancetype)initWithPartID:(NSInteger)partID
-{
-	self = [super initWithPartID:partID];
-	if (self != nil) {
-		_selectedVertexIndex = -1;
-		_lastHitVertexIndex = -1;
-		_lastHitSegmentIndex = -1;
-		_requiresModifierToInsert = YES;
-		_minimumVertexCount = 2;
-		_hitRadius = 6.0;
-		_vertexHitRadius = 10.0;
-		_handleRadius = 4.0;
-		_color = kFxGripOSCOutlineColor;
-	}
-	return self;
-}
-
-- (NSInteger)selectedVertexIndex
-{
-	return _selectedVertexIndex;
-}
-
-- (nullable FxGripPointListData *)pointListAtTime:(CMTime)time
-{
-	NSObject *value = [self.control getCustomValueFromParameter:self.pointListParameterID atTime:time];
-	return [value isKindOfClass:FxGripPointListData.class] ? (FxGripPointListData *)value : nil;
-}
-
-- (BOOL)writeList:(FxGripPointListData *)list atTime:(CMTime)time
-{
-	return [self.control setCustomValue:list toParameter:self.pointListParameterID atTime:time];
-}
-
-- (BOOL)hitTestObjectPoint:(CGPoint)objectPoint canvasPoint:(CGPoint)canvasPoint atTime:(CMTime)time
-{
-	_lastHitVertexIndex = -1;
-	_lastHitSegmentIndex = -1;
-	FxGripPointListData *list = [self pointListAtTime:time];
-	NSUInteger count = list.count;
-	if (count == 0) {
-		return NO;
-	}
-
-	double bestVertexDistanceSquared = _vertexHitRadius * _vertexHitRadius;
-	for (NSUInteger index = 0; index < count; index++) {
-		CGPoint vertex = [self.control canvasPointFromObjectPoint:[list pointAtIndex:index]];
-		double dx = canvasPoint.x - vertex.x;
-		double dy = canvasPoint.y - vertex.y;
-		double distanceSquared = dx * dx + dy * dy;
-		if (distanceSquared <= bestVertexDistanceSquared) {
-			bestVertexDistanceSquared = distanceSquared;
-			_lastHitVertexIndex = (NSInteger)index;
-		}
-	}
-	if (_lastHitVertexIndex >= 0) {
-		return YES;
-	}
-
-	NSUInteger segmentCount = list.closed ? count : (count > 0 ? count - 1 : 0);
-	double hitRadiusSquared = _hitRadius * _hitRadius;
-	for (NSUInteger segment = 0; segment < segmentCount; segment++) {
-		CGPoint a = [self.control canvasPointFromObjectPoint:[list pointAtIndex:segment]];
-		CGPoint b = [self.control canvasPointFromObjectPoint:[list pointAtIndex:(segment + 1) % count]];
-		if (FxGripOSCDistanceSquaredToSegment(canvasPoint, a, b) <= hitRadiusSquared) {
-			_lastHitSegmentIndex = (NSInteger)segment;
-			return YES;
-		}
-	}
-	return NO;
-}
-
-- (BOOL)mouseDownAtObjectPoint:(CGPoint)objectPoint
-				   canvasPoint:(CGPoint)canvasPoint
-					 modifiers:(FxModifierKeys)modifiers
-						atTime:(CMTime)time
-{
-	_selectedVertexIndex = _lastHitVertexIndex;
-	// Command-click on a vertex deletes it, matching the Delete key on the selected vertex.
-	if (_lastHitVertexIndex >= 0 && [FxGripEventModifiers isDeleteClickForFxModifiers:modifiers]) {
-		return [self removeSelectedVertexAtTime:time];
-	}
-	if (_lastHitVertexIndex < 0 && _lastHitSegmentIndex >= 0) {
-		BOOL modifierSatisfied = !_requiresModifierToInsert || (modifiers & kFxModifierKey_OPTION) != 0;
-		if (modifierSatisfied) {
-			return [self insertVertexOnSegment:(NSUInteger)_lastHitSegmentIndex
-								 atObjectPoint:objectPoint
-										atTime:time];
-		}
-	}
-	return NO;
-}
-
-- (BOOL)insertVertexOnSegment:(NSUInteger)segment atObjectPoint:(CGPoint)objectPoint atTime:(CMTime)time
-{
-	FxGripPointListData *list = [self pointListAtTime:time];
-	NSUInteger count = list.count;
-	if (count < 2 || segment >= count) {
-		return NO;
-	}
-	CGPoint a = [list pointAtIndex:segment];
-	CGPoint b = [list pointAtIndex:(segment + 1) % count];
-	CGPoint ab = CGPointMake(b.x - a.x, b.y - a.y);
-	double lengthSquared = ab.x * ab.x + ab.y * ab.y;
-	double t = 0.5;
-	if (lengthSquared > 0.0) {
-		t = ((objectPoint.x - a.x) * ab.x + (objectPoint.y - a.y) * ab.y) / lengthSquared;
-		t = t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t);
-	}
-	CGPoint inserted = CGPointMake(a.x + t * ab.x, a.y + t * ab.y);
-	NSUInteger insertIndex = segment + 1;
-	FxGripPointListData *updated = [list byInsertingPoint:inserted atIndex:insertIndex];
-	if (![self writeList:updated atTime:time]) {
-		return NO;
-	}
-	_selectedVertexIndex = (NSInteger)insertIndex;
-	return YES;
-}
-
-- (BOOL)dragToObjectPoint:(CGPoint)objectPoint
-			  objectDelta:(CGPoint)objectDelta
-				modifiers:(FxModifierKeys)modifiers
-				   atTime:(CMTime)time
-{
-	FxGripPointListData *list = [self pointListAtTime:time];
-	if (list == nil || list.count == 0) {
-		return NO;
-	}
-	FxGripPointListData *updated = nil;
-	if (_selectedVertexIndex >= 0 && (NSUInteger)_selectedVertexIndex < list.count) {
-		updated = [list byReplacingPointAtIndex:(NSUInteger)_selectedVertexIndex withPoint:objectPoint];
-	} else {
-		updated = [list byTranslatingBy:objectDelta];
-	}
-	return [self writeList:updated atTime:time];
-}
-
-- (BOOL)keyDownWithKey:(unsigned short)asciiKey
-			 modifiers:(FxModifierKeys)modifiers
-				atTime:(CMTime)time
-{
-	// Delete (127) or Backspace (8) removes the selected vertex.
-	if (asciiKey != 127 && asciiKey != 8) {
-		return NO;
-	}
-	return [self removeSelectedVertexAtTime:time];
-}
-
-/*! Removes the selected vertex, unless it would drop below the minimum count. */
-- (BOOL)removeSelectedVertexAtTime:(CMTime)time
-{
-	if (_selectedVertexIndex < 0) {
-		return NO;
-	}
-	FxGripPointListData *list = [self pointListAtTime:time];
-	if (list == nil || (NSUInteger)_selectedVertexIndex >= list.count || list.count <= self.minimumVertexCount) {
-		return NO;
-	}
-	FxGripPointListData *updated = [list byRemovingPointAtIndex:(NSUInteger)_selectedVertexIndex];
-	_selectedVertexIndex = -1;
-	return [self writeList:updated atTime:time];
-}
-
-- (void)drawSelected:(BOOL)selected
-		  canvasSize:(CGSize)canvasSize
-	  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder
-			  atTime:(CMTime)time
-{
-	FxGripPointListData *list = [self pointListAtTime:time];
-	NSUInteger count = list.count;
-	if (count == 0) {
-		return;
-	}
-	CGPoint *points = malloc(count * sizeof(CGPoint));
-	if (points == NULL) {
-		return;
-	}
-	for (NSUInteger index = 0; index < count; index++) {
-		points[index] = [self.control canvasPointFromObjectPoint:[list pointAtIndex:index]];
-	}
-	if (count >= 2) {
-		[self.control strokeCanvasPoints:points
-								   count:count
-								  closed:list.closed
-								   color:self.color
-							  withShadow:YES
-							  canvasSize:canvasSize
-						  commandEncoder:commandEncoder];
-	}
-	for (NSUInteger index = 0; index < count; index++) {
-		[self fxDrawHandleAtCanvasPoint:points[index]
-							   halfSide:self.handleRadius
-							   selected:((NSInteger)index == _selectedVertexIndex)
-							 canvasSize:canvasSize
-						 commandEncoder:commandEncoder];
-	}
-	free(points);
 }
 
 @end

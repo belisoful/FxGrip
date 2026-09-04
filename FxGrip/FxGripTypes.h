@@ -203,7 +203,7 @@ typedef NS_ENUM(NSUInteger, FxGripPresetSource) {
 // the decimal parameter ID (zero-argument, per the FxPlug button contract). The method is
 // not implemented anywhere; FxGripTileableEffect resolves it at runtime, decodes the
 // parameter ID, and dispatches to the standardized -parameterClicked: path.
-#define kFxGripClickSelectorPrefix	@"clickFxGripParameterId"
+#define kFxGripClickSelectorPrefix	@"clickFxGripParameterId_"
 #define kFxParameterProperty_ManagePrefix	@"manage"
 #define kFxParameterProperty_X			@"x"
 #define kFxParameterProperty_Y			@"y"

@@ -327,13 +327,13 @@ static CMTime FxGripPointOSCTestTime(void)
 {
 	[self addPointWith:@{kFxGripPointKey_PinDistance: @20.0, kFxGripPointKey_PinAngle: @90.0} name:nil];
 
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:20], (NSInteger)1, @"canvas y runs down, so up is -y");
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:60], (NSInteger)0);
+	XCTAssertEqual([self hitTestAtCanvasX:40 y:60], (NSInteger)1, @"canvas y increases upward, so up is +y");
+	XCTAssertEqual([self hitTestAtCanvasX:40 y:20], (NSInteger)0);
 }
 
 - (void)testTheEffectiveHandleRadiusFollowsControlSize
 {
-	FxGripOSCRichPointHandlePart *sized = [self addPointWith:@{kFxGripPointKey_ControlSize: @14.0} name:nil][0];
+	FxGripOSCRichPointHandlePart *sized = (FxGripOSCRichPointHandlePart *)[self addPointWith:@{kFxGripPointKey_ControlSize: @14.0} name:nil][0];
 	XCTAssertEqual([sized effectiveHandleRadius], 7.0);
 
 	FxGripOSCRichPointHandlePart *stock = [FxGripOSCRichPointHandlePart partWithID:9 parameterID:1 options:[self optionsWith:nil]];

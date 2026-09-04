@@ -143,7 +143,8 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripCurveSetEditorView.h>
 #import <FxGrip/FxGripCurveSetData.h>
 #import <FxGrip/FxGripFrameData.h>
-#import <FxGrip/FxGripPointListData.h>
+#import <FxGrip/FxGripPathData.h>
+#import <FxGrip/FxGripPathGeometry.h>
 #import <FxGrip/FxGripInterpolatingDictionary.h>
 #import <FxGrip/FxGripMetaManager.h>
 #import <FxGrip/FxGripMutableParameter.h>
@@ -152,6 +153,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripOSCShaderTypes.h>
 #import <FxGrip/FxGripOnScreenControl.h>
 #import <FxGrip/FxGripOSCPart.h>
+#import <FxGrip/FxGripOSCPathPart.h>
 #import <FxGrip/FxGripPointOSC.h>
 
 #import <FxGrip/FxGripInferenceRequest.h>

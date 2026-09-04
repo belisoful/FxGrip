@@ -51,6 +51,24 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCShapeOptions) {
 	base applies it through the host's OSC API on mouse-moved. */
 @property (nonatomic, strong, nullable) NSCursor *cursor;
 
+/*!
+	@property   shadowColor
+	@abstract   The color of the part's drop shadow.
+	@discussion Introduced in FxGrip 1.0. Every part casts a drop shadow, drawn by the control in
+				a pass beneath the crisp control. shadowColor defaults to the standard shadow. An
+				alpha of 0 disables the shadow.
+*/
+@property (nonatomic, assign) simd_float4 shadowColor;
+
+/*! The shadow offset in canvas pixels, down and to the right. Defaults to 1. 0 offsets nothing. */
+@property (nonatomic, assign) double shadowDistance;
+
+/*! The gaussian blur radius of the shadow, in canvas pixels. Defaults to 0 (a crisp shadow). */
+@property (nonatomic, assign) double shadowBlur;
+
+/*! YES when the part casts a visible shadow: a nonzero shadow alpha with a nonzero offset or blur. */
+@property (nonatomic, readonly) BOOL castsShadow;
+
 - (nonnull instancetype)initWithPartID:(NSInteger)partID;
 
 - (BOOL)hitTestObjectPoint:(CGPoint)objectPoint canvasPoint:(CGPoint)canvasPoint atTime:(CMTime)time;
@@ -129,7 +147,7 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCShapeOptions) {
 /*!
 	@class      FxGripOSCPointHandlePart
 	@abstract   A square handle bound to a point parameter.
-	@discussion The handle follows the cursor: a drag writes the pointer's object
+	@discussion Introduced in FxGrip 1.0. The handle follows the cursor: a drag writes the pointer's object
 				position to the parameter. Hit testing measures canvas-pixel distance
 				to the handle, so the grab target stays the same size at every zoom.
 */
@@ -148,12 +166,6 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCShapeOptions) {
 @end
 
 /*!
-	@class      FxGripOSCRectPart
-	@abstract   A rectangle bound to lower-left and upper-right point parameters.
-	@discussion A hit is any object point inside the rectangle; a drag moves both
-				corner parameters by the drag's object-space delta.
-*/
-/*!
 	@enum       FxGripOSCRectCorner
 	@abstract   Names a corner for FxGripOSCRectCornerPart and FxGripOSCBoxCornerPart.
 */
@@ -164,6 +176,12 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	FxGripOSCRectCornerUpperLeft	= 3,
 };
 
+/*!
+	@class      FxGripOSCRectPart
+	@abstract   A rectangle bound to lower-left and upper-right point parameters.
+	@discussion Introduced in FxGrip 1.0. A hit is any object point inside the rectangle; a drag moves both
+				corner parameters by the drag's object-space delta.
+*/
 @interface FxGripOSCRectPart : FxGripOSCPart
 
 @property (nonatomic, assign) FxParameterId lowerLeftParameterID;
@@ -193,7 +211,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 /*!
 	@class      FxGripOSCRectRotationHandlePart
 	@abstract   A rotation spoke for the two-corner rectangle's angle overlay.
-	@discussion The spoke runs from the corners' midpoint to a tip handle at a fixed
+	@discussion Introduced in FxGrip 1.0. The spoke runs from the corners' midpoint to a tip handle at a fixed
 				canvas radius, aimed by the angle parameter; dragging writes the
 				pointer's canvas-space angle around the midpoint. Holding Shift snaps
 				the written angle to 45° increments, the Final Cut Pro convention.
@@ -227,7 +245,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	@class      FxGripOSCBoxPart
 	@abstract   A rotatable box bound to center point, pixel width, pixel height,
 				and angle parameters.
-	@discussion The Motion-style box model. Width and height are in input-image
+	@discussion Introduced in FxGrip 1.0. The Motion-style box model. Width and height are in input-image
 				pixels; the box rotates rigidly about its center in the input-pixel
 				frame. A hit is any pointer inside the rotated box; a drag moves the
 				center. angleParameterID 0 leaves the box axis-aligned.
@@ -256,7 +274,8 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 
 /*! The body, four corner handles numbered firstCornerID through firstCornerID + 3
 	in lower-left, lower-right, upper-right, upper-left order, and the rotation
-	dial. Handles follow the body, so they win overlapping hits. */
+	dial, which is omitted when angleParameterID is 0. Handles follow the body, so
+	they win overlapping hits. */
 + (nonnull NSArray<FxGripOSCPart *> *)boxPartsWithBodyID:(NSInteger)bodyID
 										   firstCornerID:(NSInteger)firstCornerID
 										rotationHandleID:(NSInteger)rotationHandleID
@@ -279,7 +298,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 /*!
 	@class      FxGripOSCBoxCornerPart
 	@abstract   A resize handle on one corner of an FxGripOSCBoxPart-model box.
-	@discussion The handle sits on the rotated corner. Dragging resizes the box in
+	@discussion Introduced in FxGrip 1.0. The handle sits on the rotated corner. Dragging resizes the box in
 				its local frame, writing the width and height parameters. Modifiers
 				follow Final Cut Pro:
 
@@ -319,7 +338,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 /*!
 	@class      FxGripOSCLinePart
 	@abstract   A line segment bound to start and end point parameters.
-	@discussion Serves gradients, wipes, and motion vectors. A hit is any point
+	@discussion Introduced in FxGrip 1.0. Serves gradients, wipes, and motion vectors. A hit is any point
 				within hitRadius canvas pixels of the segment; a drag moves both
 				endpoint parameters by the drag's object-space delta.
 
@@ -358,7 +377,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	@class      FxGripOSCAngleDialPart
 	@abstract   A rotation spoke bound to a center point parameter and an angle
 				parameter.
-	@discussion The spoke runs from the center to a tip handle at a fixed canvas
+	@discussion Introduced in FxGrip 1.0. The spoke runs from the center to a tip handle at a fixed canvas
 				radius; dragging the tip writes the angle of the pointer around the
 				center, measured counterclockwise from +x in canvas space. Holding
 				Shift snaps the written angle to 45° increments, the Final Cut Pro
@@ -393,7 +412,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	@class      FxGripOSCRectCornerPart
 	@abstract   A resize handle on one corner of a rectangle bound to lower-left and
 				upper-right point parameters.
-	@discussion Dragging writes the pointer's object position into the corner's
+	@discussion Introduced in FxGrip 1.0. Dragging writes the pointer's object position into the corner's
 				components: the lower-right corner, for example, writes x to the
 				upper-right parameter and y to the lower-left parameter. The corners
 				are not normalized; a corner dragged past its opposite inverts the
@@ -432,7 +451,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	@class      FxGripOSCCirclePart
 	@abstract   A circle bound to a center point parameter and a pixel-radius float
 				parameter.
-	@discussion The radius parameter is in input-image pixels; hit testing and
+	@discussion Introduced in FxGrip 1.0. The radius parameter is in input-image pixels; hit testing and
 				drawing normalize it against the input bounds, correcting for the
 				image's aspect ratio. A drag moves the center by the object-space
 				delta.
@@ -478,7 +497,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 /*!
 	@class      FxGripOSCCircleRadiusHandlePart
 	@abstract   A handle on a circle's rim that resizes the radius parameter.
-	@discussion The handle sits on the rim at rimAngle. Dragging writes the
+	@discussion Introduced in FxGrip 1.0. The handle sits on the rim at rimAngle. Dragging writes the
 				aspect-corrected object-space distance from the center, scaled to
 				input-image pixels, into the radius parameter; the companion
 				FxGripOSCCirclePart's drag moves the center, so together they give a
@@ -508,7 +527,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 	@class      FxGripOSCRotationHandlePart
 	@abstract   A rotation handle on a circle's rim, bound to center point, pixel
 				radius, and angle parameters.
-	@discussion The handle sits on the rim at the angle parameter's direction, with
+	@discussion Introduced in FxGrip 1.0. The handle sits on the rim at the angle parameter's direction, with
 				a spoke drawn from the center. Dragging writes the pointer's angle
 				around the center, measured counterclockwise from +x in canvas
 				space; the radius parameter only positions the handle. Holding Shift
@@ -545,7 +564,7 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 /*!
 	@class      FxGripOSCPolylinePart
 	@abstract   A chain of point parameters drawn as connected segments.
-	@discussion Serves paths, garbage mattes, and corner pins: four points with
+	@discussion Introduced in FxGrip 1.0. Serves paths, garbage mattes, and corner pins: four points with
 				closed YES is a corner-pin outline. A hit is any point within
 				hitRadius canvas pixels of a segment; a drag moves every point
 				parameter by the drag's object-space delta.
@@ -557,20 +576,6 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 
 /*! The point parameters, in chain order. */
 @property (nonatomic, copy, nonnull) NSArray<NSNumber *> *pointParameterIDs;
-
-/*!
-	@property   inTangentParameterIDs
-	@abstract   Opts the chain into cubic Bézier segments, Final Cut Pro style.
-	@discussion Both tangent arrays name one point parameter per vertex, in chain
-				order, holding absolute object-space positions. Segment i curves
-				from vertex i through its out tangent and vertex i+1's in tangent.
-				A vertex whose tangents sit on it behaves as a linear point. The
-				chain stays straight while either array is nil or its count does
-				not match the vertices. A body drag moves the tangents with the
-				vertices.
-*/
-@property (nonatomic, copy, nullable) NSArray<NSNumber *> *inTangentParameterIDs;
-@property (nonatomic, copy, nullable) NSArray<NSNumber *> *outTangentParameterIDs;
 
 /*! YES closes the chain's last vertex back to the first. Defaults to NO. */
 @property (nonatomic, assign) BOOL closed;
@@ -595,118 +600,8 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 											 pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
 														closed:(BOOL)closed;
 
-/*!
-	@method     bezierPartsWithOptions:firstPartID:pointParameterIDs:inTangentParameterIDs:outTangentParameterIDs:closed:
-	@abstract   The Bézier chain: the curved body, vertex handles that carry their
-				tangents, and tangent handles with aligned mirroring.
-	@discussion Inclusion order: Body; VertexHandles
-				(FxGripOSCBezierVertexHandlePart per vertex, chain order);
-				TangentHandles (FxGripOSCTangentHandlePart in, then out, per vertex,
-				chain order). An open chain skips the first vertex's in tangent and
-				the last vertex's out tangent, which no segment uses.
-*/
-+ (nonnull NSArray<FxGripOSCPart *> *)bezierPartsWithOptions:(FxGripOSCShapeOptions)options
-												 firstPartID:(NSInteger)firstPartID
-										   pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
-									   inTangentParameterIDs:(nonnull NSArray<NSNumber *> *)inTangentParameterIDs
-									  outTangentParameterIDs:(nonnull NSArray<NSNumber *> *)outTangentParameterIDs
-													  closed:(BOOL)closed;
-
 @end
 
-/*!
-	@class      FxGripOSCBezierVertexHandlePart
-	@abstract   A vertex handle that carries the vertex's tangents with it.
-	@discussion Dragging writes the pointer's object position to the vertex and
-				moves both tangent parameters by the same delta, so the curve's
-				shape at the vertex is preserved, the Final Cut Pro behavior. A
-				tangent parameter ID of 0 skips that side.
-
-				A double-click toggles the vertex between smooth and corner, the
-				Final Cut Pro convention. A corner vertex has both tangents on it,
-				so its segments run straight. Toggling to corner retracts both
-				tangents onto the vertex. Toggling back to smooth regenerates them
-				along the axis through the neighbor vertices at a sixth of that
-				span, so the neighbor parameter IDs must be set for the smooth
-				direction to be known. An endpoint uses its one neighbor.
-*/
-@interface FxGripOSCBezierVertexHandlePart : FxGripOSCPart
-
-@property (nonatomic, assign) FxParameterId vertexParameterID;
-@property (nonatomic, assign) FxParameterId inTangentParameterID;
-@property (nonatomic, assign) FxParameterId outTangentParameterID;
-
-/*! The previous vertex in the chain, for regenerating a smooth tangent; 0 (the default) is none. */
-@property (nonatomic, assign) FxParameterId previousVertexParameterID;
-
-/*! The next vertex in the chain, for regenerating a smooth tangent; 0 (the default) is none. */
-@property (nonatomic, assign) FxParameterId nextVertexParameterID;
-
-/*! The hit radius around the handle, in canvas pixels. Defaults to 10. */
-@property (nonatomic, assign) double hitRadius;
-
-/*! Half the handle square's side, in canvas pixels. Defaults to 4. */
-@property (nonatomic, assign) double handleRadius;
-
-+ (nonnull instancetype)partWithID:(NSInteger)partID
-				 vertexParameterID:(FxParameterId)vertexParameterID
-			  inTangentParameterID:(FxParameterId)inTangentParameterID
-			 outTangentParameterID:(FxParameterId)outTangentParameterID;
-
-@end
-
-/*!
-	@enum       FxGripOSCTangentMirroring
-	@abstract   How a tangent handle drives the vertex's opposite tangent.
-	@constant   FxGripOSCTangentMirroringAligned    Collinear, the opposite keeps its own length.
-	@constant   FxGripOSCTangentMirroringSymmetric  Collinear, the opposite matches the dragged length.
-*/
-typedef NS_ENUM(NSInteger, FxGripOSCTangentMirroring) {
-	FxGripOSCTangentMirroringAligned	= 0,
-	FxGripOSCTangentMirroringSymmetric	= 1,
-};
-
-/*!
-	@class      FxGripOSCTangentHandlePart
-	@abstract   A Bézier tangent handle drawn with a stem from its vertex.
-	@discussion Dragging writes the pointer's object position to the tangent. When
-				oppositeTangentParameterID names the vertex's other tangent, the
-				opposite rotates to stay collinear through the vertex so the vertex
-				stays smooth. The mirroring property sets whether the opposite keeps
-				its own length (aligned, the default) or matches the dragged length
-				(symmetric, Motion's linked handles). The Final Cut Pro modifiers
-				apply:
-
-				- Option drag breaks the pair and moves only the dragged tangent.
-				- Shift drag snaps the handle's angle about the vertex to 45°
-				  increments, keeping the dragged length.
-				- Command click retracts the tangent onto the vertex, making that
-				  side of the vertex linear.
-
-				Angles, lengths, and collinearity are measured in the input-pixel frame.
-*/
-@interface FxGripOSCTangentHandlePart : FxGripOSCPart
-
-@property (nonatomic, assign) FxParameterId vertexParameterID;
-@property (nonatomic, assign) FxParameterId tangentParameterID;
-
-/*! The vertex's other tangent for mirroring; 0 (the default) is none. */
-@property (nonatomic, assign) FxParameterId oppositeTangentParameterID;
-
-/*! How the opposite tangent follows this one. Defaults to aligned. */
-@property (nonatomic, assign) FxGripOSCTangentMirroring mirroring;
-
-/*! The hit radius around the handle, in canvas pixels. Defaults to 8. */
-@property (nonatomic, assign) double hitRadius;
-
-/*! Half the handle square's side, in canvas pixels. Defaults to 3. */
-@property (nonatomic, assign) double handleRadius;
-
-+ (nonnull instancetype)partWithID:(NSInteger)partID
-				 vertexParameterID:(FxParameterId)vertexParameterID
-				tangentParameterID:(FxParameterId)tangentParameterID;
-
-@end
 
 /*!
 	@category   FxGripOSCRectPart (Composites)
@@ -746,10 +641,12 @@ typedef NS_ENUM(NSInteger, FxGripOSCTangentMirroring) {
 /*!
 	@class      FxGripOSCCurvePart
 	@abstract   A display-only smooth curve through point parameters.
-	@discussion Strokes a Catmull-Rom spline that passes through every control point named by
+	@discussion Introduced in FxGrip 1.0. Strokes a Catmull-Rom spline that passes through every control point named by
 				pointParameterIDs. The part answers no hit and ignores drags; pair it with
 				point handle parts (or a polyline body) for an editable curve, or use it alone
-				to draw a read-only path such as a motion track.
+				to draw a read-only path such as a motion track. For an editable curve with
+				vertex and tangent handles, use FxGripOSCPathPart instead. The drop shadow is the
+				inherited shadowColor, shadowDistance, and shadowBlur appearance.
 */
 @interface FxGripOSCCurvePart : FxGripOSCPart
 
@@ -761,9 +658,6 @@ typedef NS_ENUM(NSInteger, FxGripOSCTangentMirroring) {
 
 /*! The stroke color. Defaults to the standard outline color. */
 @property (nonatomic, assign) simd_float4 color;
-
-/*! Draws a one-pixel drop shadow beneath the stroke. Defaults to YES. */
-@property (nonatomic, assign) BOOL shadowed;
 
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
@@ -814,49 +708,5 @@ typedef NS_ENUM(NSInteger, FxGripOSCTangentMirroring) {
 
 @end
 
-/*!
-	@class      FxGripOSCEditablePolygonPart
-	@abstract   A polygon whose vertices can be inserted, moved, and deleted at runtime.
-	@discussion Introduced in FxGrip 1.0. The vertices live in one custom-data parameter
-				holding an FxGripPointListData, so the count changes without a fixed set of
-				point parameters. Interactions:
-				- click a vertex to select it, then drag to move it;
-				- drag a segment (no vertex under the pointer) to move the whole polygon;
-				- click a segment to insert a vertex at the pointer's projection
-				  (requiresModifierToInsert gates this on the Option key);
-				- press Delete or Backspace to remove the selected vertex, down to
-				  minimumVertexCount.
-				A hit on a vertex measures canvas-pixel distance, so the grab target stays
-				the same size at every zoom.
-*/
-@interface FxGripOSCEditablePolygonPart : FxGripOSCPart
-
-/*! The custom-data parameter holding the FxGripPointListData vertices. */
-@property (nonatomic, assign) FxParameterId pointListParameterID;
-
-/*! YES requires the Option key to insert a vertex on a segment click. Defaults to YES. */
-@property (nonatomic, assign) BOOL requiresModifierToInsert;
-
-/*! The polygon will not delete below this many vertices. Defaults to 2. */
-@property (nonatomic, assign) NSUInteger minimumVertexCount;
-
-/*! The hit distance from a segment, in canvas pixels. Defaults to 6. */
-@property (nonatomic, assign) double hitRadius;
-
-/*! The hit radius around a vertex, in canvas pixels. Defaults to 10. */
-@property (nonatomic, assign) double vertexHitRadius;
-
-/*! Half a vertex handle's side, in canvas pixels. Defaults to 4. */
-@property (nonatomic, assign) double handleRadius;
-
-/*! The outline stroke color. Defaults to the standard outline color. */
-@property (nonatomic, assign) simd_float4 color;
-
-/*! The selected vertex, or -1 when none is selected. */
-@property (nonatomic, readonly) NSInteger selectedVertexIndex;
-
-+ (nonnull instancetype)partWithID:(NSInteger)partID pointListParameterID:(FxParameterId)pointListParameterID;
-
-@end
 
 #endif /* FxGripOSCPart_h */

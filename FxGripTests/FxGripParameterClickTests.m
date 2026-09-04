@@ -114,14 +114,15 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 
 - (void)testGetParameterIDRejectsMalformedSelectors
 {
+	NSString *prefix = kFxGripClickSelectorPrefix;
 	NSArray<NSString *> *rejected = @[
-		@"clickFxGripParameterId",			// no digits
-		@"clickFxGripParameterId12x",		// trailing junk
-		@"clickFxGripParameterId 12",		// embedded space
-		@"clickMyButton",					// unrelated plugin selector
-		@"clickfxgripparameterid12",		// wrong case
-		@"FxGripParameterId12",				// missing prefix
-		@"clickFxGripParameterId4294967296",// greater than UINT32_MAX
+		prefix,													// no digits
+		[prefix stringByAppendingString:@"12x"],				// trailing junk
+		[prefix stringByAppendingString:@" 12"],				// embedded space
+		@"clickMyButton",										// unrelated plugin selector
+		[prefix.lowercaseString stringByAppendingString:@"12"],	// wrong case
+		[[prefix substringFromIndex:@"click".length] stringByAppendingString:@"12"],	// missing "click"
+		[prefix stringByAppendingString:@"4294967296"],			// greater than UINT32_MAX
 	];
 
 	for (NSString *name in rejected) {
@@ -146,13 +147,13 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 
 - (void)testSynthesizedClickSelectorResolvesOnEffectBase
 {
-	SEL selector = NSSelectorFromString(@"clickFxGripParameterId777");
+	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:777]);
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:selector]);
 }
 
 - (void)testResolvedClickSelectorInstallsTrampolineMethod
 {
-	SEL selector = NSSelectorFromString(@"clickFxGripParameterId777");
+	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:777]);
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:selector]);
 	XCTAssertTrue(class_getInstanceMethod(FxGripTileableEffect.class, selector) != NULL);
 }
@@ -160,12 +161,12 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 - (void)testNonSynthesizedSelectorsAreNotResolved
 {
 	XCTAssertFalse([FxGripTileableEffect instancesRespondToSelector:NSSelectorFromString(@"clickMyButton")]);
-	XCTAssertFalse([FxGripTileableEffect instancesRespondToSelector:NSSelectorFromString(@"clickFxGripParameterId12x")]);
+	XCTAssertFalse([FxGripTileableEffect instancesRespondToSelector:NSSelectorFromString([kFxGripClickSelectorPrefix stringByAppendingString:@"12x"])]);
 }
 
 - (void)testSubclassInheritsClickSelectorResolution
 {
-	SEL selector = NSSelectorFromString(@"clickFxGripParameterId31337");
+	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:31337]);
 	XCTAssertTrue([FxGripClickTestEffectSubclass instancesRespondToSelector:selector]);
 }
 

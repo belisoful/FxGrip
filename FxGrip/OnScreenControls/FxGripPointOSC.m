@@ -120,8 +120,8 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 		return CGPointZero;
 	}
 	double radians = self.options.pinAngle * M_PI / 180.0;
-	// Canvas y runs down, so a positive angle lifts the pin on screen.
-	return CGPointMake(self.options.pinDistance * cos(radians), -self.options.pinDistance * sin(radians));
+	// Canvas y increases upward, so a positive angle lifts the pin on screen.
+	return CGPointMake(self.options.pinDistance * cos(radians), self.options.pinDistance * sin(radians));
 }
 
 - (BOOL)handleCanvasPoint:(nonnull CGPoint *)canvasPoint atTime:(CMTime)time
@@ -447,11 +447,12 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 		label.anchorParameterID = parameterID;
 		label.handlePartID = handleID;
 		label.nameOnlyWhenAbove = options.nameOnlyWhenAbove;
-		// Sit the readout above and to the right of the handle, clear of the pin offset.
+		// Sit the readout above and to the right of the handle, clear of the pin offset. Canvas y
+		// increases upward, so "above" adds to y and the readout's top-left clears its own height.
 		double radians = options.pinAngle * M_PI / 180.0;
 		CGPoint pin = options.displayAsPin
-			? CGPointMake(options.pinDistance * cos(radians), -options.pinDistance * sin(radians)) : CGPointZero;
-		label.canvasOffset = CGPointMake(pin.x + halfSide + 6.0, pin.y - halfSide - label.fontSize - 8.0);
+			? CGPointMake(options.pinDistance * cos(radians), options.pinDistance * sin(radians)) : CGPointZero;
+		label.canvasOffset = CGPointMake(pin.x + halfSide + 6.0, pin.y + halfSide + label.fontSize + 8.0);
 		[parts addObject:NARC_AUTORELEASE(label)];
 	}
 	return parts;

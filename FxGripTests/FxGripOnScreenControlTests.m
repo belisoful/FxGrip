@@ -16,7 +16,10 @@
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripOnScreenControl.h>
 #import <FxGrip/FxGripOSCPart.h>
-#import <FxGrip/FxGripPointListData.h>
+
+@interface FxGripOnScreenControl (FxGripShadowTesting)
++ (NSArray<NSNumber *> *)fxShadowBlurRadiiForParts:(NSArray<FxGripOSCPart *> *)parts;
+@end
 
 static const double kOSCTestCanvasPerObject = 100.0;
 
@@ -1260,346 +1263,6 @@ static CMTime FxGripOSCTestTime(void)
 							   @"Shift snaps the rectangle's rotation to the nearest 45 degrees");
 }
 
-#pragma mark Bézier chains
-
-/*!
-	A two-vertex chain on 71/72 with tangents 75-78 bowing the segment upward:
-	canvas control polygon (20,20) - (33,47) - (47,47) - (60,20).
-*/
-- (FxGripOSCPolylinePart *)stageBezierChain
-{
-	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:71];
-	[self stagePoint:NSMakePoint(0.6, 0.2) forParameter:72];
-	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:75];
-	[self stagePoint:NSMakePoint(0.33, 0.47) forParameter:76];
-	[self stagePoint:NSMakePoint(0.47, 0.47) forParameter:77];
-	[self stagePoint:NSMakePoint(0.6, 0.2) forParameter:78];
-
-	FxGripOSCPolylinePart *part = [FxGripOSCPolylinePart partWithID:20
-												  pointParameterIDs:@[@71, @72]
-															 closed:NO];
-	part.inTangentParameterIDs = @[@75, @77];
-	part.outTangentParameterIDs = @[@76, @78];
-	return part;
-}
-
-- (void)testABezierChainCurvesAwayFromTheStraightLine
-{
-	[self.control addPart:[self stageBezierChain]];
-
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:40], (NSInteger)20,
-				   @"the curve's midpoint sits near canvas (40, 40)");
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:20], (NSInteger)0,
-				   @"the straight chord is no longer on the curve");
-}
-
-- (void)testMismatchedTangentArraysFallBackToStraightSegments
-{
-	FxGripOSCPolylinePart *part = [self stageBezierChain];
-	part.inTangentParameterIDs = @[@75];
-	[self.control addPart:part];
-
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:20], (NSInteger)20);
-}
-
-- (void)testABezierBodyDragCarriesTheTangents
-{
-	[self.control addPart:[self stageBezierChain]];
-	BOOL forceUpdate = NO;
-
-	[self.control mouseDownAtPositionX:40 positionY:40 activePart:20 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDraggedAtPositionX:50 positionY:50 activePart:20 modifiers:0
-							  forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertTrue(forceUpdate);
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)6, @"two vertices and four tangents move together");
-	XCTAssertEqualObjects(writes[2][@"parameter"], @75);
-	XCTAssertEqualWithAccuracy([writes[2][@"x"] doubleValue], 0.3, 1e-9);
-	XCTAssertEqualWithAccuracy([writes[2][@"y"] doubleValue], 0.3, 1e-9);
-}
-
-- (void)testABezierVertexHandleCarriesItsTangents
-{
-	[self stageBezierChain];
-	[self.control addPart:[FxGripOSCBezierVertexHandlePart partWithID:25
-													vertexParameterID:71
-												 inTangentParameterID:75
-												outTangentParameterID:76]];
-	BOOL forceUpdate = NO;
-
-	XCTAssertEqual([self hitTestAtCanvasX:20 y:20], (NSInteger)25);
-	[self.control mouseDownAtPositionX:20 positionY:20 activePart:25 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDraggedAtPositionX:30 positionY:30 activePart:25 modifiers:0
-							  forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertTrue(forceUpdate);
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)3);
-	XCTAssertEqualObjects(writes[0][@"parameter"], @71);
-	XCTAssertEqualWithAccuracy([writes[0][@"x"] doubleValue], 0.3, 1e-9);
-	XCTAssertEqualObjects(writes[2][@"parameter"], @76);
-	XCTAssertEqualWithAccuracy([writes[2][@"x"] doubleValue], 0.43, 1e-9,
-							   @"the out tangent moves by the vertex's delta");
-	XCTAssertEqualWithAccuracy([writes[2][@"y"] doubleValue], 0.57, 1e-9);
-}
-
-- (void)testATangentHandleMirrorsTheOppositeTangent
-{
-	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:61];
-	[self stagePoint:NSMakePoint(0.6, 0.6) forParameter:62];
-	[self stagePoint:NSMakePoint(0.5, 0.7) forParameter:63];
-	FxGripOSCTangentHandlePart *handle = [FxGripOSCTangentHandlePart partWithID:26
-																vertexParameterID:61
-															   tangentParameterID:62];
-	handle.oppositeTangentParameterID = 63;
-	[self.control addPart:handle];
-	BOOL forceUpdate = NO;
-
-	[self.control mouseDownAtPositionX:60 positionY:60 activePart:26 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDraggedAtPositionX:70 positionY:50 activePart:26 modifiers:0
-							  forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertTrue(forceUpdate);
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)2);
-	XCTAssertEqualObjects(writes[0][@"parameter"], @62);
-	XCTAssertEqualWithAccuracy([writes[0][@"x"] doubleValue], 0.7, 1e-9);
-	// The opposite keeps its 20-pixel length, rotated collinear with the drag.
-	XCTAssertEqualObjects(writes[1][@"parameter"], @63);
-	XCTAssertEqualWithAccuracy([writes[1][@"x"] doubleValue], 0.4, 1e-9);
-	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.5, 1e-9);
-}
-
-- (void)testOptionBreaksTheTangentPair
-{
-	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:61];
-	[self stagePoint:NSMakePoint(0.6, 0.6) forParameter:62];
-	[self stagePoint:NSMakePoint(0.5, 0.7) forParameter:63];
-	FxGripOSCTangentHandlePart *handle = [FxGripOSCTangentHandlePart partWithID:26
-																vertexParameterID:61
-															   tangentParameterID:62];
-	handle.oppositeTangentParameterID = 63;
-	[self.control addPart:handle];
-	BOOL forceUpdate = NO;
-
-	[self.control mouseDownAtPositionX:60 positionY:60 activePart:26 modifiers:kFxModifierKey_OPTION
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDraggedAtPositionX:70 positionY:50 activePart:26 modifiers:kFxModifierKey_OPTION
-							  forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)1, @"only the dragged tangent moves");
-	XCTAssertEqualObjects(writes[0][@"parameter"], @62);
-	// The tangent claims Option for its break gesture, so the base does not slow it: full distance.
-	XCTAssertEqualWithAccuracy([writes[0][@"x"] doubleValue], 0.7, 1e-9);
-	XCTAssertEqualWithAccuracy([writes[0][@"y"] doubleValue], 0.5, 1e-9);
-}
-
-- (void)testSymmetricMirroringMatchesTheDraggedLength
-{
-	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:61];
-	[self stagePoint:NSMakePoint(0.6, 0.6) forParameter:62];
-	[self stagePoint:NSMakePoint(0.5, 0.7) forParameter:63];
-	FxGripOSCTangentHandlePart *handle = [FxGripOSCTangentHandlePart partWithID:26
-																vertexParameterID:61
-															   tangentParameterID:62];
-	handle.oppositeTangentParameterID = 63;
-	handle.mirroring = FxGripOSCTangentMirroringSymmetric;
-	[self.control addPart:handle];
-	BOOL forceUpdate = NO;
-
-	[self.control mouseDownAtPositionX:60 positionY:60 activePart:26 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDraggedAtPositionX:70 positionY:50 activePart:26 modifiers:0
-							  forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)2);
-	XCTAssertEqualObjects(writes[0][@"parameter"], @62);
-	// The opposite matches the dragged 40-pixel length, so it moves twice as far as aligned did.
-	XCTAssertEqualObjects(writes[1][@"parameter"], @63);
-	XCTAssertEqualWithAccuracy([writes[1][@"x"] doubleValue], 0.3, 1e-9);
-	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.5, 1e-9);
-}
-
-- (void)testShiftSnapsATangentToFortyFiveDegreesAboutTheVertex
-{
-	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:61];
-	[self stagePoint:NSMakePoint(0.6, 0.6) forParameter:62];
-	FxGripOSCTangentHandlePart *handle = [FxGripOSCTangentHandlePart partWithID:26
-																vertexParameterID:61
-															   tangentParameterID:62];
-	[self.control addPart:handle];
-	BOOL forceUpdate = NO;
-
-	// A mostly-horizontal drag: pixel offset (40, 5) snaps to the horizontal axis, length kept.
-	[self.control mouseDownAtPositionX:60 positionY:60 activePart:26 modifiers:kFxModifierKey_SHIFT
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDraggedAtPositionX:70 positionY:55 activePart:26 modifiers:kFxModifierKey_SHIFT
-							  forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)1, @"no opposite tangent to mirror");
-	XCTAssertEqualObjects(writes[0][@"parameter"], @62);
-	double tx = [writes[0][@"x"] doubleValue], ty = [writes[0][@"y"] doubleValue];
-	XCTAssertEqualWithAccuracy(ty, 0.5, 1e-9, @"the tangent snaps onto the vertex's horizontal");
-	XCTAssertGreaterThan(tx, 0.5, @"and keeps the drag's positive direction");
-	double inputLength = hypot(0.2 * 200.0, 0.05 * 100.0);
-	double snappedLength = hypot((tx - 0.5) * 200.0, (ty - 0.5) * 100.0);
-	XCTAssertEqualWithAccuracy(snappedLength, inputLength, 1e-9, @"the handle keeps its length");
-}
-
-- (void)testCommandClickRetractsATangentOntoItsVertex
-{
-	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:61];
-	[self stagePoint:NSMakePoint(0.6, 0.6) forParameter:62];
-	FxGripOSCTangentHandlePart *handle = [FxGripOSCTangentHandlePart partWithID:26
-																vertexParameterID:61
-															   tangentParameterID:62];
-	[self.control addPart:handle];
-	BOOL forceUpdate = NO;
-
-	[self.control mouseDownAtPositionX:60 positionY:60 activePart:26 modifiers:kFxModifierKey_COMMAND
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertTrue(forceUpdate);
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)1);
-	XCTAssertEqualObjects(writes[0][@"parameter"], @62);
-	XCTAssertEqualWithAccuracy([writes[0][@"x"] doubleValue], 0.5, 1e-9, @"the tangent sits on the vertex");
-	XCTAssertEqualWithAccuracy([writes[0][@"y"] doubleValue], 0.5, 1e-9);
-}
-
-- (void)testDoubleClickTogglesASmoothVertexToACorner
-{
-	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:71];
-	[self stagePoint:NSMakePoint(0.1, 0.2) forParameter:75];
-	[self stagePoint:NSMakePoint(0.33, 0.47) forParameter:76];
-	[self.control addPart:[FxGripOSCBezierVertexHandlePart partWithID:25
-													vertexParameterID:71
-												 inTangentParameterID:75
-												outTangentParameterID:76]];
-	BOOL forceUpdate = NO;
-
-	[self.control mouseDownAtPositionX:20 positionY:20 activePart:25 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDownAtPositionX:20 positionY:20 activePart:25 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertTrue(forceUpdate, @"the second click toggles the vertex");
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)2, @"both tangents retract onto the vertex");
-	for (NSDictionary *write in writes) {
-		XCTAssertEqualWithAccuracy([write[@"x"] doubleValue], 0.2, 1e-9);
-		XCTAssertEqualWithAccuracy([write[@"y"] doubleValue], 0.2, 1e-9);
-	}
-}
-
-- (void)testDoubleClickTogglesACornerVertexToSmoothAlongItsNeighbors
-{
-	[self stagePoint:NSMakePoint(0.2, 0.4) forParameter:70];
-	[self stagePoint:NSMakePoint(0.4, 0.4) forParameter:71];
-	[self stagePoint:NSMakePoint(0.6, 0.4) forParameter:72];
-	// A corner vertex: both tangents sit on it.
-	[self stagePoint:NSMakePoint(0.4, 0.4) forParameter:75];
-	[self stagePoint:NSMakePoint(0.4, 0.4) forParameter:76];
-	FxGripOSCBezierVertexHandlePart *handle = [FxGripOSCBezierVertexHandlePart partWithID:25
-																	   vertexParameterID:71
-																	inTangentParameterID:75
-																   outTangentParameterID:76];
-	handle.previousVertexParameterID = 70;
-	handle.nextVertexParameterID = 72;
-	[self.control addPart:handle];
-	BOOL forceUpdate = NO;
-
-	[self.control mouseDownAtPositionX:40 positionY:40 activePart:25 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDownAtPositionX:40 positionY:40 activePart:25 modifiers:0
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertTrue(forceUpdate);
-	NSArray<NSDictionary *> *writes = self.manager.paramSetAPIv5.writes;
-	XCTAssertEqual(writes.count, (NSUInteger)2);
-	// The neighbor span is 80 pixels wide; a sixth of it is the handle offset, along +x.
-	double offset = (80.0 / 6.0) / 200.0;
-	XCTAssertEqualObjects(writes[0][@"parameter"], @76);
-	XCTAssertEqualWithAccuracy([writes[0][@"x"] doubleValue], 0.4 + offset, 1e-9, @"the out tangent leads");
-	XCTAssertEqualWithAccuracy([writes[0][@"y"] doubleValue], 0.4, 1e-9);
-	XCTAssertEqualObjects(writes[1][@"parameter"], @75);
-	XCTAssertEqualWithAccuracy([writes[1][@"x"] doubleValue], 0.4 - offset, 1e-9, @"the in tangent trails");
-	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.4, 1e-9);
-}
-
-- (void)testAClosedBezierChainCurvesItsWrapSegment
-{
-	// Two vertices closed into a lens: the forward segment bows up through
-	// (33,47)-(47,47); the wrap segment bows down through (47,-7)-(33,-7).
-	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:71];
-	[self stagePoint:NSMakePoint(0.6, 0.2) forParameter:72];
-	[self stagePoint:NSMakePoint(0.33, -0.07) forParameter:75];
-	[self stagePoint:NSMakePoint(0.33, 0.47) forParameter:76];
-	[self stagePoint:NSMakePoint(0.47, 0.47) forParameter:77];
-	[self stagePoint:NSMakePoint(0.47, -0.07) forParameter:78];
-
-	FxGripOSCPolylinePart *part = [FxGripOSCPolylinePart partWithID:20
-												  pointParameterIDs:@[@71, @72]
-															 closed:YES];
-	part.inTangentParameterIDs = @[@75, @77];
-	part.outTangentParameterIDs = @[@76, @78];
-	[self.control addPart:part];
-
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:40], (NSInteger)20,
-				   @"the forward segment's crown");
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:0], (NSInteger)20,
-				   @"the wrap segment curves back through its own tangents");
-	XCTAssertEqual([self hitTestAtCanvasX:40 y:20], (NSInteger)0,
-				   @"the straight chord lies between the two arcs");
-}
-
-- (void)testTheClosedBezierCompositeKeepsEveryTangentHandle
-{
-	NSArray<FxGripOSCPart *> *parts =
-		[FxGripOSCPolylinePart bezierPartsWithOptions:FxGripOSCShapeOptionsAll
-										  firstPartID:20
-									pointParameterIDs:@[@71, @72, @73]
-								inTangentParameterIDs:@[@75, @77, @79]
-							   outTangentParameterIDs:@[@76, @78, @80]
-											   closed:YES];
-
-	XCTAssertEqual(parts.count, (NSUInteger)10,
-				   @"the body, three vertex handles, and all six tangent handles");
-	FxGripOSCTangentHandlePart *first = (FxGripOSCTangentHandlePart *)parts[4];
-	XCTAssertEqual(first.tangentParameterID, (FxParameterId)75,
-				   @"a closed chain's first vertex keeps its in tangent");
-}
-
-- (void)testTheBezierCompositeSkipsUnusedOpenTangents
-{
-	NSArray<FxGripOSCPart *> *parts =
-		[FxGripOSCPolylinePart bezierPartsWithOptions:FxGripOSCShapeOptionsAll
-										  firstPartID:20
-									pointParameterIDs:@[@71, @72, @73]
-								inTangentParameterIDs:@[@75, @77, @79]
-							   outTangentParameterIDs:@[@76, @78, @80]
-											   closed:NO];
-
-	// Body, three vertex handles, then tangents skipping in_0 and out_2.
-	XCTAssertEqual(parts.count, (NSUInteger)8);
-	XCTAssertEqual(parts.lastObject.partID, (NSInteger)27);
-	XCTAssertTrue([parts[1] isKindOfClass:FxGripOSCBezierVertexHandlePart.class]);
-	XCTAssertTrue([parts[4] isKindOfClass:FxGripOSCTangentHandlePart.class]);
-	FxGripOSCTangentHandlePart *first = (FxGripOSCTangentHandlePart *)parts[4];
-	XCTAssertEqual(first.tangentParameterID, (FxParameterId)76,
-				   @"the open chain's first tangent handle is vertex 0's out tangent");
-	FxGripOSCTangentHandlePart *last = (FxGripOSCTangentHandlePart *)parts.lastObject;
-	XCTAssertEqual(last.tangentParameterID, (FxParameterId)79,
-				   @"the open chain's last tangent handle is the final vertex's in tangent");
-}
-
 #pragma mark Flag composition
 
 - (void)testFlagCompositionNumbersOnlyTheIncludedParts
@@ -1766,7 +1429,9 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual(curve.partID, (NSInteger)7);
 	XCTAssertEqualObjects(curve.pointParameterIDs, (@[@1, @2, @3]));
 	XCTAssertTrue(curve.closed);
-	XCTAssertTrue(curve.shadowed, @"a curve strokes with a shadow by default");
+	XCTAssertTrue(curve.castsShadow, @"a curve casts the inherited drop shadow by default");
+	XCTAssertEqual(curve.shadowDistance, 1.0);
+	XCTAssertEqual(curve.shadowBlur, 0.0);
 }
 
 - (void)testACurvePartIsDisplayOnly
@@ -1823,156 +1488,69 @@ static CMTime FxGripOSCTestTime(void)
 								   atTime:FxGripOSCTestTime()]);
 }
 
-#pragma mark Editable polygon
+#pragma mark Correctness fixes
 
-/*! A closed triangle at object (0.2,0.2), (0.6,0.2), (0.6,0.6) staged in a custom parameter. */
-- (FxGripPointListData *)stageTriangleForParameter:(UInt32)parameterID
+- (void)testAnInvertedRectPartStillHitsInsideItsSpan
 {
-	CGPoint points[3] = { CGPointMake(0.2, 0.2), CGPointMake(0.6, 0.2), CGPointMake(0.6, 0.6) };
-	FxGripPointListData *list = [FxGripPointListData pointListWithPoints:points count:3 closed:YES];
-	self.manager.paramGetAPIv6.customs[@(parameterID)] = list;
-	return list;
+	// Corners dragged past each other invert the rectangle; a hit is still any point in the span.
+	[self stagePoint:NSMakePoint(0.6, 0.6) forParameter:11];
+	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:12];
+	[self.control addPart:[FxGripOSCRectPart partWithID:1 lowerLeftParameterID:11 upperRightParameterID:12]];
+
+	XCTAssertEqual([self hitTestAtCanvasX:40 y:40], (NSInteger)1, @"inside the inverted rect's span");
+	XCTAssertEqual([self hitTestAtCanvasX:80 y:40], (NSInteger)0, @"outside the span misses");
 }
 
-- (FxGripPointListData *)stagedListForParameter:(UInt32)parameterID
+- (void)testTheBoxCompositeOmitsTheDialWithoutAnAngleParameter
 {
-	return self.manager.paramGetAPIv6.customs[@(parameterID)];
+	NSArray<FxGripOSCPart *> *parts = [FxGripOSCBoxPart boxPartsWithBodyID:30
+														   firstCornerID:31
+														rotationHandleID:35
+													   centerParameterID:81
+														widthParameterID:82
+													   heightParameterID:83
+														angleParameterID:0];
+	XCTAssertEqual(parts.count, (NSUInteger)5, @"body plus four corners, no dead dial");
+	for (FxGripOSCPart *part in parts) {
+		XCTAssertFalse([part isKindOfClass:FxGripOSCAngleDialPart.class]);
+	}
 }
 
-- (void)testEditablePolygonSelectsAVertexOnClick
-{
-	[self stageTriangleForParameter:30];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
+#pragma mark Shadow appearance
 
-	NSInteger active = [self hitTestAtCanvasX:20 y:20];
-	XCTAssertEqual(active, (NSInteger)3);
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:20 positionY:20 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	XCTAssertEqual(poly.selectedVertexIndex, (NSInteger)0);
+- (void)testAPartCastsTheStandardShadowByDefault
+{
+	FxGripOSCPart *part = [[FxGripOSCPart alloc] initWithPartID:1];
+	XCTAssertEqual(part.shadowDistance, 1.0);
+	XCTAssertEqual(part.shadowBlur, 0.0);
+	XCTAssertEqual(part.shadowColor.w, kFxGripOSCShadowColor.w);
+	XCTAssertTrue(part.castsShadow);
 }
 
-- (void)testEditablePolygonDragMovesTheSelectedVertex
+- (void)testAPartWithNoShadowAlphaOrOffsetDoesNotCastAShadow
 {
-	[self stageTriangleForParameter:30];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
+	FxGripOSCPart *transparent = [[FxGripOSCPart alloc] initWithPartID:1];
+	transparent.shadowColor = (simd_float4){ 0.0, 0.0, 0.0, 0.0 };
+	XCTAssertFalse(transparent.castsShadow, @"a zero shadow alpha casts nothing");
 
-	NSInteger active = [self hitTestAtCanvasX:20 y:20];
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:20 positionY:20 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	[self.control mouseDraggedAtPositionX:30 positionY:30 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	FxGripPointListData *updated = [self stagedListForParameter:30];
-	XCTAssertEqual(updated.count, (NSUInteger)3);
-	CGPoint moved = [updated pointAtIndex:0];
-	XCTAssertEqualWithAccuracy(moved.x, 0.3, 1e-9);
-	XCTAssertEqualWithAccuracy(moved.y, 0.3, 1e-9);
-	XCTAssertEqualWithAccuracy([updated pointAtIndex:1].x, 0.6, 1e-9, @"the other vertices are unchanged");
+	FxGripOSCPart *flat = [[FxGripOSCPart alloc] initWithPartID:2];
+	flat.shadowDistance = 0.0;
+	flat.shadowBlur = 0.0;
+	XCTAssertFalse(flat.castsShadow, @"no offset and no blur casts nothing");
 }
 
-- (void)testEditablePolygonBodyDragTranslatesEveryVertex
+- (void)testShadowBlurGroupingIsDistinctSortedAndSkipsNonCasters
 {
-	[self stageTriangleForParameter:30];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
+	FxGripOSCPart *a = [[FxGripOSCPart alloc] initWithPartID:1];   // blur 0
+	FxGripOSCPart *b = [[FxGripOSCPart alloc] initWithPartID:2];
+	b.shadowBlur = 3.0;
+	FxGripOSCPart *c = [[FxGripOSCPart alloc] initWithPartID:3];
+	c.shadowBlur = 3.0;   // shares b's radius
+	FxGripOSCPart *d = [[FxGripOSCPart alloc] initWithPartID:4];
+	d.shadowColor = (simd_float4){ 0.0, 0.0, 0.0, 0.0 };   // casts nothing
 
-	// Segment 0's midpoint is canvas (40, 20); a plain click there selects no vertex.
-	NSInteger active = [self hitTestAtCanvasX:40 y:20];
-	XCTAssertEqual(active, (NSInteger)3);
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:40 positionY:20 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	XCTAssertEqual(poly.selectedVertexIndex, (NSInteger)-1);
-	[self.control mouseDraggedAtPositionX:50 positionY:30 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	FxGripPointListData *updated = [self stagedListForParameter:30];
-	XCTAssertEqual(updated.count, (NSUInteger)3);
-	XCTAssertEqualWithAccuracy([updated pointAtIndex:0].x, 0.3, 1e-9);
-	XCTAssertEqualWithAccuracy([updated pointAtIndex:0].y, 0.3, 1e-9);
-	XCTAssertEqualWithAccuracy([updated pointAtIndex:2].x, 0.7, 1e-9);
-}
-
-- (void)testEditablePolygonInsertsAVertexOnOptionSegmentClick
-{
-	[self stageTriangleForParameter:30];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
-
-	NSInteger active = [self hitTestAtCanvasX:40 y:20];
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:40 positionY:20 activePart:active modifiers:kFxModifierKey_OPTION forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	XCTAssertTrue(forceUpdate);
-
-	FxGripPointListData *updated = [self stagedListForParameter:30];
-	XCTAssertEqual(updated.count, (NSUInteger)4);
-	XCTAssertEqualWithAccuracy([updated pointAtIndex:1].x, 0.4, 1e-9);
-	XCTAssertEqualWithAccuracy([updated pointAtIndex:1].y, 0.2, 1e-9);
-	XCTAssertEqual(poly.selectedVertexIndex, (NSInteger)1);
-}
-
-- (void)testEditablePolygonPlainSegmentClickDoesNotInsert
-{
-	[self stageTriangleForParameter:30];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
-
-	NSInteger active = [self hitTestAtCanvasX:40 y:20];
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:40 positionY:20 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertEqual([self stagedListForParameter:30].count, (NSUInteger)3);
-}
-
-- (void)testEditablePolygonDeletesTheSelectedVertex
-{
-	[self stageTriangleForParameter:30];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
-
-	NSInteger active = [self hitTestAtCanvasX:60 y:60];
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:60 positionY:60 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	XCTAssertEqual(poly.selectedVertexIndex, (NSInteger)2);
-
-	BOOL didHandle = NO;
-	[self.control keyDownAtPositionX:60 positionY:60 keyPressed:127 modifiers:0 forceUpdate:&forceUpdate didHandle:&didHandle atTime:FxGripOSCTestTime()];
-	XCTAssertTrue(didHandle);
-	XCTAssertEqual([self stagedListForParameter:30].count, (NSUInteger)2);
-	XCTAssertEqual(poly.selectedVertexIndex, (NSInteger)-1);
-}
-
-- (void)testEditablePolygonCommandClickDeletesAVertex
-{
-	[self stageTriangleForParameter:30];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
-
-	NSInteger active = [self hitTestAtCanvasX:60 y:60];
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:60 positionY:60 activePart:active modifiers:kFxModifierKey_COMMAND
-						   forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-
-	XCTAssertTrue(forceUpdate);
-	XCTAssertEqual([self stagedListForParameter:30].count, (NSUInteger)2, @"Command-click removes the vertex");
-	XCTAssertEqual(poly.selectedVertexIndex, (NSInteger)-1);
-}
-
-- (void)testEditablePolygonDeleteStopsAtTheMinimum
-{
-	CGPoint points[2] = { CGPointMake(0.2, 0.2), CGPointMake(0.6, 0.6) };
-	self.manager.paramGetAPIv6.customs[@(30)] = [FxGripPointListData pointListWithPoints:points count:2 closed:NO];
-	FxGripOSCEditablePolygonPart *poly = [FxGripOSCEditablePolygonPart partWithID:3 pointListParameterID:30];
-	[self.control addPart:poly];
-
-	NSInteger active = [self hitTestAtCanvasX:20 y:20];
-	BOOL forceUpdate = NO;
-	[self.control mouseDownAtPositionX:20 positionY:20 activePart:active modifiers:0 forceUpdate:&forceUpdate atTime:FxGripOSCTestTime()];
-	XCTAssertEqual(poly.selectedVertexIndex, (NSInteger)0);
-
-	BOOL didHandle = NO;
-	[self.control keyDownAtPositionX:20 positionY:20 keyPressed:127 modifiers:0 forceUpdate:&forceUpdate didHandle:&didHandle atTime:FxGripOSCTestTime()];
-	XCTAssertFalse(didHandle);
-	XCTAssertEqual([self stagedListForParameter:30].count, (NSUInteger)2);
+	NSArray<NSNumber *> *radii = [FxGripOnScreenControl fxShadowBlurRadiiForParts:@[a, b, c, d]];
+	XCTAssertEqualObjects(radii, (@[@0.0, @3.0]), @"one pass per distinct radius, ascending, non-casters skipped");
 }
 
 @end

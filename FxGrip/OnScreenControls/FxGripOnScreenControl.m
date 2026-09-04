@@ -9,7 +9,9 @@
 #import "FxGripMTLDeviceCache.h"
 #import "FxTileImage+FxGrip.h"
 #import "FxGripTextImage.h"
+#import "FxGripOSCPart.h"
 #import "FxGrip_ARC.h"
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 
 CGPoint FxGripOSCMetalPointFromCanvasPoint(CGPoint canvasPoint, CGSize canvasSize)
 {
@@ -52,6 +54,16 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	FxGripMTLDeviceCacheItem *_activeDeviceCacheItem;
 	id<MTLLibrary> _activeLibrary;
 	id<MTLRenderPipelineState> _activeFlatPipelineState;
+
+	// Shadow-pass state, valid only within drawOSCWithWidth:. In the shadow pass the draw kit
+	// emits each part's geometry offset by _fxShadowOffset in _fxShadowColor instead of its crisp
+	// color; the control renders that offscreen, blurs it, and composites it beneath the crisp
+	// control (see the shadow phase in drawOSCWithWidth:).
+	BOOL _fxShadowPass;
+	simd_float4 _fxShadowColor;
+	vector_float2 _fxShadowOffset;
+	id<MTLRenderPipelineState> _fxBlendTexturedPipeline;	// cached for _fxBlendPipelineDevice
+	id<MTLDevice> _fxBlendPipelineDevice;
 }
 @end
 
@@ -78,6 +90,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	NARC_RELEASE(_pluginUUID);
 	NARC_RELEASE(_parts);
 	NARC_RELEASE(_lastPositionLock);
+	NARC_RELEASE(_fxBlendTexturedPipeline);
 	SUPER_DEALLOC();
 }
 
@@ -299,6 +312,24 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	return NARC_AUTORELEASE(library);
 }
 
+/*! The distinct shadow blur radii among the parts that cast a shadow, ascending. Each radius is
+	one offscreen render and blur; parts that share a radius share the pass. */
++ (nonnull NSArray<NSNumber *> *)fxShadowBlurRadiiForParts:(nonnull NSArray<FxGripOSCPart *> *)parts
+{
+	NSMutableArray<NSNumber *> *radii = [NSMutableArray array];
+	for (FxGripOSCPart *part in parts) {
+		if (!part.castsShadow) {
+			continue;
+		}
+		NSNumber *radius = @(part.shadowBlur);
+		if (![radii containsObject:radius]) {
+			[radii addObject:radius];
+		}
+	}
+	[radii sortUsingSelector:@selector(compare:)];
+	return radii;
+}
+
 - (void)drawOSCWithWidth:(NSInteger)width
 				  height:(NSInteger)height
 			  activePart:(NSInteger)activePart
@@ -319,13 +350,6 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	[commandBuffer enqueue];
 
 	id<MTLTexture> outputTexture = [destinationImage metalTextureForDevice:device];
-	MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-	renderPassDescriptor.colorAttachments[0].texture = outputTexture;
-	renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
-	renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-
-	id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-
 	FxRect pixelBounds = destinationImage.imagePixelBounds;
 	CGSize canvasSize = CGSizeMake(pixelBounds.right - pixelBounds.left,
 								   pixelBounds.top - pixelBounds.bottom);
@@ -334,43 +358,218 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 																	  pixelFormat:destinationImage.metalPixelFormat
 																	  andPluginID:self.pluginUUID];
 	id<MTLLibrary> library = [self fxOSCLibraryForDevice:device];
-	id<MTLRenderPipelineState> pipelineState =
+	id<MTLRenderPipelineState> flatPipeline =
 		[deviceCacheItem pipelineStateWithLibrary:library
 									 vertexShader:@"fxGripOSCVertexShader"
 								   fragmentShader:@"fxGripOSCFragmentShader"
 								   constantValues:nil];
-	if (pipelineState == nil) {
+	if (flatPipeline == nil) {
 		NSLog(@"%s Error: no OSC pipeline state", __func__);
-		[commandEncoder endEncoding];
 		[commandBuffer commit];
 		[deviceCache returnCommandQueueToCache:commandQueue];
 		return;
 	}
-	[commandEncoder setRenderPipelineState:pipelineState];
 
-	// Metal is y-down: the viewport starts at the top of the surface.
+	// The destination is the plug-in's IOSurface; the OSC occupies the lower canvas region. The
+	// offscreen shadow textures are the canvas size exactly, so they use a zero-origin viewport.
 	CGFloat ioSurfaceHeight = [destinationImage.ioSurface height];
-	MTLViewport viewport = {
+	MTLViewport destViewport = {
 		0, ioSurfaceHeight - canvasSize.height, canvasSize.width, canvasSize.height, -1.0, 1.0
 	};
-	[commandEncoder setViewport:viewport];
+	MTLViewport offscreenViewport = { 0, 0, canvasSize.width, canvasSize.height, -1.0, 1.0 };
 
 	_activeDeviceCacheItem = deviceCacheItem;
 	_activeLibrary = library;
-	_activeFlatPipelineState = pipelineState;
+	_activeFlatPipelineState = flatPipeline;
+
+	// Shadow phase: one offscreen render, blur, and composite per distinct blur radius. The crisp
+	// foreground, drawn last with the overwriting flat pipeline, punches the shadow out from under
+	// each shape.
+	BOOL destCleared = NO;
+	for (NSNumber *radius in [self.class fxShadowBlurRadiiForParts:_parts]) {
+		BOOL rendered = [self fxRenderShadowGroupWithBlur:radius.doubleValue
+												  device:device
+										   commandBuffer:commandBuffer
+										   outputTexture:outputTexture
+											destViewport:destViewport
+									   offscreenViewport:offscreenViewport
+											  canvasSize:canvasSize
+											   clearDest:!destCleared
+												  atTime:time];
+		destCleared = destCleared || rendered;
+	}
+
+	// Foreground phase: the crisp control on top of the shadows.
+	MTLRenderPassDescriptor *foreground = [MTLRenderPassDescriptor renderPassDescriptor];
+	foreground.colorAttachments[0].texture = outputTexture;
+	foreground.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
+	foreground.colorAttachments[0].loadAction = destCleared ? MTLLoadActionLoad : MTLLoadActionClear;
+	id<MTLRenderCommandEncoder> foregroundEncoder = [commandBuffer renderCommandEncoderWithDescriptor:foreground];
+	[foregroundEncoder setRenderPipelineState:flatPipeline];
+	[foregroundEncoder setViewport:destViewport];
+	_fxShadowPass = NO;
 	[self drawOSC:destinationImage
-	commandEncoder:commandEncoder
+	commandEncoder:foregroundEncoder
 		canvasSize:canvasSize
 		activePart:activePart
 			atTime:time];
+	[foregroundEncoder endEncoding];
+
 	_activeDeviceCacheItem = nil;
 	_activeLibrary = nil;
 	_activeFlatPipelineState = nil;
 
-	[commandEncoder endEncoding];
 	[commandBuffer commit];
 	[commandBuffer waitUntilScheduled];
 	[deviceCache returnCommandQueueToCache:commandQueue];
+}
+
+/*! Renders every casting part's shadow at one blur radius into an offscreen texture, blurs it, and
+	composites it beneath the control. Returns YES when it drew into the destination. */
+- (BOOL)fxRenderShadowGroupWithBlur:(double)blurRadius
+							 device:(id<MTLDevice>)device
+					  commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+					  outputTexture:(id<MTLTexture>)outputTexture
+					   destViewport:(MTLViewport)destViewport
+				  offscreenViewport:(MTLViewport)offscreenViewport
+						 canvasSize:(CGSize)canvasSize
+						  clearDest:(BOOL)clearDest
+							 atTime:(CMTime)time
+{
+	id<MTLTexture> shadowTexture = [self fxOffscreenTextureForDevice:device
+															   size:canvasSize
+														pixelFormat:outputTexture.pixelFormat];
+	id<MTLRenderPipelineState> compositePipeline = [self fxBlendTexturedPipelineForDevice:device
+																			   pixelFormat:outputTexture.pixelFormat];
+	if (shadowTexture == nil || compositePipeline == nil) {
+		return NO;
+	}
+
+	// 1. Each part's shadow silhouette, offset and in its shadow color, into the offscreen texture.
+	MTLRenderPassDescriptor *shadowPass = [MTLRenderPassDescriptor renderPassDescriptor];
+	shadowPass.colorAttachments[0].texture = shadowTexture;
+	shadowPass.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
+	shadowPass.colorAttachments[0].loadAction = MTLLoadActionClear;
+	shadowPass.colorAttachments[0].storeAction = MTLStoreActionStore;
+	id<MTLRenderCommandEncoder> shadowEncoder = [commandBuffer renderCommandEncoderWithDescriptor:shadowPass];
+	[shadowEncoder setRenderPipelineState:_activeFlatPipelineState];
+	[shadowEncoder setViewport:offscreenViewport];
+	_fxShadowPass = YES;
+	for (FxGripOSCPart *part in _parts) {
+		if (!part.castsShadow || part.shadowBlur != blurRadius) {
+			continue;
+		}
+		_fxShadowColor = part.shadowColor;
+		_fxShadowOffset = (vector_float2){ (float)part.shadowDistance, (float)part.shadowDistance };
+		[part drawSelected:NO canvasSize:canvasSize commandEncoder:shadowEncoder atTime:time];
+	}
+	_fxShadowPass = NO;
+	[shadowEncoder endEncoding];
+
+	// 2. Blur the silhouette into a second offscreen texture.
+	if (blurRadius > 0.0) {
+		id<MTLTexture> blurred = [self fxOffscreenTextureForDevice:device
+															 size:canvasSize
+													  pixelFormat:outputTexture.pixelFormat];
+		if (blurred != nil) {
+			MPSImageGaussianBlur *blur = NARC_AUTORELEASE([[MPSImageGaussianBlur alloc] initWithDevice:device
+																								   sigma:(float)blurRadius]);
+			blur.edgeMode = MPSImageEdgeModeClamp;
+			[blur encodeToCommandBuffer:commandBuffer sourceTexture:shadowTexture destinationTexture:blurred];
+			shadowTexture = blurred;
+		}
+	}
+
+	// 3. Composite the shadow beneath the control, blending over what is already there.
+	MTLRenderPassDescriptor *composite = [MTLRenderPassDescriptor renderPassDescriptor];
+	composite.colorAttachments[0].texture = outputTexture;
+	composite.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
+	composite.colorAttachments[0].loadAction = clearDest ? MTLLoadActionClear : MTLLoadActionLoad;
+	id<MTLRenderCommandEncoder> compositeEncoder = [commandBuffer renderCommandEncoderWithDescriptor:composite];
+	[compositeEncoder setRenderPipelineState:compositePipeline];
+	[compositeEncoder setViewport:destViewport];
+	[self fxEncodeFullCanvasTexture:shadowTexture canvasSize:canvasSize commandEncoder:compositeEncoder];
+	[compositeEncoder endEncoding];
+	return YES;
+}
+
+/*! An offscreen render-target texture the size of the canvas. */
+- (nullable id<MTLTexture>)fxOffscreenTextureForDevice:(id<MTLDevice>)device
+												  size:(CGSize)size
+										   pixelFormat:(MTLPixelFormat)pixelFormat
+{
+	NSUInteger width = (NSUInteger)MAX(1.0, size.width), height = (NSUInteger)MAX(1.0, size.height);
+	MTLTextureDescriptor *descriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixelFormat
+																						  width:width
+																						 height:height
+																					  mipmapped:NO];
+	descriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
+	descriptor.storageMode = MTLStorageModePrivate;
+	return [device newTextureWithDescriptor:descriptor];
+}
+
+/*! The textured pipeline with over-blend, for compositing a shadow texture. Cached per device. */
+- (nullable id<MTLRenderPipelineState>)fxBlendTexturedPipelineForDevice:(id<MTLDevice>)device
+															 pixelFormat:(MTLPixelFormat)pixelFormat
+{
+	if (_fxBlendTexturedPipeline != nil && _fxBlendPipelineDevice == device) {
+		return _fxBlendTexturedPipeline;
+	}
+	id<MTLFunction> vertexFunction = NARC_AUTORELEASE([_activeLibrary newFunctionWithName:@"fxGripOSCTexturedVertexShader"]);
+	id<MTLFunction> fragmentFunction = NARC_AUTORELEASE([_activeLibrary newFunctionWithName:@"fxGripOSCTexturedFragmentShader"]);
+	if (vertexFunction == nil || fragmentFunction == nil) {
+		return nil;
+	}
+	MTLRenderPipelineDescriptor *descriptor = [[MTLRenderPipelineDescriptor alloc] init];
+	descriptor.vertexFunction = vertexFunction;
+	descriptor.fragmentFunction = fragmentFunction;
+	MTLRenderPipelineColorAttachmentDescriptor *attachment = descriptor.colorAttachments[0];
+	attachment.pixelFormat = pixelFormat;
+	attachment.blendingEnabled = YES;
+	attachment.rgbBlendOperation = MTLBlendOperationAdd;
+	attachment.alphaBlendOperation = MTLBlendOperationAdd;
+	attachment.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+	attachment.sourceAlphaBlendFactor = MTLBlendFactorOne;
+	attachment.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+	attachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+	NSError *error = nil;
+	id<MTLRenderPipelineState> pipeline = [device newRenderPipelineStateWithDescriptor:descriptor error:&error];
+	NARC_RELEASE(descriptor);
+	if (pipeline == nil) {
+		NSLog(@"%s Error building the shadow composite pipeline: %@", __func__, error);
+		return nil;
+	}
+	NARC_RELEASE(_fxBlendTexturedPipeline);
+	_fxBlendTexturedPipeline = NARC_RETAIN(pipeline);
+	_fxBlendPipelineDevice = device;
+	return pipeline;
+}
+
+/*! Draws a texture across the whole canvas, upright, for the shadow composite. */
+- (void)fxEncodeFullCanvasTexture:(id<MTLTexture>)texture
+					   canvasSize:(CGSize)canvasSize
+				   commandEncoder:(id<MTLRenderCommandEncoder>)commandEncoder
+{
+	CGPoint corners[4] = {
+		CGPointMake(canvasSize.width, 0.0),
+		CGPointMake(0.0, 0.0),
+		CGPointMake(canvasSize.width, canvasSize.height),
+		CGPointMake(0.0, canvasSize.height),
+	};
+	vector_float2 texCoords[4] = { { 1.0, 1.0 }, { 0.0, 1.0 }, { 1.0, 0.0 }, { 0.0, 0.0 } };
+	FxGripOSCTexturedVertex vertices[4];
+	for (NSUInteger index = 0; index < 4; index++) {
+		CGPoint metalPoint = FxGripOSCMetalPointFromCanvasPoint(corners[index], canvasSize);
+		vertices[index].position = (vector_float2){ (float)metalPoint.x, (float)metalPoint.y };
+		vertices[index].texCoord = texCoords[index];
+	}
+	simd_uint2 viewportSize = { (unsigned int)canvasSize.width, (unsigned int)canvasSize.height };
+	simd_float4 tint = { 1.0, 1.0, 1.0, 1.0 };
+	[commandEncoder setVertexBytes:vertices length:sizeof(vertices) atIndex:FxGripOSCVertexInputIndexVertices];
+	[commandEncoder setVertexBytes:&viewportSize length:sizeof(viewportSize) atIndex:FxGripOSCVertexInputIndexViewportSize];
+	[commandEncoder setFragmentTexture:texture atIndex:FxGripOSCFragmentTextureIndexColor];
+	[commandEncoder setFragmentBytes:&tint length:sizeof(tint) atIndex:FxGripOSCFragmentInputIndexColor];
+	[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
 }
 
 
@@ -399,6 +598,28 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	[commandEncoder drawPrimitives:primitive vertexStart:0 vertexCount:count];
 }
 
+/*! Encodes flat geometry as the crisp foreground, or, in the shadow pass, offset by
+	_fxShadowOffset in _fxShadowColor. Mutates vertices in the shadow pass; the caller frees them. */
+- (void)fxEncodeVertices:(nonnull FxGripOSCVertex *)vertices
+				   count:(NSUInteger)count
+			   primitive:(MTLPrimitiveType)primitive
+		 foregroundColor:(simd_float4)color
+			  canvasSize:(CGSize)canvasSize
+		  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder
+{
+	if (_fxShadowPass) {
+		for (NSUInteger index = 0; index < count; index++) {
+			vertices[index].position += _fxShadowOffset;
+		}
+	}
+	[self encodeVertices:vertices
+				   count:count
+			   primitive:primitive
+				   color:(_fxShadowPass ? _fxShadowColor : color)
+			  canvasSize:canvasSize
+		  commandEncoder:commandEncoder];
+}
+
 - (void)strokeCanvasPoints:(nonnull const CGPoint *)canvasPoints
 					 count:(NSUInteger)count
 					closed:(BOOL)closed
@@ -408,6 +629,10 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 			commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder
 {
 	if (count < 2) {
+		return;
+	}
+	// A stroke that opts out of a shadow contributes nothing to the shadow pass.
+	if (_fxShadowPass && !withShadow) {
 		return;
 	}
 	NSUInteger vertexCount = count + (closed ? 1 : 0);
@@ -422,29 +647,12 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	if (closed) {
 		vertices[count] = vertices[0];
 	}
-
-	if (withShadow) {
-		FxGripOSCVertex *shadow = malloc(vertexCount * sizeof(FxGripOSCVertex));
-		if (shadow != NULL) {
-			for (NSUInteger index = 0; index < vertexCount; index++) {
-				shadow[index].position = vertices[index].position + (vector_float2){ 1.0, 1.0 };
-			}
-			[self encodeVertices:shadow
-						   count:vertexCount
-					   primitive:MTLPrimitiveTypeLineStrip
-						   color:kFxGripOSCShadowColor
-					  canvasSize:canvasSize
-				  commandEncoder:commandEncoder];
-			free(shadow);
-		}
-	}
-
-	[self encodeVertices:vertices
-				   count:vertexCount
-			   primitive:MTLPrimitiveTypeLineStrip
-				   color:color
-			  canvasSize:canvasSize
-		  commandEncoder:commandEncoder];
+	[self fxEncodeVertices:vertices
+					 count:vertexCount
+				 primitive:MTLPrimitiveTypeLineStrip
+		   foregroundColor:color
+				canvasSize:canvasSize
+			commandEncoder:commandEncoder];
 	free(vertices);
 }
 
@@ -462,12 +670,12 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 		CGPoint metalPoint = FxGripOSCMetalPointFromCanvasPoint(corners[index], canvasSize);
 		vertices[index].position = (vector_float2){ (float)metalPoint.x, (float)metalPoint.y };
 	}
-	[self encodeVertices:vertices
-				   count:4
-			   primitive:MTLPrimitiveTypeTriangleStrip
-				   color:color
-			  canvasSize:canvasSize
-		  commandEncoder:commandEncoder];
+	[self fxEncodeVertices:vertices
+					 count:4
+				 primitive:MTLPrimitiveTypeTriangleStrip
+		   foregroundColor:color
+				canvasSize:canvasSize
+			commandEncoder:commandEncoder];
 }
 
 - (void)fillCanvasFanAroundCenter:(CGPoint)center
@@ -492,12 +700,12 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 		vertices[index * 3 + 1].position = (vector_float2){ (float)rim.x, (float)rim.y };
 		vertices[index * 3 + 2].position = (vector_float2){ (float)next.x, (float)next.y };
 	}
-	[self encodeVertices:vertices
-				   count:3 * count
-			   primitive:MTLPrimitiveTypeTriangle
-				   color:color
-			  canvasSize:canvasSize
-		  commandEncoder:commandEncoder];
+	[self fxEncodeVertices:vertices
+					 count:3 * count
+				 primitive:MTLPrimitiveTypeTriangle
+		   foregroundColor:color
+				canvasSize:canvasSize
+			commandEncoder:commandEncoder];
 	free(vertices);
 }
 
@@ -526,12 +734,15 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	// top-left (v = 0) maps to the upper corners.
 	CGPoint corners[4]			= { lowerRight, lowerLeft, upperRight, upperLeft };
 	vector_float2 texCoords[4]	= { { 1.0, 1.0 }, { 0.0, 1.0 }, { 1.0, 0.0 }, { 0.0, 0.0 } };
+	// In the shadow pass the texture becomes a silhouette: offset, tinted the shadow color.
+	vector_float2 offset = _fxShadowPass ? _fxShadowOffset : (vector_float2){ 0.0, 0.0 };
 	FxGripOSCTexturedVertex vertices[4];
 	for (NSUInteger index = 0; index < 4; index++) {
 		CGPoint metalPoint = FxGripOSCMetalPointFromCanvasPoint(corners[index], canvasSize);
-		vertices[index].position = (vector_float2){ (float)metalPoint.x, (float)metalPoint.y };
+		vertices[index].position = (vector_float2){ (float)metalPoint.x, (float)metalPoint.y } + offset;
 		vertices[index].texCoord = texCoords[index];
 	}
+	simd_float4 tint = _fxShadowPass ? _fxShadowColor : color;
 
 	simd_uint2 viewportSize = { (unsigned int)canvasSize.width, (unsigned int)canvasSize.height };
 	[commandEncoder setRenderPipelineState:texturedPipeline];
@@ -542,8 +753,8 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 							length:sizeof(viewportSize)
 						   atIndex:FxGripOSCVertexInputIndexViewportSize];
 	[commandEncoder setFragmentTexture:texture atIndex:FxGripOSCFragmentTextureIndexColor];
-	[commandEncoder setFragmentBytes:&color
-							  length:sizeof(color)
+	[commandEncoder setFragmentBytes:&tint
+							  length:sizeof(tint)
 							 atIndex:FxGripOSCFragmentInputIndexColor];
 	[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
 

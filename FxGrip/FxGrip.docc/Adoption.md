@@ -17,7 +17,7 @@ directly from any code:
 
 - `FxGripRect`, `FxGripColorGamut`, ``FxGripImageBuffer``, ``FxGripMTLDeviceCache``
 - ``FxGripEventModifiers`` (the modifier-key convention), ``FxGripURLWhitelist``
-- The value types: ``FxGripDictionary``, ``FxGripCurveData``, ``FxGripPointListData``
+- The value types: ``FxGripDictionary``, ``FxGripCurveData``, ``FxGripPathData``
 
 ### Level 2: API access and on-screen controls
 

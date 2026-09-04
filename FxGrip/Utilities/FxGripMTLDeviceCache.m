@@ -21,29 +21,29 @@
 + (MTLPixelFormat)MTLPixelFormatForImageTile:(FxImageTile*)imageTile
 {
 	MTLPixelFormat  result  = MTLPixelFormatRGBA16Float;
-	
+
 	switch (imageTile.ioSurface.pixelFormat)
 	{
 		case kCVPixelFormatType_32BGRA:
 			result = MTLPixelFormatBGRA8Unorm;
 			break;
-			
+
 		case kCVPixelFormatType_32RGBA:
 			result = MTLPixelFormatRGBA8Unorm;
 			break;
-			
+
 		case kCVPixelFormatType_64RGBALE:
 			result = MTLPixelFormatRGBA16Unorm;
 			break;
-			
+
 		case kCVPixelFormatType_64RGBAHalf: // Most Common Case
 			result = MTLPixelFormatRGBA16Float;
 			break;
-			
+
 		case kCVPixelFormatType_128RGBAFloat:
 			result = MTLPixelFormatRGBA32Float;
 			break;
-			
+
 		default:
 			NSLog (@"Got an unexpected pixel format in the IOSurface: %c%c%c%c",
 				   (imageTile.ioSurface.pixelFormat >> 24) & 0x000000FF,
@@ -52,7 +52,7 @@
 				   (imageTile.ioSurface.pixelFormat & 0x000000FF));
 			break;
 	}
-	
+
 	return result;
 }
 
@@ -64,29 +64,12 @@
 + (FxGripMTLDeviceCache*)deviceCache;
 {
 	return self.__BESingleton;
-	/*
-	static dispatch_once_t onceToken = 0;
-	dispatch_once(&onceToken, ^{
-		gDeviceCache = [[FxGripMTLDeviceCache alloc] init];
-	});
-	
-	return gDeviceCache;*/
 }
 
 
 + (FxGripMTLLibraryCache*)libraryCacheForDevice:(nullable id<MTLDevice>)device
 {
-	if (!device) {
-		return nil;
-	}
-	NSNumber *key = @(device.registryID);
-	FxGripMTLLibraryCache *cache = [self.deviceCache->_deviceDefaultLibraries objectForKey:key];
-	if (cache) {
-		return cache;
-	}
-	cache = [FxGripMTLLibraryCache.alloc initWithDevice:device];
-	[self.deviceCache->_deviceDefaultLibraries setObject:cache forKey:key];
-	return cache;
+	return [self.deviceCache libraryCacheForDevice:device];
 }
 
 + (FxGripMTLLibraryCache*)libraryCacheForRegistryID:(uint64_t)registryID
@@ -95,16 +78,16 @@
 }
 
 
-+ (GuruMTLCommandQueue*)guruCommandQueueForImageTile:(FxImageTile*)imageTile
++ (FxGripMTLCommandQueue*)scopedCommandQueueForImageTile:(FxImageTile*)imageTile
 {
-	return [self guruCommandQueueForImageTile:imageTile pluginID:nil];
+	return [self scopedCommandQueueForImageTile:imageTile pluginID:nil];
 }
 
-+ (GuruMTLCommandQueue*)guruCommandQueueForImageTile:(FxImageTile*)imageTile pluginID:(nullable NSString *)pluginID
++ (FxGripMTLCommandQueue*)scopedCommandQueueForImageTile:(FxImageTile*)imageTile pluginID:(nullable NSString *)pluginID
 {
 	MTLPixelFormat pixelFormat = [self MTLPixelFormatForImageTile:imageTile];
 	FxGripMTLDeviceCacheItem *device = [self.deviceCache deviceWithRegistryID:imageTile.deviceRegistryID pixelFormat:pixelFormat andPluginID:pluginID];
-	return [GuruMTLCommandQueue.alloc initWithDevice:device];
+	return NARC_AUTORELEASE([FxGripMTLCommandQueue.alloc initWithDeviceCacheItem:device]);
 }
 
 + (id<MTLCommandQueue>)commandQueueForImageTile:(FxImageTile*)imageTile {
@@ -127,7 +110,7 @@
 + (id<MTLDevice>)metalDeviceFromID:(uint64_t)registryID
 {
 	id<MTLDevice>   device  = nil;
-	
+
 	NSArray<id<MTLDevice>>* devices = MTLCopyAllDevices();
 	for (id<MTLDevice> nextDevice in devices)
 	{
@@ -138,7 +121,7 @@
 		}
 	}
 	NARC_RELEASE(devices);
-	
+
 	return NARC_RETAIN_AUTORELEASE(device);
 }
 
@@ -149,14 +132,14 @@
 		return nil;
 	}
 	id<MTLTexture>  result  = nil;
-	
+
 	MTLTextureDescriptor*   depthTexDesc    = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
 																								 width:bounds.right - bounds.left
 																								height:bounds.top - bounds.bottom
 																							 mipmapped:NO];
 	depthTexDesc.storageMode = MTLStorageModePrivate;
 	result = NARC_RETAIN_AUTORELEASE([device newTextureWithDescriptor:depthTexDesc]);
-	
+
 	return result;
 }
 
@@ -164,45 +147,48 @@
 - (instancetype)init
 {
 	self = [super init];
-	
+
 	if (self != nil)
 	{
-		// FxGripMTLDeviceCache * __weak controller = self; // if used inside the block, to stop recursive references.
 		MTLDeviceNotificationHandler notificationHandler = ^(id<MTLDevice> device, MTLDeviceNotificationName name)
 		{
 			[[NSNotificationCenter defaultCenter] postNotificationName:name object:device];
 		};
-		
+
 		NSArray<id<MTLDevice>>* devices = MTLCopyAllDevicesWithObserver(&_metalDeviceObserver, notificationHandler);
-		
+
+		_deviceCachesLock = [[NSLock alloc] init];
+		_deviceCachesLock.name = @"FxGripMTLDeviceCache";
 		_deviceDefaultLibraries = [NSMutableDictionary.alloc initWithCapacity:devices.count];
 		_deviceCaches = [[NSMutableArray alloc] initWithCapacity:devices.count];
-		
+
 		for (id<MTLDevice> nextDevice in devices)
 		{
 			FxGripMTLDeviceCacheItem*  newCacheItem    = NARC_AUTORELEASE([[FxGripMTLDeviceCacheItem alloc] initWithDevice:nextDevice
 																						pixelFormat:kFxGripMTLDeviceDefaultPixelFormat
 																						andPluginID:kDefaultPluginID]);
-			[_deviceCaches addObject:newCacheItem];
+			if (newCacheItem) {
+				[_deviceCaches addObject:newCacheItem];
+			}
 		}
 		NARC_RELEASE(devices);
-		
+
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(observeDeviceAdded:)
 														 name:MTLDeviceWasAddedNotification
 													   object:nil];
-		
+
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(observeDeviceRemovalRequested:)
 														 name:MTLDeviceRemovalRequestedNotification
 													   object:nil];
-		
+
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(observeDeviceRemovedRequested:)
 														 name:MTLDeviceWasRemovedNotification
 													   object:nil];
 	}
-	
+
 	return self;
 }
 
@@ -211,11 +197,30 @@
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	MTLRemoveDeviceObserver(_metalDeviceObserver);
 	_metalDeviceObserver = nil;
-	
+
 	NARC_RELEASE(_deviceDefaultLibraries);
 	NARC_RELEASE(_deviceCaches);
-	
+	NARC_RELEASE(_deviceCachesLock);
+
 	SUPER_DEALLOC();
+}
+
+- (FxGripMTLLibraryCache*)libraryCacheForDevice:(nullable id<MTLDevice>)device
+{
+	if (!device) {
+		return nil;
+	}
+	NSNumber *key = @(device.registryID);
+	[_deviceCachesLock lock];
+	FxGripMTLLibraryCache *cache = [_deviceDefaultLibraries objectForKey:key];
+	if (!cache) {
+		cache = NARC_AUTORELEASE([FxGripMTLLibraryCache.alloc initWithDevice:device]);
+		if (cache) {
+			[_deviceDefaultLibraries setObject:cache forKey:key];
+		}
+	}
+	[_deviceCachesLock unlock];
+	return cache;
 }
 
 - (void)observeDeviceAdded:(NSNotification*)notification
@@ -223,34 +228,35 @@
 	FxGripMTLDeviceCacheItem*  newCacheItem    = NARC_AUTORELEASE([[FxGripMTLDeviceCacheItem alloc] initWithDevice:notification.object
 																					  pixelFormat:kFxGripMTLDeviceDefaultPixelFormat
 																					  andPluginID:kDefaultPluginID]);
+	if (!newCacheItem) {
+		return;
+	}
+	[_deviceCachesLock lock];
 	[_deviceCaches addObject:newCacheItem];
+	[_deviceCachesLock unlock];
 }
+
 - (void)observeDeviceRemovalRequested:(NSNotification*)notification
 {
 	uint64_t registryID = ((id<MTLDevice>)notification.object).registryID;
 	NSNumber *key = @(registryID);
-	
-	// Remove Device libraries
-	FxGripMTLLibraryCache *cache = [_deviceDefaultLibraries objectForKey:key];
-	if (cache) {
-		[_deviceDefaultLibraries removeObjectForKey:key];
-	}
-	
-	// remove Device caches
-	for (FxGripMTLDeviceCacheItem* nextCacheItem in _deviceCaches)
-	{
-		if (nextCacheItem.gpuDevice.registryID == registryID) {
-			[_deviceCaches removeObject:nextCacheItem];
-		}
-	}
+
+	[_deviceCachesLock lock];
+	[_deviceDefaultLibraries removeObjectForKey:key];
+
+	NSIndexSet *removed = [_deviceCaches indexesOfObjectsPassingTest:^BOOL(FxGripMTLDeviceCacheItem *item, NSUInteger idx, BOOL *stop) {
+		return item.gpuDevice.registryID == registryID;
+	}];
+	[_deviceCaches removeObjectsAtIndexes:removed];
+	[_deviceCachesLock unlock];
 }
+
 - (void)observeDeviceRemovedRequested:(NSNotification*)notification
 {
 }
 
-//
 - (FxGripMTLDeviceCacheItem*)deviceWithRegistryID:(uint64_t)registryID
-{	// default pixel format is MTLPixelFormatRGBA16Float
+{
 	return [self deviceWithRegistryID:registryID pixelFormat:kFxGripMTLDeviceDefaultPixelFormat andPluginID:kDefaultPluginID];
 }
 
@@ -260,74 +266,101 @@
 	return [self deviceWithRegistryID:registryID pixelFormat:pixFormat andPluginID:kDefaultPluginID];
 }
 
+- (BOOL)cacheItem:(FxGripMTLDeviceCacheItem*)item matchesRegistryID:(uint64_t)registryID pixelFormat:(MTLPixelFormat)pixFormat pluginID:(NSString*)pluginID
+{
+	if (item.gpuDevice.registryID != registryID) {
+		return NO;
+	}
+	if (pixFormat != FxGripMTLPixelFormatAny && item.pixelFormat != pixFormat) {
+		return NO;
+	}
+	if (pluginID == kDefaultPluginID) {
+		return item.pluginID == kDefaultPluginID;
+	}
+	return item.pluginID != nil && [pluginID isEqualToString:item.pluginID];
+}
+
 - (FxGripMTLDeviceCacheItem*)deviceWithRegistryID:(uint64_t)registryID
 								  pixelFormat:(MTLPixelFormat)pixFormat
 								  andPluginID:(NSString*)pluginID
 {
+	// The lock spans lookup and insertion so concurrent misses create one item, not one per thread.
+	[_deviceCachesLock lock];
+	FxGripMTLDeviceCacheItem *result = nil;
 	for (FxGripMTLDeviceCacheItem* nextCacheItem in _deviceCaches)
 	{
-		if ((nextCacheItem.gpuDevice.registryID == registryID) &&
-			((pluginID == kDefaultPluginID && nextCacheItem.pluginID == kDefaultPluginID) || (pluginID && nextCacheItem.pluginID && [pluginID isEqualToString:nextCacheItem.pluginID])) &&
-			(pixFormat == GMTLPixelFormatAny || nextCacheItem.pixelFormat == pixFormat))
-		{
-			return nextCacheItem;
+		if ([self cacheItem:nextCacheItem matchesRegistryID:registryID pixelFormat:pixFormat pluginID:pluginID]) {
+			result = nextCacheItem;
+			break;
 		}
 	}
-	id<MTLDevice> device = [self.class metalDeviceFromID:registryID];
-	FxGripMTLDeviceCacheItem*  newCacheItem = NARC_AUTORELEASE([[FxGripMTLDeviceCacheItem alloc] initWithDevice:device
-																					   pixelFormat:pixFormat
-																					   andPluginID:pluginID]);
-	if (newCacheItem) {
-		[_deviceCaches addObject:newCacheItem];
+	if (!result) {
+		id<MTLDevice> device = [self.class metalDeviceFromID:registryID];
+		if (device) {
+			result = NARC_AUTORELEASE([[FxGripMTLDeviceCacheItem alloc] initWithDevice:device
+																		 pixelFormat:pixFormat
+																		 andPluginID:pluginID]);
+		}
+		if (result) {
+			[_deviceCaches addObject:result];
+		}
 	}
-	
-	return newCacheItem;
+	[_deviceCachesLock unlock];
+
+	return NARC_RETAIN_AUTORELEASE(result);
 }
 
 
 - (id<MTLDepthStencilState>)depthStateWithRegistryID:(uint64_t)registryID
 {
 	FxGripMTLDeviceCacheItem* deviceCacheItem = [self deviceWithRegistryID:registryID];
-	
+
 	return deviceCacheItem.depthState;
 }
 
 
 - (void)returnCommandQueueToCache:(id<MTLCommandQueue>)commandQueue;
 {
+	if (!commandQueue) {
+		return;
+	}
+	[_deviceCachesLock lock];
 	for (FxGripMTLDeviceCacheItem* nextCacheItem in _deviceCaches)
 	{
 		if ([nextCacheItem containsCommandQueue:commandQueue])
 		{
 			[nextCacheItem returnCommandQueue:commandQueue];
-			return;
+			break;
 		}
 	}
+	[_deviceCachesLock unlock];
 }
 
 @end
 
 
 #pragma mark -
-#pragma mark GuruMTLCommandQueue Implementation
+#pragma mark FxGripMTLCommandQueue Implementation
 
-@implementation GuruMTLCommandQueue
+@implementation FxGripMTLCommandQueue
 
 @synthesize queue = _queue;
 @synthesize label = _label;
 
 
-- (id)initWithDevice:(nullable FxGripMTLDeviceCacheItem*)device
+- (instancetype)initWithDeviceCacheItem:(nullable FxGripMTLDeviceCacheItem*)deviceCacheItem
 {
-	id<MTLCommandQueue> queue = [device getNextFreeCommandQueue];
+	id<MTLCommandQueue> queue = [deviceCacheItem getNextFreeCommandQueue];
 	if (!queue) {
-		self = nil;
-		return self;
+		NARC_RELEASE(self);
+		return nil;
 	}
 	self = [super init];
 	if (self) {
-		_deviceCache = device;
-		_queue = queue;
+		_deviceCacheItem = NARC_RETAIN(deviceCacheItem);
+		_queue = NARC_RETAIN(queue);
+	} else {
+		[deviceCacheItem returnCommandQueue:queue];
 	}
 	return self;
 }
@@ -335,15 +368,15 @@
 
 
 - (void)dealloc {
-	[_deviceCache returnCommandQueue:_queue];
-	_queue = nil;
-	
+	[_deviceCacheItem returnCommandQueue:_queue];
+	NARC_RELEASE(_queue);
+	NARC_RELEASE(_deviceCacheItem);
+
 	SUPER_DEALLOC();
 }
 
 #pragma mark MTLCommandQueue implementation
 
-/*! @brief A string to help identify this object */
 - (NSString *)label {
 	return [_queue label];
 }
@@ -352,83 +385,46 @@
 	[_queue setLabel:label];
 }
 
-/*! @brief The device this queue will submit to */
 - (id<MTLDevice>)device {
 	return [_queue device];
 }
 
-/*!
- @method commandBuffer
- @abstract Returns a new autoreleased command buffer used to encode work into this queue that
- maintains strong references to resources used within the command buffer.
-*/
 - (nullable id <MTLCommandBuffer>)commandBuffer
 {
 	return [_queue commandBuffer];
 }
 
-/*!
- @method commandBufferWithDescriptor
- @param descriptor The requested properties of the command buffer.
- @abstract Returns a new autoreleased command buffer used to encode work into this queue.
-*/
 - (nullable id <MTLCommandBuffer>)commandBufferWithDescriptor:(MTLCommandBufferDescriptor*)descriptor
 {
 	return [_queue commandBufferWithDescriptor:descriptor];
 }
 
-
-/*!
- @method commandBufferWithUnretainedReferences
- @abstract Returns a new autoreleased command buffer used to encode work into this queue that
- does not maintain strong references to resources used within the command buffer.
-*/
 - (nullable id <MTLCommandBuffer>)commandBufferWithUnretainedReferences
 {
 	return [_queue commandBufferWithUnretainedReferences];
 }
 
-/*!
- @method insertDebugCaptureBoundary
- @abstract Inform Xcode about when debug capture should start and stop.
- */
 - (void)insertDebugCaptureBoundary
 {
 	return [_queue insertDebugCaptureBoundary];
 }
 
-/*!
-  @method addResidencySet
-  @abstract Marks the residency set as part of the command queue execution. This ensures that the residency set is resident during execution of all the command buffers within the queue.
- */
 - (void)addResidencySet:(id <MTLResidencySet>)residencySet
 {
 	return [_queue addResidencySet:residencySet];
 }
 
-/*!
-  @method addResidencySets
-  @abstract Marks the residency sets as part of the command queue execution. This ensures that the residency sets are resident during execution of all the command buffers within the queue.
- */
 - (void)addResidencySets:(const id <MTLResidencySet> _Nonnull[_Nonnull])residencySets
 				   count:(NSUInteger)count
 {
 	return [_queue addResidencySets:residencySets count:count];
 }
 
-/*!
-  @method removeResidencySet
-  @abstract Removes the residency set from the command queue execution. This ensures that only the remaining residency sets are resident during execution of all the command buffers within the queue.
- */
 - (void)removeResidencySet:(id <MTLResidencySet>)residencySet
 {
 	return [_queue removeResidencySet:residencySet];
 }
 
-/*!
-  @method removeResidencySets
-  @abstract Removes the residency sets from the command queue execution. This ensures that only the remaining residency sets are resident during execution of all the command buffers within the queue.
- */
 - (void)removeResidencySets:(const id <MTLResidencySet> _Nonnull[_Nonnull])residencySets
 					  count:(NSUInteger)count
 {
@@ -444,6 +440,14 @@
 #pragma mark FxGripMTLLibraryCache Implementation
 
 
+typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSError * _Nullable error);
+
+@interface FxGripMTLLibraryCache ()
+{
+	NSMutableDictionary<NSString*, NSMutableArray<FxGripMTLFunctionHandler>*> *_pendingHandlers;
+}
+@end
+
 @implementation FxGripMTLLibraryCache
 
 @synthesize library = _library;
@@ -454,6 +458,7 @@
 	self = [super init];
 	if (self) {
 		__functionCache = NARC_RETAIN(NSMutableDictionary.new);
+		_pendingHandlers = NARC_RETAIN(NSMutableDictionary.new);
 	}
 	return self;
 }
@@ -461,6 +466,7 @@
 - (nullable instancetype)initWithLibrary:(nonnull id<MTLLibrary>)library
 {
 	if (!library) {
+		NARC_RELEASE(self);
 		return nil;
 	}
 	self = [self init];
@@ -473,12 +479,14 @@
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device
 {
 	if (!device) {
+		NARC_RELEASE(self);
 		return nil;
 	}
 	self = [self init];
 	if (self) {
 		_library = device.newDefaultLibrary;
 		if (!_library) {
+			NARC_RELEASE(self);
 			return nil;
 		}
 	}
@@ -488,8 +496,10 @@
 - (void)dealloc
 {
 	NARC_RELEASE(__functionCache);
+	NARC_RELEASE(_functionCache);
+	NARC_RELEASE(_pendingHandlers);
 	NARC_RELEASE(_library);
-	
+
 	SUPER_DEALLOC();
 }
 
@@ -499,6 +509,7 @@
 	@synchronized (self) {
 		hasObject = [__functionCache objectForKey:name] != nil;
 		[__functionCache removeObjectForKey:name];
+		NARC_RELEASE(_functionCache);
 	}
 	return hasObject;
 }
@@ -524,31 +535,37 @@
 		if (!_functionCache) {
 			_functionCache = __functionCache.copy;
 		}
+		return _functionCache;
 	}
-	return _functionCache;
 }
 
-
+- (void)storeFunction:(nullable id<MTLFunction>)function forName:(NSString *)name
+{
+	@synchronized (self) {
+		if (function) {
+			[__functionCache setObject:function forKey:name];
+		} else {
+			[__functionCache removeObjectForKey:name];
+		}
+		NARC_RELEASE(_functionCache);
+	}
+}
 
 - (nullable id<MTLFunction>)objectForKeyedSubscript:(nullable NSString*)key
 {
-	if (!key) {
+	if (![key isKindOfClass:NSString.class]) {
 		return nil;
 	}
-	if ([key isKindOfClass:NSString.class]) {
-		return __functionCache[key];
+	@synchronized (self) {
+		id<MTLFunction> func = __functionCache[key];
+		return (func != (id<MTLFunction>)[NSNull null]) ? func : nil;
 	}
-	return nil;
 }
 
 
 
 // MTLLibrary caching and passthrough
 
-/*!
- @property label
- @abstract A string to help identify this object.
- */
 - (NSString *)label {
 	return [_library label];
 }
@@ -556,217 +573,170 @@
 	[_library setLabel:label];
 }
 
-/*!
- @property device
- @abstract The device this resource was created against.  This resource can only be used with this device.
- */
 - (id <MTLDevice>)device {
 	return [_library device];
 }
 
-/*!
- @method newFunctionWithName
- @abstract Returns a pointer to a function object, return nil if the function is not found in the library.
- */
 - (nullable id <MTLFunction>) newFunctionWithName:(nonnull NSString *)functionName {
 	@synchronized (self) {
-		id<MTLFunction> func;
-		if ((func = [__functionCache objectForKey:functionName])) {
-			return (func != (id<MTLFunction>)[NSNull null]) ? func : nil;
+		id<MTLFunction> func = [self loadedFunctionNamed:functionName];
+		if (func) {
+			return func;
 		}
 		func = [_library newFunctionWithName:functionName];
-		[__functionCache setObject:func forKey:functionName];
-		
+		[self storeLoadedFunction:func forName:functionName];
 		return func;
 	}
 }
 
-/*!
- @method newFunctionWithName:constantValues:error:
- @abstract Returns a pointer to a function object obtained by applying the constant values to the named function.
- @discussion This method will call the compiler. Use newFunctionWithName:constantValues:completionHandler: to
- avoid waiting on the compiler.
- */
 - (nullable id <MTLFunction>) newFunctionWithName:(nonnull NSString *)name constantValues:(nullable MTLFunctionConstantValues *)constantValues
 											error:(__autoreleasing NSError **)error {
 	@synchronized (self) {
-		id<MTLFunction> func;
-		if ((func = [__functionCache objectForKey:name])) {
-			return (func != (id<MTLFunction>)[NSNull null]) ? func : nil;
+		id<MTLFunction> func = [self loadedFunctionNamed:name];
+		if (func) {
+			return func;
 		}
 		func = [_library newFunctionWithName:name constantValues:constantValues error:error];
-		[__functionCache setObject:func forKey:name];
+		[self storeLoadedFunction:func forName:name];
 		return func;
 	}
 }
 
-
-/*!
- @method newFunctionWithName:constantValues:completionHandler:
- @abstract Returns a pointer to a function object obtained by applying the constant values to the named function.
- @discussion This method is asynchronous since it is will call the compiler.
- */
 - (void) newFunctionWithName:(nonnull NSString *)name constantValues:(nullable MTLFunctionConstantValues *)constantValues
 			completionHandler:(void (^_Nonnull)(id<MTLFunction> __nullable function, NSError* __nullable error))completionHandler {
-	@synchronized (self) {
-		id<MTLFunction> func;
-		if ((func = [__functionCache objectForKey:name])) {
-			if (func != (id<MTLFunction>)[NSNull null])
-				completionHandler(func, nil);
-			return;
-		}
-		// set placeholder for the metal function
-		[__functionCache setObject:[NSNull null] forKey:name];
+	if (![self beginLoadingFunctionNamed:name completionHandler:completionHandler]) {
+		return;
 	}
-	__block void (^ _Nullable finalizeBlock)(id<MTLFunction> __nullable function, NSError* __nullable error) = BLOCK_COPY(completionHandler);
 	[_library newFunctionWithName:name constantValues:constantValues completionHandler:
 		 ^(id<MTLFunction> __nullable function, NSError* __nullable error) {
-		if (function && !error) {
-			@synchronized (self) {
-				[self->__functionCache setObject:function forKey:name];
-			}
-		}
-		if (completionHandler) {
-			completionHandler(function, error);
-			BLOCK_RELEASE(finalizeBlock);
-		}
+		[self finishLoadingFunctionNamed:name function:function error:error];
 	}];
 }
 
-/*!
- @method newFunctionWithDescriptor:completionHandler:
- @abstract Create a new MTLFunction object asynchronously.
- */
 - (void)newFunctionWithDescriptor:(nonnull MTLFunctionDescriptor *)descriptor
 				completionHandler:(void (^_Nonnull)(id<MTLFunction> __nullable function, NSError* __nullable error))completionHandler {
-	NSString *name = descriptor.specializedName ? descriptor.specializedName : descriptor.name;
-	
-	@synchronized (self) {
-		id<MTLFunction> func;
-		if ((func = [__functionCache objectForKey:name])) {
-			if (func != (id<MTLFunction>)[NSNull null])
-				completionHandler(func, nil);
-			return;
-		}
-		// set placeholder for the metal function
-		[__functionCache setObject:[NSNull null] forKey:name];
+	NSString *name = [self cacheNameForDescriptor:descriptor];
+	if (![self beginLoadingFunctionNamed:name completionHandler:completionHandler]) {
+		return;
 	}
-	__block void (^ _Nullable finalizeBlock)(id<MTLFunction> __nullable function, NSError* __nullable error) = BLOCK_COPY(completionHandler);
 	[_library newFunctionWithDescriptor:descriptor completionHandler:
 				^(id<MTLFunction> __nullable function, NSError* __nullable error) {
-		if (function && !error) {
-			@synchronized (self) {
-				[self->__functionCache setObject:function forKey:name];
-			}
-		}
-		if (completionHandler) {
-			completionHandler(function, error);
-			BLOCK_RELEASE(finalizeBlock);
-		}
+		[self finishLoadingFunctionNamed:name function:function error:error];
 	}];
 }
 
-/*!
- @method newFunctionWithDescriptor:error:
- @abstract Create  a new MTLFunction object synchronously.
- */
 - (nullable id <MTLFunction>)newFunctionWithDescriptor:(nonnull MTLFunctionDescriptor *)descriptor
 												 error:(__autoreleasing NSError *_Nullable*_Nullable)error {
-	NSString *name = descriptor.specializedName ? descriptor.specializedName : descriptor.name;
-	
+	NSString *name = [self cacheNameForDescriptor:descriptor];
 	@synchronized (self) {
-		id<MTLFunction> func;
-		if ((func = [__functionCache objectForKey:name])) {
-			return (func != (id<MTLFunction>)[NSNull null]) ? func : nil;
+		id<MTLFunction> func = [self loadedFunctionNamed:name];
+		if (func) {
+			return func;
 		}
 		func = [_library newFunctionWithDescriptor:descriptor error:error];
-		[__functionCache setObject:func forKey:name];
+		[self storeLoadedFunction:func forName:name];
 		return func;
 	}
 }
 
-
-
-/*!
- @method newIntersectionFunctionWithDescriptor:completionHandler:
- @abstract Create a new MTLFunction object asynchronously.
- */
 - (void)newIntersectionFunctionWithDescriptor:(nonnull MTLIntersectionFunctionDescriptor *)descriptor
 							completionHandler:(void (^_Nonnull)(id<MTLFunction> __nullable function, NSError* __nullable error))completionHandler  {
-	NSString *name = descriptor.specializedName ? descriptor.specializedName : descriptor.name;
-	
-	@synchronized (self) {
-		id<MTLFunction> func;
-		if ((func = [__functionCache objectForKey:name])) {
-			if (func != (id<MTLFunction>)[NSNull null])
-				completionHandler(func, nil);
-			return;
-		}
-		// set placeholder for the metal function
-		[__functionCache setObject:[NSNull null] forKey:name];
+	NSString *name = [self cacheNameForDescriptor:descriptor];
+	if (![self beginLoadingFunctionNamed:name completionHandler:completionHandler]) {
+		return;
 	}
-	__block void (^ _Nullable finalizeBlock)(id<MTLFunction> __nullable function, NSError* __nullable error) = BLOCK_COPY(completionHandler);
 	[_library newIntersectionFunctionWithDescriptor:descriptor completionHandler:
 				^(id<MTLFunction> __nullable function, NSError* __nullable error) {
-		if (function && !error) {
-			@synchronized (self) {
-				[self->__functionCache setObject:function forKey:name];
-			}
-		}
-		if (completionHandler) {
-			completionHandler(function, error);
-			BLOCK_RELEASE(finalizeBlock);
-		}
+		[self finishLoadingFunctionNamed:name function:function error:error];
 	}];
 }
 
-
-/*!
- @method newIntersectionFunctionWithDescriptor:error:
- @abstract Create  a new MTLFunction object synchronously.
- */
 - (nullable id <MTLFunction>)newIntersectionFunctionWithDescriptor:(nonnull MTLIntersectionFunctionDescriptor *)descriptor
 															 error:(__autoreleasing NSError *_Nullable * _Null_unspecified)error {
-	NSString *name = descriptor.specializedName ? descriptor.specializedName : descriptor.name;
-	
+	NSString *name = [self cacheNameForDescriptor:descriptor];
 	@synchronized (self) {
-		id<MTLFunction> func;
-		if ((func = [__functionCache objectForKey:name])) {
-			return (func != (id<MTLFunction>)[NSNull null]) ? func : nil;
+		id<MTLFunction> func = [self loadedFunctionNamed:name];
+		if (func) {
+			return func;
 		}
 		func = [_library newIntersectionFunctionWithDescriptor:descriptor error:error];
-		[__functionCache setObject:func forKey:name];
+		[self storeLoadedFunction:func forName:name];
 		return func;
 	}
 }
 
+#pragma mark Function loading
 
+- (NSString *)cacheNameForDescriptor:(MTLFunctionDescriptor *)descriptor
+{
+	return descriptor.specializedName ? descriptor.specializedName : descriptor.name;
+}
 
-/*!
- @property functionNames
- @abstract The array contains NSString objects, with the name of each function in library.
- */
+// Callers hold @synchronized (self). A loading placeholder reads as not loaded, so a synchronous
+// request during an asynchronous compile compiles on its own thread instead of returning nil.
+- (nullable id<MTLFunction>)loadedFunctionNamed:(NSString *)name
+{
+	id entry = [__functionCache objectForKey:name];
+	return (entry && entry != [NSNull null]) ? entry : nil;
+}
+
+// Callers hold @synchronized (self). A miss leaves the cache untouched, so an in-flight
+// asynchronous compile keeps its placeholder.
+- (void)storeLoadedFunction:(nullable id<MTLFunction>)function forName:(NSString *)name
+{
+	if (function) {
+		[self storeFunction:function forName:name];
+	}
+}
+
+- (BOOL)beginLoadingFunctionNamed:(NSString *)name completionHandler:(FxGripMTLFunctionHandler)completionHandler
+{
+	id<MTLFunction> cached = nil;
+	BOOL ownsCompile = NO;
+	@synchronized (self) {
+		id entry = [__functionCache objectForKey:name];
+		if (entry && entry != [NSNull null]) {
+			cached = entry;
+		} else {
+			ownsCompile = (entry == nil);
+			if (ownsCompile) {
+				[__functionCache setObject:[NSNull null] forKey:name];
+			}
+			NSMutableArray *waiters = _pendingHandlers[name];
+			if (!waiters) {
+				waiters = [NSMutableArray array];
+				_pendingHandlers[name] = waiters;
+			}
+			[waiters addObject:BLOCK_COPY(completionHandler)];
+		}
+	}
+	if (cached) {
+		completionHandler(cached, nil);
+	}
+	return ownsCompile;
+}
+
+- (void)finishLoadingFunctionNamed:(NSString *)name function:(nullable id<MTLFunction>)function error:(nullable NSError *)error
+{
+	NSArray<FxGripMTLFunctionHandler> *waiters = nil;
+	@synchronized (self) {
+		[self storeFunction:(function && !error) ? function : nil forName:name];
+		waiters = NARC_AUTORELEASE([_pendingHandlers[name] copy]);
+		[_pendingHandlers removeObjectForKey:name];
+	}
+	for (FxGripMTLFunctionHandler waiter in waiters) {
+		waiter(function, error);
+	}
+}
+
 - (NSArray <NSString *> *)functionNames {
 	return [_library functionNames];
 }
 
-/*!
- @property type
- @abstract The library type provided when this MTLLibrary was created.
- Libraries with MTLLibraryTypeExecutable can be used to obtain MTLFunction from.
- Libraries with MTLLibraryTypeDynamic can be used to resolve external references in other MTLLibrary from.
- @see MTLCompileOptions
- */
 - (MTLLibraryType)type {
 	return [_library type];
 }
 
-/*!
- @property installName
- @abstract The installName provided when this MTLLibrary was created.
- @discussion Always nil if the type of the library is not MTLLibraryTypeDynamic.
- @see MTLCompileOptions
- */
 - (NSString *)installName {
 	return [_library installName];
 }
@@ -777,11 +747,9 @@
 #pragma mark -
 #pragma mark FxGripMTLDeviceCacheItem Implementation
 
-const NSUInteger    kMTLMaxCommandQueues   = 3;
+const NSUInteger    kFxGripMTLInitialCommandQueueCount   = 3;
 static NSString*    kKey_InUse          = @"InUse";
 static NSString*    kKey_CommandQueue   = @"CommandQueue";
-
-//static FxGripMTLDeviceCache*   gDeviceCache    = nil;
 
 @implementation FxGripMTLDeviceCacheItem
 
@@ -793,52 +761,46 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
                    pixelFormat:(MTLPixelFormat)pixFormat
                    andPluginID:(NSString*)newPluginID
 {
+	if (!device) {
+		NARC_RELEASE(self);
+		return nil;
+	}
     self = [super init];
-    
+
     if (self != nil)
     {
         _gpuDevice = NARC_RETAIN(device);
         _pluginID = [newPluginID copy];
-        
-        _commandQueueCache = [[NSMutableArray alloc] initWithCapacity:kMTLMaxCommandQueues];
+		_pixelFormat = pixFormat;
+
+        _commandQueueCache = [[NSMutableArray alloc] initWithCapacity:kFxGripMTLInitialCommandQueueCount];
+		_commandQueueCacheLock = [[NSLock alloc] init];
+		_commandQueueCacheLock.name = @"FxGripMTLDeviceCacheItem.commandQueues";
 		_pipelineStates = [[NSMutableDictionary alloc] initWithCapacity:3];
-        for (NSUInteger i = 0; (_commandQueueCache != nil) && (i < kMTLMaxCommandQueues); i++)
+        for (NSUInteger i = 0; i < kFxGripMTLInitialCommandQueueCount; i++)
         {
             [self addNewCommandQueue];
         }
-        
-		_pixelFormat = pixFormat;
-		 
-        if (_commandQueueCache != nil)
-        {
-            _commandQueueCacheLock = [[NSLock alloc] init];
-        }
-        
-        if ((_gpuDevice == nil) || (_commandQueueCache == nil) || (_commandQueueCacheLock == nil) )
-        {
-			NARC_RELEASE(_gpuDevice);
-			NARC_RELEASE(_commandQueueCache);
-			NARC_RELEASE(_commandQueueCacheLock);
-			
-			NARC_RELEASE(self);
-        }
     }
-    
+
     return self;
 }
 
+// Callers hold _commandQueueCacheLock, or are still inside init.
 - (id<MTLCommandQueue>)addNewCommandQueue
 {
+	id<MTLCommandQueue> commandQueue    = [_gpuDevice newCommandQueue];
+	if (!commandQueue) {
+		return nil;
+	}
 	NSMutableDictionary*   commandDict = [NSMutableDictionary dictionary];
 	[commandDict setObject:[NSNumber numberWithBool:NO]
 					forKey:kKey_InUse];
-	
-	id<MTLCommandQueue> commandQueue    = [_gpuDevice newCommandQueue];
 	[commandDict setObject:commandQueue
 					forKey:kKey_CommandQueue];
-	
+
 	[_commandQueueCache addObject:commandDict];
-	return commandQueue;
+	return NARC_AUTORELEASE(commandQueue);
 }
 
 - (void)dealloc
@@ -846,26 +808,33 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 	NARC_RELEASE(_pipelineStates);
 	NARC_RELEASE(_commandQueueCache);
 	NARC_RELEASE(_commandQueueCacheLock);
+	NARC_RELEASE(_defaultLibraryCache);
 	NARC_RELEASE(_defaultLibrary);
+	NARC_RELEASE(_depthState);
+	NARC_RELEASE(_pluginID);
 	NARC_RELEASE(_gpuDevice);
-    
+
 	SUPER_DEALLOC();
 }
 
 - (id<MTLLibrary>) defaultLibrary
 {
-	if (!_defaultLibrary) {
-		_defaultLibrary = [_gpuDevice newDefaultLibrary];
+	@synchronized (self) {
+		if (!_defaultLibrary) {
+			_defaultLibrary = [_gpuDevice newDefaultLibrary];
+		}
+		return _defaultLibrary;
 	}
-	return _defaultLibrary;
 }
 
 - (FxGripMTLLibraryCache*)defaultLibraryCache
 {
-	if (!_defaultLibraryCache) {
-		_defaultLibraryCache = [FxGripMTLLibraryCache.alloc initWithLibrary:self.defaultLibrary];
+	@synchronized (self) {
+		if (!_defaultLibraryCache) {
+			_defaultLibraryCache = [FxGripMTLLibraryCache.alloc initWithLibrary:self.defaultLibrary];
+		}
+		return _defaultLibraryCache;
 	}
-	return _defaultLibraryCache;
 }
 
 - (uint64_t)registryID {
@@ -891,9 +860,20 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 - (id<MTLRenderPipelineState>)pipelineStateWithLibrary:(id<MTLLibrary>)library vertexShader:(NSString*)vertexShader fragmentShader:(NSString*)fragmentShader
 	constantValues:(MTLFunctionConstantValues *)constantValues
 {
-	return [self pipelineStateWithLibrary:nil vertexShader:vertexShader fragmentShader:fragmentShader constantValues:constantValues specializedFormat:nil];
+	return [self pipelineStateWithLibrary:library vertexShader:vertexShader fragmentShader:fragmentShader constantValues:constantValues specializedFormat:nil];
 }
 
+- (NSString*)pipelineKeyForVertexName:(NSString*)vertexName fragmentName:(NSString*)fragmentName
+{
+	return fragmentName ? [NSString stringWithFormat:@"%@:%@", vertexName, fragmentName] : @"";
+}
+
+- (id<MTLRenderPipelineState>)cachedPipelineStateForKey:(NSString*)key
+{
+	@synchronized (self) {
+		return [_pipelineStates objectForKey:key];
+	}
+}
 
 - (id<MTLRenderPipelineState>)pipelineStateWithLibrary:(id<MTLLibrary>)library vertexShader:(NSString*)vertexShader fragmentShader:(NSString*)fragmentShader
 	constantValues:(MTLFunctionConstantValues *)constantValues specializedFormat:(nullable NSString*)specializedFormat
@@ -903,34 +883,30 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 	if (specializedFormat) {
 		specializedVertexName = [NSString stringWithFormat:specializedFormat, vertexShader];
 		specializedFragmentName = [NSString stringWithFormat:specializedFormat, fragmentShader];
-		
-		NSString *key = fragmentShader ? [NSString stringWithFormat:@"%@:%@", specializedVertexName, specializedFragmentName] : @"";
-	 
-		if ([_pipelineStates objectForKey:key]) {
-			return _pipelineStates[key];
-		}
-	} else {
-		NSString *key = fragmentShader ? [NSString stringWithFormat:@"%@:%@", vertexShader, fragmentShader] : @"";
-	 
-		if ([_pipelineStates objectForKey:key]) {
-			return _pipelineStates[key];
-		}
 	}
+	NSString *key = specializedFormat
+		? [self pipelineKeyForVertexName:specializedVertexName fragmentName:specializedFragmentName]
+		: [self pipelineKeyForVertexName:vertexShader fragmentName:fragmentShader];
+	id<MTLRenderPipelineState> pipelineState = [self cachedPipelineStateForKey:key];
+	if (pipelineState) {
+		return pipelineState;
+	}
+
 	MTLFunctionDescriptor *vertexDescriptor = MTLFunctionDescriptor.functionDescriptor;
 	MTLFunctionDescriptor *fragmentDescriptor = MTLFunctionDescriptor.functionDescriptor;
-	
+
 	vertexDescriptor.name = vertexShader;
 	fragmentDescriptor.name = fragmentShader;
-	
+
 	if (specializedFormat) {
-		vertexDescriptor.specializedName = [NSString stringWithFormat:specializedFormat, vertexShader];
-		fragmentDescriptor.specializedName = [NSString stringWithFormat:specializedFormat, fragmentShader];
+		vertexDescriptor.specializedName = specializedVertexName;
+		fragmentDescriptor.specializedName = specializedFragmentName;
 	}
 	if (constantValues) {
 		vertexDescriptor.constantValues = constantValues;
 		fragmentDescriptor.constantValues = constantValues;
 	}
-	
+
 	return [self pipelineStateWithLibrary:library vertexDescriptor:vertexDescriptor fragmentDescriptor:fragmentDescriptor];
 }
 
@@ -944,66 +920,67 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 	if (!library) {
 		library = self.defaultLibraryCache;
 	}
-	
+
 	if (!library || (vertexDescriptor && !vertexDescriptor.name) || (fragmentDescriptor && !fragmentDescriptor.name)) {
 		return nil;
 	}
-	
-	NSString *key = fragmentDescriptor ? [NSString stringWithFormat:@"%@:%@", vertexDescriptor.specializedName ? vertexDescriptor.specializedName : vertexDescriptor.name, fragmentDescriptor.specializedName ? fragmentDescriptor.specializedName : fragmentDescriptor.name] : @"";
-	
-	id<MTLRenderPipelineState> pipelineState;
-	if ((pipelineState = [_pipelineStates objectForKey:key])) {
+
+	NSString *vertexName = vertexDescriptor.specializedName ? vertexDescriptor.specializedName : vertexDescriptor.name;
+	NSString *fragmentName = fragmentDescriptor.specializedName ? fragmentDescriptor.specializedName : fragmentDescriptor.name;
+	NSString *key = fragmentDescriptor ? [self pipelineKeyForVertexName:vertexName fragmentName:fragmentName] : @"";
+
+	id<MTLRenderPipelineState> pipelineState = [self cachedPipelineStateForKey:key];
+	if (pipelineState) {
 		return pipelineState;
 	}
-	
-	NSError    *vertexError = nil, *fragmetError = nil;
-	return [self pipelineStateWithVertexFunction:[library newFunctionWithDescriptor:vertexDescriptor error:&vertexError] fragmentFunction:[library newFunctionWithDescriptor:fragmentDescriptor error:&fragmetError]];
+
+	NSError    *vertexError = nil, *fragmentError = nil;
+	id<MTLFunction> vertexFunction = NARC_AUTORELEASE([library newFunctionWithDescriptor:vertexDescriptor error:&vertexError]);
+	id<MTLFunction> fragmentFunction = NARC_AUTORELEASE([library newFunctionWithDescriptor:fragmentDescriptor error:&fragmentError]);
+	if (!vertexFunction) {
+		NSLog(@"Error loading vertex function %@: %@", vertexName, vertexError);
+		return nil;
+	}
+	return [self pipelineStateWithVertexFunction:vertexFunction fragmentFunction:fragmentFunction];
 }
 
 - (id<MTLRenderPipelineState>)pipelineStateWithVertexFunction:(id<MTLFunction>)vertexFunction fragmentFunction:(id<MTLFunction>)fragmentFunction
 {
-	NSString *key = fragmentFunction ? [NSString stringWithFormat:@"%@:%@", vertexFunction.name, fragmentFunction.name] : @"";
-	
-	id<MTLRenderPipelineState> pipelineState;
-	if ((pipelineState = [_pipelineStates objectForKey:key])) {
+	NSString *key = fragmentFunction ? [self pipelineKeyForVertexName:vertexFunction.name fragmentName:fragmentFunction.name] : @"";
+
+	// The lock spans lookup and compilation so concurrent misses compile one state, not one per thread.
+	@synchronized (self) {
+		id<MTLRenderPipelineState> pipelineState = [_pipelineStates objectForKey:key];
+		if (pipelineState) {
+			return pipelineState;
+		}
+
+		MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
+		if (_pluginID) {
+			pipelineStateDescriptor.label = _pluginID;
+		}
+
+		NSError*    error = nil;
+
+		pipelineStateDescriptor.vertexFunction = vertexFunction;
+		pipelineStateDescriptor.fragmentFunction = fragmentFunction;
+		pipelineStateDescriptor.colorAttachments[0].pixelFormat = _pixelFormat;
+		pipelineStateDescriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+
+		pipelineState = NARC_AUTORELEASE([_gpuDevice newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error]);
+		if (pipelineState) {
+			_pipelineStates[key] = pipelineState;
+		} else {
+			NSLog (@"Error generating pipeline state: %@", error);
+		}
+		NARC_RELEASE(pipelineStateDescriptor);
 		return pipelineState;
 	}
-	// Configure a pipeline descriptor that is used to create a pipeline state
-	
-	MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
-	if (_pluginID) {
-		pipelineStateDescriptor.label = _pluginID;
-	}
-	
-	NSError*    error = nil;
-	
-	pipelineStateDescriptor.vertexFunction = vertexFunction;
-	pipelineStateDescriptor.fragmentFunction = fragmentFunction;
-	pipelineStateDescriptor.colorAttachments[0].pixelFormat = _pixelFormat;
-	pipelineStateDescriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
-	
-	id<MTLRenderPipelineState> pipe = _pipelineStates[key] = [_gpuDevice newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
-																										error:&error];
-	if (error != nil)
-	{
-		NSLog (@"Error generating pipeline state: %@", error);
-	}
-	NARC_RELEASE(pipelineStateDescriptor);
-	return pipe;
 }
 
 - (id<MTLTexture>)depthTexture:(FxRect)bounds
 {
-	id<MTLTexture>  result  = nil;
-	
-	MTLTextureDescriptor*   depthTexDesc    = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
-																								 width:bounds.right - bounds.left
-																								height:bounds.top - bounds.bottom
-																							 mipmapped:NO];
-	depthTexDesc.storageMode = MTLStorageModePrivate;
-	result = NARC_RETAIN_AUTORELEASE([_gpuDevice newTextureWithDescriptor:depthTexDesc]);
-	
-	return result;
+	return [FxGripMTLDeviceCache depthTexture:bounds forDevice:_gpuDevice];
 }
 
 - (unsigned int)max1DTextureWidth
@@ -1062,90 +1039,83 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 
 - (id<MTLDepthStencilState>)depthState
 {
-	if (!_depthState) {
-		MTLDepthStencilDescriptor   *depthStencilDescriptor = NARC_AUTORELEASE([MTLDepthStencilDescriptor.alloc init]);
-		depthStencilDescriptor.label = @"3D Depth Stencil State";
-		depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
-		depthStencilDescriptor.depthWriteEnabled = YES;
-		
-		_depthState = [_gpuDevice newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+	@synchronized (self) {
+		if (!_depthState) {
+			MTLDepthStencilDescriptor   *depthStencilDescriptor = NARC_AUTORELEASE([MTLDepthStencilDescriptor.alloc init]);
+			depthStencilDescriptor.label = @"3D Depth Stencil State";
+			depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
+			depthStencilDescriptor.depthWriteEnabled = YES;
+
+			_depthState = [_gpuDevice newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+		}
+		return _depthState;
 	}
-	return _depthState;
 }
 
 
 - (id<MTLCommandQueue>)getNextFreeCommandQueue
 {
     id<MTLCommandQueue> result  = nil;
-    
+
     [_commandQueueCacheLock lock];
-    NSUInteger  index   = 0;
-    while ((result == nil) && (index < _commandQueueCache.count))
+    for (NSMutableDictionary* nextCommandQueue in _commandQueueCache)
     {
-        NSMutableDictionary*    nextCommandQueue    = [_commandQueueCache objectAtIndex:index];
-        NSNumber*               inUse               = [nextCommandQueue objectForKey:kKey_InUse];
+        NSNumber* inUse = [nextCommandQueue objectForKey:kKey_InUse];
         if (![inUse boolValue])
         {
             [nextCommandQueue setObject:[NSNumber numberWithBool:YES]
                                  forKey:kKey_InUse];
             result = [nextCommandQueue objectForKey:kKey_CommandQueue];
+            break;
         }
-        index++;
     }
 	if (!result) {
 		result = [self addNewCommandQueue];
+		if (result) {
+			[_commandQueueCache.lastObject setObject:[NSNumber numberWithBool:YES] forKey:kKey_InUse];
+		}
 	}
     [_commandQueueCacheLock unlock];
-    
+
     return result;
 }
 
 - (void)returnCommandQueue:(id<MTLCommandQueue>)commandQueue
 {
+	if (!commandQueue) {
+		return;
+	}
     [_commandQueueCacheLock lock];
-    
-    BOOL        found   = false;
-    NSUInteger  index   = 0;
-    while ((!found) && (index < _commandQueueCache.count))
+    for (NSMutableDictionary* nextCommandQueueDict in _commandQueueCache)
     {
-        NSMutableDictionary*    nextCommandQueuDict = [_commandQueueCache objectAtIndex:index];
-        id<MTLCommandQueue>     nextCommandQueue    = [nextCommandQueuDict objectForKey:kKey_CommandQueue];
-        if (nextCommandQueue == commandQueue)
+        if ([nextCommandQueueDict objectForKey:kKey_CommandQueue] == commandQueue)
         {
-            found = YES;
-            [nextCommandQueuDict setObject:[NSNumber numberWithBool:NO]
-                                    forKey:kKey_InUse];
+            [nextCommandQueueDict setObject:[NSNumber numberWithBool:NO]
+                                     forKey:kKey_InUse];
+            break;
         }
-        index++;
     }
-    
     [_commandQueueCacheLock unlock];
 }
 
 - (BOOL)containsCommandQueue:(id<MTLCommandQueue>)commandQueue
 {
+	if (!commandQueue) {
+		return NO;
+	}
+    BOOL found = NO;
 	[_commandQueueCacheLock lock];
-	
-    BOOL        found   = NO;
-    NSUInteger  index   = 0;
-    while ((!found) && (index < _commandQueueCache.count))
+    for (NSMutableDictionary* nextCommandQueueDict in _commandQueueCache)
     {
-        NSMutableDictionary*    nextCommandQueuDict = [_commandQueueCache objectAtIndex:index];
-        id<MTLCommandQueue>     nextCommandQueue    = [nextCommandQueuDict objectForKey:kKey_CommandQueue];
-        if (nextCommandQueue == commandQueue)
+        if ([nextCommandQueueDict objectForKey:kKey_CommandQueue] == commandQueue)
         {
             found = YES;
+            break;
         }
-        index++;
     }
-	
 	[_commandQueueCacheLock unlock];
-    
+
     return found;
 }
 
 @end
-
-
-
-

@@ -9,19 +9,39 @@
 #import <BEFoundation/BESingleton.h>
 #import <FxGrip/FxTileImage+FxGrip.h>
 
-#define kDefaultPluginID		nil
-#define GMTLPixelFormatAny		-1
+#define kDefaultPluginID			nil
+#define FxGripMTLPixelFormatAny		((MTLPixelFormat)-1)
 
 @class FxGripMTLDeviceCacheItem;
 @class FxImageTile;
-@class GuruMTLCommandQueue;
+@class FxGripMTLCommandQueue;
 @class FxGripMTLLibraryCache;
 
+/*!
+	@class      FxGripMTLDeviceCache
+	@abstract   Process-wide cache of Metal devices, command queues, pipeline states, and
+				shader libraries keyed by device registry ID, pixel format, and plugin ID.
+	@discussion Introduced in FxGrip 1.0. Extends the `MetalDeviceCache` pattern from Apple's
+				FxPlug samples. One `FxGripMTLDeviceCacheItem` exists per (device, pixel format,
+				plugin ID) triple; items are created on first request and dropped when Metal
+				reports the device's removal.
+
+				Every method is safe to call from concurrent render threads. The cache guards its
+				item list and library dictionary with one lock; each item guards its command-queue
+				pool and pipeline-state dictionary separately. Callers never hold a cache lock
+				while a Metal command buffer executes.
+
+				A command queue obtained from `+commandQueueForImageTile:` must be handed back
+				through `+returnCommandQueue:` or `-returnCommandQueueToCache:` once its command
+				buffer is committed. `+scopedCommandQueueForImageTile:` returns a
+				`FxGripMTLCommandQueue` wrapper that performs the hand-back on dealloc.
+*/
 @interface FxGripMTLDeviceCache : NSObject <BESingleton>
 {
 	NSMutableArray<FxGripMTLDeviceCacheItem*>*			_deviceCaches;
 	NSMutableDictionary<NSNumber*, FxGripMTLLibraryCache*>*	_deviceDefaultLibraries;
-	
+	NSLock*												_deviceCachesLock;
+
 	id <NSObject>	_metalDeviceObserver;
 }
 + (nullable FxGripMTLLibraryCache*)libraryCacheForDevice:(nullable id<MTLDevice>)device;
@@ -29,8 +49,29 @@
 
 + (nullable id<MTLCommandQueue>)commandQueueForImageTile:(FxImageTile *_Null_unspecified)imageTile;
 + (nullable id<MTLCommandQueue>)commandQueueForImageTile:(FxImageTile *_Null_unspecified)imageTile pluginID:(nullable NSString *)pluginID;
-+ (nullable GuruMTLCommandQueue*)guruCommandQueueForImageTile:(FxImageTile*_Null_unspecified)imageTile;
-+ (nullable GuruMTLCommandQueue*)guruCommandQueueForImageTile:(FxImageTile*_Null_unspecified)imageTile pluginID:(nullable NSString *)pluginID;
+
+/*!
+	@method     scopedCommandQueueForImageTile:
+	@abstract   Checks out a command queue for the tile's device and pixel format, wrapped so it
+				returns itself to the cache on dealloc.
+	@discussion Introduced in FxGrip 1.0. Equivalent to `+commandQueueForImageTile:` followed by
+				`+returnCommandQueue:` when the wrapper is released. Do not pass the wrapper to
+				`+returnCommandQueue:`.
+	@param      imageTile  The tile whose device and pixel format select the cache item.
+	@result     The wrapper, or `nil` when no device matches the tile.
+*/
++ (nullable FxGripMTLCommandQueue*)scopedCommandQueueForImageTile:(FxImageTile*_Null_unspecified)imageTile;
+
+/*!
+	@method     scopedCommandQueueForImageTile:pluginID:
+	@abstract   Checks out a command queue for the tile's device, pixel format, and plugin ID,
+				wrapped so it returns itself to the cache on dealloc.
+	@discussion Introduced in FxGrip 1.0.
+	@param      imageTile  The tile whose device and pixel format select the cache item.
+	@param      pluginID   Selects a per-plugin cache item; `nil` selects the shared item.
+	@result     The wrapper, or `nil` when no device matches the tile.
+*/
++ (nullable FxGripMTLCommandQueue*)scopedCommandQueueForImageTile:(FxImageTile*_Null_unspecified)imageTile pluginID:(nullable NSString *)pluginID;
 + (void)returnCommandQueue:(id<MTLCommandQueue>_Null_unspecified)commandQueue;
 
 + (nonnull FxGripMTLDeviceCache*)deviceCache;
@@ -53,12 +94,25 @@
 
 
 
-//Pass through class that returns the command queue to the cache when it's done
-@interface GuruMTLCommandQueue : NSObject <MTLCommandQueue>
+/*!
+	@class      FxGripMTLCommandQueue
+	@abstract   An `MTLCommandQueue` pass-through that returns the wrapped queue to its
+				`FxGripMTLDeviceCacheItem` on dealloc.
+	@discussion Introduced in FxGrip 1.0. The queue is checked out of the item at init and
+				checked back in at dealloc, so a render method that keeps the wrapper in a local
+				variable releases the queue when the variable goes out of scope. Obtain one from
+				`+[FxGripMTLDeviceCache scopedCommandQueueForImageTile:]`.
+*/
+@interface FxGripMTLCommandQueue : NSObject <MTLCommandQueue>
 @property (readonly, nonatomic, nonnull) id<MTLCommandQueue> queue;
-@property (readonly, retain, nonnull) FxGripMTLDeviceCacheItem *deviceCache;
+@property (readonly, retain, nonnull) FxGripMTLDeviceCacheItem *deviceCacheItem;
 
-- (nullable id)initWithDevice:(nullable FxGripMTLDeviceCacheItem*)device;
+/*!
+	@method     initWithDeviceCacheItem:
+	@abstract   Checks a command queue out of `deviceCacheItem`.
+	@result     `nil` when `deviceCacheItem` is `nil` or has no queue to give.
+*/
+- (nullable instancetype)initWithDeviceCacheItem:(nullable FxGripMTLDeviceCacheItem*)deviceCacheItem;
 - (void)dealloc;
 
 // MTLCommandQueue interface
@@ -131,6 +185,18 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 
 
 
+/*!
+	@class      FxGripMTLLibraryCache
+	@abstract   An `MTLLibrary` pass-through that memoizes the `MTLFunction` objects it creates.
+	@discussion Introduced in FxGrip 1.0. Functions are cached by name, or by specialized name
+				when a descriptor supplies one. A lookup that yields no function is not cached.
+				All methods are safe to call concurrently.
+
+				Asynchronous requests for one name share one compile: the first caller starts it
+				and every caller's completion handler runs when it finishes, with the function or
+				the error. A synchronous request for a name whose asynchronous compile is in flight
+				compiles on the calling thread and returns its own result.
+*/
 @interface FxGripMTLLibraryCache : NSObject <MTLLibrary>
 {
 @protected
@@ -251,6 +317,14 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 
 
 
+/*!
+	@class      FxGripMTLDeviceCacheItem
+	@abstract   One Metal device's pooled command queues, cached pipeline states, default
+				library, and depth-stencil state for a given pixel format and plugin ID.
+	@discussion Introduced in FxGrip 1.0. The command-queue pool starts with a fixed number of
+				queues and grows when every pooled queue is checked out. Pipeline states are keyed
+				by vertex and fragment function names. All methods are safe to call concurrently.
+*/
 @interface FxGripMTLDeviceCacheItem : NSObject
 
 @property (readonly, nonnull)   		id<MTLDevice>                           gpuDevice;
