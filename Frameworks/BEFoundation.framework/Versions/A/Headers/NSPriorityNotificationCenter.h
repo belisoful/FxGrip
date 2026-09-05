@@ -145,6 +145,12 @@ extern NSInteger const NSPriorityNotificationDefaultPriority;
 				The class intercepts notifications from the standard NSNotificationCenter
 				and re-dispatches them with priority ordering when used as the defaultCenter.
 
+				A notification posted through CFNotificationCenterPostNotification may carry an
+				opaque C pointer as its object (SceneKit posts C structs this way). The center
+				compares that object by identity and never retains it. An observer that reads the
+				object of such a notification must do the same: under ARC, read it into an
+				`__unsafe_unretained` variable.
+
 				@code
 				NSPriorityNotificationCenter *center = NSPriorityNotificationCenter.defaultCenter;
 
