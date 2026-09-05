@@ -5,12 +5,12 @@
 //  Created by ~ ~ on 3/19/24.
 //
 
-#import "FXBox.h"
+#import "FxGripDividerBox.h"
 #import "FxGripDividerData.h"
 #import "FxGripTypes.h"
 #import "FxGrip_ARC.h"
 
-@implementation FXBox
+@implementation FxGripDividerBox
 
 - (instancetype)initWithFrame:(NSRect)frameRect
 {

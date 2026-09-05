@@ -1,19 +1,19 @@
 //
-//  NSString+Extension.h
-//  XPC Service
+//  FxGripDividerBox.h
+//  FxGrip
 //
 //  Created by ~ ~ on 3/19/24.
 //
 
-#ifndef FXBox_h
-#define FXBox_h
+#ifndef FxGripDividerBox_h
+#define FxGripDividerBox_h
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import "FxGripCustomViewDataDelegate.h"
 #import "FxGripDividerParameter.h"
 
-@interface FXBox : NSBox <FxGripCustomViewDataDelegate>
+@interface FxGripDividerBox : NSBox <FxGripCustomViewDataDelegate>
 
 @property (nonatomic, strong) NSView *topView;
 

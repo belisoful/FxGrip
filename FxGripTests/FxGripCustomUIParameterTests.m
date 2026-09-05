@@ -12,7 +12,7 @@
 //  FxGripSwitchParameter.h is marked public but imports FxGripCustomViewDataDelegate.h,
 //  which the target does not install, so the header cannot be included here; the switch
 //  parameter and its view are reached by name through locally declared probe protocols.
-//  FxGripDividerParameter.h imports only installed headers and is used directly. FXBox and
+//  FxGripDividerParameter.h imports only installed headers and is used directly. FxGripDividerBox and
 //  FxGripDividerData are not public and are reached by name.
 //
 //  AppKit is not linked into the test bundle. Its headers supply the view types and the
@@ -645,13 +645,13 @@ static Class FxGripCustomUITestRandomViewClass(void)
 	NSView *container = [parameter newParameterView];
 	NSView *box = parameter.customView;
 
-	XCTAssertTrue([box isKindOfClass:NSClassFromString(@"FXBox")]);
+	XCTAssertTrue([box isKindOfClass:NSClassFromString(@"FxGripDividerBox")]);
 	XCTAssertNotEqualObjects(container, box, @"the container wraps the box rather than being it");
 	XCTAssertTrue([container.subviews containsObject:box]);
 }
 
 /*!
-	DEFECT: FXBox reads a pushed dictionary under "percentWidth", "marginTop" and
+	DEFECT: FxGripDividerBox reads a pushed dictionary under "percentWidth", "marginTop" and
 	"marginBottom", while a divider configuration declares its default under "width",
 	"margintop" and "marginbottom" — the shape FxGripDividerData consumes and the shape
 	-newParameterView pushes into the box. The declared geometry never reaches the view.
@@ -691,7 +691,7 @@ static Class FxGripCustomUITestRandomViewClass(void)
 	NSView *container = [effect createViewForParameterID:kCustomUITestDivider];
 	NSView *box = parameter.customView;
 
-	XCTAssertTrue([box isKindOfClass:NSClassFromString(@"FXBox")],
+	XCTAssertTrue([box isKindOfClass:NSClassFromString(@"FxGripDividerBox")],
 				  @"the parameter attaches its box, so the host leaves the attachment alone");
 	XCTAssertNotEqualObjects(container, box);
 	XCTAssertTrue([container.subviews containsObject:box]);

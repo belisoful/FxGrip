@@ -210,9 +210,9 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 
 - (void)testDivider
 {
-	// FXBox is an internal class; the divider control vends it. Reach it by name.
-	NSView *box = [[NSClassFromString(@"FXBox") alloc] initWithFrame:NSZeroRect];
-	XCTAssertNotNil(box, @"FXBox not found in the runtime");
+	// FxGripDividerBox is an internal class; the divider control vends it. Reach it by name.
+	NSView *box = [[NSClassFromString(@"FxGripDividerBox") alloc] initWithFrame:NSZeroRect];
+	XCTAssertNotNil(box, @"FxGripDividerBox not found in the runtime");
 	[self renderView:box size:NSMakeSize(300, 11) named:@"divider"];
 }
 

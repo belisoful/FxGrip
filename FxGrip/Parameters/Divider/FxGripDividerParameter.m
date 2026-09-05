@@ -7,7 +7,7 @@
 #import "FxGripTileableEffect.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripDividerData.h"
-#import "FXBox.h"
+#import "FxGripDividerBox.h"
 #import "FxGrip_ARC.h"
 
 @implementation FxGripDividerParameter
@@ -44,7 +44,7 @@
 
 - (NSView *_Nullable)newParameterView
 {
-	FXBox *box = [FXBox.alloc initWithFrame:NSMakeRect(0, 22, 100, 1)];
+	FxGripDividerBox *box = [FxGripDividerBox.alloc initWithFrame:NSMakeRect(0, 22, 100, 1)];
 	id declared = _data.parameterDefaultValue;
 	if ([declared isKindOfClass:NSDictionary.class]) {
 		// The configuration declares width/margintop/marginbottom; the data class reads
