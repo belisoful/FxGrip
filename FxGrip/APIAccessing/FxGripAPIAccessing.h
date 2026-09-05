@@ -94,6 +94,9 @@ effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 	@property (assign, readonly) id<FxTimingAPI_v4> _Nullable timingAPIv4_Raw;
 	@property (assign, readonly) id<FxTimingAPI_v4> _Nullable timingAPIv4;
+	/*! The FxPlug 4.3.5 timing API with the drop-frame queries; nil on older hosts. */
+	@property (assign, readonly) id<FxTimingAPI_v5> _Nullable timingAPIv5_Raw;
+	@property (assign, readonly) id<FxTimingAPI_v5> _Nullable timingAPIv5;
 	@property (assign, readonly) id<FxKeyframeAPI_v3> _Nullable keyframeAPIv3_Raw;
 	@property (assign, readonly) id<FxKeyframeAPI_v3> _Nullable keyframeAPIv3;
 	@property (assign, readonly) id<FxAnalysisAPI> _Nullable analysisAPIv1_Raw;
@@ -235,6 +238,9 @@ effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 	@property (assign, readonly) id<FxTimingAPI_v4> _Nullable timingAPIv4_Raw;
 	@property (assign, readonly) id<FxTimingAPI_v4> _Nullable timingAPIv4;
+	/*! The FxPlug 4.3.5 timing API with the drop-frame queries; nil on older hosts. */
+	@property (assign, readonly) id<FxTimingAPI_v5> _Nullable timingAPIv5_Raw;
+	@property (assign, readonly) id<FxTimingAPI_v5> _Nullable timingAPIv5;
 	@property (assign, readonly) id<FxKeyframeAPI_v3> _Nullable keyframeAPIv3_Raw;
 	@property (assign, readonly) id<FxKeyframeAPI_v3> _Nullable keyframeAPIv3;
 	@property (assign, readonly) id<FxAnalysisAPI> _Nullable analysisAPIv1_Raw;

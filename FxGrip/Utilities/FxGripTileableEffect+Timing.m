@@ -22,6 +22,7 @@
  */
 
 #import "FxGripTileableEffect+Timing.h"
+#import "FxGripTimecode.h"
 #import "FxGripTypes.h"
 #import "FxGrip_ARC.h"
 
@@ -102,7 +103,43 @@ long long floorWithNearest(double value)
 	CMTime frameDuration = kCMTimeInvalid, sampleDuration = kCMTimeInvalid;
 	[timing frameDuration:&frameDuration];
 	[timing sampleDuration:&sampleDuration];
-	return !CMTimeCompare(frameDuration, sampleDuration);
+	return CMTimeCompare(frameDuration, sampleDuration) != 0;
+}
+
+#pragma mark Drop frame (FxTimingAPI_v5)
+
+// Each query messages nil on a host older than FxPlug 4.3.5 and so reports NO.
+- (BOOL)isTimelineDropFrame
+{
+	return [self.apiManager.timingAPIv5 isTimelineDropFrame];
+}
+
+- (BOOL)isInputDropFrame
+{
+	return [self.apiManager.timingAPIv5 isInputDropFrame:kFxImageTileRequestSourceEffectClip
+											 parameterID:0];
+}
+
+- (BOOL)isDropFrameOfImageParameter:(UInt32)parameterID
+{
+	return [self.apiManager.timingAPIv5 isInputDropFrame:kFxImageTileRequestSourceParameter
+											 parameterID:parameterID];
+}
+
+- (NSString *)timelineTimecodeStringForTime:(CMTime)time
+{
+	CMTime timelineTime = kCMTimeInvalid;
+	[self timelineTime:&timelineTime fromInputTime:time];
+	return [FxGripTimecode stringForTime:timelineTime
+						   frameDuration:self.timelineFrameDuration
+							   dropFrame:self.isTimelineDropFrame];
+}
+
+- (NSString *)inputTimecodeStringForTime:(CMTime)time
+{
+	return [FxGripTimecode stringForTime:time
+						   frameDuration:self.frameDuration
+							   dropFrame:self.isInputDropFrame];
 }
 
 

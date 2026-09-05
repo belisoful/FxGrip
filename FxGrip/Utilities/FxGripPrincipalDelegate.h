@@ -20,6 +20,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, strong, readonly) NSString* hostBundleIdentifier;
 @property (nullable, strong, readonly) NSString* hostVersion;
 
+/*! YES when the connected host is Motion; see FxGripPluginInfo.hostIsMotion for the timing
+	differences this implies. Introduced in FxGrip 1.0. */
+@property (readonly) BOOL hostIsMotion;
+
 +(instancetype) sharedInstance;
 
 @end

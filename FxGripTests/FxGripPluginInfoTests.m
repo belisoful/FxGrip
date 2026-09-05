@@ -350,4 +350,31 @@
 	XCTAssertEqual(rect.top, 7);
 }
 
+
+#pragma mark - Host identity
+
+- (void)testMotionBundleIdentifiersAreRecognized
+{
+	XCTAssertTrue(FxGripHostBundleIdentifierIsMotion(@"com.apple.motionapp"));
+	XCTAssertTrue(FxGripHostBundleIdentifierIsMotion(@"com.apple.motionappApp"));
+}
+
+- (void)testOtherHostsAndNoHostAreNotMotion
+{
+	XCTAssertFalse(FxGripHostBundleIdentifierIsMotion(@"com.apple.FinalCut"));
+	XCTAssertFalse(FxGripHostBundleIdentifierIsMotion(@"com.apple.motionapp.helper"));
+	XCTAssertFalse(FxGripHostBundleIdentifierIsMotion(nil));
+}
+
+- (void)testHostIsMotionFollowsTheEstablishedConnection
+{
+	FxGripPluginInfo *info = [FxGripPluginInfo.alloc init];
+	XCTAssertFalse(info.hostIsMotion);
+
+	[info didEstablishConnectionWithHost:@"com.apple.motionapp" version:@"5.9"];
+
+	XCTAssertTrue(info.hostIsMotion);
+	XCTAssertEqualObjects(info.hostBundleIdentifier, @"com.apple.motionapp");
+}
+
 @end

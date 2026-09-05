@@ -60,7 +60,32 @@ inline long long floorWithNearest(double value);
 - (Float64)retimingSpeed;
 
 - (CMTime)sampleDuration;
+
+/*! YES when the sample duration differs from the frame duration. Final Cut Pro reports half the
+	frame duration per sample for interlaced clips. */
 - (BOOL)isInterlacedClip;
+
+/*! YES when the project displays timecode in drop-frame format. NO on hosts without
+	FxTimingAPI_v5. Introduced in FxGrip 1.0. */
+- (BOOL)isTimelineDropFrame;
+
+/*! YES when the filter's input clip requires drop-frame timecode. Motion always reports NO;
+	a Motion template running in Final Cut Pro reports the clip setting. NO on hosts without
+	FxTimingAPI_v5. Introduced in FxGrip 1.0. */
+- (BOOL)isInputDropFrame;
+
+/*! YES when an image-well parameter's clip requires drop-frame timecode. Same host behavior as
+	isInputDropFrame. Introduced in FxGrip 1.0. */
+- (BOOL)isDropFrameOfImageParameter:(UInt32)parameterID;
+
+/*! The timeline timecode for an input time: the time converted to timeline time, at the
+	timeline frame rate, in the project's drop-frame mode. `--:--:--:--` when the host vends
+	no timing API. Introduced in FxGrip 1.0. */
+- (nonnull NSString *)timelineTimecodeStringForTime:(CMTime)time;
+
+/*! The input-clip timecode for an input time, at the effect's frame duration, in the input's
+	drop-frame mode. Introduced in FxGrip 1.0. */
+- (nonnull NSString *)inputTimecodeStringForTime:(CMTime)time;
 
 - (CMTime)effectStartTime;
 - (NSInteger)effectStartFrame;

@@ -24,6 +24,12 @@
 - (CMTime)startTime;
 - (CMTime)durationTime;
 
+// TimingAPI_v5
+/*! YES when the image well's clip requires drop-frame timecode. Motion always reports NO; a
+	Motion template running in Final Cut Pro reports the clip setting. NO on hosts without
+	FxTimingAPI_v5. Introduced in FxGrip 1.0. */
+- (BOOL)isDropFrame;
+
 @end
 
 #endif

@@ -866,6 +866,18 @@
 	return api;
 }
 
+- (id<FxTimingAPI_v5> _Nullable)timingAPIv5_Raw
+{
+	return [_apiAccessing apiForProtocol:@protocol(FxTimingAPI_v5)];
+}
+
+- (id<FxTimingAPI_v5> _Nullable)timingAPIv5
+{
+	// No FxGrip wrapper: the host object is vended directly. Silent on nil, since hosts older
+	// than FxPlug 4.3.5 vend no v5 and callers fall back to v4.
+	return [self apiForProtocol:@protocol(FxTimingAPI_v5)];
+}
+
 - (id<FxKeyframeAPI_v3> _Nullable)keyframeAPIv3_Raw
 {
 	return [_apiAccessing apiForProtocol:@protocol(FxKeyframeAPI_v3)];

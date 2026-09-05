@@ -63,6 +63,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripTileableGenerator.h>
 #import <FxGrip/FxTileImage+FxGrip.h>
 #import <FxGrip/FxGripTextImage.h>
+#import <FxGrip/FxGripTimecode.h>
 #import <FxGrip/FxGripWatermark.h>
 
 #import <FxGrip/FxGripImageBuffer.h>
@@ -194,4 +195,5 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripParameterTagsAPI_v1.h>
 #import <FxGrip/FxGripPreset.h>
 #import <FxGrip/FxGripPresetsAPI_v1.h>
+#import <FxGrip/FxGripTimingAPI_v4.h>
 #import <FxGrip/FxGripCustomCreationAPI_v1.h>

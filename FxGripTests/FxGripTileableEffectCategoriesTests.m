@@ -355,6 +355,30 @@ static BOOL FxGripCatTestTimeIsInvalid(CMTime time)
 
 @end
 
+/*! The v4 stub plus the FxTimingAPI_v5 drop-frame queries, recording the last input query. */
+@interface FxGripCatTestStubTimingAPIv5 : FxGripCatTestStubTimingAPI
+@property (nonatomic, assign) BOOL timelineDropFrame;
+@property (nonatomic, assign) BOOL inputDropFrame;
+@property (nonatomic, assign) FxImageTileRequestSource lastDropFrameSource;
+@property (nonatomic, assign) UInt32 lastDropFrameParameterID;
+@end
+
+@implementation FxGripCatTestStubTimingAPIv5
+
+- (BOOL)isTimelineDropFrame
+{
+	return self.timelineDropFrame;
+}
+
+- (BOOL)isInputDropFrame:(FxImageTileRequestSource)source parameterID:(UInt32)parameterID
+{
+	self.lastDropFrameSource = source;
+	self.lastDropFrameParameterID = parameterID;
+	return self.inputDropFrame;
+}
+
+@end
+
 @interface FxGripCatTestStubProjectAPI : NSObject
 @property (nonatomic, assign) NSUInteger documentID;
 @property (nonatomic, assign) BOOL documentIDSucceeds;
@@ -402,6 +426,7 @@ static BOOL FxGripCatTestTimeIsInvalid(CMTime time)
 @property (nonatomic, strong) id colorGamutAPIv2;
 @property (nonatomic, strong) id versioningAPIv1;
 @property (nonatomic, strong) id timingAPIv4;
+@property (nonatomic, strong) id timingAPIv5;
 @property (nonatomic, strong) id projectAPIv1;
 @property (nonatomic, strong) id projectAPIv2;
 @property (nonatomic, assign) UInt64 sessionID;
@@ -1218,6 +1243,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqualWithAccuracy(self.effect.retimingSpeed, 2.0, 0.0001);
 }
 
+/*! Final Cut Pro reports a sample duration of half the frame duration for interlaced clips. */
 - (void)testInterlacedClipsAreRecognizedByTheSampleDuration
 {
 	[self makeEffect];
@@ -1225,10 +1251,84 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 	timing.frameDuration = FxGripCatTestMakeTime(1, 30);
 	timing.sampleDuration = FxGripCatTestMakeTime(1, 30);
-	XCTAssertTrue(self.effect.isInterlacedClip);
+	XCTAssertFalse(self.effect.isInterlacedClip);
 
 	timing.sampleDuration = FxGripCatTestMakeTime(1, 60);
-	XCTAssertFalse(self.effect.isInterlacedClip);
+	XCTAssertTrue(self.effect.isInterlacedClip);
+}
+
+#pragma mark Drop frame
+
+- (FxGripCatTestStubTimingAPIv5 *)installTimingAPIv5
+{
+	FxGripCatTestStubAPIManager *manager = [self installStubAPIManager];
+	FxGripCatTestStubTimingAPIv5 *timing = FxGripCatTestStubTimingAPIv5.new;
+	manager.timingAPIv4 = timing;
+	manager.timingAPIv5 = timing;
+	return timing;
+}
+
+- (void)testDropFrameQueriesReportNoWithoutTheV5TimingAPI
+{
+	[self makeEffect];
+	[self installTimingAPI];
+
+	XCTAssertFalse(self.effect.isTimelineDropFrame);
+	XCTAssertFalse(self.effect.isInputDropFrame);
+	XCTAssertFalse([self.effect isDropFrameOfImageParameter:9]);
+}
+
+- (void)testDropFrameQueriesReadTheV5TimingAPI
+{
+	[self makeEffect];
+	FxGripCatTestStubTimingAPIv5 *timing = [self installTimingAPIv5];
+	timing.timelineDropFrame = YES;
+	timing.inputDropFrame = YES;
+
+	XCTAssertTrue(self.effect.isTimelineDropFrame);
+
+	XCTAssertTrue(self.effect.isInputDropFrame);
+	XCTAssertEqual(timing.lastDropFrameSource, kFxImageTileRequestSourceEffectClip);
+
+	XCTAssertTrue([self.effect isDropFrameOfImageParameter:9]);
+	XCTAssertEqual(timing.lastDropFrameSource, kFxImageTileRequestSourceParameter);
+	XCTAssertEqual(timing.lastDropFrameParameterID, (UInt32)9);
+}
+
+- (void)testTimelineTimecodeUsesTheTimelineTimeRateAndProjectDropFrame
+{
+	[self makeEffect];
+	FxGripCatTestStubTimingAPIv5 *timing = [self installTimingAPIv5];
+	timing.fpsNumerator = 30000;
+	timing.fpsDenominator = 1001;
+	timing.timelineDropFrame = YES;
+	timing.timelineTime = FxGripCatTestMakeTime(1800 * 1001, 30000);
+
+	NSString *timecode = [self.effect timelineTimecodeStringForTime:FxGripCatTestMakeTime(7, 30)];
+
+	XCTAssertEqualObjects(timecode, @"00:01:00;02");
+	XCTAssertTrue(FxGripCatTestTimesEqual(timing.lastInputTimeArgument, FxGripCatTestMakeTime(7, 30)));
+}
+
+- (void)testInputTimecodeUsesTheClipFrameDurationAndInputDropFrame
+{
+	[self makeEffect];
+	FxGripCatTestStubTimingAPIv5 *timing = [self installTimingAPIv5];
+	timing.frameDuration = FxGripCatTestMakeTime(1001, 30000);
+	timing.inputDropFrame = NO;
+
+	NSString *timecode = [self.effect inputTimecodeStringForTime:FxGripCatTestMakeTime(1800 * 1001, 30000)];
+
+	XCTAssertEqualObjects(timecode, @"00:01:00:00");
+}
+
+- (void)testTimecodeStringsArePlaceholdersWithoutTheTimingAPI
+{
+	[self makeEffect];
+	[self installStubAPIManager];
+
+	XCTAssertEqualObjects([self.effect timelineTimecodeStringForTime:FxGripCatTestMakeTime(7, 30)], @"--:--:--:--");
+	XCTAssertEqualObjects([self.effect inputTimecodeStringForTime:FxGripCatTestMakeTime(7, 30)], @"--:--:--:--");
 }
 
 /*!

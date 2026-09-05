@@ -81,6 +81,8 @@ typedef UInt32 FxParameterId;
 
 @property (readonly) CMTime sampleDuration;
 @property (readonly) BOOL isInterlacedClip;
+@property (readonly) BOOL isTimelineDropFrame;
+@property (readonly) BOOL isInputDropFrame;
 
 @property (readonly) CMTime effectStartTime;
 @property (readonly) NSInteger effectStartFrame;

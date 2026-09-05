@@ -71,6 +71,17 @@ static NSCharacterSet*		gSeparatorSet = nil;
 }
 
 
+- (BOOL)hostIsMotion
+{
+	return FxGripHostBundleIdentifierIsMotion(self.hostBundleIdentifier);
+}
+
+BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifier)
+{
+	return [hostBundleIdentifier isEqualToString:@"com.apple.motionapp"]
+		|| [hostBundleIdentifier isEqualToString:@"com.apple.motionappApp"];
+}
+
 // White Space plus period, comma, and semicolon.
 + (NSCharacterSet*_Nonnull)separatorSet
 {

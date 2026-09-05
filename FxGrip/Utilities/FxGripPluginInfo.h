@@ -30,6 +30,13 @@
 @property (nullable, readonly) NSString* hostBundleIdentifier;
 @property (nullable, readonly) NSString* hostVersion;
 
+/*! YES when the connected host is Motion. NO before the host connects. Introduced in FxGrip 1.0.
+	@discussion Motion differs from Final Cut Pro in two timing queries: `frameDuration:` returns
+	the project frame duration rather than the footage's, and `isInputDropFrame:parameterID:`
+	always returns NO. A plugin that displays footage timecode in Motion asks the user for the
+	footage rate instead; see FxGripTimecode. */
+@property (readonly) BOOL hostIsMotion;
+
 
 + (nullable id)sharedInstance;
 
@@ -61,5 +68,9 @@
 + (NSCharacterSet*_Nonnull)separatorSet;
 
 @end
+
+/*! YES when a host bundle identifier names Motion: `com.apple.motionapp` or
+	`com.apple.motionappApp`. nil returns NO. Introduced in FxGrip 1.0. */
+BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifier);
 
 #endif

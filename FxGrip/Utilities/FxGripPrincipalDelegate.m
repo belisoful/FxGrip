@@ -7,6 +7,7 @@
 //
 
 #import "FxGripPrincipalDelegate.h"
+#import "FxGripPluginInfo.h"
 #import <objc/runtime.h>
 #import "FxGrip_ARC.h"
 
@@ -50,6 +51,11 @@
 #endif
 	_hostBundleIdentifier = hostBundleIdentifier;
 	_hostVersion = hostVersion;
+}
+
+- (BOOL)hostIsMotion
+{
+	return FxGripHostBundleIdentifierIsMotion(self.hostBundleIdentifier);
 }
 
 

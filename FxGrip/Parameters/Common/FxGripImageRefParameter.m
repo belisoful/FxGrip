@@ -55,4 +55,10 @@
 	return time;
 }
 
+- (BOOL)isDropFrame
+{
+	return [self.effect.apiManager.timingAPIv5 isInputDropFrame:kFxImageTileRequestSourceParameter
+													 parameterID:self.parameterID];
+}
+
 @end
