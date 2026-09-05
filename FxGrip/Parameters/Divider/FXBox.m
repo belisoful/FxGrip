@@ -19,7 +19,7 @@
 		_percentWidth = phi - 1.0;
 		_marginTop = 7;
 		_marginBottom = 12;
-		_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+		_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
 		
 		self.boxType = NSBoxSeparator;
 		self.autoresizingMask = (NSViewWidthSizable | NSViewMinXMargin | NSViewMaxXMargin);
@@ -38,7 +38,7 @@
 {
 	CGRect superFrame = newSuperview.frame;
 	double offset = superFrame.size.width * (1.0 - _percentWidth) / 2.0;
-	CGRect newFrame = NSMakeRect(offset, _marginBottom, superFrame.size.width * _percentWidth, kFxBoxDividerHeight);
+	CGRect newFrame = NSMakeRect(offset, _marginBottom, superFrame.size.width * _percentWidth, kFxGripBoxDividerHeight);
 	self.frame = newFrame;
 }
 
@@ -83,7 +83,7 @@
 		}
 	}
 	if (changed) {
-		_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+		_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
 		
 		if (_topView != nil) {
 			[self updateViewHeight];
@@ -104,7 +104,7 @@
 }
 
 
-- (void)setPercentWidth:(DividerSize)percentWidth
+- (void)setPercentWidth:(FxGripDividerSize)percentWidth
 {
 	_percentWidth = percentWidth;
 	[self viewWillMoveToSuperview:self.superview];
@@ -131,8 +131,8 @@
 - (void)setParameterHeight:(uint16)parameterHeight
 {
 	_parameterHeight = parameterHeight;
-	_marginTop = (parameterHeight - kFxBoxDividerHeight) >> 1;
-	_marginBottom = parameterHeight - _marginTop - kFxBoxDividerHeight;
+	_marginTop = (parameterHeight - kFxGripBoxDividerHeight) >> 1;
+	_marginBottom = parameterHeight - _marginTop - kFxGripBoxDividerHeight;
 	
 	[self updateViewHeight];
 	[self viewWillMoveToSuperview:self.superview];
@@ -140,7 +140,7 @@
 
 - (void)updateViewHeight
 {
-	_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+	_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
 	
 	CGRect newFrame = NSMakeRect(_topView.frame.origin.x, _topView.frame.origin.y, _topView.frame.size.width, _parameterHeight);
 	_topView.frame = newFrame;

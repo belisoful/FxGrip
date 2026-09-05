@@ -9,7 +9,7 @@
 #define FxGripTimingAPI_v4_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxParameterTagsAPI_v1.h"
+#import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripCommonAPI.h"
 
 /*!

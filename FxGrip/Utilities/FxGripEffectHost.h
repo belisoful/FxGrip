@@ -10,7 +10,7 @@
 #import <CoreMedia/CoreMedia.h>
 
 @protocol FxGripAPIAccessing;
-@protocol FxParameter;
+@protocol FxGripParameter;
 @class NSPriorityNotificationCenter;
 @class FxGripMetaManager;
 @class FxGripParameterData;
@@ -64,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*! The registered parameter for an ID, for group walks and companion checks; a minimal host has
 	none and skips those checks. */
-- (id<FxParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
+- (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
 
 @end
 

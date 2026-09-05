@@ -229,7 +229,7 @@ static const FxParameterId kGroupTestParameter = 71;
 	[group addChildParameter:second];
 
 	NSMutableArray *seen = NSMutableArray.new;
-	for (id<FxParameter> child in group) {
+	for (id<FxGripParameter> child in group) {
 		[seen addObject:child];
 	}
 

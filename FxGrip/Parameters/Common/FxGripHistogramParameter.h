@@ -9,10 +9,10 @@
 #ifndef FxGripHistogramParameter_h
 #define FxGripHistogramParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripHistogramParameter : FxParameter <FxStateParameter>
+@interface FxGripHistogramParameter : FxGripParameter <FxGripStateParameter>
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;

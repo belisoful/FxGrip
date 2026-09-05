@@ -9,10 +9,10 @@
 #ifndef FxGripPushButtonParameter_h
 #define FxGripPushButtonParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripPushButtonParameter : FxParameter
+@interface FxGripPushButtonParameter : FxGripParameter
 
 @property (readonly, nonatomic, nullable) SEL			selector;
 @property (readonly, nonatomic, nullable) NSString* 	selectorString;

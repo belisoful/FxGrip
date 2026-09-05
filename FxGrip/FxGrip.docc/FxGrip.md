@@ -22,9 +22,9 @@ There are multiple topics introduced
 
 ### FxGrip API Accessing
 
-This puts a wrapper around the standard FxPlug API Protocols and adds its own APIs, such as FxPresetsAPI_v1 and FxParameterTagsAPI_v1.
+This puts a wrapper around the standard FxPlug API Protocols and adds its own APIs, such as FxGripPresetsAPI_v1 and FxGripParameterTagsAPI_v1.
 
-### FxParameter
+### FxGripParameter
 
 ### FxCustomParameter
 

@@ -23,13 +23,13 @@
 
 	// The upgraded v6 also implements v5
 	@property (assign, readonly) id<FxParameterSettingAPI_v6> _Nullable api;
-	@property (strong, readonly) id<FxParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
+	@property (strong, readonly) id<FxGripParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
 	@property (strong, readonly) id<FxParameterRetrievalAPI_v6> _Nullable paramGetAPIv6;
 
 
 - (nullable instancetype)initWithAPI:(id<FxParameterSettingAPI_v5> _Nonnull)api
 					   paramGetAPIv6:(id<FxParameterRetrievalAPI_v6>_Nullable)paramGetAPIv6
-				   parameterInfoAPIv1:(id<FxParameterInfoAPI_v1>_Nullable)parameterInfoAPIv1
+				   parameterInfoAPIv1:(id<FxGripParameterInfoAPI_v1>_Nullable)parameterInfoAPIv1
 							  effect:(nonnull id<FxGripEffectHost>)effect;
 
 @end

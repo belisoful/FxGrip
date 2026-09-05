@@ -25,7 +25,7 @@
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripAPINotifications.h>
-#import <FxGrip/FxParameter.h>
+#import <FxGrip/FxGripParameter.h>
 #import <FxGrip/FxGripDictionary.h>
 #import <FxGrip/FxGripMetaManager.h>
 #import <FxGrip/FxGripDividerParameter.h>
@@ -50,7 +50,7 @@
 + (BOOL)addParameter:(NSDictionary *)parameter toEffect:(id)effect;
 @end
 
-/*! The instance surface a custom-view parameter adds to FxParameter. */
+/*! The instance surface a custom-view parameter adds to FxGripParameter. */
 @protocol FxGripCustomUIParameterProbe <NSObject>
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary effect:(id)effect;
 - (FxParameterType)parameterType;
@@ -266,7 +266,7 @@ static Class FxGripCustomUITestRandomViewClass(void)
 	return _stagedParameters;
 }
 
-- (id<FxParameter>)objectAtIndexedSubscript:(NSInteger)index
+- (id<FxGripParameter>)objectAtIndexedSubscript:(NSInteger)index
 {
 	return self.stagedParameters[@(index)];
 }

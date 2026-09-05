@@ -8,6 +8,9 @@
 
 #import "FxGripCustomParameter.h"
 
+#define kFxGripBoxDividerHeight (1)
+typedef double FxGripDividerSize;
+
 /*!
 	@class      FxGripDividerParameter
 	@abstract   A horizontal divider line in the inspector.

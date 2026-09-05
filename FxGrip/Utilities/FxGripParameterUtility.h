@@ -10,14 +10,14 @@
 #define FxParameterFactory_h
 
 #import <Foundation/Foundation.h>
-#import <FxGrip/FxParameterFlags.h>
+#import <FxGrip/FxGripParameterFlags.h>
 #import <FxGrip/FxGripTypes.h>
 
-@protocol FxParameter;
+@protocol FxGripParameter;
 
 @protocol FxParameterFactory <NSObject>
 
-- (nullable id<FxParameter>)parameterForDictionary:(nonnull NSDictionary *)data;
+- (nullable id<FxGripParameter>)parameterForDictionary:(nonnull NSDictionary *)data;
 
 @end
 

@@ -14,17 +14,16 @@
 #import <FxPlug/FxTypes.h>
 #import "FxGrip/FxGripTypes.h"
 #import "FxGrip/FxGripErrors.h"
-#import "FxGrip/FxParameterFlags.h"
+#import "FxGrip/FxGripParameterFlags.h"
 #import "FxGrip/FxGripMetaManager.h"
 #import "FxGrip/FxGripAPINotifications.h"
 #import "FxGrip/FxGripTileableEffect+Notifications.h"
-#import "FxGrip/FxParameterTagsAPI_v1.h"
+#import "FxGrip/FxGripParameterTagsAPI_v1.h"
 #import "FxGrip/FxGripMetaAPI_v1.h"
 
-// FxGripMeta.h reaches its superclass through a flat angled include, and
-// FxGripParameterTagsAPI_v1.h is not a public framework header, so neither resolves
-// outside the framework target. Both classes are declared here with the members the
-// tests exercise; the implementations come from the linked framework.
+// FxGripMeta.h reaches its superclass through a flat angled include that does not resolve
+// outside the framework target, so it is declared here with the members the tests
+// exercise; the implementation comes from the linked framework.
 @interface FxGripMeta : NSObject
 @property (readonly, nonatomic, nullable) FxGripMetaManager *manager;
 @property (readonly, nonatomic) FxParameterId parameterID;
@@ -37,10 +36,6 @@
 - (void)extParameterChanged:(nonnull NSNotification *)notification;
 - (void)extFlush:(nonnull NSNotification *)notification;
 - (NSInteger)ncPriority:(nullable NSNotificationName)aName;
-@end
-
-@interface FxGripParameterTagsAPI_v1 : NSObject <FxParameterTagsAPI_v1>
-- (nullable instancetype)initWithAPI:(nullable id<FxParameterTagsAPI_v1>)api effect:(nonnull id)effect;
 @end
 
 static const FxParameterId kMetaTestParamA = 10;

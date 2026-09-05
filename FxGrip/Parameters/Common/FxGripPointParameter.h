@@ -9,7 +9,7 @@
 #ifndef FxGripPointParameter_h
 #define FxGripPointParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 #import "FxGripPointOptions.h"
 
 
@@ -20,7 +20,7 @@
 				FxGripPointOptions.h) are parsed once into options, which an effect passes to
 				FxGripPointOSC to draw and constrain the point's on-screen control.
 */
-@interface FxGripPointParameter : FxParameter <FxStateParameter>
+@interface FxGripPointParameter : FxGripParameter <FxGripStateParameter>
 
 /*! The parsed design-time options; the documented defaults when the declaration sets none. */
 @property (readonly, nonnull) FxGripPointOptions *options;

@@ -9,7 +9,7 @@
 #import "FxGripParameterGroupingAPI_v1.h"
 //#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTileableEffect.h"
-#import "../Parameters/FxParameter.h"
+#import "../Parameters/FxGripParameter.h"
 
 @implementation FxGripParameterGroupingAPI_v1
 
@@ -22,8 +22,8 @@
 // chooses not to be accessible for some reason.
 //---------------------------------------------------------
 
-- (nullable instancetype)initWithAPI:(id<FxParameterGroupingAPI_v1> _Nullable)api
-				   parameterInfoAPIv1:(id<FxParameterInfoAPI_v1>_Nullable)parameterInfoAPIv1 effect:(id<FxGripEffectHost>_Nonnull)effect
+- (nullable instancetype)initWithAPI:(id<FxGripParameterGroupingAPI_v1> _Nullable)api
+				   parameterInfoAPIv1:(id<FxGripParameterInfoAPI_v1>_Nullable)parameterInfoAPIv1 effect:(id<FxGripEffectHost>_Nonnull)effect
 {
 	self = [super initWithEffect:effect];
 	
@@ -44,15 +44,15 @@
 
 - (BOOL)hasSubParameters:(FxParameterId)parameterID
 {
-	id<FxParameter> param = self.effect[parameterID];
+	id<FxGripParameter> param = self.effect[parameterID];
 	if (!param) {
 		return NO;
 	}
-	if (![param conformsToProtocol:@protocol(FxSubParameters)]) {
+	if (![param conformsToProtocol:@protocol(FxGripSubParameters)]) {
 		return NO;
 	}
 	
-	return ((id<FxSubParameters>)param).count > 0;
+	return ((id<FxGripSubParameters>)param).count > 0;
 }
 
 /*!
@@ -61,14 +61,14 @@
 */
 - (UInt32)parameterSubCount:(FxParameterId)parameterID
 {
-	id<FxParameter> param = self.effect[parameterID];
+	id<FxGripParameter> param = self.effect[parameterID];
 	if (!param) {
 		return NO;
 	}
-	if (![param conformsToProtocol:@protocol(FxSubParameters)]) {
+	if (![param conformsToProtocol:@protocol(FxGripSubParameters)]) {
 		return NO;
 	}
-	return (UInt32)((id<FxSubParameters>)param).count;
+	return (UInt32)((id<FxGripSubParameters>)param).count;
 	
 	//return [_api parameterSubCount:parameterID];
 }
@@ -95,14 +95,14 @@
 	
 - (FxParameterId)parameterIDAtSubIndex:(UInt32)index fromParameter:(FxParameterId) parameterID
 {
-	id<FxParameter> param = self.effect[parameterID];
+	id<FxGripParameter> param = self.effect[parameterID];
 	if (!param) {
 		return 0;
 	}
-	if (![param conformsToProtocol:@protocol(FxSubParameters)]) {
+	if (![param conformsToProtocol:@protocol(FxGripSubParameters)]) {
 		return 0;
 	}
-	id<FxSubParameters> subGroup = (id<FxSubParameters>)param;
+	id<FxGripSubParameters> subGroup = (id<FxGripSubParameters>)param;
 	if (index >= subGroup.count) {
 		return 0;
 	}
@@ -118,7 +118,7 @@
  */
 - (FxParameterId)getParameterSubGroup:(FxParameterId)parameterID
 {
-	id<FxParameter> param = self.effect[parameterID];
+	id<FxGripParameter> param = self.effect[parameterID];
 	if (!param) {
 		return -1;
 	}

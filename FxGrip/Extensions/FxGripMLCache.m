@@ -8,7 +8,7 @@
 #import "FxGripTileableEffect+Extensions.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTypes.h"
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripAPIAccessing.h"
 #import "FxGripImageBuffer.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>

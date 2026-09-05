@@ -11,14 +11,14 @@
 #import "FxGripCommonAPI.h"
 
 /*!
-	@protocol   FxParameterBoundsAPI_v1
+	@protocol   FxGripParameterBoundsAPI_v1
 	@abstract   Sets one edge of a Float or Int parameter's value or slider range, in the style
 				of Apple's FxPlug APIs.
 	@discussion Introduced in FxGrip 1.0. FxGrip's own API. Apple's dynamic-parameter API sets a
 				parameter's minimum, maximum, and slider range together; these convenience methods
 				change one edge and preserve the rest by reading the current range first.
 */
-@protocol FxParameterBoundsAPI_v1 <NSObject>
+@protocol FxGripParameterBoundsAPI_v1 <NSObject>
 
 // Float
 - (NSError* _Nullable)setParameter:(UInt32)parameterID floatMinimum:(double)min;
@@ -41,13 +41,13 @@
 
 /*!
 	@interface  FxGripParameterBoundsAPI_v1
-	@abstract   FxGrip's implementation of FxParameterBoundsAPI_v1.
+	@abstract   FxGrip's implementation of FxGripParameterBoundsAPI_v1.
 	@discussion Introduced in FxGrip 1.0. Reads the current range through Apple's
 				FxDynamicParameterAPI_v3 and writes back the full range with one edge changed.
 				Vended by FxGripAPIAccessing's parameterBoundsAPIv1. Previously these setters lived
-				on the fabricated FxDynamicParameterAPI_v4.
+				on the fabricated FxGripDynamicParameterAPI_v4.
 */
-@interface FxGripParameterBoundsAPI_v1 : FxGripCommonAPI <FxParameterBoundsAPI_v1>
+@interface FxGripParameterBoundsAPI_v1 : FxGripCommonAPI <FxGripParameterBoundsAPI_v1>
 
 @property (assign, readonly) id<FxDynamicParameterAPI_v3> _Nullable api;
 

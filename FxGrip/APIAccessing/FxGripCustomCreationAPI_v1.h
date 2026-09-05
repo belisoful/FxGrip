@@ -13,13 +13,13 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /*!
-	@protocol   FxCustomCreationAPI_v1
+	@protocol   FxGripCustomCreationAPI_v1
 	@abstract   Creates FxGrip's custom parameters, in the style of Apple's FxPlug creation APIs.
 	@discussion Introduced in FxGrip 1.0. FxGrip's own API. Each method mirrors the shape of
 				Apple's addFloatSliderWithName:… and registers one FxGrip control during the
 				plug-in's -addParameters. FxGripCustomCreationAPI_v1 is the implementation.
 */
-@protocol FxCustomCreationAPI_v1 <NSObject>
+@protocol FxGripCustomCreationAPI_v1 <NSObject>
 
 - (BOOL)addSectionWithName:(NSString *)name
 			   parameterID:(UInt32)parameterID
@@ -104,7 +104,7 @@ NS_ASSUME_NONNULL_BEGIN
 				Every method returns YES when the host accepted the parameter. Call during the
 				plug-in's -addParameters, like Apple's creation API.
 */
-@interface FxGripCustomCreationAPI_v1 : NSObject <FxCustomCreationAPI_v1>
+@interface FxGripCustomCreationAPI_v1 : NSObject <FxGripCustomCreationAPI_v1>
 
 - (nullable instancetype)initWithEffect:(id<FxGripEffectHost>)effect;
 

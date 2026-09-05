@@ -8,7 +8,7 @@
 #import "NSView+FxGrip.h"
 #import <objc/runtime.h>
 
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 
 @implementation NSView (FxGrip)
 

@@ -15,7 +15,7 @@
 #import "FxGripCustomDataClasses.h"
 #import "FxGripMutableParameter.h"
 #import "FxGripCustomViewData.h"
-#import "FxDivider.h"
+#import "FxGripDividerParameter.h"
 
 /*!
 	@class      FxGripInterpolatingDictionary
@@ -28,7 +28,7 @@
 @interface FxGripDividerData : NSObject <NSSecureCoding, NSCopying, FxGripMutableParameter, FxGripCustomViewData>
 
 
-	@property (nonatomic, assign)  DividerSize percentWidth;
+	@property (nonatomic, assign)  FxGripDividerSize percentWidth;
 	@property (nonatomic, assign)  uint16 marginTop;
 	@property (nonatomic, assign)  uint16 marginBottom;
 	@property (nonatomic, assign)  uint16 parameterHeight;

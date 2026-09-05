@@ -5,7 +5,7 @@
 
 #import "FxGripTileableEffect+CustomUI.h"
 #import "FxGripTileableEffect+Parameters.h"
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 #import "FxGrip_ARC.h"
 
 @implementation FxGripTileableEffect (CustomUI)

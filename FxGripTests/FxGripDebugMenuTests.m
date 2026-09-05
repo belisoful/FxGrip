@@ -11,7 +11,7 @@
 #import <XCTest/XCTest.h>
 #import <CoreMedia/CoreMedia.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxParameterFlags.h>
+#import <FxGrip/FxGripParameterFlags.h>
 #import <FxGrip/FxGripParameterFlags.h>
 #import <FxGrip/FxGripTileableEffect.h>
 #import <FxGrip/FxGripTileableEffect+Notifications.h>

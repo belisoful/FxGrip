@@ -5,10 +5,10 @@
 #ifndef FxGripCustomExtension_h
 #define FxGripCustomExtension_h
 
-#import "FxParameterExtension.h"
+#import "FxGripParameterExtension.h"
 #import "FxGripCustomParameter.h"
 
-@interface FxGripCustomExtension : FxParameterExtension <FxGripCustomParameter>
+@interface FxGripCustomExtension : FxGripParameterExtension <FxGripCustomParameter>
 
 @property (readonly, retain, nonnull) NSSet *dataClasses;
 

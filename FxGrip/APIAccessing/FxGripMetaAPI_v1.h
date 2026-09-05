@@ -11,14 +11,14 @@
 #import "FxGripCommonAPI.h"
 
 /*!
-	@protocol   FxMetaAPI_v1
+	@protocol   FxGripMetaAPI_v1
 	@abstract   Per-parameter metadata storage, in the style of Apple's FxPlug APIs.
 	@discussion Introduced in FxGrip 1.0. FxGrip's own API; no host vends it. Metadata is
 				arbitrary secure-codable data attached to a parameter and persisted with the
 				effect's plugin state. Every method resolves through the host's meta manager;
 				a host without one answers the not-found result.
 */
-@protocol FxMetaAPI_v1 <NSObject>
+@protocol FxGripMetaAPI_v1 <NSObject>
 
 - (SInt32)metaCountFromParameter:(FxParameterId)parameterID;
 - (NSError* _Nullable)getMeta:(NSDictionary* _Nullable * _Nonnull)meta fromParameter:(FxParameterId)parameterID;
@@ -36,13 +36,13 @@
 
 /*!
 	@interface  FxGripMetaAPI_v1
-	@abstract   FxGrip's implementation of FxMetaAPI_v1.
+	@abstract   FxGrip's implementation of FxGripMetaAPI_v1.
 	@discussion Introduced in FxGrip 1.0. Forwards every call to the host's meta manager
 				(hostMeta). Vended by FxGripAPIAccessing's metaAPIv1. Previously these methods
-				lived on the fabricated FxDynamicParameterAPI_v4; they are their own API now so
+				lived on the fabricated FxGripDynamicParameterAPI_v4; they are their own API now so
 				FxGrip does not extend Apple's dynamic-parameter protocol with its own methods.
 */
-@interface FxGripMetaAPI_v1 : FxGripCommonAPI <FxMetaAPI_v1>
+@interface FxGripMetaAPI_v1 : FxGripCommonAPI <FxGripMetaAPI_v1>
 
 - (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect;
 

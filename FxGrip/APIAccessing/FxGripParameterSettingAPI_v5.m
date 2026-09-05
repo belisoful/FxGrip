@@ -6,7 +6,7 @@
 //
 
 #import "FxGripParameterSettingAPI_v5.h"
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripParameterInfoAPI_v1.h"
 #import "FxGripInterpolatingDictionary.h"
 #import "FxGripTileableEffect.h"
@@ -28,7 +28,7 @@
 
 - (nullable instancetype)initWithAPI:(id<FxParameterSettingAPI_v6>)api
 					   paramGetAPIv6:(id<FxParameterRetrievalAPI_v6>)paramGetAPIv6
-				   parameterInfoAPIv1:(id<FxParameterInfoAPI_v1>)parameterInfoAPIv1
+				   parameterInfoAPIv1:(id<FxGripParameterInfoAPI_v1>)parameterInfoAPIv1
 							  effect:(id<FxGripEffectHost>)effect
 {
 	self = [super initWithEffect:effect];

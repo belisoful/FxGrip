@@ -9,10 +9,10 @@
 #ifndef FxGripColorParameter_h
 #define FxGripColorParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripColorParameter : FxParameter <FxStateParameter>
+@interface FxGripColorParameter : FxGripParameter <FxGripStateParameter>
 
 @property (readwrite, nonatomic) BOOL flagDontRemapColors;
 

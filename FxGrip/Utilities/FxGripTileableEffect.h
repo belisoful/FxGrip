@@ -10,16 +10,13 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import <FxGrip/FxParameter.h>
+#import <FxGrip/FxGripParameter.h>
 #import <FxGrip/FxGripExtension.h>
 #import <FxGrip/FxGripParameterUtility.h>
 #import <FxGrip/FxGripAPIAccessing.h>
 #import <FxGrip/FxGripImageCompression.h>
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-
-#ifndef FxParameterId
-typedef UInt32 FxParameterId;
-#endif
+#import <FxGrip/FxGripTypes.h>
 
 @class FxGripOOBParameterAccess;
 
@@ -52,7 +49,7 @@ typedef UInt32 FxParameterId;
 
 @property (readonly, retain, nonnull) NSString*		defaultFontName;
 
-- (id<FxParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
+- (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
 - (id _Nullable)objectForKeyedSubscript:(id _Nullable)key;
 - (NSUInteger) countByEnumeratingWithState: (nonnull NSFastEnumerationState *) enumerationState
 								   objects: (_Nullable id __unsafe_unretained [_Nullable]) stackBuffer
@@ -215,7 +212,7 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 
 @property (readonly, nonnull, assign) NSPriorityNotificationCenter *notifier;
 @property (readonly, nonnull, retain) NSDictionary<NSString*, id<FxGripExtension>> *extensions;
-@property (readonly, nonnull, retain) NSDictionary<NSNumber*, id<FxParameter>> *parameters;
+@property (readonly, nonnull, retain) NSDictionary<NSNumber*, id<FxGripParameter>> *parameters;
 
 //Plugin Properties
 @property (readonly, nonnull, retain) NSString*		pluginUUID;
@@ -274,7 +271,7 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 
 //Parameters
 - (UInt32)parameterCount;
-- (id<FxParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
+- (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
 - (id _Nullable)objectForKeyedSubscript:(id _Nullable)key;
 - (NSUInteger) countByEnumeratingWithState: (nonnull NSFastEnumerationState *) enumerationState
 								   objects: (id _Nullable __unsafe_unretained [_Nullable]) stackBuffer

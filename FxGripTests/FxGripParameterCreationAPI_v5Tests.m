@@ -11,7 +11,7 @@
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxParameterFlags.h>
+#import <FxGrip/FxGripParameterFlags.h>
 #import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripParameterCreationAPI_v5.h>
 

@@ -2,14 +2,14 @@
  *	FxGripToggle.h
  */
 
-#ifndef FxParameterExtension_h
-#define FxParameterExtension_h
+#ifndef FxGripParameterExtension_h
+#define FxGripParameterExtension_h
 
 #import "FxGripExtension.h"
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@protocol FxParameterExtension <FxGripExtension, FxParameter>
+@protocol FxGripParameterExtension <FxGripExtension, FxGripParameter>
 
 @property (readwrite, nonatomic) FxParameterId parameterID;
 
@@ -19,7 +19,7 @@
 
 
 //This is an extension that is itself a parameter
-@interface FxParameterExtension : FxGripExtension <FxParameter, FxParameterExtension>
+@interface FxGripParameterExtension : FxGripExtension <FxGripParameter, FxGripParameterExtension>
 {
 	BOOL					_addedToEffect;
 	

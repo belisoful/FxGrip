@@ -113,7 +113,7 @@
 #pragma mark FxGripSubParameters
 
 
-- (BOOL)addChildParameter:(id<FxParameter> _Nonnull)parameter
+- (BOOL)addChildParameter:(id<FxGripParameter> _Nonnull)parameter
 {
 	BOOL isChild = [_children containsObject:parameter];
 	
@@ -124,7 +124,7 @@
 	return YES;
 }
 
-- (BOOL)removeChildParameter:(id<FxParameter> _Nonnull)parameter
+- (BOOL)removeChildParameter:(id<FxGripParameter> _Nonnull)parameter
 {
 	BOOL isChild = [_children containsObject:parameter];
 	
@@ -136,7 +136,7 @@
 }
 
 //
-- (id<FxParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index
+- (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index
 {
 	return [_children objectAtIndex:index];
 }
@@ -153,7 +153,7 @@
 	return _children.count;
 }
 
-- (nonnull NSArray<id<FxParameter>>*)children
+- (nonnull NSArray<id<FxGripParameter>>*)children
 {
 	return _children;
 }
@@ -162,21 +162,21 @@
 - (NSUInteger)allCount
 {
 	NSUInteger count = self.count;
-	for(id<FxParameter> child in self.children) {
-		if ([child conformsToProtocol:@protocol(FxSubParameters)]) {
-			count += ((id<FxSubParameters>)child).allCount;
+	for(id<FxGripParameter> child in self.children) {
+		if ([child conformsToProtocol:@protocol(FxGripSubParameters)]) {
+			count += ((id<FxGripSubParameters>)child).allCount;
 		}
 	}
 	return count;
 }
 
-- (nonnull NSArray<id<FxParameter>>*)allChildren
+- (nonnull NSArray<id<FxGripParameter>>*)allChildren
 {
-	NSArray<id<FxParameter>>* children = self.children;
+	NSArray<id<FxGripParameter>>* children = self.children;
 	NSMutableArray *all = [NSMutableArray.alloc initWithCapacity:children.count];
-	for(id<FxParameter> child in children) {
-		if ([child conformsToProtocol:@protocol(FxSubParameters)]) {
-			[all addObjectsFromArray:((id<FxSubParameters>)child).allChildren];
+	for(id<FxGripParameter> child in children) {
+		if ([child conformsToProtocol:@protocol(FxGripSubParameters)]) {
+			[all addObjectsFromArray:((id<FxGripSubParameters>)child).allChildren];
 		}
 		[all addObject:child];
 	}

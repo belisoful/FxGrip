@@ -5,7 +5,7 @@
 //  Created by ~ ~ on 2/29/24.
 //
 
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripParameterCreationAPI_v5.h"
 #import "FxGripTileableEffect.h"
 #import "FxGripTileableEffect+Notifications.h"

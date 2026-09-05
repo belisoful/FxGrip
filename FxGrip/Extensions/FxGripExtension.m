@@ -10,7 +10,7 @@
 #import "FxGripTileableEffect+Extensions.h"
 #import "FxGripTileableEffect+Notifications.h"
 #import "NSDictionary+FxGripTileableEffect.h"
-#import "FxParameterExtension.h"
+#import "FxGripParameterExtension.h"
 #import "FxGripParameterUtility.h"
 
 

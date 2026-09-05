@@ -9,7 +9,7 @@
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxParameterFlags.h>
+#import <FxGrip/FxGripParameterFlags.h>
 #import "FxGripParameterClassTestSupport.h"
 
 typedef NS_ENUM(NSInteger, FxGripObjectTrackerShape) {

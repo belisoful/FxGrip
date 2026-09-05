@@ -7,7 +7,7 @@
 
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxGripTypes.h"
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 //#import "FxGripCustomParameter.h"
 
 //#import "NSCoder+AtIndex.h"

@@ -8,7 +8,7 @@
 #import "FxGripPresetsAPI_v1.h"
 #import "FxGripAPIAccessing.h"
 #import "FxGripTileableEffect.h"
-#import "FxParameterTagsAPI_v1.h"
+#import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripParameterTagsAPI_v1.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripPluginInfo.h"
@@ -52,7 +52,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 
 @implementation FxGripPresetsAPI_v1
 
-- (nullable instancetype)initWithAPI:(id<FxPresetsAPI_v1>_Nullable)api
+- (nullable instancetype)initWithAPI:(id<FxGripPresetsAPI_v1>_Nullable)api
 							  effect:(id<FxGripEffectHost>_Nonnull)effect
 {
 	self = [super initWithEffect:effect];
@@ -100,12 +100,12 @@ static NSString *FxGripFolderNameString(NSString *name)
 
 #pragma mark Apply
 
-- (NSError * _Nullable)setPreset:(FxGripPreset * _Nonnull)preset options:(FxParameterPresetFlags)flags
+- (NSError * _Nullable)setPreset:(FxGripPreset * _Nonnull)preset options:(FxGripParameterPresetFlags)flags
 {
 	return [self setPreset:preset options:flags atTime:kCMTimeZero];
 }
 
-- (NSError * _Nullable)setPreset:(FxGripPreset * _Nonnull)preset options:(FxParameterPresetFlags)flags atTime:(CMTime)time
+- (NSError * _Nullable)setPreset:(FxGripPreset * _Nonnull)preset options:(FxGripParameterPresetFlags)flags atTime:(CMTime)time
 {
 	if (preset == nil) {
 		return [self errorWithDescription:@"No preset to apply."];
@@ -115,7 +115,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	}
 
 	id<FxGripEffectHost> effect = self.effect;
-	id<FxParameterTagsAPI_v1> tagsAPI = effect.apiManager.paramTagsAPIv1;
+	id<FxGripParameterTagsAPI_v1> tagsAPI = effect.apiManager.paramTagsAPIv1;
 	if (tagsAPI == nil) {
 		return [self errorWithDescription:@"The tag API is unavailable."];
 	}
@@ -149,7 +149,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	if (setterAPI == nil || getterAPI == nil) {
 		return [self errorWithDescription:@"The parameter APIs are unavailable."];
 	}
-	id<FxParameterTagsAPI_v1> tagsAPI = effect.apiManager.paramTagsAPIv1;
+	id<FxGripParameterTagsAPI_v1> tagsAPI = effect.apiManager.paramTagsAPIv1;
 
 	NSMutableDictionary *values = [NSMutableDictionary dictionary];
 	NSMutableDictionary *tags = [NSMutableDictionary dictionary];

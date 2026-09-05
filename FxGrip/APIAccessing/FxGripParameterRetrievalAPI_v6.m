@@ -5,7 +5,7 @@
 //  Created by ~ ~ on 2/29/24.
 //
 
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripParameterRetrievalAPI_v6.h"
 #import "FxGripInterpolatingDictionary.h"
 #import "FxGripParameterInfoAPI_v1.h"
@@ -28,7 +28,7 @@
 //---------------------------------------------------------
 
 - (nullable instancetype)initWithAPI:(id<FxParameterRetrievalAPI_v6>)api
-				   parameterInfoAPIv1:(id<FxParameterInfoAPI_v1>)parameterInfoAPIv1
+				   parameterInfoAPIv1:(id<FxGripParameterInfoAPI_v1>)parameterInfoAPIv1
 							  effect:(id<FxGripEffectHost>)effect
 
 {

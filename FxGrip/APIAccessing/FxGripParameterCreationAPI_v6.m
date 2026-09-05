@@ -4,7 +4,7 @@
 //
 
 #import "FxGripParameterCreationAPI_v6.h"
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripTileableEffect.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 

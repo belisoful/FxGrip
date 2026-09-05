@@ -100,9 +100,9 @@ static BOOL FxGripCatTestTimeIsInvalid(CMTime time)
 }
 @end
 
-// Stands in for a parameter extension: claims FxParameter conformance and records the
+// Stands in for a parameter extension: claims FxGripParameter conformance and records the
 // configuration call the loader must make. conformsToProtocol: is overridden so the stub
-// need not implement the whole FxParameter surface.
+// need not implement the whole FxGripParameter surface.
 @interface FxGripCatTestParameterExtension : FxGripExtension
 @property (nonatomic, assign) BOOL configuredFromDictionary;
 @property (nonatomic, copy) NSDictionary *configuredData;
@@ -112,7 +112,7 @@ static BOOL FxGripCatTestTimeIsInvalid(CMTime time)
 @implementation FxGripCatTestParameterExtension
 - (BOOL)conformsToProtocol:(Protocol *)aProtocol
 {
-	if (aProtocol == @protocol(FxParameter)) {
+	if (aProtocol == @protocol(FxGripParameter)) {
 		return YES;
 	}
 	return [super conformsToProtocol:aProtocol];
@@ -827,13 +827,13 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	FxGripCatTestEffect *effect = [self effectWithMarkerAndPlainExtensions];
 
 	XCTAssertFalse([effect hasExtensionClass:FxGripCatTestIndividuatedExtension.class]);
-	XCTAssertFalse([effect hasExtensionProtocol:@protocol(FxParameter)]);
+	XCTAssertFalse([effect hasExtensionProtocol:@protocol(FxGripParameter)]);
 	XCTAssertFalse([effect hasExtensionKey:@"Absent"]);
 	XCTAssertFalse([effect hasExtensionKey:nil]);
 
 	XCTAssertNil([effect extensionForClass:FxGripCatTestIndividuatedExtension.class]);
 	XCTAssertNil([effect extensionForClass:nil]);
-	XCTAssertNil([effect extensionForProtocol:@protocol(FxParameter)]);
+	XCTAssertNil([effect extensionForProtocol:@protocol(FxGripParameter)]);
 	XCTAssertNil([effect extensionForProtocol:nil]);
 	XCTAssertNil([effect extensionForKey:@"Absent"]);
 	XCTAssertNil([effect extensionForKey:nil]);

@@ -11,7 +11,7 @@
 #import "FxGripTileableEffect+Notifications.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTypes.h"
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripAPIAccessing.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 #import "FxGrip_ARC.h"

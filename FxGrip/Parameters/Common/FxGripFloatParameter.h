@@ -9,10 +9,10 @@
 #ifndef FxGripFloatParameter_h
 #define FxGripFloatParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripFloatParameter : FxParameter <FxStateParameter>
+@interface FxGripFloatParameter : FxGripParameter <FxGripStateParameter>
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;

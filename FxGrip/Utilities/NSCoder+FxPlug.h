@@ -31,7 +31,6 @@ typedef double  Matrix44Data[4][4];
 @class FxMatrix44;
 #endif
 @class FxImageTile;
-@protocol Fx3DLighting_v5;
 
 extern NSString * _Nonnull const FxGrip3DCoderFocalLengthKey;
 extern NSString * _Nonnull const FxGrip3DCoderModelMatrixKey;

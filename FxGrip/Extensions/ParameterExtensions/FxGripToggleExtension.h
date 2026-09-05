@@ -5,11 +5,11 @@
 #ifndef FxGripToggleExtension_h
 #define FxGripToggleExtension_h
 
-#import "FxParameterExtension.h"
+#import "FxGripParameterExtension.h"
 #import "FxGripToggleParameter.h"
 
 
-@interface FxGripToggleExtension : FxParameterExtension <FxGripToggleParameter>
+@interface FxGripToggleExtension : FxGripParameterExtension <FxGripToggleParameter>
 
 
 @end

@@ -29,7 +29,7 @@
 		_percentWidth = phi - 1.0;
 		_marginTop = 7;
 		_marginBottom = 12;
-		_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+		_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
     }
     
     return self;
@@ -45,7 +45,7 @@
 			_marginTop = [values[@"margintop"] intValue];
 		if (values[@"marginbottom"] != nil)
 			_marginBottom = [values[@"marginbottom"] intValue];
-		_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+		_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
 	}
 	return self;
 }
@@ -70,10 +70,10 @@
 	if (self != nil)
 	{
 		NSUInteger dataSize = 4;
-		_percentWidth = *(DividerSize*)[aDecoder decodeBytesWithReturnedLength:&dataSize];
+		_percentWidth = *(FxGripDividerSize*)[aDecoder decodeBytesWithReturnedLength:&dataSize];
 		_marginTop = *(uint16*)[aDecoder decodeBytesWithReturnedLength:&dataSize];
 		_marginBottom = *(uint16*)[aDecoder decodeBytesWithReturnedLength:&dataSize];
-		_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+		_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
 	}
 	
 	return self;
@@ -81,7 +81,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)aCoder
 {
-	[aCoder encodeBytes:&_percentWidth length:sizeof(DividerSize)];
+	[aCoder encodeBytes:&_percentWidth length:sizeof(FxGripDividerSize)];
 	[aCoder encodeBytes:&_marginTop length:sizeof(uint16)];
 	[aCoder encodeBytes:&_marginBottom length:sizeof(uint16)];
 }
@@ -119,7 +119,7 @@
 }
 
 
-- (void)setPercentWidth:(DividerSize)percentWidth
+- (void)setPercentWidth:(FxGripDividerSize)percentWidth
 {
 	_percentWidth = percentWidth;
 	
@@ -133,7 +133,7 @@
 - (void)setMarginTop:(uint16)marginTop
 {
 	_marginTop = marginTop;
-	_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+	_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
 
 	if (self.parameterView != nil && [self.parameterView conformsToProtocol:@protocol(FxGripCustomViewDataDelegate)]) {
 		
@@ -145,7 +145,7 @@
 - (void)setMarginBottom:(uint16)marginBottom
 {
 	_marginBottom = marginBottom;
-	_parameterHeight = _marginTop + kFxBoxDividerHeight + _marginBottom;
+	_parameterHeight = _marginTop + kFxGripBoxDividerHeight + _marginBottom;
 	
 	if (self.parameterView != nil && [self.parameterView conformsToProtocol:@protocol(FxGripCustomViewDataDelegate)]) {
 		
@@ -159,7 +159,7 @@
 	_parameterHeight = parameterHeight;
 	// A height below the divider itself leaves no margin; unsigned subtraction would
 	// wrap to 65535.
-	uint16 margins = parameterHeight > kFxBoxDividerHeight ? parameterHeight - kFxBoxDividerHeight : 0;
+	uint16 margins = parameterHeight > kFxGripBoxDividerHeight ? parameterHeight - kFxGripBoxDividerHeight : 0;
 	_marginTop = margins >> 1;
 	_marginBottom = margins - _marginTop;
 	

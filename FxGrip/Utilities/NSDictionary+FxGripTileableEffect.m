@@ -11,7 +11,7 @@
 #import "FxGripParameterUtility.h"
 #import "FxGripPluginInfo.h"
 #import "FxGripPrimeNumbers.h"
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 #import <BEFoundation/NSNumber+Primes16b.h>
 
 //#import "FxGrip.h"

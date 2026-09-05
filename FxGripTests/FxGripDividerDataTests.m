@@ -7,9 +7,9 @@
 #import <FxPlug/FxTypes.h>
 
 // FxGripDividerData.h is not a public framework header, so the surface under test is
-// re-declared locally. The constants mirror FxDivider.h and FxGripTypes.h. AppKit is not
+// re-declared locally. The constants mirror FxGripDividerParameter.h and FxGripTypes.h. AppKit is not
 // linked into the test bundle, so parameterView is typed id and stands in for the NSView.
-typedef double DividerSize;
+typedef double FxGripDividerSize;
 static const uint16_t kDividerHeight = 1;
 static const double kGoldenRatio = 1.618033988749895;
 
@@ -18,7 +18,7 @@ static const double kGoldenRatio = 1.618033988749895;
 @end
 
 @interface FxGripDividerData : NSObject <NSSecureCoding, NSCopying>
-@property (nonatomic, assign) DividerSize percentWidth;
+@property (nonatomic, assign) FxGripDividerSize percentWidth;
 @property (nonatomic, assign) uint16_t marginTop;
 @property (nonatomic, assign) uint16_t marginBottom;
 @property (nonatomic, assign) uint16_t parameterHeight;

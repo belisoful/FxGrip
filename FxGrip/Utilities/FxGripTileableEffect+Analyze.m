@@ -197,7 +197,7 @@
 - (NSArray<FxGripObjectTrackerParameter *> *)objectTrackerParameters
 {
 	NSMutableArray<FxGripObjectTrackerParameter *> *trackers = [NSMutableArray array];
-	for (id<FxParameter> parameter in self.parameters.allValues) {
+	for (id<FxGripParameter> parameter in self.parameters.allValues) {
 		if ([parameter isKindOfClass:FxGripObjectTrackerParameter.class]) {
 			[trackers addObject:(FxGripObjectTrackerParameter *)parameter];
 		}
@@ -242,7 +242,7 @@
 				  forParameter:(FxParameterId)parameterID
 						atTime:(CMTime)time
 {
-	id<FxParameter> parameter = self.parameters[@(parameterID)];
+	id<FxGripParameter> parameter = self.parameters[@(parameterID)];
 	if (![parameter isKindOfClass:FxGripObjectTrackerParameter.class]) {
 		return NO;
 	}

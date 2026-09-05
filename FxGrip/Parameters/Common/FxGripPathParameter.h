@@ -9,10 +9,10 @@
 #ifndef FxGripPathParameter_h
 #define FxGripPathParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripPathParameter : FxParameter <FxStateParameter>
+@interface FxGripPathParameter : FxGripParameter <FxGripStateParameter>
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;

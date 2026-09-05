@@ -9,9 +9,9 @@
 #ifndef FxGripToggleParameter_h
 #define FxGripToggleParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
-@protocol FxGripToggleParameter <FxParameter>
+@protocol FxGripToggleParameter <FxGripParameter>
 
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
@@ -26,7 +26,7 @@
 @end
 
 
-@interface FxGripToggleParameter : FxParameter <FxGripToggleParameter, FxStateParameter>
+@interface FxGripToggleParameter : FxGripParameter <FxGripToggleParameter, FxGripStateParameter>
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;

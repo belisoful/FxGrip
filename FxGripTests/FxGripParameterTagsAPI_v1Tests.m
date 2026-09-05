@@ -2,7 +2,7 @@
 //  FxGripParameterTagsAPI_v1Tests.m
 //  FxGripTests
 //
-//  Unit tests for the preset section of FxParameterTagsAPI_v1: tag-to-definition
+//  Unit tests for the preset section of FxGripParameterTagsAPI_v1: tag-to-definition
 //  resolution from the plugin's plist table, target-preset resolution with the
 //  instance meta record overriding the parameter configuration, the preset
 //  application core (section order, option gating, the tag boundary, and the five
@@ -17,16 +17,11 @@
 #import "FxGrip/FxGripTypes.h"
 #import "FxGrip/FxGripMetaManager.h"
 #import "FxGrip/FxGripParameterFlags.h"
-#import "FxGrip/FxParameterTagsAPI_v1.h"
+#import "FxGrip/FxGripParameterTagsAPI_v1.h"
 
-// FxGripParameterTagsAPI_v1.h and FxGripAPIAccessing.h reach their dependencies through
-// flat quoted includes that do not resolve outside the framework target, so both classes
-// are declared here with the members the tests exercise; the implementations come from
-// the linked framework.
-@interface FxGripParameterTagsAPI_v1 : NSObject <FxParameterTagsAPI_v1>
-- (nullable instancetype)initWithAPI:(nullable id<FxParameterTagsAPI_v1>)api effect:(nonnull id)effect;
-@end
-
+// FxGripAPIAccessing.h reaches its dependencies through flat quoted includes that do not
+// resolve outside the framework target, so the manager is declared here with the members
+// the tests exercise; the implementation comes from the linked framework.
 @interface FxGripAPIAccessing : NSObject
 - (nullable instancetype)initWithAPIManager:(nullable id)apiManager effect:(nonnull id)effect;
 - (nullable id)apiForProtocol:(nonnull Protocol *)apiProtocol;
@@ -38,7 +33,7 @@ static const FxParameterId kTagsTestOtherParam = 21;
 
 // FxGripPresetsAPI_v1.h is not a public framework header, so the one preset flag these
 // tests exercise is declared here with its shipped value.
-static const FxParameterPresetFlags kTagsTestIgnoreTagBoundary = (1 << 1);
+static const FxGripParameterPresetFlags kTagsTestIgnoreTagBoundary = (1 << 1);
 
 // The test bundle links only FxGrip and XCTest, so CMTime values are built without the
 // CoreMedia symbols.
@@ -1401,17 +1396,17 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 */
 - (void)testTheTagsProtocolIsRegisteredOnceAndTheWrapperConformsToIt
 {
-	Protocol *tagsProtocol = objc_getProtocol("FxParameterTagsAPI_v1");
+	Protocol *tagsProtocol = objc_getProtocol("FxGripParameterTagsAPI_v1");
 
 	XCTAssertTrue(tagsProtocol != NULL);
-	XCTAssertTrue(protocol_isEqual(tagsProtocol, @protocol(FxParameterTagsAPI_v1)));
-	XCTAssertTrue([FxGripParameterTagsAPI_v1 conformsToProtocol:@protocol(FxParameterTagsAPI_v1)]);
-	XCTAssertTrue([self.tagsAPI conformsToProtocol:@protocol(FxParameterTagsAPI_v1)]);
+	XCTAssertTrue(protocol_isEqual(tagsProtocol, @protocol(FxGripParameterTagsAPI_v1)));
+	XCTAssertTrue([FxGripParameterTagsAPI_v1 conformsToProtocol:@protocol(FxGripParameterTagsAPI_v1)]);
+	XCTAssertTrue([self.tagsAPI conformsToProtocol:@protocol(FxGripParameterTagsAPI_v1)]);
 }
 
 - (void)testThePresetResolutionMethodsAreRequiredProtocolMembers
 {
-	Protocol *tagsProtocol = @protocol(FxParameterTagsAPI_v1);
+	Protocol *tagsProtocol = @protocol(FxGripParameterTagsAPI_v1);
 	SEL required[] = {
 		@selector(presetDefinitionForTag:),
 		@selector(targetPresetForParameter:record:)
@@ -1430,7 +1425,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 // protocol declares them all as required.
 - (void)testTheImplementedPresetMethodsAreRequiredProtocolMembers
 {
-	Protocol *tagsProtocol = @protocol(FxParameterTagsAPI_v1);
+	Protocol *tagsProtocol = @protocol(FxGripParameterTagsAPI_v1);
 	SEL required[] = {
 		@selector(presetDefinitionForTag:),
 		@selector(targetPresetForParameter:record:),
@@ -1448,7 +1443,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 - (void)testThePresetProtocolDeclaresNoOptionalMembers
 {
-	Protocol *tagsProtocol = @protocol(FxParameterTagsAPI_v1);
+	Protocol *tagsProtocol = @protocol(FxGripParameterTagsAPI_v1);
 	unsigned int count = 0;
 	struct objc_method_description *optional =
 		protocol_copyMethodDescriptionList(tagsProtocol, NO, YES, &count);
@@ -1467,7 +1462,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 }
 
 /*!
-	No host vends FxParameterTagsAPI_v1, so gating the wrapper on a host API left the whole
+	No host vends FxGripParameterTagsAPI_v1, so gating the wrapper on a host API left the whole
 	tags and preset delegation unreachable.
 */
 - (void)testTheTagsAPIIsVendedEvenThoughNoHostSuppliesTheProtocol
@@ -1477,7 +1472,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	id tagsAPI = manager.paramTagsAPIv1;
 
 	XCTAssertNotNil(tagsAPI);
-	XCTAssertTrue([tagsAPI conformsToProtocol:@protocol(FxParameterTagsAPI_v1)]);
+	XCTAssertTrue([tagsAPI conformsToProtocol:@protocol(FxGripParameterTagsAPI_v1)]);
 	XCTAssertTrue([tagsAPI isKindOfClass:FxGripParameterTagsAPI_v1.class]);
 }
 
@@ -1485,7 +1480,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 {
 	FxGripAPIAccessing *manager = [FxGripAPIAccessing.alloc initWithAPIManager:nil effect:(id)self.effect];
 
-	id tagsAPI = [manager apiForProtocol:@protocol(FxParameterTagsAPI_v1)];
+	id tagsAPI = [manager apiForProtocol:@protocol(FxGripParameterTagsAPI_v1)];
 
 	XCTAssertTrue([tagsAPI isKindOfClass:FxGripParameterTagsAPI_v1.class]);
 }
@@ -1496,7 +1491,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	[self installPresetDefinition:definition forTag:@"warm"];
 	FxGripAPIAccessing *manager = [FxGripAPIAccessing.alloc initWithAPIManager:nil effect:(id)self.effect];
 
-	id<FxParameterTagsAPI_v1> tagsAPI = manager.paramTagsAPIv1;
+	id<FxGripParameterTagsAPI_v1> tagsAPI = manager.paramTagsAPIv1;
 
 	XCTAssertEqualObjects([tagsAPI presetDefinitionForTag:@"warm"], definition);
 }

@@ -6,30 +6,44 @@
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
+#import "FxGripParameterFlags.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripAPIAccessing.h"
 #import "FxGripTileableEffect.h"
-#import "NSCoder+AtIndex.h"
+#import <BEFoundation/NSCoder+AtIndex.h>
+#import "NSCoder+FxPlug.h"
+#import <BEFoundation/NSNotification+MutableUserInfo.h>
+#import "FxGrip_ARC.h"
 
 #pragma mark -
 #pragma mark FxGripParameter Implementation
 
-@implementation FxGripParameter
 
-#include "../FxGripParameters/FxGripParameterLibrary.m"
+@interface FxGripParameterBase ()
+
+- (void)notifyGetFlagsPre:(nonnull NSNotification *)notification;
+- (void)notifySetFlagsPre:(nonnull NSNotification *)notification;
+- (void)notifySetFlags:(nonnull NSNotification *)notification;
+
+@end
+
+
+@implementation FxGripParameterBase
+
+- (NSInteger)ncPriority:(nullable NSNotificationName)aName
+{
+	if ([FxGripNotifyAPI_ParameterGetFlagsPreName isEqualToString:aName]) {
+		return -17;
+	}
+	return -19;
+}
+
+#include "FxGripParameterBaseLibrary.m"
 
 @synthesize effect = _effect;
 
-+(NSMutableDictionary*)buildParameter:(NSInteger)paramID //TODO: other parameters
-{
-	NSMutableDictionary *plist = [NSMutableDictionary.alloc initWithCapacity:10];
-	plist[kFxParameterProperty_Id] = [NSNumber numberWithLong:paramID];
-	//other values
-	return plist;
-}
-
--(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(id<FxTileableEffect>_Nonnull)effect
+-(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect
 {
 	self = [super init];
 	if(self) {
@@ -52,10 +66,20 @@
 		} else {
 			_data = dictionary.mutableCopy;
 		}
+
+		[self installNotifications];
 	}
 	return self;
 }
+- (void)dealloc
+{
+	[self removeObservers];
+	SUPER_DEALLOC();
+}
 
+- (nonnull NSString *)extKey {
+	return @"";
+}
 
 - (BOOL)startChangedTime:(CMTime)time
 				   error:(NSError * _Nullable * _Nullable)error
@@ -100,6 +124,7 @@
 
 
 
+
 - (SEL _Nullable)parameterSelector
 {
 	NSString *paramSelector = _data.parameterSelector;
@@ -133,5 +158,33 @@
 	}*/
 	return YES;
 }
+
+
+@end
+
+
+
+
+@implementation FxGripParameter
+
+@synthesize customView;
+
+- (NSView *_Nullable)newParameterView
+{
+	return nil;
+}
+
+- (void)attachCustomView:(NSView *_Nullable)view
+{
+	customView = view;
+}
+
++ (NSSet<Class> *_Nullable)customValueClasses
+{
+	return nil;
+}
+
+#include "FxGripParameterLibrary.m"
+
 
 @end

@@ -14,7 +14,7 @@
 #import "FxGripPreset.h"
 #import "FxGripPresetsAPI_v1.h"
 #import "FxGripParameterData.h"
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 
 @implementation FxGripParameterTagsAPI_v1
 
@@ -32,7 +32,7 @@
 // chooses not to be accessible for some reason.
 //---------------------------------------------------------
 
-- (nullable instancetype)initWithAPI:(id<FxParameterTagsAPI_v1> _Nullable)api
+- (nullable instancetype)initWithAPI:(id<FxGripParameterTagsAPI_v1> _Nullable)api
 							  effect:(id<FxGripEffectHost>)effect
 {
 	self = [super initWithEffect:effect];
@@ -215,7 +215,7 @@ static void FxGripParseFlagSpec(id spec, FxParameterFlags *add, FxParameterFlags
 - (NSError *_Nullable)applyPreset:(NSDictionary *_Nonnull)preset
 						   atTime:(CMTime)time
 						  options:(FxGripPresetOptions)options
-					  presetFlags:(FxParameterPresetFlags)presetFlags
+					  presetFlags:(FxGripParameterPresetFlags)presetFlags
 						   source:(FxGripPresetSource)source
 							  tag:(NSString *_Nullable)tag
 {

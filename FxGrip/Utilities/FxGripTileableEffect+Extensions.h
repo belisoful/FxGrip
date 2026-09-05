@@ -11,7 +11,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 #import "FxGripExtension.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 

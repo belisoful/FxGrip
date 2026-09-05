@@ -31,7 +31,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 /*!
 	Stands in for one of the effect's parameter objects. It reports conformance to
-	FxSubParameters through -conformsToProtocol: so a leaf and a group can be told apart
+	FxGripSubParameters through -conformsToProtocol: so a leaf and a group can be told apart
 	without adopting the full parameter protocol.
 */
 @interface FxGripGroupingTestParameter : NSObject
@@ -54,7 +54,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 - (BOOL)conformsToProtocol:(Protocol *)aProtocol
 {
-	if (strcmp(protocol_getName(aProtocol), "FxSubParameters") == 0) {
+	if (strcmp(protocol_getName(aProtocol), "FxGripSubParameters") == 0) {
 		return self.isSubParameterContainer;
 	}
 	return [super conformsToProtocol:aProtocol];

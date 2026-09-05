@@ -107,7 +107,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 @property (nonatomic, strong) NSURL *pluginFolderURL;
 @property (nonatomic, assign) NSUInteger applyCount;
 @property (nonatomic, strong) FxGripPreset *appliedPreset;
-@property (nonatomic, assign) FxParameterPresetFlags appliedOptions;
+@property (nonatomic, assign) FxGripParameterPresetFlags appliedOptions;
 @property (nonatomic, assign) CMTime appliedTime;
 @property (nonatomic, strong) NSError *applyError;
 
@@ -133,7 +133,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	return self.pluginFolderURL;
 }
 
-- (NSError *)setPreset:(FxGripPreset *)preset options:(FxParameterPresetFlags)flags atTime:(CMTime)time
+- (NSError *)setPreset:(FxGripPreset *)preset options:(FxGripParameterPresetFlags)flags atTime:(CMTime)time
 {
 	self.applyCount += 1;
 	self.appliedPreset = preset;
@@ -909,7 +909,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual(self.presetsAPI.applyCount, (NSUInteger)1);
 	XCTAssertEqualObjects(self.presetsAPI.appliedPreset.name, @"Ambient");
 	XCTAssertEqualObjects(self.presetsAPI.appliedPreset.uuid, written.uuid);
-	XCTAssertEqual(self.presetsAPI.appliedOptions, (FxParameterPresetFlags)kFxParameterPreset_Default);
+	XCTAssertEqual(self.presetsAPI.appliedOptions, (FxGripParameterPresetFlags)kFxParameterPreset_Default);
 	XCTAssertEqual(self.presetsAPI.appliedTime.value, (int64_t)13);
 	XCTAssertEqual(self.presetsAPI.appliedTime.timescale, (int32_t)30);
 }

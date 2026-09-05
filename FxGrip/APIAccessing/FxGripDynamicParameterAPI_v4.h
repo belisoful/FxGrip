@@ -54,14 +54,14 @@
 #pragma mark -
 
 /*!
-	@protocol   FxDynamicParameterAPI_v4
+	@protocol   FxGripDynamicParameterAPI_v4
 	@abstract   More dynamic features: parameter exists, parameter type, parameter tags,
  				parameter meta, individual parameter value setting
 	@discussion With this API your plugin can check for parameter existence by ID, get a
 				a parameter's type, get/set/remove a parameter tags and meta data, and
  				sets a parameter's individual slider configuration.
 */
-@protocol FxDynamicParameterAPI_v4 <FxDynamicParameterAPI_v3>
+@protocol FxGripDynamicParameterAPI_v4 <FxDynamicParameterAPI_v3>
 
 // ***** Float Parameter settings
 /*!
@@ -178,7 +178,7 @@
 
  */
 
-@interface FxGripDynamicParameterAPI_v4 : FxGripDynamicParameterAPI_v3 <FxDynamicParameterAPI_v4> {
+@interface FxGripDynamicParameterAPI_v4 : FxGripDynamicParameterAPI_v3 <FxGripDynamicParameterAPI_v4> {
 }
 // parameter
 

@@ -30,8 +30,8 @@
 	[self.effect.notifier removeObserver:self];
 }
 
-// ncPriority: is NOT defined here: FxParameterExtension includes this fragment and must
-// keep FxGripExtension's implementation. FxParameterBase defines its own in FxParameter.m.
+// ncPriority: is NOT defined here: FxGripParameterExtension includes this fragment and must
+// keep FxGripExtension's implementation. FxGripParameterBase defines its own in FxGripParameter.m.
 
 // Direct key: thin payloads cannot satisfy the guarded parameterID accessor.
 - (BOOL)notificationTargetsReceiver:(nonnull NSNotification *)notification
@@ -194,10 +194,10 @@ flagMethodBody(flagIsDefault)
 
 - (BOOL)hasState
 {
-	if (![self conformsToProtocol:@protocol(FxStateParameter)]) {
+	if (![self conformsToProtocol:@protocol(FxGripStateParameter)]) {
 		return NO;
 	}
-	id<FxParameterBase> param = self;
+	id<FxGripParameterBase> param = self;
 	FxParameterId parentId = 0;
 	do {
 		if (param.flagNoState) {

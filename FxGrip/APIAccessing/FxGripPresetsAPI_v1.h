@@ -12,7 +12,7 @@
 
 @class BEPathWatcher;
 
-typedef enum FxParameterPresetFlagOptions {
+typedef enum FxGripParameterPresetFlagOptions {
 	kFxParameterPreset_Default				= (0 << 0),
 
 	// ignores check for compatibility with the preset plugin Uuid agains the current Uuid and uuid alternatives
@@ -23,22 +23,22 @@ typedef enum FxParameterPresetFlagOptions {
 
 	// ignores preset meta data.
 	kFxParameterPreset_IgnoreMetaData		= (1 << 2)
-} FxParameterPresetFlagOptions;
+} FxGripParameterPresetFlagOptions;
 
 
 /*!
-	@protocol   FxPresetsAPI_v1
+	@protocol   FxGripPresetsAPI_v1
 	@abstract   The preset file and discovery layer, in the style of Apple's FxPlug APIs.
 	@discussion Introduced in FxGrip 1.0. FxGrip's own API; no host vends it. Captures and applies
 				presets, browses the merged plugin and user listings, and watches the managed user
 				folder. FxGripPresetsAPI_v1 is the implementation.
 */
-@protocol FxPresetsAPI_v1 <NSObject>
+@protocol FxGripPresetsAPI_v1 <NSObject>
 
 - (NSError* _Nullable)generatePreset:(FxGripPreset* _Nullable * _Nonnull)preset fromLabel:(NSString* _Nonnull)label;
 
-- (NSError* _Nullable)setPreset:(FxGripPreset* _Nonnull)preset options:(FxParameterPresetFlags)flags atTime:(CMTime)time;
-- (NSError* _Nullable)setPreset:(FxGripPreset* _Nonnull)preset options:(FxParameterPresetFlags)flags;
+- (NSError* _Nullable)setPreset:(FxGripPreset* _Nonnull)preset options:(FxGripParameterPresetFlags)flags atTime:(CMTime)time;
+- (NSError* _Nullable)setPreset:(FxGripPreset* _Nonnull)preset options:(FxGripParameterPresetFlags)flags;
 
 - (BOOL)savePreset:(FxGripPreset* _Nonnull)preset remap:(NSDictionary* _Nullable)keyMap;
 - (BOOL)loadPreset:(FxGripPreset* _Nullable * _Nonnull)preset remap:(NSDictionary* _Nullable)keyMap;
@@ -100,11 +100,11 @@ typedef enum FxParameterPresetFlagOptions {
 				listing; their flags and names sections apply through automatic rigging
 				only.
  */
-@interface FxGripPresetsAPI_v1 : FxGripCommonAPI <FxPresetsAPI_v1>
+@interface FxGripPresetsAPI_v1 : FxGripCommonAPI <FxGripPresetsAPI_v1>
 
-@property (assign, readonly) id<FxPresetsAPI_v1> _Nullable api;
+@property (assign, readonly) id<FxGripPresetsAPI_v1> _Nullable api;
 
-- (nullable instancetype)initWithAPI:(id<FxPresetsAPI_v1>_Nullable)api
+- (nullable instancetype)initWithAPI:(id<FxGripPresetsAPI_v1>_Nullable)api
 							  effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 /*!
@@ -126,10 +126,10 @@ typedef enum FxParameterPresetFlagOptions {
 				kFxParameterPreset_IgnoreMetaData) with FxGripPresetSourceFile and the
 				preset's tag, so the tag boundary governs which parameters change.
 */
-- (NSError* _Nullable)setPreset:(FxGripPreset*_Nonnull)preset options:(FxParameterPresetFlags)flags atTime:(CMTime)time;
+- (NSError* _Nullable)setPreset:(FxGripPreset*_Nonnull)preset options:(FxGripParameterPresetFlags)flags atTime:(CMTime)time;
 
 /*! Applies at time zero. */
-- (NSError* _Nullable)setPreset:(FxGripPreset*_Nonnull)preset options:(FxParameterPresetFlags)flags;
+- (NSError* _Nullable)setPreset:(FxGripPreset*_Nonnull)preset options:(FxGripParameterPresetFlags)flags;
 
 /*!
 	@method     savePreset:remap:

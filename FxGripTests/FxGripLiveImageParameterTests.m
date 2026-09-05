@@ -17,7 +17,7 @@
 #import <dlfcn.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxParameter.h>
+#import <FxGrip/FxGripParameter.h>
 #import <FxGrip/FxGripDictionary.h>
 #import <FxGrip/FxGripImageBuffer.h>
 #import <FxGrip/FxGripImageCompression.h>

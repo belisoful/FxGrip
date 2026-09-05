@@ -170,7 +170,7 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 	if (![setterAPI respondsToSelector:@selector(parameterInfoAPIv1)]) {
 		return FxParameterType_None;
 	}
-	id<FxParameterInfoAPI_v1> dynamicAPI = [(id)setterAPI parameterInfoAPIv1];
+	id<FxGripParameterInfoAPI_v1> dynamicAPI = [(id)setterAPI parameterInfoAPIv1];
 	if (!dynamicAPI) {
 		return FxParameterType_None;
 	}

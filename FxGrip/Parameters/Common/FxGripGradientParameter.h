@@ -9,11 +9,11 @@
 #ifndef FxGripGradientParameter_h
 #define FxGripGradientParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 #import <FxPlug/FxTypes.h>
 
 
-@interface FxGripGradientParameter : FxParameter <FxStateParameter>
+@interface FxGripGradientParameter : FxGripParameter <FxGripStateParameter>
 
 @property (readwrite, assign) FxDepth	fxDepth;
 @property (readwrite, assign) uint		byteDepth;

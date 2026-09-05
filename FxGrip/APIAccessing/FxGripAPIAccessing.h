@@ -11,11 +11,11 @@
 #import <FxPlug/FxPlugSDK.h>
 
 @class FxGripCustomCreationAPI_v1;
-@protocol FxCustomCreationAPI_v1, FxPresetsAPI_v1;
+@protocol FxGripCustomCreationAPI_v1, FxGripPresetsAPI_v1;
 #import <FxGrip/FxGripParameterInfoAPI_v1.h>
 #import <FxGrip/FxGripParameterBoundsAPI_v1.h>
 #import <FxGrip/FxGripMetaAPI_v1.h>
-#import "FxParameterTagsAPI_v1.h"
+#import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripAPINotifications.h"
 
 
@@ -114,15 +114,15 @@ effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 
 	// FxGrip's own APIs, in the style of Apple's FxPlug APIs.
-	@property (assign, readonly) id<FxParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
-	@property (assign, readonly) id<FxParameterBoundsAPI_v1> _Nullable parameterBoundsAPIv1;
-	@property (assign, readonly) id<FxMetaAPI_v1> _Nullable metaAPIv1;
-	@property (assign, readonly) id<FxParameterTagsAPI_v1> _Nullable paramTagsAPIv1;
-	@property (assign, readonly) id<FxPresetsAPI_v1> _Nullable presetsAPIv1;
+	@property (assign, readonly) id<FxGripParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
+	@property (assign, readonly) id<FxGripParameterBoundsAPI_v1> _Nullable parameterBoundsAPIv1;
+	@property (assign, readonly) id<FxGripMetaAPI_v1> _Nullable metaAPIv1;
+	@property (assign, readonly) id<FxGripParameterTagsAPI_v1> _Nullable paramTagsAPIv1;
+	@property (assign, readonly) id<FxGripPresetsAPI_v1> _Nullable presetsAPIv1;
 
 	/*! Creates FxGrip's custom parameters (status, banner, web view, …) in Apple's creation-API
 		style; nil when the manager has no effect host. FxGrip-implemented. */
-	@property (assign, readonly) id<FxCustomCreationAPI_v1> _Nullable customCreationAPIv1;
+	@property (assign, readonly) id<FxGripCustomCreationAPI_v1> _Nullable customCreationAPIv1;
 
 
 @end
@@ -258,15 +258,15 @@ effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 
 	// FxGrip's own APIs, in the style of Apple's FxPlug APIs.
-	@property (assign, readonly) id<FxParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
-	@property (assign, readonly) id<FxParameterBoundsAPI_v1> _Nullable parameterBoundsAPIv1;
-	@property (assign, readonly) id<FxMetaAPI_v1> _Nullable metaAPIv1;
-	@property (assign, readonly) id<FxParameterTagsAPI_v1> _Nullable paramTagsAPIv1;
-	@property (assign, readonly) id<FxPresetsAPI_v1> _Nullable presetsAPIv1;
+	@property (assign, readonly) id<FxGripParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
+	@property (assign, readonly) id<FxGripParameterBoundsAPI_v1> _Nullable parameterBoundsAPIv1;
+	@property (assign, readonly) id<FxGripMetaAPI_v1> _Nullable metaAPIv1;
+	@property (assign, readonly) id<FxGripParameterTagsAPI_v1> _Nullable paramTagsAPIv1;
+	@property (assign, readonly) id<FxGripPresetsAPI_v1> _Nullable presetsAPIv1;
 
 	/*! Creates FxGrip's custom parameters (status, banner, web view, …) in Apple's creation-API
 		style; nil when the manager has no effect host. FxGrip-implemented. */
-	@property (assign, readonly) id<FxCustomCreationAPI_v1> _Nullable customCreationAPIv1;
+	@property (assign, readonly) id<FxGripCustomCreationAPI_v1> _Nullable customCreationAPIv1;
 
 @end
 

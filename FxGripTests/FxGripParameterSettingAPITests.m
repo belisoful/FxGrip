@@ -14,7 +14,7 @@
 #import <objc/runtime.h>
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
-#import <FxGrip/FxParameterFlags.h>
+#import <FxGrip/FxGripParameterFlags.h>
 #import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripParameterSettingAPI_v5.h>
 #import <FxGrip/FxGripParameterSettingAPI_v6.h>

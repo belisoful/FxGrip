@@ -45,7 +45,7 @@
 
 @implementation FxGripTileableEffect
 {
-	NSMutableDictionary<NSNumber*, id<FxParameter>> *__parameters;
+	NSMutableDictionary<NSNumber*, id<FxGripParameter>> *__parameters;
 	NSDictionary<NSNumber*, NSDictionary*> *__configParameters;
 	NSArray<NSNumber*> *__configParameterOrder;	// creation order; drives host add order
 	id _notifierObservers[7];
@@ -530,7 +530,7 @@
 	
 	BOOL success = *error == NULL;
 	for(NSNumber *pid in __parameters) {
-		id<FxParameter> p = __parameters[pid];
+		id<FxGripParameter> p = __parameters[pid];
 		if ([p respondsToSelector:@selector(validate)]) {
 			success = [p validate] && success;
 		}
@@ -765,7 +765,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	if (declared && [self respondsToSelector:declared]) {
 		((void (*)(id, SEL))objc_msgSend)(self, declared);
 	} else {
-		id<FxParameter> parameter = __parameters[@(parameterID)];
+		id<FxGripParameter> parameter = __parameters[@(parameterID)];
 		if ([parameter respondsToSelector:@selector(defaultParameterAction)]) {
 			[(id)parameter defaultParameterAction];
 		}
@@ -815,7 +815,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 
 	// The render thread cannot use the retrieval API, so parameters with state
 	// encode their values here for the render-side coder to read back.
-	for (id<FxParameter> parameter in self.parameters.allValues) {
+	for (id<FxGripParameter> parameter in self.parameters.allValues) {
 		if (parameter.hasState) {
 			[parameter encodeWithCoder:state];
 		}
@@ -912,10 +912,10 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	// An image-ref parameter delivers a tile only when it is requested. The requests
 	// follow the scheduled inputs in ascending parameter-ID order, so the render side
 	// finds the main clip first and each image reference after it.
-	NSDictionary<NSNumber *, id<FxParameter>> *parameters = self.parameters;
+	NSDictionary<NSNumber *, id<FxGripParameter>> *parameters = self.parameters;
 	NSMutableArray<FxGripImageRefParameter *> *imageRefParameters = [NSMutableArray array];
 	for (NSNumber *parameterID in [parameters.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
-		id<FxParameter> parameter = parameters[parameterID];
+		id<FxGripParameter> parameter = parameters[parameterID];
 		if ([parameter isKindOfClass:FxGripImageRefParameter.class]) {
 			[imageRefParameters addObject:(FxGripImageRefParameter *)parameter];
 		}
@@ -1274,7 +1274,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 #pragma mark Parameters
 
 
-- (NSDictionary<NSNumber*, id<FxParameter>> *)parameters
+- (NSDictionary<NSNumber*, id<FxGripParameter>> *)parameters
 {
 	if (!_parameters) {
 		_parameters = [__parameters copy];
@@ -1292,7 +1292,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 //	Negative values are an index into the arrey of parameters, starting with 0 and going to (-n + 1).
 // Thus to access by index, [0] is the first parameter, [-1] is the second, [-2] is the third.  Until nil is returned.
 // 0 is an invalid parameter ID.  so by iterating 0 backwards
-- (id<FxParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index
+- (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index
 {
 	if (index <= 0) {
 		index = -index;
@@ -1408,16 +1408,16 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 
 - (void)constructParameter:(NSDictionary*)parameter
 {
-	id<FxParameter> paramObj = [self parameterForDictionary:parameter];
+	id<FxGripParameter> paramObj = [self parameterForDictionary:parameter];
 	
 	__parameters[@(parameter.parameterID)] = paramObj;
 	NARC_RELEASE(_parameters);
 	
 	FxParameterId parentID = paramObj.parameterParentID;
 	if (parentID) {
-		id<FxSubParameters> parent = (id<FxSubParameters>)self[parentID];
-		if ([parent conformsToProtocol:@protocol(FxSubParameters)]) {
-			[((id<FxSubParameters>)self[parentID]) addChildParameter:paramObj];
+		id<FxGripSubParameters> parent = (id<FxGripSubParameters>)self[parentID];
+		if ([parent conformsToProtocol:@protocol(FxGripSubParameters)]) {
+			[((id<FxGripSubParameters>)self[parentID]) addChildParameter:paramObj];
 		} else {
 			NSLog(@"Error: %d Has parent %d that does not contain sub parameters", paramObj.parameterID, parentID);
 		}

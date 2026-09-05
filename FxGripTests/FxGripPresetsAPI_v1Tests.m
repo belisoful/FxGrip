@@ -176,7 +176,7 @@ static BOOL FxGripPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 @property (nonatomic, strong) NSDictionary *appliedPreset;
 @property (nonatomic, assign) CMTime appliedTime;
 @property (nonatomic, assign) FxGripPresetOptions appliedOptions;
-@property (nonatomic, assign) FxParameterPresetFlags appliedFlags;
+@property (nonatomic, assign) FxGripParameterPresetFlags appliedFlags;
 @property (nonatomic, assign) FxGripPresetSource appliedSource;
 @property (nonatomic, copy) NSString *appliedTag;
 @property (nonatomic, strong) NSError *applyError;
@@ -193,7 +193,7 @@ static BOOL FxGripPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 - (NSError *)applyPreset:(NSDictionary *)preset
 				  atTime:(CMTime)time
 				 options:(FxGripPresetOptions)options
-			 presetFlags:(FxParameterPresetFlags)presetFlags
+			 presetFlags:(FxGripParameterPresetFlags)presetFlags
 				  source:(FxGripPresetSource)source
 					 tag:(NSString *)tag
 {
@@ -493,7 +493,7 @@ static BOOL FxGripPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(FxGripPresetsTestTimesEqual(self.tagsAPI.appliedTime, FxGripPresetsTestTime()));
 	XCTAssertEqual(self.tagsAPI.appliedSource, FxGripPresetSourceFile);
 	XCTAssertEqualObjects(self.tagsAPI.appliedTag, @"look");
-	XCTAssertEqual(self.tagsAPI.appliedFlags, (FxParameterPresetFlags)kFxParameterPreset_Default);
+	XCTAssertEqual(self.tagsAPI.appliedFlags, (FxGripParameterPresetFlags)kFxParameterPreset_Default);
 }
 
 - (void)testSetPresetRequestsTheValuesTagsAndMetaSections
@@ -515,7 +515,7 @@ static BOOL FxGripPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 
 - (void)testSetPresetForwardsThePresetFlagsToTheTagsCore
 {
-	FxParameterPresetFlags flags = kFxParameterPreset_IgnoreTagBoundary;
+	FxGripParameterPresetFlags flags = kFxParameterPreset_IgnoreTagBoundary;
 
 	XCTAssertNil([self.api setPreset:[self compatiblePreset] options:flags atTime:FxGripPresetsTestTime()]);
 

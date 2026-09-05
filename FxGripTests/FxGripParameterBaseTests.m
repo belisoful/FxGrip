@@ -8,21 +8,21 @@
 //  conversions, the coder branch, and the flag-caching notification handlers the
 //  initializer installs on the effect's notifier.
 //
-//  FxParameterBase and FxParameter are abstract, so the concrete subclasses stand in:
+//  FxGripParameterBase and FxGripParameter are abstract, so the concrete subclasses stand in:
 //  FxGripFloatParameter for a state parameter and FxGripPushButtonParameter for one that
 //  carries no state.
 //
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
-#import <FxGrip/FxParameter.h>
+#import <FxGrip/FxGripParameter.h>
 #import <FxGrip/FxGripFloatParameter.h>
 #import <FxGrip/FxGripPushButtonParameter.h>
 #import <FxGrip/FxGripParameterSettingAPI_v5.h>
 #import <FxGrip/FxGripAPINotifications.h>
 
 // Implemented on the base but absent from the public header.
-@interface FxParameter (FxGripParameterBaseTests)
+@interface FxGripParameter (FxGripParameterBaseTests)
 - (void)removeObservers;
 - (BOOL)flagIsDefault;
 - (SEL)parameterSelector;
@@ -145,13 +145,13 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 - (void)testTheAbstractTypeAccessorsRefuseToAnswer
 {
-	XCTAssertThrowsSpecificNamed([FxParameter parameterType], NSException, NSInternalInconsistencyException);
-	XCTAssertThrowsSpecificNamed([FxParameter parameterTypeString], NSException, NSInternalInconsistencyException);
+	XCTAssertThrowsSpecificNamed([FxGripParameter parameterType], NSException, NSInternalInconsistencyException);
+	XCTAssertThrowsSpecificNamed([FxGripParameter parameterTypeString], NSException, NSInternalInconsistencyException);
 }
 
 - (void)testTheAbstractCreationEntryPointRefusesToAnswer
 {
-	id parameterClass = FxParameter.class;
+	id parameterClass = FxGripParameter.class;
 	SEL creation = @selector(addParameter:toEffect:);
 
 #pragma clang diagnostic push
@@ -472,7 +472,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 - (void)testAParameterSupportsSecureCoding
 {
-	XCTAssertTrue(FxParameter.supportsSecureCoding);
+	XCTAssertTrue(FxGripParameter.supportsSecureCoding);
 }
 
 - (void)testDecodingReturnsTheParameterItself

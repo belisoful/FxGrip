@@ -22,10 +22,10 @@
 @interface FxGripParameterRetrievalAPI_v6 : FxGripCommonAPI<FxParameterRetrievalAPI_v6>
 
 	@property (assign, readonly) id<FxParameterRetrievalAPI_v6> _Nullable api;
-	@property (strong, readonly) id<FxParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
+	@property (strong, readonly) id<FxGripParameterInfoAPI_v1> _Nullable parameterInfoAPIv1;
 
 - (nullable instancetype)initWithAPI:(id<FxParameterRetrievalAPI_v6> _Nonnull)api
-				   parameterInfoAPIv1:(id<FxParameterInfoAPI_v1>_Nullable)parameterInfoAPIv1 effect:(nonnull id<FxGripEffectHost>)effect;
+				   parameterInfoAPIv1:(id<FxGripParameterInfoAPI_v1>_Nullable)parameterInfoAPIv1 effect:(nonnull id<FxGripEffectHost>)effect;
 
 @end
 

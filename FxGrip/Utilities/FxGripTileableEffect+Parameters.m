@@ -17,7 +17,7 @@
 
 @implementation FxGripTileableEffect (FxParameters)
 
-@protocol FxParameterExtension;
+@protocol FxGripParameterExtension;
 
 static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ", @"离开", @"uit", @"désactivé", @"aus", @"hemo", @"बंद", @"オフ", @"ਬੰਦ", @"выключенный", @"apagado"];
 
@@ -33,10 +33,10 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 	id<FxGripExtension> ext = [self extensionForKey:data.parameterExtensionKey];
 	if (ext) {
 		// The extension configures itself from the parameter dictionary — syncing its
-		// id/name/flags and marking itself addedToEffect — and returns the FxParameter
+		// id/name/flags and marking itself addedToEffect — and returns the FxGripParameter
 		// it vends. Returning it unconfigured left FxGripCustomExtension values
 		// permanently nil (addedToEffect stayed NO).
-		if ([ext conformsToProtocol:@protocol(FxParameter)]
+		if ([ext conformsToProtocol:@protocol(FxGripParameter)]
 			&& [ext respondsToSelector:@selector(parameterForDictionary:)]) {
 			return [(id)ext parameterForDictionary:data];
 		}
@@ -66,7 +66,7 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 		parameterClass = cls;
 	}
 	
-	if (![parameterClass conformsToProtocol: @protocol(FxParameter)]) {
+	if (![parameterClass conformsToProtocol: @protocol(FxGripParameter)]) {
 		NSLog(@"Error: class %@ does not conform to FxGripParameterProtocol.", parameterClass.className);
 		return nil;
 	}
@@ -75,7 +75,7 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 
 - (void)registerParameterType:(nullable Class)paramClass
 {
-	if (![paramClass conformsToProtocol:@protocol(FxParameter)]) {
+	if (![paramClass conformsToProtocol:@protocol(FxGripParameter)]) {
 		return;
 	}
 	[__typeToClassMap setObject:paramClass forKey:@([paramClass parameterType])];

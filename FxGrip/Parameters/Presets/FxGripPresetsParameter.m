@@ -77,7 +77,7 @@
 											    effect:(nonnull id<FxGripEffectHost>)effect
 {
 	NSString *tag = [self presetTagForParameter:parameter];
-	id<FxPresetsAPI_v1> presetsAPI = effect.apiManager.presetsAPIv1;
+	id<FxGripPresetsAPI_v1> presetsAPI = effect.apiManager.presetsAPIv1;
 
 	NSMutableArray *entries = [NSMutableArray arrayWithObject:NSLocalizedString(kFxPresetsMenuEntry_Default, kFxPresetsMenuEntry_Default)];
 	if (tag != nil && presetsAPI != nil) {
@@ -151,7 +151,7 @@
 	if (tag == nil) {
 		return;
 	}
-	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxGripPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	NSURL *folderURL = [presetsAPI userPresetURL:tag];
 	if (folderURL == nil || ![NSFileManager.defaultManager fileExistsAtPath:folderURL.path]) {
 		return;
@@ -226,7 +226,7 @@
 	if (tag == nil) {
 		return nil;
 	}
-	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxGripPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	for (FxGripPreset *preset in [presetsAPI userPresetsForTag:tag]) {
 		if ([preset.name isEqualToString:name]) {
 			return preset;
@@ -273,7 +273,7 @@
 
 - (void)revealUserPresetsAtTime:(CMTime)time
 {
-	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxGripPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	NSString *tag = [self.class presetTagForParameter:_data];
 	NSURL *folderURL = tag != nil ? [presetsAPI userPresetURL:tag] : [presetsAPI userPresetURL];
 	if (folderURL != nil) {
@@ -289,7 +289,7 @@
 
 - (void)saveCurrentStateAsPresetAtTime:(CMTime)time
 {
-	id<FxPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
+	id<FxGripPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
 	FxGripPreset *preset = nil;
 	NSError *error = [presetsAPI generatePreset:&preset fromLabel:self.parameterName ?: @"Preset"];
 	if (error == nil && preset != nil) {
@@ -347,7 +347,7 @@
 		NSLog(@"%s Error: no preset named %@ for parameter %d.", __func__, entry, self.parameterID);
 		return;
 	}
-	id<FxPresetsAPI_v1> presetsAPI = effect.apiManager.presetsAPIv1;
+	id<FxGripPresetsAPI_v1> presetsAPI = effect.apiManager.presetsAPIv1;
 	NSError *error = [presetsAPI setPreset:preset options:kFxParameterPreset_Default atTime:time];
 	if (error != nil) {
 		NSLog(@"%s Error: could not apply the preset %@: %@", __func__, entry, error);

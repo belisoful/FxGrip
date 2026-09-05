@@ -9,10 +9,10 @@
 #ifndef FxGripIntParameter_h
 #define FxGripIntParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripIntParameter : FxParameter <FxParameterMinMaxInt, FxStateParameter>
+@interface FxGripIntParameter : FxGripParameter <FxGripParameterMinMaxInt, FxGripStateParameter>
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;

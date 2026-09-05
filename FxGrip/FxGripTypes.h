@@ -42,7 +42,7 @@
 
 
 //options for the preset, like ignoring meta, ignoring compatability, etc.
-typedef UInt32	FxParameterPresetFlags;
+typedef UInt32	FxGripParameterPresetFlags;
 typedef UInt32	FxParameterId;
 
 #define phi (1.618033988749895)

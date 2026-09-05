@@ -10,9 +10,9 @@
 #import "FxGripTileableEffect+Extensions.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTypes.h"
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripAPIAccessing.h"
-#import "FxParameterTagsAPI_v1.h"
+#import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripPreset.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 #import <BEFoundation/FxTime.h>
@@ -303,7 +303,7 @@
 	}
 
 	FxGripTileableEffect *effect = self.effect.effectBase;
-	id<FxParameterTagsAPI_v1> tagsAPI = effect.apiManager.paramTagsAPIv1;
+	id<FxGripParameterTagsAPI_v1> tagsAPI = effect.apiManager.paramTagsAPIv1;
 	if (![tagsAPI respondsToSelector:@selector(applyTargetPresetForParameter:atTime:options:)]) {
 		return;
 	}

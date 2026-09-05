@@ -1,11 +1,11 @@
 //
-//  FxParameterExtension.m
+//  FxGripParameterExtension.m
 //  FxGrip
 //
 //  Copyright © 2024 Belisoful All rights reserved.
 //
 
-#import "FxParameterExtension.h"
+#import "FxGripParameterExtension.h"
 #import "FxGripTileableEffect.h"
 #import "FxGripTileableEffect+Notifications.h"
 #import "NSDictionary+FxGripTileableEffect.h"
@@ -17,7 +17,7 @@
 #pragma mark -
 #pragma mark FxGripExtensionParameter Implementation
 
-@interface FxParameterExtension ()
+@interface FxGripParameterExtension ()
 
 /*! YES from the first observed parameter add: registration is underway, the ID is frozen. */
 @property (nonatomic, assign) BOOL sawParameterAdd;
@@ -30,7 +30,7 @@
 @end
 
 
-@implementation FxParameterExtension
+@implementation FxGripParameterExtension
 {
 	id _parameterAddObserver;
 	// Cached at load: self.effect is weak and reads nil during dealloc, so the block
@@ -133,8 +133,8 @@
 	}
 }
 
-#include "../../Parameters/FxParameterBaseLibrary.m"
-#include "../../Parameters/FxParameterLibrary.m"
+#include "../../Parameters/FxGripParameterBaseLibrary.m"
+#include "../../Parameters/FxGripParameterLibrary.m"
 
 
 @end

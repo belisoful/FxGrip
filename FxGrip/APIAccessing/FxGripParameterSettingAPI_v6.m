@@ -6,7 +6,7 @@
 //
 
 #import "FxGripParameterSettingAPI_v6.h"
-#import "FxParameterFlags.h"
+#import "FxGripParameterFlags.h"
 #import "FxGripTileableEffect.h"
 
 @implementation FxGripParameterSettingAPI_v6

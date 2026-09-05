@@ -73,7 +73,7 @@
 
 
 
-@interface FxGripFxFactory : FxGripToggleExtension <FxStateParameter>
+@interface FxGripFxFactory : FxGripToggleExtension <FxGripStateParameter>
 {
 	NSNumber *_fxFactoryActive;
 	NSNumber *_fxFactoryWaterMarkUnlicensed;

@@ -19,7 +19,7 @@
 #import "FxGripParameterSettingAPI_v5.h"
 #import "FxGripParameterSettingAPI_v6.h"
 #import "FxGripTimingAPI_v4.h"
-#import "FxParameterTagsAPI_v1.h"
+#import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripPresetsAPI_v1.h"
 #import <BEFoundation/NSNumber+BExtension.h>
@@ -353,7 +353,7 @@
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxParameterRetrievalAPI_v6", _sessionID);
 		}
-		id<FxParameterInfoAPI_v1> paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
+		id<FxGripParameterInfoAPI_v1> paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
 		if (paramInfo_v1 == nil)
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", _sessionID);
@@ -374,7 +374,7 @@
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxParameterRetrievalAPI_v6", _sessionID);
 		}
-		id<FxParameterInfoAPI_v1> paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
+		id<FxGripParameterInfoAPI_v1> paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
 		if (paramInfo_v1 == nil)
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", _sessionID);
@@ -456,21 +456,21 @@
 }
 
 
-- (id<FxParameterTagsAPI_v1> _Nullable)paramTagsAPIv1
+- (id<FxGripParameterTagsAPI_v1> _Nullable)paramTagsAPIv1
 {
 	// FxGrip-implemented: always available, independent of the host's API set.
-	id<FxParameterTagsAPI_v1> tagsAPI = [self apiForProtocol:@protocol(FxParameterTagsAPI_v1)];
+	id<FxGripParameterTagsAPI_v1> tagsAPI = [self apiForProtocol:@protocol(FxGripParameterTagsAPI_v1)];
 	if (tagsAPI == nil)
 	{
-		NSLog(@"FxGripAPIManager(%llu)::paramTagsAPIv1 Unable to load FxParameterTagsAPI_v1", _sessionID);
+		NSLog(@"FxGripAPIManager(%llu)::paramTagsAPIv1 Unable to load FxGripParameterTagsAPI_v1", _sessionID);
 	}
 	return tagsAPI;
 }
 
-- (id<FxPresetsAPI_v1> _Nullable)presetsAPIv1
+- (id<FxGripPresetsAPI_v1> _Nullable)presetsAPIv1
 {
 	// FxGrip-implemented: always available, independent of the host's API set.
-	id<FxPresetsAPI_v1> presetsAPI = [self apiForProtocol:@protocol(FxPresetsAPI_v1)];
+	id<FxGripPresetsAPI_v1> presetsAPI = [self apiForProtocol:@protocol(FxGripPresetsAPI_v1)];
 	if (presetsAPI == nil)
 	{
 		NSLog(@"FxGripAPIManager(%llu)::presetsAPIv1 Unable to load FxGripPresetsAPI_v1", _sessionID);
@@ -478,7 +478,7 @@
 	return presetsAPI;
 }
 
-- (id<FxCustomCreationAPI_v1> _Nullable)customCreationAPIv1
+- (id<FxGripCustomCreationAPI_v1> _Nullable)customCreationAPIv1
 {
 	// FxGrip-implemented over the effect host; no host protocol backs it.
 	FxGripCustomCreationAPI_v1 *api =
@@ -570,35 +570,35 @@
 }
 
 
-- (id<FxParameterInfoAPI_v1> _Nullable)parameterInfoAPIv1
+- (id<FxGripParameterInfoAPI_v1> _Nullable)parameterInfoAPIv1
 {
 	// FxGrip-implemented: always available, independent of the host's API set.
-	id<FxParameterInfoAPI_v1> infoAPI = [self apiForProtocol:@protocol(FxParameterInfoAPI_v1)];
+	id<FxGripParameterInfoAPI_v1> infoAPI = [self apiForProtocol:@protocol(FxGripParameterInfoAPI_v1)];
 	if (infoAPI == nil)
 	{
-		NSLog(@"FxGripAPIManager(%llu)::parameterInfoAPIv1 Unable to load FxParameterInfoAPI_v1", _sessionID);
+		NSLog(@"FxGripAPIManager(%llu)::parameterInfoAPIv1 Unable to load FxGripParameterInfoAPI_v1", _sessionID);
 	}
 	return infoAPI;
 }
 
-- (id<FxParameterBoundsAPI_v1> _Nullable)parameterBoundsAPIv1
+- (id<FxGripParameterBoundsAPI_v1> _Nullable)parameterBoundsAPIv1
 {
 	// FxGrip-implemented: always available, independent of the host's API set.
-	id<FxParameterBoundsAPI_v1> boundsAPI = [self apiForProtocol:@protocol(FxParameterBoundsAPI_v1)];
+	id<FxGripParameterBoundsAPI_v1> boundsAPI = [self apiForProtocol:@protocol(FxGripParameterBoundsAPI_v1)];
 	if (boundsAPI == nil)
 	{
-		NSLog(@"FxGripAPIManager(%llu)::parameterBoundsAPIv1 Unable to load FxParameterBoundsAPI_v1", _sessionID);
+		NSLog(@"FxGripAPIManager(%llu)::parameterBoundsAPIv1 Unable to load FxGripParameterBoundsAPI_v1", _sessionID);
 	}
 	return boundsAPI;
 }
 
-- (id<FxMetaAPI_v1> _Nullable)metaAPIv1
+- (id<FxGripMetaAPI_v1> _Nullable)metaAPIv1
 {
 	// FxGrip-implemented: always available, independent of the host's API set.
-	id<FxMetaAPI_v1> metaAPI = [self apiForProtocol:@protocol(FxMetaAPI_v1)];
+	id<FxGripMetaAPI_v1> metaAPI = [self apiForProtocol:@protocol(FxGripMetaAPI_v1)];
 	if (metaAPI == nil)
 	{
-		NSLog(@"FxGripAPIManager(%llu)::metaAPIv1 Unable to load FxMetaAPI_v1", _sessionID);
+		NSLog(@"FxGripAPIManager(%llu)::metaAPIv1 Unable to load FxGripMetaAPI_v1", _sessionID);
 	}
 	return metaAPI;
 }

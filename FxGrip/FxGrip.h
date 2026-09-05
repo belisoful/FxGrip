@@ -17,7 +17,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripErrors.h>
-#import <FxGrip/FxParameterFlags.h>
+#import <FxGrip/FxGripParameterFlags.h>
 
 #import <FxGrip/FxGripPluginData.h>
 #import <FxGrip/FxGripPluginGroupData.h>
@@ -29,7 +29,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 
 
 #import <FxGrip/FxGripExtension.h>
-#import <FxGrip/FxParameterExtension.h>
+#import <FxGrip/FxGripParameterExtension.h>
 #import <FxGrip/FxGripCustomExtension.h>
 #import <FxGrip/FxGripToggleExtension.h>
 // FxGripFxFactory is not published: its implementation is excluded from the target and
@@ -80,7 +80,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/NSCoder+FxPlug.h>
 #import <FxGrip/NSDictionary+FxGripTileableEffect.h>
 
-#import <FxGrip/FxParameter.h>
+#import <FxGrip/FxGripParameter.h>
 #import <FxGrip/NSView+FxGrip.h>
 
 #import <FxGrip/FxGripAngleParameter.h>

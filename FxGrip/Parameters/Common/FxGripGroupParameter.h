@@ -9,10 +9,10 @@
 #ifndef FxGripGroupParameter_h
 #define FxGripGroupParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripGroupParameter : FxParameter <FxSubParameters>
+@interface FxGripGroupParameter : FxGripParameter <FxGripSubParameters>
 {
 	@protected
 	NSMutableArray *_children;
@@ -27,10 +27,10 @@
 
 // ***  FxGripSubParameters Implementation  ***
 - (NSUInteger)count;
-- (nonnull NSArray<id<FxParameter>>*)children;
+- (nonnull NSArray<id<FxGripParameter>>*)children;
 - (NSUInteger)allCount;
-- (nonnull NSArray<id<FxParameter>>*)allChildren;
-- (id<FxParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
+- (nonnull NSArray<id<FxGripParameter>>*)allChildren;
+- (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
 - (NSUInteger) countByEnumeratingWithState: (NSFastEnumerationState *_Nonnull) enumerationState
 								   objects: (id _Nonnull __unsafe_unretained [_Nullable]) stackBuffer
 									 count: (NSUInteger) len;

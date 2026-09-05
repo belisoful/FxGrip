@@ -9,10 +9,10 @@
 #ifndef FxGripImageRefParameter_h
 #define FxGripImageRefParameter_h
 
-#import "FxParameter.h"
+#import "FxGripParameter.h"
 
 
-@interface FxGripImageRefParameter : FxParameter
+@interface FxGripImageRefParameter : FxGripParameter
 
 + (nullable NSString*)parameterTypeString;
 + (FxParameterType)parameterType;
