@@ -28,6 +28,7 @@
 #import "FxGripMetaManager.h"
 #import "FxGripMeta.h"
 #import "FxGripDebugMenu.h"
+#import "FxGripAboutMenu.h"
 #import "FxGripI18N.h"
 #import "FxGripRegression.h"
 #import "FxGripGoogleAnalytics.h"
@@ -242,6 +243,9 @@
 	// the gates above. They stay inert for a plugin that does not request them.
 	if (self.hasDebugMenu) {
 		[extensions addObject:self.newDebugMenuExtension];
+	}
+	if (self.hasAboutMenu) {
+		[extensions addObject:self.newAboutMenuExtension];
 	}
 	if (self.isInternationalized) {
 		[extensions addObject:self.newI18NExtension];

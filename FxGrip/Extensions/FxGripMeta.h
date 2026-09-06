@@ -28,8 +28,9 @@
 				definitions therefore live in the instance storage and are customizable
 				per instance.
 
-				Activation is driven by the plist `manageMeta` boolean through the
-				standard extension loading path.
+				Activation is driven by the plist `manageMeta` boolean, which defaults
+				to YES, through the standard extension loading path. A plugin opts out
+				with `manageMeta` = NO.
 */
 @interface FxGripMeta : FxGripCustomExtension
 

@@ -232,6 +232,16 @@
 	return NO;
 }
 
+- (NSDictionary*_Nullable)pluginAboutMenu
+{
+	isPluginDictionary(nil);
+	NSDictionary *value = self[kProPlugPlugInX_AboutMenuProperty];
+	if ([value isKindOfClass:NSDictionary.class]) {
+		return value;
+	}
+	return nil;
+}
+
 - (BOOL)pluginManageMeta
 {
 	isPluginDictionary(NO);
@@ -239,7 +249,8 @@
 	if (value != nil) {
 		return value.boolValue;
 	}
-	return NO;
+	// Meta management is on by default; a plugin opts out with manageMeta = NO.
+	return YES;
 }
 
 - (BOOL)pluginManageParameterData

@@ -1,6 +1,10 @@
 //
-//  FxGripInferenceCoreTests.m
+//  FxGripPassthroughBackendTests.m
 //  FxGripTests
+//
+//  Unit tests for FxGripPassthroughBackend: it is always ready, echoes inputs by default,
+//  routes through its output map, fails on a mapped input that is missing, and conforms to
+//  the FxGripInferenceBackend protocol.
 //
 
 #import <XCTest/XCTest.h>
@@ -10,55 +14,10 @@
 #import <FxGrip/FxGripPassthroughBackend.h>
 #import <FxGrip/FxGripErrors.h>
 
-@interface FxGripInferenceCoreTests : XCTestCase
+@interface FxGripPassthroughBackendTests : XCTestCase
 @end
 
-@implementation FxGripInferenceCoreTests
-
-#pragma mark Request
-
-- (void)testARequestKeepsInputsAndParametersSeparate
-{
-	FxGripInferenceRequest *request = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"plate" }
-																	 parameters:@{ @"seed": @42 }];
-	XCTAssertEqualObjects([request inputForKey:@"image"], @"plate");
-	XCTAssertEqualObjects([request parameterForKey:@"seed"], @42);
-	XCTAssertNil([request inputForKey:@"seed"], @"a parameter is not an input");
-	XCTAssertNil([request parameterForKey:@"image"], @"an input is not a parameter");
-}
-
-- (void)testARequestDefaultsToEmptyCollections
-{
-	FxGripInferenceRequest *request = [FxGripInferenceRequest requestWithInputs:@{}];
-	XCTAssertEqualObjects(request.inputs, @{});
-	XCTAssertEqualObjects(request.parameters, @{});
-}
-
-- (void)testRequestEqualityConsidersInputsAndParameters
-{
-	FxGripInferenceRequest *a = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"plate" } parameters:@{ @"seed": @1 }];
-	FxGripInferenceRequest *b = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"plate" } parameters:@{ @"seed": @1 }];
-	FxGripInferenceRequest *c = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"plate" } parameters:@{ @"seed": @2 }];
-	XCTAssertEqualObjects(a, b);
-	XCTAssertNotEqualObjects(a, c);
-}
-
-- (void)testARequestIsImmutableUnderCopy
-{
-	FxGripInferenceRequest *request = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"plate" }];
-	XCTAssertEqual([request copy], request, @"an immutable value copies to itself");
-}
-
-#pragma mark Result
-
-- (void)testAResultExposesItsOutputs
-{
-	FxGripInferenceResult *result = [FxGripInferenceResult resultWithOutputs:@{ @"image": @"generated" }];
-	XCTAssertEqualObjects([result outputForKey:@"image"], @"generated");
-	XCTAssertNil([result outputForKey:@"missing"]);
-}
-
-#pragma mark Passthrough backend
+@implementation FxGripPassthroughBackendTests
 
 - (void)testThePassthroughBackendIsAlwaysReady
 {

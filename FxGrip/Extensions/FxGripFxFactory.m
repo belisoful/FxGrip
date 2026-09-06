@@ -190,18 +190,21 @@
 	if (productUUID != NULL && productUUID.length > 0) {
 		_licensingHandlerUUID = productUUID;
 		_licensingStatusChangeHandler = [self factoryRegisterLicensingHandlerForProduct:productUUID handler:^(FxFactoryLicensingStatus status, id _Nullable context) {
-			
-			self->_pluginLicenseStatus = @(status);
-			
-			FxGripOOBParameterAccess *__attribute__((unused)) accessor = [FxGripOOBParameterAccess access:((FxGripFxFactory*)context).effect];
-			
-			[(FxGripFxFactory*)context setBoolValue:status == kFxFactoryLicensingStatusProductLicensed];
-			
-			
+			// Reach self only through the registered context. Capturing self would retain it for
+			// the life of the FxFactory registration, so dealloc (and the unregister it runs)
+			// could never fire, leaking the handler.
+			FxGripFxFactory *factory = (FxGripFxFactory *)context;
+
+			[factory setCachedLicenseStatus:@(status)];
+
+			FxGripOOBParameterAccess *__attribute__((unused)) accessor = [FxGripOOBParameterAccess access:factory.effect];
+
+			[factory setBoolValue:status == kFxFactoryLicensingStatusProductLicensed];
+
 			// Product may have gone from unlicensed to licensed, or vice versa
-			[(FxGripTileableEffect*)((FxGripFxFactory*)context).effect onFxFactoryRegisterLicensingStatusChange:status];
-			
-			[self.effect.notifier postNotificationName:kFxFactoryBroadcastProductLicenseChange object:(FxGripFxFactory*)context userInfo:@{kFxFactoryBroadcastProductLicenseStatus: @(status)}];
+			[(FxGripTileableEffect*)factory.effect onFxFactoryRegisterLicensingStatusChange:status];
+
+			[factory.effect.notifier postNotificationName:kFxFactoryBroadcastProductLicenseChange object:factory userInfo:@{kFxFactoryBroadcastProductLicenseStatus: @(status)}];
 		}];
 	}
 }
@@ -209,7 +212,10 @@
 - (void)unregisterLicenseHandler
 {
 	if (_licensingStatusChangeHandler) {
-		[self factoryUnregisterLicensingHandler:_licensingStatusChangeHandler forProduct:self.fxFactoryPluginUUID];
+		// Unregister with the UUID the handler was registered under, not the current one: the
+		// product UUID can change (an edit to the FxFactory Product UUID parameter) between
+		// register and unregister, and the SDK matches the handler by product.
+		[self factoryUnregisterLicensingHandler:_licensingStatusChangeHandler forProduct:_licensingHandlerUUID];
 		_licensingStatusChangeHandler = nil;
 		_licensingHandlerUUID = nil;
 	}
@@ -354,7 +360,7 @@
 	} else {
 		_fxFactoryWaterMarkUnlicensed = parameter[kPropertiesFxFactoryWatermarkUnlicensed];
 	}
-	_fxFactoryHasWaterMarkUnlicensed = parameter[kPropertiesFxFactoryWatermarkUnlicensed] != nil;
+	_fxFactoryHasWaterMarkUnlicensed = _fxFactoryWaterMarkUnlicensed != nil;
 	
 	
 	
@@ -543,10 +549,8 @@
 	
 #if DEBUG
 	id debugLicensed = self.fxEffect.pluginProperties[kPropertiesFxFactoryDebugSetLicensed];
-	// Only the explicit debug override forces a state; an absent property must fall
-	// through to the real licensing sync (the else). The prior `!debugLicensed ||`
-	// took the override branch when the property was absent, force-UNLICENSING every
-	// DEBUG build.
+	// Only an explicit debug override forces a state; an absent property falls through to
+	// the real licensing sync (the else).
 	if (debugLicensed && [debugLicensed isKindOfClass:NSNumber.class]) {
 		BOOL licensed = ((NSNumber*)debugLicensed).boolValue;
 		NSLog(@"⚠️ Debugging %@icensed version as default. This bypasses FxFactory Licensing in the xCode Debug Target and will work normally in the Release Target.", licensed ? @"L" : @"Unl");
@@ -554,8 +558,8 @@
 		// pluginIsLicensed (and the watermark, buy button, and license toggle that read it)
 		// honors the forced state instead of the real FxFactory status, mirror it into the
 		// toggle value, and apply the license UI state.
-		_pluginLicenseStatus = @(licensed ? kFxFactoryLicensingStatusProductLicensed
-										  : kFxFactoryLicensingStatusProductUnlicensed);
+		[self setCachedLicenseStatus:@(licensed ? kFxFactoryLicensingStatusProductLicensed
+												: kFxFactoryLicensingStatusProductUnlicensed)];
 		self.boolValue = licensed;
 		[self.fxEffect setFxFactoryLicenseState:licensed];
 	} else {
@@ -597,8 +601,11 @@
 		}
 		
 	} else if (paramID == self.parameterID + kParameterFxFactoryProductUUIDOffset) {
+		// The cached verdict belongs to the previous product; drop it so pluginLicenseStatus
+		// recomputes for the new UUID instead of reporting the old product's status.
+		[self setCachedLicenseStatus:nil];
 		[self registerLicenseHandler:self.fxFactoryPluginUUID];
-		
+
 	} else if (paramID == self.parameterID + kParameterFxFactoryProductButtonLabelOffset || paramID == self.parameterID + kParameterFxFactoryBuyButtonLabelOffset) {
 		//	 The value becomes the button name
 		self.effect[paramID - 1].parameterName = self.effect[paramID].stringValue;
@@ -618,7 +625,10 @@
 		return;
 	}
 	NSError *__autoreleasing renderError = nil;
-	[self renderWatermarkOntoImage:destinationImage error:&renderError];
+	if (![self renderWatermarkOntoImage:destinationImage error:&renderError]) {
+		// A failed render leaves the unlicensed frame unmarked; surface it rather than ship clean.
+		NSLog(@"Error: FxFactory unlicensed watermark render failed: %@", renderError);
+	}
 }
 
 // The watermark render is isolated behind this seam so the watermark DECISION (unlicensed
@@ -711,10 +721,21 @@
 
 - (FxFactoryLicensingStatus)pluginLicenseStatus
 {
-	if (!_pluginLicenseStatus) {
-		_pluginLicenseStatus = @([self factoryLicensingStatusForProduct:self.fxFactoryPluginUUID]);
+	// The FxFactory licensing callback writes the cached status from its own thread; guard the
+	// lazy read-modify-write against it. All writes go through setCachedLicenseStatus:.
+	@synchronized (self) {
+		if (!_pluginLicenseStatus) {
+			_pluginLicenseStatus = @([self factoryLicensingStatusForProduct:self.fxFactoryPluginUUID]);
+		}
+		return _pluginLicenseStatus.intValue;
 	}
-	return _pluginLicenseStatus.intValue;
+}
+
+- (void)setCachedLicenseStatus:(nullable NSNumber *)status
+{
+	@synchronized (self) {
+		_pluginLicenseStatus = status;
+	}
 }
 
 - (BOOL)pluginIsUpdateChecking

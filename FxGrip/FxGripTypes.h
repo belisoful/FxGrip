@@ -99,6 +99,8 @@ typedef UInt32	FxParameterId;
 // Default NO:
 #define kProPlugPlugInX_DebugMenuProperty		@"debugMenu"
 #define kProPlugPlugInX_DebugActivatorProperty	@"debugActivator"
+// The About menu configuration dictionary; the extension loads when it is present.
+#define kProPlugPlugInX_AboutMenuProperty		@"aboutMenu"
 //Default YES:
 #define kProPlugPlugInX_ManagedMetaProperty		@"manageMeta"
 //Default NO
@@ -743,6 +745,7 @@ typedef NS_ENUM(NSInteger, FxParameterType) {
 #define kFxParameterId_TopLevelGroup		0
 
 
+#define kFxParameterId_AboutMenu			(9991)
 #define kFxParameterId_PhysicsBake			(9992)
 #define kFxParameterId_MLCache				(9993)
 #define kFxParameterId_AnalysisData			(9994)

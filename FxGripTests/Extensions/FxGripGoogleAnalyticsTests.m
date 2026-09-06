@@ -20,6 +20,7 @@
 // without a linked Firebase.
 @interface FxGripGATestRecordingAnalytics : FxGripGoogleAnalytics
 @property (nonatomic, strong) NSMutableArray<NSString *> *loggedEvents;
+@property (nonatomic, strong) NSMutableArray<NSDictionary *> *loggedParameters;
 @end
 
 @implementation FxGripGATestRecordingAnalytics
@@ -28,12 +29,14 @@
 	self = [super init];
 	if (self) {
 		_loggedEvents = NSMutableArray.new;
+		_loggedParameters = NSMutableArray.new;
 	}
 	return self;
 }
 - (void)logWithName:(NSString *)eventName parameters:(NSDictionary *)parameters
 {
 	[self.loggedEvents addObject:eventName];
+	[self.loggedParameters addObject:parameters ?: @{}];
 }
 @end
 
@@ -97,6 +100,12 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 - (void)captureEventNamed:(NSString *)name
 {
 	[self.analytics captureEvent:[NSNotification notificationWithName:name object:self.effect userInfo:nil]];
+}
+
+- (void)captureEventNamed:(NSString *)name parameterID:(NSUInteger)parameterID
+{
+	NSDictionary *userInfo = @{FxGripTileableEffectParameterChangedIDKey: @(parameterID)};
+	[self.analytics captureEvent:[NSNotification notificationWithName:name object:self.effect userInfo:userInfo]];
 }
 
 #pragma mark #39 — the dispatched init selector
@@ -169,6 +178,72 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 
 	[self captureEventNamed:@"MyEvent"];
 	XCTAssertEqualObjects(self.analytics.loggedEvents, @[], @"the removed accept rule no longer logs");
+}
+
+#pragma mark Priority ordering survives the lazy sort
+
+- (void)testAHigherPriorityRejectOverridesALaterAcceptRegardlessOfInsertionOrder
+{
+	// The accept is inserted first; the lower-priority-number reject must still win, which
+	// only holds if the capture path sorts by priority before evaluating.
+	[self.analytics addCaptureRule:@"name LIKE %@" outcome:YES priority:10, @"X"];
+	[self.analytics addCaptureRule:@"name LIKE %@" outcome:NO priority:5, @"X"];
+
+	[self captureEventNamed:@"X"];
+
+	XCTAssertEqualObjects(self.analytics.loggedEvents, @[],
+						  @"the highest-precedence matching rule decides the outcome");
+}
+
+#pragma mark Event latch — one event per interaction
+
+- (void)testABurstOfIdenticalEventsLogsOnce
+{
+	[self.analytics addCaptureEvent:@"Drag"];
+	for (NSInteger i = 0; i < 50; i++) {
+		[self captureEventNamed:@"Drag"];
+	}
+	XCTAssertEqualObjects(self.analytics.loggedEvents, @[@"Drag"],
+						  @"a continuous interaction latches to a single logged event");
+}
+
+- (void)testTheLatchReopensAfterTheIdleInterval
+{
+	self.analytics.eventLatchInterval = 0.05;
+	[self.analytics addCaptureEvent:@"Drag"];
+
+	[self captureEventNamed:@"Drag"];
+	[NSThread sleepForTimeInterval:0.1];
+	[self captureEventNamed:@"Drag"];
+
+	XCTAssertEqualObjects(self.analytics.loggedEvents, (@[@"Drag", @"Drag"]),
+						  @"a fresh interaction after the idle window logs again");
+}
+
+- (void)testDistinctParameterIDsEachLogWithinTheWindow
+{
+	[self.analytics addCaptureEvent:FxGripTileableEffectParameterChangedName];
+
+	[self captureEventNamed:FxGripTileableEffectParameterChangedName parameterID:11];
+	[self captureEventNamed:FxGripTileableEffectParameterChangedName parameterID:11];
+	[self captureEventNamed:FxGripTileableEffectParameterChangedName parameterID:22];
+
+	XCTAssertEqual(self.analytics.loggedEvents.count, (NSUInteger)2,
+				   @"the latch keys on the parameter ID, so a second control still logs");
+	XCTAssertEqualObjects(self.analytics.loggedParameters.firstObject[@"Parameter ID"], @11,
+						  @"the changed parameter ID rides along in the logged parameters");
+	XCTAssertEqualObjects(self.analytics.loggedParameters.lastObject[@"Parameter ID"], @22);
+}
+
+- (void)testDisablingTheLatchLogsEveryEvent
+{
+	self.analytics.eventLatchInterval = 0.0;
+	[self.analytics addCaptureEvent:@"Drag"];
+	for (NSInteger i = 0; i < 3; i++) {
+		[self captureEventNamed:@"Drag"];
+	}
+	XCTAssertEqual(self.analytics.loggedEvents.count, (NSUInteger)3,
+				   @"a non-positive interval disables the latch");
 }
 
 @end

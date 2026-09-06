@@ -95,6 +95,11 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 	if (![effect isKindOfClass:FxGripTileableEffect.class]) {
 		return;
 	}
+	// A nil UUID cannot key the registry; the setter below would raise on a nil key. The
+	// instances getter guards the same case.
+	if (effect.pluginUUID == nil) {
+		return;
+	}
 	@synchronized (gEffectInstances) {
 		if (!gEffectInstances[effect.pluginUUID]) {
 			gEffectInstances[effect.pluginUUID] = [NSMutableArray.alloc init];
@@ -132,11 +137,7 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 {
 	CMTime  timelineEffectTime  = effect.effectStartTimeInTimeline;
 	CMTime  startTime   = kCMTimeInvalid;
-	
-	if (!gEffectInstances[effect.pluginUUID]) {
-		return startTime;
-	}
-	
+
 	@synchronized (gEffectInstances) {
 		CMTime  nextTimelineTime    = kCMTimePositiveInfinity;
 		for (NSValue* pluginValue in gEffectInstances[effect.pluginUUID])

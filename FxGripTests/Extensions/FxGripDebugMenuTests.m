@@ -20,19 +20,17 @@
 #import <FxGrip/FxGripAboutMenu.h>
 #import <FxGrip/FxGripRegression.h>
 
-// The debug menu selections the extension recognizes. The values mirror the private
-// enumeration in FxGripDebugMenu.m.
+// Displayed menu positions with an activator present, mirroring debugMenuLayout: in
+// FxGripDebugMenu.m. Dispatch resolves the position through the layout, so these track the
+// row order rather than a private command enum.
 typedef NS_ENUM(NSUInteger, FxGripDebugTestMenuItem) {
 	FxGripDebugTestItem_Main = 0,
 	FxGripDebugTestItem_ToggleUnhide = 2,
 	FxGripDebugTestItem_ToggleShow = 3,
-	FxGripDebugTestItem_ToggleMenu = 5,
-	FxGripDebugTestItem_RemoveDebug = 7,
-	FxGripDebugTestItem_AddParam = 8,
-	FxGripDebugTestItem_RemoveParam = 9,
+	FxGripDebugTestItem_ToggleAll = 4,
+	FxGripDebugTestItem_ToggleMenu = 6,
+	FxGripDebugTestItem_RemoveDebug = 8,
 };
-
-static const FxParameterId kFxDebugTestTempParameter = 888;
 
 // FxGripDebugMenu.h and FxGripAboutMenu.h publish the classes without their members, so
 // the members the tests drive are declared here. The implementations come from the
@@ -45,6 +43,8 @@ static const FxParameterId kFxDebugTestTempParameter = 888;
 - (void)extAddParameters:(nonnull NSNotification *)notification;
 - (void)extAPIParameterGetFlags:(nonnull NSNotification *)notification;
 - (void)extAPIParameterSetFlagsPre:(nonnull NSNotification *)notification;
+- (void)extParameterChanged:(nonnull NSNotification *)notification;
+- (BOOL)setDebugMenuShown:(BOOL)show atTime:(CMTime)time;
 - (BOOL)debugUnhide:(BOOL)active;
 - (BOOL)manageDebuggerController:(FxParameterId)parameterID
 						  atTime:(CMTime)time
@@ -53,10 +53,15 @@ static const FxParameterId kFxDebugTestTempParameter = 888;
 @end
 
 @interface FxGripAboutMenu (FxGripAboutMenuTestAccess)
-- (void)extProcessParameters:(nonnull NSMutableArray *)parameters;
-- (NSArray * _Nullable)computeAboutMenuFrom:(nullable id)paramGetAPIv6 atTime:(CMTime)time;
-- (void)clickResetAboutMenu;
-- (void)clickAboutMenu:(unsigned int)selectionIndex paramAPIv6:(nullable id)paramGetAPIv6 atTime:(CMTime)time;
+- (BOOL)hasAboutMenu;
+- (void)extAddParameters:(nonnull NSNotification *)notification;
+- (void)extParameterChanged:(nonnull NSNotification *)notification;
+- (NSArray<NSString *> * _Nonnull)aboutMenuItemsReadingValues:(BOOL)readValues atTime:(CMTime)time;
+- (BOOL)manageAboutMenu:(FxParameterId)parameterID atTime:(CMTime)time error:(NSError * _Nullable * _Nullable)error;
+- (void)openAboutURLStrings:(nonnull NSArray<NSString *> *)urlStrings;
+- (void)showAboutDialogWithText:(nullable NSString *)text;
+- (NSSet<NSNumber *> * _Nonnull)aboutMenuGatingParameterIDs;
+- (void)refreshAboutMenuAtTime:(CMTime)time;
 @end
 
 static NSNotificationCenter *FxGripDebugTestMakePriorityCenter(void)
@@ -220,40 +225,11 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 
 @end
 
-@interface FxGripDebugTestStubCreateAPI : NSObject
-@property (nonatomic, strong) NSMutableArray<NSNumber *> *addedParameters;
-@property (nonatomic, assign) BOOL addSucceeds;
-@end
-
-@implementation FxGripDebugTestStubCreateAPI
-
-- (instancetype)init
-{
-	self = [super init];
-	if (self) {
-		_addedParameters = NSMutableArray.new;
-		_addSucceeds = YES;
-	}
-	return self;
-}
-
-- (BOOL)addStringParameterWithName:(NSString *)name
-					   parameterID:(UInt32)parameterID
-					  defaultValue:(NSString *)defaultValue
-					parameterFlags:(FxParameterFlags)flags
-{
-	[self.addedParameters addObject:@(parameterID)];
-	return self.addSucceeds;
-}
-
-@end
-
 @interface FxGripDebugTestStubAPIManager : NSObject
 @property (nonatomic, strong) FxGripDebugTestStubDynamicAPI *dynamicParamAPIv3;
 @property (nonatomic, strong) FxGripDebugTestStubGetAPI *paramGetAPIv6;
 @property (nonatomic, strong) FxGripDebugTestStubSetAPI *paramSetAPIv5;
 @property (nonatomic, strong) FxGripDebugTestStubSetAPI *paramSetAPIv6;
-@property (nonatomic, strong) FxGripDebugTestStubCreateAPI *paramCreateAPIv5;
 @end
 
 @implementation FxGripDebugTestStubAPIManager
@@ -267,6 +243,8 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 @property (nonatomic, strong) FxGripDebugTestStubAPIManager *apiManager;
 @property (nonatomic, strong) NSDictionary<NSString *, id> *pluginProperties;
 @property (nonatomic, copy) NSString *pluginUUID;
+// The About menu configuration the extension reads through the effect seam.
+@property (nonatomic, strong) NSDictionary *aboutConfig;
 @end
 
 @implementation FxGripDebugTestStubEffect
@@ -275,6 +253,44 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 {
 	// The stub plays the full effect; rich reads route back to it, as the old cast did.
 	return self;
+}
+
+// The debug gate seam the extension routes through. Defaults mirror the framework category:
+// the Info.plist keys reach the bools through the master gate.
+- (BOOL)allowsDebugFeatures
+{
+	return YES;
+}
+
+- (BOOL)pluginDebugMenuEnabled
+{
+	return self.allowsDebugFeatures && [self.pluginProperties[kProPlugPlugInX_DebugMenuProperty] boolValue];
+}
+
+- (BOOL)pluginDebugActivatorEnabled
+{
+	return self.allowsDebugFeatures && [self.pluginProperties[kProPlugPlugInX_DebugActivatorProperty] boolValue];
+}
+
+- (BOOL)hasDebugMenu
+{
+	return self.pluginDebugMenuEnabled || self.pluginDebugActivatorEnabled;
+}
+
+// The About gate seam the extension routes through.
+- (NSDictionary *)aboutMenuConfiguration
+{
+	return self.aboutConfig;
+}
+
+- (BOOL)hasAboutMenu
+{
+	return self.aboutConfig != nil;
+}
+
+- (NSArray<NSDictionary *> *)aboutMenuItems:(NSArray<NSDictionary *> *)items
+{
+	return items;
 }
 
 
@@ -288,11 +304,23 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 		_apiManager.paramGetAPIv6 = FxGripDebugTestStubGetAPI.new;
 		_apiManager.paramSetAPIv5 = FxGripDebugTestStubSetAPI.new;
 		_apiManager.paramSetAPIv6 = FxGripDebugTestStubSetAPI.new;
-		_apiManager.paramCreateAPIv5 = FxGripDebugTestStubCreateAPI.new;
 		_pluginProperties = FxGripDebugTestPluginProperties(YES, YES);
 		_pluginUUID = @"33333333-3333-3333-3333-333333333333";
 	}
 	return self;
+}
+
+@end
+
+// A plugin that blocks debug features in compiled code even though its Info.plist asks for them.
+@interface FxGripDebugTestBlockedEffect : FxGripDebugTestStubEffect
+@end
+
+@implementation FxGripDebugTestBlockedEffect
+
+- (BOOL)allowsDebugFeatures
+{
+	return NO;
 }
 
 @end
@@ -338,6 +366,23 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 	return [self.extension manageDebuggerController:kFxParameterId_DebugMenu
 											 atTime:FxGripDebugTestZeroTime()
 											  error:&error];
+}
+
+// The displayed position of a labeled row in the current menu layout, so a test names the row
+// it drives instead of hard-coding an index the layout can shift.
+- (NSUInteger)menuIndexForLabel:(NSString *)label
+{
+	NSUInteger index = [[self.extension debugMenuItems:NO] indexOfObject:label];
+	XCTAssertNotEqual(index, (NSUInteger)NSNotFound, @"menu row %@ is missing", label);
+	return index;
+}
+
+- (void)postParameterChangedForID:(FxParameterId)parameterID
+{
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
+														object:self.effect
+													  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @(parameterID)}];
+	[self.extension extParameterChanged:note];
 }
 
 // The add-parameters handler reads its list from the notification's FxGripEffectParameters entry.
@@ -449,12 +494,16 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 	[self setDebugMenu:YES activator:NO];
 	NSArray<NSString *> *withoutActivator = [self.extension debugMenuItems:NO];
 
-	XCTAssertEqual(withActivator.count, withoutActivator.count + 1);
+	XCTAssertEqual(withActivator.count, withoutActivator.count + 2,
+				   @"the activator adds both its visibility toggle and Toggle All Debug");
 	XCTAssertTrue([withActivator containsObject:@"FxGrip::DebugMenu::ToggleDebugToggle"]);
+	XCTAssertTrue([withActivator containsObject:@"FxGrip::DebugMenu::ToggleAllDebug"]);
 	XCTAssertFalse([withoutActivator containsObject:@"FxGrip::DebugMenu::ToggleDebugToggle"]);
+	XCTAssertFalse([withoutActivator containsObject:@"FxGrip::DebugMenu::ToggleAllDebug"]);
 	XCTAssertEqualObjects(withActivator.firstObject, @"FxGrip::DebugMenu::MainItem");
 	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_ToggleUnhide], @"FxGrip::DebugMenu::ToggleUnhideOff");
 	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_ToggleShow], @"FxGrip::DebugMenu::ToggleDebugToggle");
+	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_ToggleAll], @"FxGrip::DebugMenu::ToggleAllDebug");
 	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_ToggleMenu], @"FxGrip::DebugMenu::ToggleDebugMenu");
 	XCTAssertEqualObjects(withActivator[FxGripDebugTestItem_RemoveDebug], @"FxGrip::DebugMenu::RemoveDebugMenu");
 }
@@ -675,12 +724,9 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 {
 	[self setDebugMenu:YES activator:NO];
 
-	// Without the activator the host menu carries one item fewer, so the selection the
-	// extension receives is one lower than the enumerated position.
-	self.getAPI.intValues[@(kFxParameterId_DebugMenu)] = @(FxGripDebugTestItem_RemoveDebug - 1);
-	XCTAssertTrue([self.extension manageDebuggerController:kFxParameterId_DebugMenu
-													atTime:FxGripDebugTestZeroTime()
-													 error:NULL]);
+	// Without the activator the layout is shorter; the row is resolved by name so the test
+	// does not track the shifted index.
+	XCTAssertTrue([self selectMenuItem:[self menuIndexForLabel:@"FxGrip::DebugMenu::RemoveDebugMenu"]]);
 
 	XCTAssertEqualObjects(self.dynamicAPI.removedParameters, @[@(kFxParameterId_DebugMenu)]);
 }
@@ -692,35 +738,96 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_RemoveDebug]);
 }
 
-- (void)testSelectingAddParameterCreatesTheTemporaryParameter
-{
-	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_AddParam]);
+#pragma mark Activator Reveal
 
-	XCTAssertEqualObjects(self.effect.apiManager.paramCreateAPIv5.addedParameters,
-						  @[@(kFxDebugTestTempParameter)]);
-	XCTAssertNotNil(self.setAPIv5.flags[@(kFxDebugTestTempParameter)]);
+- (void)testTheActivatorRevealsTheMenuIndependentOfManageMeta
+{
+	self.getAPI.flags[@(kFxParameterId_DebugMenu)] = @(kFxParameterFlag_HIDDEN);
+	self.getAPI.boolValues[@(kFxParameterId_DebugActivator)] = @(YES);
+
+	[self postParameterChangedForID:kFxParameterId_DebugActivator];
+
+	XCTAssertEqualObjects(self.setAPIv5.flags[@(kFxParameterId_DebugMenu)], @(0),
+						  @"turning the activator on clears the menu's hidden bit");
+
+	self.getAPI.flags[@(kFxParameterId_DebugMenu)] = @(0);
+	self.getAPI.boolValues[@(kFxParameterId_DebugActivator)] = @(NO);
+
+	[self postParameterChangedForID:kFxParameterId_DebugActivator];
+
+	XCTAssertEqualObjects(self.setAPIv5.flags[@(kFxParameterId_DebugMenu)], @(kFxParameterFlag_HIDDEN),
+						  @"turning the activator off hides the menu again");
 }
 
-- (void)testSelectingAddParameterStopsWhenTheHostRefuses
+- (void)testParameterChangedIgnoresParametersOtherThanTheActivator
 {
-	self.effect.apiManager.paramCreateAPIv5.addSucceeds = NO;
+	[self postParameterChangedForID:12345];
 
-	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_AddParam]);
-	XCTAssertNil(self.setAPIv5.flags[@(kFxDebugTestTempParameter)]);
+	XCTAssertEqual(self.setAPIv5.flags.count, (NSUInteger)0);
 }
 
-- (void)testSelectingRemoveParameterDropsTheTemporaryParameter
+- (void)testParameterChangedIgnoresTheActivatorWhenNoActivatorIsConfigured
 {
-	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_RemoveParam]);
+	[self setDebugMenu:YES activator:NO];
 
-	XCTAssertEqualObjects(self.dynamicAPI.removedParameters, @[@(kFxDebugTestTempParameter)]);
+	[self postParameterChangedForID:kFxParameterId_DebugActivator];
+
+	XCTAssertEqual(self.setAPIv5.flags.count, (NSUInteger)0);
 }
 
-- (void)testSelectingRemoveParameterReportsTheHostError
+- (void)testSetDebugMenuShownTogglesOnlyTheHiddenBit
 {
-	self.dynamicAPI.removeError = [NSError errorWithDomain:@"FxGripDebugTest" code:4 userInfo:nil];
+	self.getAPI.flags[@(kFxParameterId_DebugMenu)] = @(kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED);
 
-	XCTAssertFalse([self selectMenuItem:FxGripDebugTestItem_RemoveParam]);
+	XCTAssertTrue([self.extension setDebugMenuShown:YES atTime:FxGripDebugTestZeroTime()]);
+
+	XCTAssertEqualObjects(self.setAPIv5.flags[@(kFxParameterId_DebugMenu)], @(kFxParameterFlag_DISABLED));
+}
+
+#pragma mark Toggle All Debug
+
+- (void)testSelectingToggleAllHidesBothAndParksTheActivatorOff
+{
+	self.getAPI.flags[@(kFxParameterId_DebugActivator)] = @(0);
+
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_ToggleAll]);
+
+	XCTAssertEqualObjects(self.setAPIv6.flags[@(kFxParameterId_DebugActivator)], @(kFxParameterFlag_HIDDEN),
+						  @"the activator control is hidden but kept for rigging");
+	XCTAssertEqualObjects(self.setAPIv5.boolValues[@(kFxParameterId_DebugActivator)], @(NO));
+	XCTAssertEqualObjects(self.setAPIv5.flags[@(kFxParameterId_DebugMenu)], @(kFxParameterFlag_HIDDEN));
+}
+
+- (void)testSelectingToggleAllFromDarkShowsBothAndTurnsTheActivatorOn
+{
+	self.getAPI.flags[@(kFxParameterId_DebugActivator)] = @(kFxParameterFlag_HIDDEN);
+
+	XCTAssertTrue([self selectMenuItem:FxGripDebugTestItem_ToggleAll]);
+
+	XCTAssertEqualObjects(self.setAPIv6.flags[@(kFxParameterId_DebugActivator)], @(0));
+	XCTAssertEqualObjects(self.setAPIv5.boolValues[@(kFxParameterId_DebugActivator)], @(YES));
+	XCTAssertEqualObjects(self.setAPIv5.flags[@(kFxParameterId_DebugMenu)], @(0));
+}
+
+#pragma mark Compiled Block
+
+- (void)testACompiledBlockOverridesThePlistDebugKeys
+{
+	FxGripDebugTestBlockedEffect *blocked = FxGripDebugTestBlockedEffect.new;
+	FxGripDebugMenu *extension = FxGripDebugMenu.new;
+	[extension extLoadWithEffect:(id)blocked];
+
+	XCTAssertFalse(blocked.hasDebugMenu, @"the master gate forces the plist keys off");
+	XCTAssertFalse(extension.hasDebugMenu);
+	XCTAssertFalse(extension.hasDebugActivator);
+
+	NSMutableArray *parameters = NSMutableArray.new;
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectAddParametersName
+														object:blocked
+													  userInfo:@{FxGripTileableEffectParametersKey: parameters}];
+	[extension extAddParameters:note];
+
+	XCTAssertEqual(parameters.count, (NSUInteger)0, @"a blocked plugin registers no debug parameters");
 }
 
 #pragma mark Effect Category
@@ -730,12 +837,76 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(debugMenu)]);
 }
 
+- (void)testTheEffectExposesTheDebugGateSeam
+{
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(allowsDebugFeatures)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(pluginDebugMenuEnabled)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(pluginDebugActivatorEnabled)]);
+}
+
 @end
 
 #pragma mark - About menu tests
 
+// Captures the two side-effecting primitives so dispatch is verified without touching
+// NSWorkspace or NSAlert.
+@interface FxGripAboutTestMenu : FxGripAboutMenu
+@property (nonatomic, strong) NSArray<NSString *> *openedURLs;
+@property (nonatomic, assign) NSUInteger dialogCount;
+@property (nonatomic, copy) NSString *lastDialogText;
+@end
+
+@implementation FxGripAboutTestMenu
+- (void)openAboutURLStrings:(NSArray<NSString *> *)urlStrings { self.openedURLs = urlStrings; }
+- (void)showAboutDialogWithText:(NSString *)text { self.dialogCount += 1; self.lastDialogText = text; }
+@end
+
+// Exercises the "both" content source: a subclass hook that extends the plist items.
+@interface FxGripAboutHookEffect : FxGripDebugTestStubEffect
+@end
+
+@implementation FxGripAboutHookEffect
+- (NSArray<NSDictionary *> *)aboutMenuItems:(NSArray<NSDictionary *> *)items
+{
+	return [items arrayByAddingObject:@{FxGripAboutEntryLabelKey: @"About::Extra",
+										FxGripAboutEntryUrlKey: @"https://extra.example"}];
+}
+@end
+
+static const FxParameterId kFxAboutTestToggleParameter = 500;
+static const FxParameterId kFxAboutTestAgreementParameter = 600;
+
+static NSDictionary *FxGripAboutTestConfiguration(BOOL withAgreement)
+{
+	NSMutableDictionary *config = @{
+		FxGripAboutMenuNameKey: @"About::Name",
+		FxGripAboutMenuMainTextKey: @"About::Main",
+		FxGripAboutMenuFallbackUrlKey: @"https://fallback.example",
+		FxGripAboutMenuItemsKey: @[
+			@{FxGripAboutEntryLabelKey: @"About::Help",
+			  FxGripAboutEntryKindKey: FxGripAboutEntryKindLink,
+			  FxGripAboutEntryUrlKey: @"https://help.example",
+			  FxGripAboutEntryFallbacksKey: @[@"https://help2.example"]},
+			@{FxGripAboutEntryKindKey: FxGripAboutEntryKindSeparator},
+			@{FxGripAboutEntryLabelKey: @"About::Toggle",
+			  FxGripAboutEntryUrlKey: @"https://toggle.example",
+			  FxGripAboutEntryDisplayIdKey: @(kFxAboutTestToggleParameter)},
+			@{FxGripAboutEntryLabelKey: @"About::Follow",
+			  FxGripAboutEntryUrlKey: @"https://follow.example"},
+		]
+	}.mutableCopy;
+	if (withAgreement) {
+		config[FxGripAboutMenuAgreementIdKey] = @(kFxAboutTestAgreementParameter);
+		config[FxGripAboutMenuAgreementAcceptedValueKey] = @(1);
+		config[FxGripAboutMenuWarningKey] = @[@"About::Warn1", @"About::Warn2"];
+		config[FxGripAboutMenuWarningDialogTextKey] = @"About::MustAccept";
+	}
+	return config.copy;
+}
+
 @interface FxGripAboutMenuTests : XCTestCase
-@property (nonatomic, strong) FxGripAboutMenu *extension;
+@property (nonatomic, strong) FxGripAboutTestMenu *extension;
+@property (nonatomic, strong) FxGripDebugTestStubEffect *effect;
 @end
 
 @implementation FxGripAboutMenuTests
@@ -743,14 +914,42 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 - (void)setUp
 {
 	[super setUp];
-	self.extension = [FxGripAboutMenu.alloc init];
+	self.extension = [FxGripAboutTestMenu.alloc init];
+	self.effect = [FxGripDebugTestStubEffect.alloc init];
+	self.effect.aboutConfig = FxGripAboutTestConfiguration(NO);
+	[self.extension extLoadWithEffect:(id)self.effect];
 }
 
 - (void)tearDown
 {
 	self.extension = nil;
+	self.effect = nil;
 	[super tearDown];
 }
+
+- (FxGripDebugTestStubDynamicAPI *)dynamicAPI { return self.effect.apiManager.dynamicParamAPIv3; }
+- (FxGripDebugTestStubGetAPI *)getAPI { return self.effect.apiManager.paramGetAPIv6; }
+
+- (NSMutableArray *)runAddParameters
+{
+	NSMutableArray *parameters = NSMutableArray.new;
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectAddParametersName
+														object:self.effect
+													  userInfo:@{FxGripTileableEffectParametersKey: parameters}];
+	[self.extension extAddParameters:note];
+	return parameters;
+}
+
+- (BOOL)selectAboutItemLabeled:(NSString *)label
+{
+	NSArray<NSString *> *items = [self.extension aboutMenuItemsReadingValues:YES atTime:FxGripDebugTestZeroTime()];
+	NSUInteger index = [items indexOfObject:label];
+	XCTAssertNotEqual(index, (NSUInteger)NSNotFound, @"about row %@ is missing", label);
+	self.getAPI.intValues[@(kFxParameterId_AboutMenu)] = @(index);
+	return [self.extension manageAboutMenu:kFxParameterId_AboutMenu atTime:FxGripDebugTestZeroTime() error:NULL];
+}
+
+#pragma mark Registration
 
 - (void)testTheExtensionUsesTheSharedAboutMenuKey
 {
@@ -759,30 +958,163 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 	XCTAssertEqual([self.extension ncPriority:nil], FxGripExtensionDefaultPriority);
 }
 
-/*!
-	The about-menu content is not built yet: the extension registers no parameters and
-	computes no menu. The entry points are exercised so a future implementation replaces a
-	covered contract rather than dead code.
-*/
-- (void)testTheAboutMenuContributesNothingYet
+- (void)testAddParametersRegistersTheAboutMenu
 {
-	NSMutableArray *parameters = NSMutableArray.new;
+	NSMutableArray *parameters = [self runAddParameters];
 
-	[self.extension extProcessParameters:parameters];
+	XCTAssertEqual(parameters.count, (NSUInteger)1);
+	NSDictionary *menu = parameters[0];
+	XCTAssertEqualObjects(menu[kFxParameterProperty_Id], @(kFxParameterId_AboutMenu));
+	XCTAssertEqualObjects(menu[kFxParameterProperty_Type], kFxParameterType_Menu);
+	XCTAssertEqualObjects(menu[kFxParameterProperty_Factory], self.extension);
+	XCTAssertEqualObjects(menu[kFxParameterProperty_Selector], @"manageAboutMenu");
+	XCTAssertEqualObjects(menu[kFxParameterProperty_Name], @"About::Name");
 
-	XCTAssertEqual(parameters.count, (NSUInteger)0);
-	XCTAssertNil([self.extension computeAboutMenuFrom:nil atTime:FxGripDebugTestZeroTime()]);
+	NSArray *flags = menu[kFxParameterProperty_Flags];
+	XCTAssertTrue([flags containsObject:kParameterFlagString_NOT_ANIMATABLE]);
+	XCTAssertTrue([flags containsObject:kParameterFlagString_NO_STATE]);
+
+	// The baseline includes every gated entry, before parameter values exist.
+	NSArray<NSString *> *items = menu[kFxParameterProperty_MenuItems];
+	XCTAssertEqualObjects(items, (@[@"About::Main", @"About::Help", @"-", @"About::Toggle", @"About::Follow"]));
 }
 
-- (void)testTheAboutMenuClickHandlersAreInert
+- (void)testAddParametersRegistersNothingWithoutAConfiguration
 {
-	XCTAssertNoThrow([self.extension clickResetAboutMenu]);
-	XCTAssertNoThrow([self.extension clickAboutMenu:0 paramAPIv6:nil atTime:FxGripDebugTestZeroTime()]);
+	self.effect.aboutConfig = nil;
+
+	XCTAssertEqual([self runAddParameters].count, (NSUInteger)0);
+}
+
+#pragma mark Live layout
+
+- (void)testTheLiveMenuHidesAnEntryWhoseDisplayToggleIsOff
+{
+	self.getAPI.boolValues[@(kFxAboutTestToggleParameter)] = @(NO);
+	NSArray<NSString *> *hidden = [self.extension aboutMenuItemsReadingValues:YES atTime:FxGripDebugTestZeroTime()];
+	XCTAssertFalse([hidden containsObject:@"About::Toggle"]);
+
+	self.getAPI.boolValues[@(kFxAboutTestToggleParameter)] = @(YES);
+	NSArray<NSString *> *shown = [self.extension aboutMenuItemsReadingValues:YES atTime:FxGripDebugTestZeroTime()];
+	XCTAssertTrue([shown containsObject:@"About::Toggle"]);
+}
+
+- (void)testTheAgreementGatePrependsWarningsUntilAccepted
+{
+	self.effect.aboutConfig = FxGripAboutTestConfiguration(YES);
+
+	self.getAPI.intValues[@(kFxAboutTestAgreementParameter)] = @(0);
+	NSArray<NSString *> *gated = [self.extension aboutMenuItemsReadingValues:YES atTime:FxGripDebugTestZeroTime()];
+	XCTAssertEqualObjects(gated.firstObject, @"About::Warn1");
+	XCTAssertTrue([gated containsObject:@"About::Warn2"]);
+
+	self.getAPI.intValues[@(kFxAboutTestAgreementParameter)] = @(1);
+	NSArray<NSString *> *accepted = [self.extension aboutMenuItemsReadingValues:YES atTime:FxGripDebugTestZeroTime()];
+	XCTAssertFalse([accepted containsObject:@"About::Warn1"]);
+	XCTAssertEqualObjects(accepted.firstObject, @"About::Main");
+}
+
+- (void)testTheSubclassHookExtendsThePlistItems
+{
+	FxGripAboutHookEffect *hookEffect = FxGripAboutHookEffect.new;
+	hookEffect.aboutConfig = FxGripAboutTestConfiguration(NO);
+	FxGripAboutTestMenu *extension = FxGripAboutTestMenu.new;
+	[extension extLoadWithEffect:(id)hookEffect];
+
+	NSArray<NSString *> *items = [extension aboutMenuItemsReadingValues:NO atTime:FxGripDebugTestZeroTime()];
+	XCTAssertEqualObjects(items.lastObject, @"About::Extra");
+}
+
+#pragma mark Selection
+
+- (void)testSelectingALinkOpensItsFallbackChainWithTheGlobalFallbackLast
+{
+	XCTAssertTrue([self selectAboutItemLabeled:@"About::Help"]);
+
+	XCTAssertEqualObjects(self.extension.openedURLs,
+						  (@[@"https://help.example", @"https://help2.example", @"https://fallback.example"]));
+	XCTAssertEqual(self.extension.dialogCount, (NSUInteger)0);
+}
+
+- (void)testSelectingTheMainLineDoesNothing
+{
+	XCTAssertTrue([self selectAboutItemLabeled:@"About::Main"]);
+
+	XCTAssertNil(self.extension.openedURLs);
+	XCTAssertEqual(self.extension.dialogCount, (NSUInteger)0);
+}
+
+- (void)testSelectingAWarningShowsTheDialog
+{
+	self.effect.aboutConfig = FxGripAboutTestConfiguration(YES);
+	self.getAPI.intValues[@(kFxAboutTestAgreementParameter)] = @(0);
+
+	XCTAssertTrue([self selectAboutItemLabeled:@"About::Warn1"]);
+
+	XCTAssertEqual(self.extension.dialogCount, (NSUInteger)1);
+	XCTAssertEqualObjects(self.extension.lastDialogText, @"About::MustAccept");
+	XCTAssertNil(self.extension.openedURLs);
+}
+
+- (void)testAMenuCommandStopsWhenTheSelectionCannotBeRead
+{
+	self.getAPI.intReadSucceeds = NO;
+
+	XCTAssertFalse([self.extension manageAboutMenu:kFxParameterId_AboutMenu
+											atTime:FxGripDebugTestZeroTime()
+											 error:NULL]);
+}
+
+#pragma mark Gating and refresh
+
+- (void)testGatingParameterIDsCoverTheAgreementAndTheDisplayToggles
+{
+	self.effect.aboutConfig = FxGripAboutTestConfiguration(YES);
+
+	NSSet<NSNumber *> *ids = [self.extension aboutMenuGatingParameterIDs];
+
+	XCTAssertEqualObjects(ids, ([NSSet setWithArray:@[@(kFxAboutTestAgreementParameter), @(kFxAboutTestToggleParameter)]]));
+}
+
+- (void)testAChangeToAGatingParameterRebuildsTheMenu
+{
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
+														object:self.effect
+													  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @(kFxAboutTestToggleParameter)}];
+	[self.extension extParameterChanged:note];
+
+	XCTAssertEqual(self.dynamicAPI.menuParameter, (FxParameterId)kFxParameterId_AboutMenu);
+	XCTAssertNotNil(self.dynamicAPI.menuEntries);
+}
+
+- (void)testAChangeToAnUnrelatedParameterLeavesTheMenuAlone
+{
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
+														object:self.effect
+													  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @(4242)}];
+	[self.extension extParameterChanged:note];
+
+	XCTAssertNil(self.dynamicAPI.menuEntries);
+}
+
+#pragma mark Effect Category
+
+- (void)testTheEffectExposesItsAboutMenuAndSeam
+{
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(aboutMenu)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(hasAboutMenu)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(aboutMenuConfiguration)]);
+	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(aboutMenuItems:)]);
 }
 
 @end
 
 #pragma mark - Regression tests
+
+@interface FxGripRegression (FxGripRegressionTestAccess)
+- (BOOL)validatePluginUUID:(id)effect;
+- (BOOL)validatePluginVersion:(id)effect;
+@end
 
 @interface FxGripRegressionTests : XCTestCase
 @property (nonatomic, strong) FxGripRegression *extension;
@@ -818,12 +1150,45 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 	XCTAssertTrue(self.extension.effect == (id)self.effect);
 }
 
+- (void)testAValidPluginPassesUUIDAndVersionValidation
+{
+	XCTAssertTrue([self.extension validatePluginUUID:self.effect]);
+	XCTAssertTrue([self.extension validatePluginVersion:self.effect]);
+}
+
 - (void)testAMalformedUUIDStillLoadsTheExtension
 {
 	[self setPluginProperties:@{kProPlugPlugIn_UuidProperty: @"not-a-uuid"}];
 
+	XCTAssertFalse([self.extension validatePluginUUID:self.effect]);
 	XCTAssertTrue([self.extension extLoadWithEffect:(id)self.effect],
 				  @"the regression pass reports problems without blocking the plugin");
+}
+
+- (void)testAMissingResolvedPluginUUIDIsReportedButStillLoads
+{
+	self.effect.pluginUUID = nil;
+
+	XCTAssertFalse([self.extension validatePluginUUID:self.effect],
+				   @"a valid plist string is not enough; the resolved pluginUUID must be present");
+	XCTAssertTrue([self.extension extLoadWithEffect:(id)self.effect]);
+}
+
+- (void)testANonStringNonNumberVersionIsReportedWithoutCrashing
+{
+	[self setPluginProperties:@{kProPlugPlugIn_VersionProperty: @[@1, @2, @3]}];
+
+	XCTAssertFalse([self.extension validatePluginVersion:self.effect]);
+	XCTAssertTrue([self.extension extLoadWithEffect:(id)self.effect]);
+}
+
+- (void)testADigitStringVersionIsAcceptedAndANonDigitStringIsRejected
+{
+	[self setPluginProperties:@{kProPlugPlugIn_VersionProperty: @"12"}];
+	XCTAssertTrue([self.extension validatePluginVersion:self.effect]);
+
+	[self setPluginProperties:@{kProPlugPlugIn_VersionProperty: @"1.2.3"}];
+	XCTAssertFalse([self.extension validatePluginVersion:self.effect]);
 }
 
 - (void)testAStringVersionAndANonNumericVersionStillLoadTheExtension

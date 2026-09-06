@@ -14,8 +14,6 @@
 
 @interface FxGripRegression : FxGripExtension
 
-- (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect;
-
 @end
 
 

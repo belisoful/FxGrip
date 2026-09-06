@@ -22,12 +22,18 @@
 - (BOOL)extLoadWithEffect:(nonnull id)effect;
 - (BOOL)fxFactoryActive;
 - (void)registerLicenseHandler:(nullable NSString *)productUUID;
+- (void)unregisterLicenseHandler;
 - (void)showProductUpdates;
 - (void)setBoolValue:(BOOL)value;
 - (BOOL)boolValue;
+- (void)setFxFactorySettingsObject:(nullable id)settingsObject;
+- (BOOL)fxFactoryHasWaterMarkUnlicensed;
+- (void)extParameterChanged:(nonnull NSNotification *)notification;
 // Overridable FxFactory SDK seams.
 - (BOOL)factoryInstalled;
 - (NSUInteger)factoryLicensingStatusForProduct:(nullable NSString *)productUUID;
+- (nullable id)factoryRegisterLicensingHandlerForProduct:(nullable NSString *)productUUID handler:(nonnull id)handler;
+- (void)factoryUnregisterLicensingHandler:(nullable id)handle forProduct:(nullable NSString *)productUUID;
 - (BOOL)factoryContactFormAvailable;
 - (BOOL)factoryShowContactFormToRecipient:(nullable NSString *)recipient subject:(nullable NSString *)subject message:(nullable NSString *)message;
 - (BOOL)fxFactoryWaterMarkUnlicensed;
@@ -123,6 +129,43 @@
 	self.renderCount += 1;
 	return YES;
 }
+@end
+
+// Records the product UUID passed to the unregister seam, and stubs the register seam so a
+// handler is installed without a live FxFactory. Drives the register/unregister UUID pairing.
+@interface FxGripFxFactoryHandlerMock : FxGripFxFactoryMock
+@property (nonatomic, strong) NSMutableArray<NSString *> *unregisteredUUIDs;
+@end
+
+@implementation FxGripFxFactoryHandlerMock
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_unregisteredUUIDs = NSMutableArray.new;
+	}
+	return self;
+}
+- (id)factoryRegisterLicensingHandlerForProduct:(NSString *)productUUID handler:(id)handler
+{
+	return @"handle";
+}
+- (void)factoryUnregisterLicensingHandler:(id)handle forProduct:(NSString *)productUUID
+{
+	[self.unregisteredUUIDs addObject:productUUID ?: @""];
+}
+@end
+
+// A hard-coded settings object: the plugin declares its FxFactory preferences in code rather
+// than through the plist parameter. respondsToSelector drives the extAddParameters branches.
+@interface FxGripFxFactorySettingsMock : NSObject
+@property (nonatomic, assign) BOOL watermark;
+@end
+
+@implementation FxGripFxFactorySettingsMock
+- (BOOL)fxFactoryActive { return YES; }
+- (NSString *)fxFactoryProductUUID { return @"settings-uuid"; }
+- (BOOL)fxFactoryWaterMarkUnlicensed { return self.watermark; }
 @end
 
 @interface FxGripFxFactoryTests : XCTestCase
@@ -322,6 +365,65 @@
 - (void)testWatermarkingDisabledSkipsTheRender
 {
 	XCTAssertEqual([self renderCountForWatermark:NO licensedStatus:2], (NSUInteger)0);
+}
+
+#pragma mark License handler unregisters the UUID it registered
+
+- (void)testReRegisteringTearsDownThePreviousProductsHandler
+{
+	FxGripFxFactoryHandlerMock *mock = [FxGripFxFactoryHandlerMock.alloc init];
+
+	[mock registerLicenseHandler:@"uuid-A"];
+	[mock registerLicenseHandler:@"uuid-B"];   // re-register must first unregister uuid-A
+
+	XCTAssertEqualObjects(mock.unregisteredUUIDs, (@[@"uuid-A"]),
+						  @"unregister targets the UUID the handler was registered with, not the current one");
+}
+
+#pragma mark A settings-object watermark preference is honored
+
+- (void)testASettingsObjectWatermarkOptOutIsHonored
+{
+	FxGripFxFactory *factory = [NSClassFromString(@"FxGripFxFactory") alloc];
+	factory = [factory init];
+
+	FxGripFxFactorySettingsMock *settings = FxGripFxFactorySettingsMock.new;
+	settings.watermark = NO;   // the plugin explicitly opts out of the unlicensed watermark
+	[factory setFxFactorySettingsObject:(id)settings];
+
+	// A fxfactory-typed parameter with a parent id, so the fallback parameters the path may add
+	// carry a non-nil parent id.
+	NSMutableDictionary *fxFactoryParameter = @{ kFxParameterProperty_Type: @"fxfactory",
+												 kFxParameterProperty_ParentId: @0 }.mutableCopy;
+	NSMutableArray *parameters = @[ fxFactoryParameter ].mutableCopy;
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectAddParametersName
+														object:nil
+													  userInfo:@{FxGripTileableEffectParametersKey: parameters}];
+	[factory extAddParameters:note];
+
+	XCTAssertTrue([factory fxFactoryHasWaterMarkUnlicensed],
+				  @"a settings-object value registers as present, like every other configuration flag");
+	XCTAssertFalse([factory fxFactoryWaterMarkUnlicensed],
+				   @"the explicit opt-out is honored, not overridden to YES by the product default");
+}
+
+#pragma mark Changing the product UUID invalidates the cached license verdict
+
+- (void)testChangingTheProductUUIDInvalidatesTheCachedLicenseVerdict
+{
+	FxGripFxFactoryDocumentMock *mock = [FxGripFxFactoryDocumentMock.alloc init];
+	mock.mockStatus = 3;   // the current product is Licensed
+	XCTAssertTrue([mock pluginIsLicensed], @"first read caches the verdict");
+
+	mock.mockStatus = 2;   // the newly chosen product is Unlicensed
+	// paramID = parameterID (0) + kParameterFxFactoryProductUUIDOffset (2)
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
+														object:nil
+													  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @(2)}];
+	[mock extParameterChanged:note];
+
+	XCTAssertFalse([mock pluginIsLicensed],
+				   @"the UUID change clears the cached verdict so it recomputes for the new product");
 }
 
 @end

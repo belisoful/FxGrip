@@ -15,15 +15,22 @@
 #import "NSDictionary+FxGripTileableEffect.h"
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 
-typedef NS_ENUM(NSUInteger, FxGripDebugMenuItem) {
-	DebugItem_Main = 0,
-	DebugItem_ToggleUnhide = 2,
-	DebugItem_ToggleShow = 3,
-	DebugItem_ToggleMenu = 5,
-	DebugItem_RemoveDebug = 7,
-	DebugItem_AddParam = 8,
-	DebugItem_RemoveParam = 9,
+// Logical debug-menu commands. The values are identity tags, not menu positions: the menu
+// layout pairs each displayed row with its command in one pass (see debugMenuLayout:), and
+// dispatch resolves the host's selection index against that same layout. Reordering or
+// inserting rows needs no index bookkeeping.
+typedef NS_ENUM(NSUInteger, FxGripDebugCommand) {
+	FxGripDebugCommand_None = 0,
+	FxGripDebugCommand_Main,
+	FxGripDebugCommand_ToggleUnhide,
+	FxGripDebugCommand_ToggleActivatorVisibility,
+	FxGripDebugCommand_ToggleAll,
+	FxGripDebugCommand_ToggleActivatorValue,
+	FxGripDebugCommand_RemoveDebug,
 };
+
+static NSString *const FxGripDebugLayoutLabelKey = @"label";
+static NSString *const FxGripDebugLayoutCommandKey = @"command";
 
 NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 
@@ -51,15 +58,16 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 	return [super ncPriority:aName];
 }
 
-// Default NO, Looks at the plugin class Info.plist for @"debugMenu" BOOL equals @YES
+// The effect owns the debug gate so a plugin's compiled override, not just the Info.plist,
+// decides whether the menu and activator appear.
 - (BOOL)hasDebugMenu
 {
-	return self.effect.pluginProperties.pluginDebugActivator || self.effect.pluginProperties.pluginDebugMenu;
+	return self.effect.effectBase.hasDebugMenu;
 }
 
 - (BOOL)hasDebugActivator
 {
-	return self.effect.pluginProperties.pluginDebugActivator;
+	return self.effect.effectBase.pluginDebugActivatorEnabled;
 }
 
 /*
@@ -200,37 +208,74 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 }
 
 
+// The activator reveals the menu here, not through the activator's target preset. The target
+// preset is applied by FxGripMeta, which a plugin may not load, so a rigged activator would
+// otherwise do nothing. This handler runs for every value change independent of manageMeta.
+- (void)extParameterChanged:(nonnull NSNotification*)notification
+{
+	NSNumber *pidNumber = notification.userInfo[FxGripTileableEffectParameterChangedIDKey];
+	if (pidNumber.unsignedIntValue != kFxParameterId_DebugActivator || !self.hasDebugActivator) {
+		return;
+	}
+
+	CMTime time = kCMTimeZero;
+	NSDictionary *timeDict = notification.userInfo[FxGripTileableEffectParameterChangedAtTimeKey];
+	if ([timeDict isKindOfClass:NSDictionary.class]) {
+		time = CMTimeMakeFromDictionary((__bridge CFDictionaryRef)timeDict);
+	}
+
+	BOOL activator = NO;
+	if (![self.effect.apiManager.paramGetAPIv6 getBoolValue:&activator fromParameter:kFxParameterId_DebugActivator atTime:time]) {
+		return;
+	}
+	[self setDebugMenuShown:activator atTime:time];
+}
+
+// Sets the debug menu's HIDDEN bit to match `show`. The caller passes the activator value it
+// already knows, so the reveal never depends on reading a value back through a second API.
+- (BOOL)setDebugMenuShown:(BOOL)show atTime:(CMTime)time
+{
+	FxParameterFlags flags = 0;
+	if (![self.effect.apiManager.paramGetAPIv6 getParameterFlags:&flags fromParameter:kFxParameterId_DebugMenu]) {
+		return NO;
+	}
+	if (show) {
+		flags &= ~kFxParameterFlag_HIDDEN;
+	} else {
+		flags |= kFxParameterFlag_HIDDEN;
+	}
+	return [self.effect.apiManager.paramSetAPIv5 setParameterFlags:flags toParameter:kFxParameterId_DebugMenu];
+}
+
+
 - (BOOL)manageDebuggerController:(FxParameterId)paramID
 						  atTime:(CMTime)time
 						   error:(NSError * _Nullable * _Nullable)error
 {
 	int selection = -1;
-	
+
 	if (![self.effect.apiManager.paramGetAPIv6 getIntValue:&selection fromParameter:paramID atTime:time])
 		return NO;
-	
-	if (!self.hasDebugActivator && selection >= DebugItem_ToggleShow) {
-		selection += 1;
-	}
-	
-	switch(selection) {
-		case DebugItem_Main: // Main Item
+
+	switch([self commandForSelection:selection]) {
+		case FxGripDebugCommand_None:
+		case FxGripDebugCommand_Main:
 			break;
-		case DebugItem_ToggleUnhide:
+		case FxGripDebugCommand_ToggleUnhide:
 			if (![self debugUnhide:!self.isDebugUnhiding]) {
 				return NO;
 			}
 			break;
-		case DebugItem_ToggleShow:
+		case FxGripDebugCommand_ToggleActivatorVisibility:
 			{
 				FxParameterFlags activatorFlags = 0;
-				
+
 				[self.effect.apiManager.paramGetAPIv6 getParameterFlags:&activatorFlags fromParameter:kFxParameterId_DebugActivator];
 				activatorFlags ^= kFxParameterFlag_HIDDEN;
 				[self.effect.apiManager.paramSetAPIv6 setParameterFlags:activatorFlags toParameter:kFxParameterId_DebugActivator];
 			}
 			break;
-		case DebugItem_ToggleMenu:
+		case FxGripDebugCommand_ToggleActivatorValue:
 			{
 				BOOL activator = NO;
 				if (![self.effect.apiManager.paramGetAPIv6 getBoolValue:&activator fromParameter:kFxParameterId_DebugActivator atTime:time])
@@ -238,12 +283,33 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 				activator = !activator;
 				if (![self.effect.apiManager.paramSetAPIv5 setBoolValue:activator toParameter:kFxParameterId_DebugActivator atTime:time])
 					return NO;
-				//[self.effect setParameterTargetPreset:kFxParameterId_DebugActivator
-				//							   atTime:time
-				//							  options:PresetFlags];
+				if (![self setDebugMenuShown:activator atTime:time])
+					return NO;
 			}
 			break;
-		case DebugItem_RemoveDebug:
+		case FxGripDebugCommand_ToggleAll:
+			{
+				// Go dark without deleting: hide the activator control and the menu, leaving the
+				// activator as a Motion-riggable switch that still drives the menu's visibility.
+				FxParameterFlags activatorFlags = 0;
+				if (![self.effect.apiManager.paramGetAPIv6 getParameterFlags:&activatorFlags fromParameter:kFxParameterId_DebugActivator])
+					return NO;
+				BOOL goingDark = (activatorFlags & kFxParameterFlag_HIDDEN) == 0;
+				if (goingDark) {
+					activatorFlags |= kFxParameterFlag_HIDDEN;
+				} else {
+					activatorFlags &= ~kFxParameterFlag_HIDDEN;
+				}
+				if (![self.effect.apiManager.paramSetAPIv6 setParameterFlags:activatorFlags toParameter:kFxParameterId_DebugActivator])
+					return NO;
+				BOOL activatorOn = !goingDark;
+				if (![self.effect.apiManager.paramSetAPIv5 setBoolValue:activatorOn toParameter:kFxParameterId_DebugActivator atTime:time])
+					return NO;
+				if (![self setDebugMenuShown:activatorOn atTime:time])
+					return NO;
+			}
+			break;
+		case FxGripDebugCommand_RemoveDebug:
 			if (self.hasDebugMenu) {
 				if (self.isDebugUnhiding && ![self debugUnhide:NO]) {
 					return NO;
@@ -258,55 +324,56 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 				}
 			}
 			break;
-		
-		case DebugItem_AddParam:
-			{
-#define kTempParamId 888
-				BOOL success = [self.effect.apiManager.paramCreateAPIv5 addStringParameterWithName:@"Temp Param" parameterID:kTempParamId defaultValue:@"xyz" parameterFlags:kFxParameterFlag_DEFAULT];
-				if (!success) {
-					NSLog(@"ERROR - could not add temp param");
-					return NO;
-				}
-				FxParameterFlags flags = 0;
-				[self.effect.apiManager.paramGetAPIv6 getParameterFlags:&flags fromParameter:kTempParamId];
-				flags |= 0;
-				[self.effect.apiManager.paramSetAPIv5 setParameterFlags:flags toParameter:kTempParamId];
-			}
-			break;
-		case DebugItem_RemoveParam:
-			{
-				NSError *err = [self.effect.apiManager.dynamicParamAPIv3 removeParameter:kTempParamId];
-				if (err) {
-					NSLog(@"ERROR - could not remove param %@", err);
-					return NO;
-				}
-			}
-			break;
 	}
-	
+
 	return YES;
 }
 
 
+// The single source for the menu: each row's label paired with the command it invokes.
+// debugMenuItems: renders the labels the host displays; commandForSelection: maps the host's
+// selection index back through the same rows. Separators carry FxGripDebugCommand_None.
+- (NSArray<NSDictionary*>*)debugMenuLayout:(BOOL)unhide
+{
+	NSMutableArray<NSDictionary*> *layout = [NSMutableArray arrayWithCapacity:20];
+	void (^row)(NSString*, FxGripDebugCommand) = ^(NSString *label, FxGripDebugCommand command) {
+		[layout addObject:@{FxGripDebugLayoutLabelKey: label, FxGripDebugLayoutCommandKey: @(command)}];
+	};
+
+	row(@"FxGrip::DebugMenu::MainItem", FxGripDebugCommand_Main);
+	row(@"-", FxGripDebugCommand_None);
+	row(unhide ? @"FxGrip::DebugMenu::ToggleUnhideOn" : @"FxGrip::DebugMenu::ToggleUnhideOff", FxGripDebugCommand_ToggleUnhide);
+
+	if (self.hasDebugActivator) {
+		row(@"FxGrip::DebugMenu::ToggleDebugToggle", FxGripDebugCommand_ToggleActivatorVisibility);
+		row(@"FxGrip::DebugMenu::ToggleAllDebug", FxGripDebugCommand_ToggleAll);
+	}
+	row(@"-", FxGripDebugCommand_None);
+	row(@"FxGrip::DebugMenu::ToggleDebugMenu", FxGripDebugCommand_ToggleActivatorValue);
+	row(@"-", FxGripDebugCommand_None);
+	row(@"FxGrip::DebugMenu::RemoveDebugMenu", FxGripDebugCommand_RemoveDebug);
+
+	return [layout copy];
+}
+
 - (NSArray<NSString*>*)debugMenuItems:(BOOL)unhide
 {
-	NSMutableArray *menuItems = [NSMutableArray arrayWithCapacity:20];
-	
-	[menuItems addObject:@"FxGrip::DebugMenu::MainItem"];
-	[menuItems addObject:@"-"];
-	[menuItems addObject:unhide ? @"FxGrip::DebugMenu::ToggleUnhideOn": @"FxGrip::DebugMenu::ToggleUnhideOff"]; // map to debug menu unused flag?  like collapsed or ...
-	
-	if (self.hasDebugActivator) {
-		[menuItems addObject:@"FxGrip::DebugMenu::ToggleDebugToggle"];
+	NSArray<NSDictionary*> *layout = [self debugMenuLayout:unhide];
+	NSMutableArray<NSString*> *menuItems = [NSMutableArray arrayWithCapacity:layout.count];
+	for (NSDictionary *entry in layout) {
+		[menuItems addObject:entry[FxGripDebugLayoutLabelKey]];
 	}
-	[menuItems addObject:@"-"];
-	[menuItems addObject:@"FxGrip::DebugMenu::ToggleDebugMenu"];
-	[menuItems addObject:@"-"];
-	[menuItems addObject:@"FxGrip::DebugMenu::RemoveDebugMenu"];
-	[menuItems addObject:@"Add Param"];
-	[menuItems addObject:@"Remove Param"];
-	
 	return [menuItems copy];
+}
+
+// The command set does not depend on the unhide label, so a single layout resolves the index.
+- (FxGripDebugCommand)commandForSelection:(NSInteger)selection
+{
+	NSArray<NSDictionary*> *layout = [self debugMenuLayout:NO];
+	if (selection < 0 || (NSUInteger)selection >= layout.count) {
+		return FxGripDebugCommand_None;
+	}
+	return (FxGripDebugCommand)((NSNumber*)layout[selection][FxGripDebugLayoutCommandKey]).unsignedIntegerValue;
 }
 
 @end
@@ -320,9 +387,24 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 	return [self extensionForClass:FxGripDebugMenu.class];
 }
 
+- (BOOL)allowsDebugFeatures
+{
+	return YES;
+}
+
+- (BOOL)pluginDebugMenuEnabled
+{
+	return self.allowsDebugFeatures && self.pluginProperties.pluginDebugMenu;
+}
+
+- (BOOL)pluginDebugActivatorEnabled
+{
+	return self.allowsDebugFeatures && self.pluginProperties.pluginDebugActivator;
+}
+
 - (BOOL)hasDebugMenu
 {
-	return self.pluginProperties.pluginDebugMenu || self.pluginProperties.pluginDebugActivator;
+	return self.pluginDebugMenuEnabled || self.pluginDebugActivatorEnabled;
 }
 
 - (nonnull FxGripDebugMenu *)newDebugMenuExtension

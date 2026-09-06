@@ -432,9 +432,9 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertFalse(FxGripPluginDictionaryWith(kProPlugPlugInX_DebugActivatorProperty, @NO).pluginDebugActivator);
 }
 
-- (void)testPluginManageMetaDefaultsToNoAndFollowsItsDeclaration
+- (void)testPluginManageMetaDefaultsToYesAndFollowsItsDeclaration
 {
-	XCTAssertFalse(FxGripPluginDictionary().pluginManageMeta);
+	XCTAssertTrue(FxGripPluginDictionary().pluginManageMeta);
 	XCTAssertTrue(FxGripPluginDictionaryWith(kProPlugPlugInX_ManagedMetaProperty, @YES).pluginManageMeta);
 	XCTAssertFalse(FxGripPluginDictionaryWith(kProPlugPlugInX_ManagedMetaProperty, @NO).pluginManageMeta);
 }

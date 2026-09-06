@@ -125,8 +125,8 @@
 
 - (void)extAddedToDocument:(nonnull NSNotification*)notification
 {
-	_documentAdded = YES;
 	@synchronized (self) {
+		_documentAdded = YES;
 		NSObject<NSCopying, NSSecureCoding> *object = nil;
 		[self.effect.apiManager.paramGetAPIv6 getCustomParameterValue:&object
 														fromParameter:self.parameterID
@@ -215,6 +215,8 @@
 		[self seedRecordForParameter:pid manager:manager];
 		[manager unlock];
 
+		// Flush per-add only once the instance is live: not mid flag-cache (a batched setup
+		// defers the write), the meta parameter is added, and the document has loaded.
 		if (!flagCache(_parameterFlags) && self.addedToEffect && _documentAdded) {
 			[self extFlush:notification];
 		}
@@ -275,6 +277,7 @@
 		}
 		[_manager removeParameter:pid];
 
+		// Flush per-remove only when the instance is live; see extAPIParameterAdd:.
 		if (!flagCache(_parameterFlags) && self.addedToEffect && _documentAdded) {
 			[self extFlush:notification];
 		}
@@ -312,7 +315,12 @@
 									atTime:time
 								   options:(FxGripPresetValues | FxGripPresetFlags | FxGripPresetTags | FxGripPresetMeta)];
 
-	id resetValue = [_manager parameterData:pid][kFxParameterProperty_ResetValue];
+	// A parameter carrying a reset value is a momentary control: it snaps back to that value
+	// after every change (for example a Menu returning to its main item).
+	id resetValue = nil;
+	@synchronized (self) {
+		resetValue = [_manager parameterData:pid][kFxParameterProperty_ResetValue];
+	}
 	if (resetValue) {
 		[FxGripPreset setParameterValue:resetValue
 							toParameter:pid
@@ -332,7 +340,10 @@
 
 - (id<NSSecureCoding, NSCopying> _Nullable)valueAtTime:(CMTime)renderTime
 {
-	return _manager;
+	// Read under the same lock that guards every _manager reassignment.
+	@synchronized (self) {
+		return _manager;
+	}
 }
 
 @end

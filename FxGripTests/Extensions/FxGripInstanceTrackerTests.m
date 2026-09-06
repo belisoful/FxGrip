@@ -97,6 +97,19 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+// Reports no plugin UUID: the registry cannot key on it, so registration must no-op.
+@interface FxGripTrackTestNilUUIDEffect : FxGripTrackTestEffect
+@end
+
+@implementation FxGripTrackTestNilUUIDEffect
+
+- (NSString *)pluginUUID
+{
+	return nil;
+}
+
+@end
+
 #pragma mark - Tests
 
 @interface FxGripInstanceTrackerTests : XCTestCase
@@ -185,6 +198,17 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(effect.instances.count, (NSUInteger)1);
 	XCTAssertTrue(effect.instances.firstObject == effect);
 	XCTAssertTrue([effect instanceAtIndex:0] == effect);
+}
+
+- (void)testAddingAnEffectWithoutAUUIDRegistersNothingAndDoesNotThrow
+{
+	FxGripTrackTestNilUUIDEffect *effect = [FxGripTrackTestNilUUIDEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	XCTAssertNotNil(effect);
+	[self.effects addObject:effect];
+
+	XCTAssertNil(effect.pluginUUID, @"the double reports no UUID");
+	XCTAssertNoThrow([effect.instanceTracker extAddedToDocument:[self documentNotificationFor:effect removed:NO]],
+					 @"a nil UUID cannot key the registry, so registration is skipped rather than raising on a nil key");
 }
 
 - (void)testRegisteringTheSameInstanceTwiceKeepsOneEntry

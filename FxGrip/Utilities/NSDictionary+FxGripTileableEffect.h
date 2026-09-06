@@ -59,6 +59,7 @@
 - (NSArray<NSDictionary*>* _Nullable) pluginParameters;
 - (BOOL) pluginDebugMenu;
 - (BOOL) pluginDebugActivator;
+- (NSDictionary*_Nullable) pluginAboutMenu;
 - (BOOL) pluginManageMeta;
 - (BOOL) pluginManageParameterData;
 - (BOOL) pluginTrackInstances;
