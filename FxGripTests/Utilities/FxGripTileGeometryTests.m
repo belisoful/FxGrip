@@ -1,10 +1,12 @@
-//
-//  FxGripTileGeometryTests.m
-//  FxGripTests
-//
-//  Covers the pixel↔image conversion functions with a stub transform. The FxImageTile category
-//  methods that feed them the tile's real transform are host-verified.
-//
+/*!
+	@file       FxGripTileGeometryTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileGeometryTests
+	@abstract   Tests the pixel-to-image and image-to-pixel rect conversions against a stub transform.
+	@discussion Introduced in FxGrip 0.1.0. A stub matrix applies a known scale and offset so the conversions are checked without a live FxPlug host. The tests cover corner transformation with outward rounding, inversion back to the image rect, and the empty result when no transform is supplied.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxTileImage+FxGrip.h>
@@ -39,6 +41,7 @@
 
 @implementation FxGripTileGeometryTests
 
+/*! @abstract Transforming an image rect scales and offsets its corners into the expected integer pixel box. */
 - (void)testPixelBoundsForImageRectTransformsCornersAndRoundsOutward
 {
 	FxGripTileGeoStubMatrix *transform = FxGripTileGeoStubMatrix.new;
@@ -53,6 +56,7 @@
 	XCTAssertEqual(bounds.top, 30);
 }
 
+/*! @abstract A fractional offset floors the low pixel edges and ceils the high pixel edges. */
 - (void)testPixelBoundsRoundsAFractionalTransformOutward
 {
 	FxGripTileGeoStubMatrix *transform = FxGripTileGeoStubMatrix.new;
@@ -66,6 +70,7 @@
 	XCTAssertEqual(bounds.top, 6, @"5.6 ceils to 6");
 }
 
+/*! @abstract Converting a pixel box through the inverse transform recovers the original image rect. */
 - (void)testImageRectForPixelBoundsInvertsThroughTheTransform
 {
 	// Inverse of (scale 2, offset 10/20): p → ((x-10)/2, (y-20)/2).
@@ -80,6 +85,7 @@
 	XCTAssertEqual(imageRect.size.height, 5.0);
 }
 
+/*! @abstract A nil transform yields an empty image rect and an empty pixel bounds in both directions. */
 - (void)testConversionsWithoutATransformAreEmpty
 {
 	CGRect emptyImage = FxGripImageRectForPixelBounds(FxGripRectMake(0, 0, 10, 10), nil);

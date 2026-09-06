@@ -1,7 +1,14 @@
-//
-//  SCNCamera+FxGrip.h
-//  FxGrip
-//
+/*!
+	@file       SCNCamera+FxGrip.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     SCNCamera+FxGrip
+	@abstract   Builds a SceneKit camera from FxPlug host camera data.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the frustum-to-projection function and the
+	            SCNCamera category that configures a camera from the Fx3DAPI_v5 focal length, view
+	            frustum, and depth-of-field data.
+*/
 
 #ifndef SCNCamera_FxGrip_h
 #define SCNCamera_FxGrip_h
@@ -23,9 +30,8 @@ simd_float4x4 FxGripProjectionMatrixFromFrustum(double left, double right,
 												double near, double far);
 
 /*!
-	@category   SCNCamera (FxGrip)
 	@abstract   Builds a SceneKit camera from FxPlug host camera data.
-	@discussion Introduced in FxGrip 1.0. The `Fx3DAPI_v5` host API reports the camera focal length,
+	@discussion Introduced in FxGrip 0.1.0. The `Fx3DAPI_v5` host API reports the camera focal length,
 				view and projection matrices, and view frustum. These methods configure an `SCNCamera`
 				from that data. `fxg_cameraWithFocalLength:nearZ:farZ:` sets the focal length and a
 				35mm-equivalent sensor height, so SceneKit derives the field of view, along with the

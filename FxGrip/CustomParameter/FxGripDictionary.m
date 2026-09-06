@@ -1,10 +1,14 @@
-//
-//  FxGripInterpolatingDictionary.m
-//  PlugIn
-//
-//  Created by Apple on 10/22/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
-//
+/*!
+	@file       FxGripDictionary.m
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDictionary
+	@abstract   Implements the mutable dictionary custom parameter value and its typed accessors.
+	@discussion Introduced in FxGrip 0.1.0. The class subclasses NSMutableDictionary as a class
+	            cluster wrapper over an inner NSMutableDictionary. It maps the standard typed FxPlug
+	            accessors to well-known keys and archives its store through NSSecureCoding.
+*/
 
 #import "FxGripDictionary.h"
 #import <BEFoundation/FxTime.h>
@@ -14,6 +18,13 @@
 // Locked makes the default keys for types (bool, int, float, etc) only settable if they are already set.
 //  So the keys for the automatic var->custum->var must be set in the configuration to be usable,
 //		or it must be unlocked.
+
+/*!
+	@abstract	A mutable dictionary custom parameter value that answers the host's typed parameter API.
+	@discussion	Introduced in FxGrip 0.1.0. An inner NSMutableDictionary holds the store. The typed
+				accessors read and write well-known keys, and the lock flag confines the default typed
+				setters to keys that already exist.
+*/
 @implementation FxGripDictionary
 
 - (instancetype)init
@@ -48,6 +59,12 @@
 	SUPER_DEALLOC();
 }
 
+/*!
+	@method		classesForParameter
+	@abstract	The secure-coding allow-list of classes a parameter dictionary may carry.
+	@discussion	Introduced in FxGrip 0.1.0. A subclass overrides this to extend the list.
+	@result		The ordered set of decodable classes.
+*/
 + (NSOrderedSet<Class>*)classesForParameter
 {
 	return [NSOrderedSet orderedSetWithArray:@[
@@ -88,6 +105,11 @@
 	return self.class;
 }
 
+/*!
+	@method		initWithCoder:
+	@abstract	Decodes the store from an archive, restricting values to classesForParameter.
+	@discussion	Introduced in FxGrip 0.1.0. A decoded value that is not a dictionary yields an empty store.
+*/
 - (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
 	self = [super init];
@@ -202,6 +224,11 @@
 #pragma mark -
 #pragma mark Locking
 
+/*!
+	@method		isLocked
+	@abstract	Reports whether the default typed setters are confined to existing keys.
+	@discussion	Introduced in FxGrip 0.1.0. The flag lives under kCustomAPI_IsLocked and defaults to YES.
+*/
 // This is to lock the default API values to only those that are already set.
 //  Any API call to set a variable in FxGripMutableParameter will return
 //	NO if its not already set.
@@ -332,6 +359,13 @@
 
 
 // Histograms
+/*!
+	@method		getHistogramBlackIn:blackOut:whiteIn:whiteOut:gamma:forChannel:forKey:
+	@abstract	Reads one histogram channel's levels from the array stored at a key.
+	@discussion	Introduced in FxGrip 0.1.0. The stored array holds one entry per channel. The RGB
+				channel averages the red, green, and blue entries. A missing entry yields the identity
+				levels: black-in 0, black-out 0, white-in 1, white-out 1, gamma 1.
+*/
 //bIn, bOut, wIn, wOut, & gamma for each RGBA
 - (BOOL)getHistogramBlackIn:(double*)blackIn
 				   blackOut:(double*)blackOut
@@ -388,6 +422,13 @@
 	return NO;
 }
 
+/*!
+	@method		setHistogramBlackIn:blackOut:whiteIn:whiteOut:gamma:forChannel:forKey:
+	@abstract	Writes one histogram channel's levels into the array stored at a key.
+	@discussion	Introduced in FxGrip 0.1.0. The array grows to four channel entries on first write.
+				The RGB channel writes the red, green, and blue entries; a specific channel writes
+				only its own entry.
+*/
 - (BOOL)setHistogramBlackIn:(double)blackIn
 				   blackOut:(double)blackOut
 					whiteIn:(double)whiteIn
@@ -397,7 +438,7 @@
 					 forKey:(id<NSCopying>)aKey
 {
 	id histogram = [self objectForKey:aKey];
-	
+
 	if (!histogram || ![histogram isKindOfClass:[NSMutableArray class]]) {
 		histogram = [NSMutableArray arrayWithCapacity:4];
 	}
@@ -756,6 +797,12 @@
 // derive from the five dictionary primitives implemented above; overriding them here
 // with stubs is what broke the class-cluster contract.
 
+/*!
+	@method		exemptKeys
+	@abstract	The mutable array of keys exempt from interpolation.
+	@discussion	Introduced in FxGrip 0.1.0. The array is created on first access and always contains
+				the exempt-keys key and the last-changed key.
+*/
 - (NSMutableArray*)exemptKeys
 {
 	NSMutableArray *exemptKeys = [self objectForKey:kCustomAPI_ExemptKeysKey];

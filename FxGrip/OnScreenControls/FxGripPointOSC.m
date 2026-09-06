@@ -1,7 +1,15 @@
-//
-//  FxGripPointOSC.m
-//  FxGrip
-//
+/*!
+	@file       FxGripPointOSC.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPointOSC
+	@abstract   Implements the FxGripPointOptions point parts and the control that composes them.
+	@discussion Introduced in FxGrip 0.1.0. The rich handle applies the options' pin offset, mouse speed,
+	            constraint, and range while dragging. The divider, background image, and name label are
+	            display and interaction companions. The control tracks the hovered handle to show and
+	            hide the name labels.
+*/
 
 #import "FxGripPointOSC.h"
 #import "FxGripEventModifiers.h"
@@ -83,6 +91,11 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 
 #pragma mark - Rich point handle
 
+/*!
+	@abstract	The draggable handle of a point parameter configured by FxGripPointOptions.
+	@discussion	Introduced in FxGrip 0.1.0. The handle draws at the parameter's position or a pin offset,
+				and a drag applies the options' mouse speed, constraint, and range.
+*/
 @implementation FxGripOSCRichPointHandlePart
 {
 	CGPoint _dragAnchor;
@@ -171,6 +184,7 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 	}
 }
 
+/*! @abstract Advances the drag by the delta scaled by mouse speed, then constrains and clamps the write. */
 - (BOOL)dragToObjectPoint:(CGPoint)objectPoint
 			  objectDelta:(CGPoint)objectDelta
 				modifiers:(FxModifierKeys)modifiers
@@ -231,6 +245,11 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 
 #pragma mark - Divider
 
+/*!
+	@abstract	The divider line of an axis-constrained point.
+	@discussion	Introduced in FxGrip 0.1.0. A thin divider is display only; a thick divider answers hits
+				along its length and drags the point along the free axis.
+*/
 @implementation FxGripOSCPointDividerPart
 
 - (nonnull instancetype)initWithPartID:(NSInteger)partID
@@ -296,6 +315,12 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 
 #pragma mark - Background image
 
+/*!
+	@abstract	A display-only image drawn beneath a point's control.
+	@discussion	Introduced in FxGrip 0.1.0. Draws the options' named or file-path image centered on the
+				background object point, sized as a fraction of the input width. The texture is built
+				once per Metal device.
+*/
 @implementation FxGripOSCPointBackgroundPart
 {
 	id<MTLTexture> _texture;
@@ -382,6 +407,11 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 
 #pragma mark - Name label
 
+/*!
+	@abstract	The parameter-name readout beside a point's handle.
+	@discussion	Introduced in FxGrip 0.1.0. A HUD readout anchored to the point. When nameOnlyWhenAbove
+				is set the label draws only while the tracked handle is hovered.
+*/
 @implementation FxGripOSCPointLabelPart
 
 - (BOOL)visible
@@ -405,8 +435,18 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 
 #pragma mark - Control
 
+/*!
+	@abstract	An on-screen control composed from FxGripPointOptions-configured point parameters.
+	@discussion	Introduced in FxGrip 0.1.0. Composes the parts for each added point and tracks the
+				hovered handle to show and hide the name labels.
+*/
 @implementation FxGripPointOSC
 
+/*!
+	@method		pointPartsWithOptions:firstPartID:parameterID:name:
+	@abstract	Builds the parts for one point, numbered firstPartID upward.
+	@discussion	Introduced in FxGrip 0.1.0. Inclusion order: background image, divider, handle, name
+				label. The thick divider replaces the handle. */
 + (nonnull NSArray<FxGripOSCPart *> *)pointPartsWithOptions:(nonnull FxGripPointOptions *)options
 												firstPartID:(NSInteger)firstPartID
 												parameterID:(FxParameterId)parameterID
@@ -458,6 +498,7 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 	return parts;
 }
 
+/*! @abstract Composes and appends the parts for one point, numbering them after the existing parts. */
 - (void)addPointParameter:(FxParameterId)parameterID
 					 name:(nullable NSString *)name
 				  options:(nonnull FxGripPointOptions *)options
@@ -486,6 +527,7 @@ static CGPoint FxGripPointConstrain(FxGripPointOptions *options, CGPoint anchor,
 	return changed;
 }
 
+/*! @abstract Updates the labels' hover state from the active part after applying the cursor. */
 - (void)mouseMovedAtPositionX:(double)mousePositionX
 					positionY:(double)mousePositionY
 				   activePart:(NSInteger)activePart

@@ -1,14 +1,12 @@
-//
-//  FxGripLiveFrameTests.m
-//  FxGripTests
-//
-//  Unit tests for the published live frame: the supported pixel-format table, the tight
-//  repacking of strided rows, the format and size descriptions, the CGImage built from
-//  integer and float layouts, and the texture, CGImage, and image-buffer constructors.
-//
-//  The test bundle links only FxGrip and XCTest. Metal and CoreGraphics entry points are
-//  reached through the loaded images rather than a link-time reference.
-//
+/*!
+	@file       FxGripLiveFrameTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripLiveFrameTests
+	@abstract   Tests the FxGripLiveFrame published frame across its constructors and conversions.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the supported pixel-format table, tight repacking of strided source rows, the format and size descriptions, the CGImage built from integer, half-float, and float layouts, and the constructors that build a frame from bytes, a CGImage, an FxGripImageBuffer, and a Metal texture.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -74,6 +72,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 
 #pragma mark Formats
 
+/*! @abstract The supported formats are the RGBA, BGRA, and single-channel families, and other formats report unsupported. */
 - (void)testTheSupportedFormatsAreTheRGBABGRAAndSingleChannelFamilies
 {
 	XCTAssertTrue([FxGripLiveFrame supportsPixelFormat:MTLPixelFormatRGBA8Unorm]);
@@ -93,12 +92,14 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertFalse([FxGripLiveFrame supportsPixelFormat:MTLPixelFormatInvalid]);
 }
 
+/*! @abstract Building a frame from an unsupported pixel format returns nil. */
 - (void)testAnUnsupportedFormatMakesNoFrame
 {
 	uint8_t pixels[16] = {0};
 	XCTAssertNil([FxGripLiveFrame frameWithBytes:pixels rowBytes:8 width:2 height:2 pixelFormat:MTLPixelFormatRG8Unorm]);
 }
 
+/*! @abstract A zero dimension, a NULL source, or a stride shorter than one tight row returns nil. */
 - (void)testZeroDimensionsANilSourceOrAShortStrideMakeNoFrame
 {
 	uint8_t pixels[64] = {0};
@@ -108,6 +109,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertNil([FxGripLiveFrame frameWithBytes:pixels rowBytes:8 width:4 height:2 pixelFormat:MTLPixelFormatRGBA8Unorm]);
 }
 
+/*! @abstract Each supported format reports its bytes per pixel, row bytes, float flag, format name, and size description. */
 - (void)testFormatDescriptionsAndBytesPerPixel
 {
 	uint8_t pixels[3 * 2 * 16] = {0};
@@ -136,6 +138,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 
 #pragma mark Bytes
 
+/*! @abstract A tightly packed source is copied as is into the frame's pixels. */
 - (void)testATightSourceIsCopiedAsIs
 {
 	NSData *pixels = [self rgba8PixelsForWidth:5 height:3];
@@ -147,6 +150,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqualObjects(frame.pixels, pixels);
 }
 
+/*! @abstract A strided source repacks to tight rows, and the frame reports the tight row bytes. */
 - (void)testAStridedSourceRepacksTightly
 {
 	NSData *tight = [self rgba8PixelsForWidth:5 height:3];
@@ -161,6 +165,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqualObjects(frame.pixels, tight);
 }
 
+/*! @abstract The frame owns a copy of its pixels, so mutating the source afterward does not change the frame. */
 - (void)testTheFrameOwnsACopyOfItsPixels
 {
 	NSMutableData *pixels = [[self rgba8PixelsForWidth:2 height:2] mutableCopy];
@@ -172,6 +177,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqual(((const uint8_t *)frame.pixels.bytes)[4], 1);
 }
 
+/*! @abstract A frame is immutable, so copy returns the same object. */
 - (void)testAFrameIsImmutableSoCopyReturnsTheSameObject
 {
 	NSData *pixels = [self rgba8PixelsForWidth:2 height:2];
@@ -180,6 +186,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertTrue([frame copy] == frame);
 }
 
+/*! @abstract The frame timestamp is taken at creation, between the uptime readings that bracket it. */
 - (void)testTheTimestampIsTakenAtCreation
 {
 	NSTimeInterval before = NSProcessInfo.processInfo.systemUptime;
@@ -194,6 +201,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 
 #pragma mark CGImage
 
+/*! @abstract An integer frame builds a CGImage of the frame's size and depth, built once and owned by the frame. */
 - (void)testAnIntegerFrameBuildsACGImageWrappingItsPixels
 {
 	FxGripLiveFrameTestImageSize width = FxGripLiveFrameTestSymbol("CGImageGetWidth");
@@ -213,6 +221,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertTrue(frame.CGImage == image, @"the image is built once and owned by the frame");
 }
 
+/*! @abstract A 16-bit frame keeps its 16 bits per component in the CGImage. */
 - (void)testASixteenBitFrameKeepsItsDepthInTheCGImage
 {
 	FxGripLiveFrameTestImageSize bitsPerComponent = FxGripLiveFrameTestSymbol("CGImageGetBitsPerComponent");
@@ -226,6 +235,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqual(bitsPerComponent(frame.CGImage), 16u);
 }
 
+/*! @abstract A float frame converts to 8 bits per component for its CGImage while keeping its float pixels. */
 - (void)testAFloatFrameConvertsToEightBitsForItsCGImage
 {
 	FxGripLiveFrameTestImageSize bitsPerComponent = FxGripLiveFrameTestSymbol("CGImageGetBitsPerComponent");
@@ -249,6 +259,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqual(bitsPerPixel(single.CGImage), 8u);
 }
 
+/*! @abstract A half-float frame converts through the half decoder to an 8-bit-per-component CGImage. */
 - (void)testAHalfFloatFrameConvertsThroughTheHalfDecoder
 {
 	FxGripLiveFrameTestImageSize bitsPerComponent = FxGripLiveFrameTestSymbol("CGImageGetBitsPerComponent");
@@ -263,6 +274,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqual(bitsPerComponent(frame.CGImage), 8u);
 }
 
+/*! @abstract Setting the color space name discards the built image and stores the new name, so a fresh image builds. */
 - (void)testSettingTheColorSpaceNameDiscardsTheBuiltImage
 {
 	NSData *pixels = [self rgba8PixelsForWidth:2 height:2];
@@ -276,6 +288,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertTrue(frame.CGImage != NULL);
 }
 
+/*! @abstract A CGImage round-trips through an RGBA8 frame, preserving the size, format, and opaque sRGB bytes. */
 - (void)testACGImageRoundTripsThroughAnRGBA8Frame
 {
 	NSData *pixels = [self rgba8PixelsForWidth:4 height:3];
@@ -292,6 +305,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqualObjects(frame.pixels, pixels);
 }
 
+/*! @abstract Building a frame from a NULL CGImage returns nil. */
 - (void)testANullCGImageMakesNoFrame
 {
 	XCTAssertNil([FxGripLiveFrame frameWithCGImage:NULL]);
@@ -299,6 +313,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 
 #pragma mark Image buffer
 
+/*! @abstract An RGBA8 image buffer maps to the matching Metal format and keeps its pixels. */
 - (void)testAnRGBA8BufferMapsToTheMatchingMetalFormat
 {
 	NSData *pixels = [self rgba8PixelsForWidth:4 height:2];
@@ -313,6 +328,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqualObjects(frame.pixels, pixels);
 }
 
+/*! @abstract A three-channel image buffer converts to RGBA8 with an opaque alpha. */
 - (void)testAThreeChannelBufferConvertsToRGBA8
 {
 	uint8_t rgb[3 * 2 * 3] = { 10, 20, 30,  40, 50, 60,  70, 80, 90,
@@ -331,6 +347,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqual(bytes[3], 255);
 }
 
+/*! @abstract A float image buffer keeps its float format and its exact pixel bytes. */
 - (void)testAFloatBufferKeepsItsFloatFormat
 {
 	float pixels[2 * 1 * 4] = { 0.5f, 1.0f, 0.0f, 1.0f,  2.0f, -1.0f, 0.25f, 1.0f };
@@ -343,6 +360,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqual(memcmp(frame.pixels.bytes, pixels, sizeof(pixels)), 0);
 }
 
+/*! @abstract Building a frame from a nil image buffer returns nil. */
 - (void)testANilBufferMakesNoFrame
 {
 	XCTAssertNil([FxGripLiveFrame frameWithImageBuffer:(FxGripImageBuffer * _Nonnull)nil]);
@@ -350,6 +368,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 
 #pragma mark Metal
 
+/*! @abstract A shared Metal texture reads back into a frame with its size, format, and pixels. */
 - (void)testASharedTextureReadsBackIntoAFrame
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -367,6 +386,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqualObjects(frame.pixels, pixels);
 }
 
+/*! @abstract A BGRA texture reads back keeping its own format and format description. */
 - (void)testABGRATextureReadsBackWithItsOwnFormat
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -379,6 +399,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertEqualObjects(frame.formatDescription, @"BGRA8");
 }
 
+/*! @abstract A texture in an unsupported format returns nil. */
 - (void)testAnUnsupportedTextureFormatMakesNoFrame
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -388,6 +409,7 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	XCTAssertNil([FxGripLiveFrame frameWithTexture:texture]);
 }
 
+/*! @abstract A private-storage texture, which cannot be read back, returns nil. */
 - (void)testAPrivateTextureMakesNoFrame
 {
 	id<MTLDevice> device = [self metalDevice];

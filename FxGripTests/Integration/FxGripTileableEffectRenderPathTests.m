@@ -1,19 +1,12 @@
-//
-//  FxGripTileableEffectRenderPathTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripTileableEffect's host render-path entry points: the
-//  plist-seeded parameters configuration, the destination-image-rect and
-//  source-tile-rect defaults and their forwarding to the subclass pluginCoder:
-//  variants, and the scheduleInputs dispatch.
-//
-//  Every effect is an instance of a local subclass returning a private
-//  NSPriorityNotificationCenter, the FxGripTileableEffectCategoriesTests
-//  convention, so no test touches the process-wide center. FxImageTile and
-//  FxMatrix44 are stood in for by local stubs implementing exactly the messages
-//  the base sends (imagePixelBounds, pixelTransform, inversePixelTransform,
-//  transform2DPoint:), cast to the FxPlug pointer types.
-//
+/*!
+	@file       FxGripTileableEffectRenderPathTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffectRenderPathTests
+	@abstract   Verifies FxGripTileableEffect's host render-path entry points and plugin-state envelope.
+	@discussion Introduced in FxGrip 0.1.0. Local stubs stand in for FxImageTile and FxMatrix44, implementing only the messages the base sends. The tests cover the plist-seeded parameters configuration, the destination-image-rect and source-tile-rect defaults and their forwarding to the subclass pluginCoder variants, the scheduleInputs dispatch probed with respondsToSelector, and the plugin-state compression envelope round-trip and corruption rejection.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -259,6 +252,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 
 #pragma mark Parameters configuration
 
+/*! @abstract The parameters configuration seeds from the declared table in the plugin properties as a mutable array. */
 - (void)testTheParametersConfigurationSeedsFromThePluginPropertiesTable
 {
 	NSArray<NSDictionary *> *declared = @[
@@ -276,6 +270,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 	XCTAssertTrue([configuration isKindOfClass:NSMutableArray.class]);
 }
 
+/*! @abstract The parameters configuration is an empty array when the plugin properties declare no table. */
 - (void)testTheParametersConfigurationIsEmptyWithoutADeclaredTable
 {
 	FxGripRenderPathTestEffect *effect = [self makeEffectOfClass:FxGripRenderPathTestEffect.class];
@@ -288,6 +283,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 
 #pragma mark Destination image rect
 
+/*! @abstract The destination image rect defaults to the image-space union of the source tiles. */
 - (void)testTheDestinationImageRectDefaultsToTheSourcesImageSpaceUnion
 {
 	FxGripRenderPathTestEffect *effect = [self makeEffectOfClass:FxGripRenderPathTestEffect.class];
@@ -311,6 +307,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 				  rect.left, rect.bottom, rect.right, rect.top);
 }
 
+/*! @abstract The destination image rect defaults to the output bounds when there are no sources. */
 - (void)testTheDestinationImageRectDefaultsToTheOutputBoundsWithoutSources
 {
 	FxGripRenderPathTestEffect *effect = [self makeEffectOfClass:FxGripRenderPathTestEffect.class];
@@ -330,6 +327,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 	XCTAssertTrue(FxGripRenderPathRectsEqual(rect, expected));
 }
 
+/*! @abstract The destination image rect forwards to the subclass coder variant, whose rect reaches the host. */
 - (void)testTheDestinationImageRectForwardsToTheCoderVariant
 {
 	FxGripRenderPathCoderEffect *effect =
@@ -354,6 +352,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 
 #pragma mark Source tile rect
 
+/*! @abstract A fixed-output-size effect mirrors the destination tile as the source tile rect and still runs its coder method with that starting rect. */
 - (void)testTheSourceTileRectMirrorsTheDestinationTileWhenOutputSizeIsFixed
 {
 	FxGripRenderPathCoderEffect *effect =
@@ -380,6 +379,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 				  @"the coder method receives the mirrored default as its starting rect");
 }
 
+/*! @abstract When the output size changes, the source tile rect uses the indexed source's pixel transform. */
 - (void)testTheSourceTileRectUsesTheIndexedSourceWhenOutputSizeChanges
 {
 	FxGripRenderPathTestEffect *effect = [self makeEffectOfClass:FxGripRenderPathTestEffect.class];
@@ -409,6 +409,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 				  rect.left, rect.bottom, rect.right, rect.top);
 }
 
+/*! @abstract The source tile rect refuses an out-of-range source index and returns the FxPlug error domain. */
 - (void)testTheSourceTileRectRefusesAnOutOfRangeSourceIndex
 {
 	FxGripRenderPathTestEffect *effect = [self makeEffectOfClass:FxGripRenderPathTestEffect.class];
@@ -431,6 +432,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 
 #pragma mark Schedule inputs
 
+/*! @abstract Schedule inputs dispatches to the subclass plugin-coder method and returns its staged requests. */
 - (void)testScheduleInputsDispatchesThePluginCoderSelector
 {
 	FxGripRenderPathSchedulingEffect *effect =
@@ -449,6 +451,7 @@ static FxGripRenderPathTestTile *FxGripRenderPathTile(SInt32 left, SInt32 bottom
 	XCTAssertEqualObjects(requests, effect.stagedRequests);
 }
 
+/*! @abstract Schedule inputs leaves the requests out-parameter untouched when the subclass implements no scheduling method. */
 - (void)testScheduleInputsLeavesTheRequestsUntouchedWithoutAnImplementation
 {
 	// A coder-state conformer without the optional method: the dispatcher must probe
@@ -481,6 +484,7 @@ static NSData *FxGripRenderPathLargeState(void)
 	return archiver.encodedData;
 }
 
+/*! @abstract Plugin-state compression defaults to none with the default envelope threshold. */
 - (void)testPluginStateCompressionDefaultsToNone
 {
 	FxGripRenderPathTestEffect *effect = [self makeEffectOfClass:FxGripRenderPathTestEffect.class];
@@ -489,6 +493,7 @@ static NSData *FxGripRenderPathLargeState(void)
 	XCTAssertEqual(effect.pluginStateCompressionThreshold, FxGripCompressionEnvelopeThresholdDefault);
 }
 
+/*! @abstract The render path decompresses an enveloped plugin state and reaches the coder method. */
 - (void)testTheRenderPathDecodesACompressedPluginState
 {
 	FxGripRenderPathCoderEffect *effect =
@@ -511,6 +516,7 @@ static NSData *FxGripRenderPathLargeState(void)
 	XCTAssertTrue(effect.destinationCoderCalled);
 }
 
+/*! @abstract The render path rejects a corrupted compressed plugin state with an error. */
 - (void)testTheRenderPathRejectsACorruptCompressedPluginState
 {
 	FxGripRenderPathCoderEffect *effect =
@@ -535,6 +541,7 @@ static NSData *FxGripRenderPathLargeState(void)
 
 /*! A blob produced with compression enabled decodes on the render side unchanged, whether
 	the size gate compressed it or passed it through. */
+/*! @abstract A plugin state encoded with compression enabled round-trips and decodes on the render side. */
 - (void)testPluginStateRoundTripsWithCompressionEnabled
 {
 	FxGripRenderPathCoderEffect *effect =

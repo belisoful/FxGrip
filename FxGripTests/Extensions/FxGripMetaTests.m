@@ -1,12 +1,12 @@
-//
-//  FxGripMetaTests.m
-//  FxGripTests
-//
-//  Unit tests for the meta wiring: the FxGripMeta extension's InstanceMeta
-//  parameter registration, record seeding from the parameter configuration,
-//  the document merge, flush persistence, and the tag/meta delegation the
-//  parameter APIs perform through the effect's manager.
-//
+/*!
+	@file       FxGripMetaTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMetaTests
+	@abstract   Unit tests for the FxGripMeta extension and the tag and meta parameter-API delegation.
+	@discussion Introduced in FxGrip 0.1.0. Stub host API objects record the writes and triggers the extension performs. The tests cover the InstanceMeta parameter registration, record seeding from the parameter configuration, the document manager adoption and merge, the parameter-changed target-preset and reset-value pass, and flush persistence. They cover the FxGripParameterTagsAPI_v1 and FxGripMetaAPI_v1 delegation to the effect's manager, with sentinel returns when the effect has no meta.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -346,6 +346,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 #pragma mark Extension Registration
 
+/*! @abstract A freshly initialized extension targets the InstanceMeta parameter id and has no manager. */
 - (void)testInitUsesTheInstanceMetaParameterIDAndHasNoManager
 {
 	XCTAssertEqual(self.extension.parameterID, (FxParameterId)kFxParameterId_InstanceMeta);
@@ -353,6 +354,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertNil(self.extension.manager);
 }
 
+/*! @abstract The data classes include the meta manager and the inherited dictionary and array container classes. */
 - (void)testDataClassesIncludeTheManagerAndTheInheritedContainers
 {
 	NSSet *dataClasses = self.extension.dataClasses;
@@ -363,6 +365,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertTrue([dataClasses containsObject:NSArray.class]);
 }
 
+/*! @abstract Adding parameters registers the hidden custom InstanceMeta parameter with its factory and preset-no-meta flags. */
 - (void)testExtAddParametersRegistersTheHiddenInstanceMetaParameter
 {
 	NSMutableArray *parameters = NSMutableArray.new;
@@ -391,6 +394,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 #pragma mark Seeding
 
+/*! @abstract A parameter add seeds the manager with the configuration's tags, meta, and reset and target-preset record entries, and marks it unsaved. */
 - (void)testParameterAddSeedsTagsMetaAndConfigurationRecordEntries
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -416,6 +420,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertTrue(manager.unsaved);
 }
 
+/*! @abstract A parameter add with no configuration still creates the manager record for the parameter. */
 - (void)testParameterAddWithoutConfigurationStillCreatesTheRecord
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -425,6 +430,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertTrue([self.extension.manager parameterExists:kMetaTestParamA]);
 }
 
+/*! @abstract Reseeding keeps the existing user meta, target preset, and reset values and adds the configuration tags. */
 - (void)testRepeatedSeedingKeepsExistingRecordValuesAndAddsConfigurationTags
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -452,6 +458,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertTrue([tags containsObject:@"user"]);
 }
 
+/*! @abstract A parameter remove drops the manager record for the parameter. */
 - (void)testParameterRemoveDropsTheRecord
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -465,6 +472,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertFalse([self.extension.manager parameterExists:kMetaTestParamA]);
 }
 
+/*! @abstract A parameter add for the InstanceMeta parameter itself seeds no manager. */
 - (void)testInstanceMetaParameterIsNeverSeeded
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -476,6 +484,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertNil(self.extension.manager);
 }
 
+/*! @abstract A parameter add seeds the record under the parameter id the creation-API notification carries. */
 - (void)testParameterAddSeedsTheParameterIDCarriedByTheCreationAPINotification
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -488,6 +497,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 						  @"the seeded record carries the parameter ID the creation API announced");
 }
 
+/*! @abstract A parameter remove drops the record named by the dynamic-API notification. */
 - (void)testParameterRemoveDropsTheRecordNamedByTheDynamicAPINotification
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -503,6 +513,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 #pragma mark Document Load
 
+/*! @abstract Added-to-document adopts the stored document manager and merges the seeded records, with document values winning over configuration defaults. */
 - (void)testAddedToDocumentAdoptsTheDocumentManagerAndMergesSeededRecords
 {
 	FxGripMetaManager *documentManager = [FxGripMetaManager.alloc initWithEffect:nil];
@@ -545,6 +556,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqualObjects(value, @"seeded");
 }
 
+/*! @abstract Added-to-document creates a manager when the document holds none. */
 - (void)testAddedToDocumentCreatesAManagerWhenTheDocumentHoldsNone
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -559,6 +571,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 // extAddedToDocument: clears the loaded manager's unsaved flag before merging the seeded
 // records. A seeded reset/target key merges through a direct record write that bypasses the
 // manager's mutators, so it must raise the unsaved flag by hand or the entry never flushes.
+/*! @abstract Merging a seeded reset key into the loaded document manager raises its unsaved flag so the next flush persists it. */
 - (void)testMergingASeededResetKeyLeavesTheDocumentManagerUnsaved
 {
 	FxGripMetaManager *documentManager = [FxGripMetaManager.alloc initWithEffect:nil];
@@ -631,6 +644,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 									userInfo:userInfo]];
 }
 
+/*! @abstract A parameter-changed notification with no parameter id applies no triggers. */
 - (void)testParameterChangedWithoutAParameterIDAppliesNothing
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -645,6 +659,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqualObjects(events, @[]);
 }
 
+/*! @abstract A parameter change applies the value sections, then the reset value, then the names, in that order. */
 - (void)testParameterChangedAppliesTheValueSectionsThenTheResetValueThenTheNames
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -661,6 +676,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqualObjects(self.stubSetAPI.resetParameterIDs, @[@(kMetaTestParamA)]);
 }
 
+/*! @abstract A parameter change applies only the value and name triggers and writes no reset value when the record carries none. */
 - (void)testParameterChangedAppliesOnlyTheTriggersWhenTheRecordCarriesNoResetValue
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -673,6 +689,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqualObjects(self.stubSetAPI.resetValues, @[]);
 }
 
+/*! @abstract A parameter change fires the target-preset triggers against the changed parameter id. */
 - (void)testParameterChangedTriggersTheChangedParameter
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -684,6 +701,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqualObjects(self.stubTagsAPI.parameterIDs, (@[@(kMetaTestParamB), @(kMetaTestParamB)]));
 }
 
+/*! @abstract A parameter change forwards the CMTime carried by the notification to the tags and set APIs. */
 - (void)testParameterChangedForwardsTheTimeCarriedByTheNotification
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -697,6 +715,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertTrue(FxGripMetaTestTimesEqual(self.stubSetAPI.lastResetTime, time));
 }
 
+/*! @abstract A parameter change with no time uses the zero time for the tags and set APIs. */
 - (void)testParameterChangedWithoutATimeUsesTheZeroTime
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -709,6 +728,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertTrue(FxGripMetaTestTimesEqual(self.stubSetAPI.lastResetTime, FxGripMetaTestMakeTime(0, 1)));
 }
 
+/*! @abstract A parameter change writes nothing, including the reset value, when the tags API lacks the target-preset trigger. */
 - (void)testParameterChangedAppliesNothingWhenTheTagsAPILacksTheTrigger
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -721,6 +741,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqualObjects(events, @[], @"the reset value is not written without the trigger");
 }
 
+/*! @abstract The parameter-changed handler runs at priority -10. */
 - (void)testParameterChangedPriorityFollowsThePerParameterHandlers
 {
 	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectParameterChangedName], (NSInteger)-10);
@@ -728,6 +749,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 
 #pragma mark Persistence
 
+/*! @abstract Flush writes the manager once to the InstanceMeta parameter, clears its unsaved flag, and does not write an unchanged manager again. */
 - (void)testFlushWritesTheManagerOncePerMutation
 {
 	[self.extension extLoadWithEffect:(id)self.effect];
@@ -768,6 +790,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqual(error.code, kFxError_ThirdPartyDeveloperStart + parameterID);
 }
 
+/*! @abstract The tags API returns nil and sentinel counts and no-meta errors when the effect has no meta. */
 - (void)testTagsAPIReturnsSentinelsWhenTheEffectHasNoMeta
 {
 	self.effect.hasMeta = NO;
@@ -789,6 +812,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	[self assertError:error isNoMetaFailureForParameter:kMetaTestParamA];
 }
 
+/*! @abstract The tags API forwards add, query, count, and remove operations to the manager when the effect has meta. */
 - (void)testTagsAPIForwardsToTheManagerWhenTheEffectHasMeta
 {
 	FxGripMetaManager *manager = [FxGripMetaManager.alloc initWithEffect:nil];
@@ -820,6 +844,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	return [FxGripMetaAPI_v1.alloc initWithEffect:(id)self.effect];
 }
 
+/*! @abstract The meta API returns sentinel counts and no-meta errors when the effect has no meta. */
 - (void)testDynamicAPIMetaReturnsSentinelsWhenTheEffectHasNoMeta
 {
 	self.effect.hasMeta = NO;
@@ -840,6 +865,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	[self assertError:error isNoMetaFailureForParameter:kMetaTestParamA];
 }
 
+/*! @abstract The meta API forwards set, get, count, query, and remove operations to the manager when the effect has meta. */
 - (void)testDynamicAPIMetaForwardsToTheManagerWhenTheEffectHasMeta
 {
 	FxGripMetaManager *manager = [FxGripMetaManager.alloc initWithEffect:nil];
@@ -869,6 +895,7 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertEqual([api metaCountFromParameter:kMetaTestParamA], 0);
 }
 
+/*! @abstract The orphan meta-count and remove-meta selectors are absent from both parameter APIs. */
 - (void)testOrphanMetaStubsAreAbsentFromTheParameterAPIs
 {
 	SEL metaCount = NSSelectorFromString(@"parameterMetaCount:");

@@ -1,12 +1,12 @@
-//
-//  FxGripAdoptionTests.m
-//  FxGripTests
-//
-//  Verifies the incremental-adoption contract: a plain FxPlug-style plug-in that does not use
-//  FxGripTileableEffect drives the parameter subsystem through the narrow FxGripEffectHost
-//  protocol, with only the two required members. The optional-member fallbacks (font default,
-//  gamut conversion, group recursion, preset meta) must degrade, not crash.
-//
+/*!
+	@file       FxGripAdoptionTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAdoptionTests
+	@abstract   Verifies the incremental-adoption contract for hosts that adopt FxGrip through the narrow FxGripEffectHost protocol.
+	@discussion Introduced in FxGrip 0.1.0. A minimal host implements only the required host members, and the tests confirm the parameter subsystem registers standard and custom controls through it while the optional-member fallbacks degrade rather than crash. Further tests cover the FxGripPluginHost wrapper over a bare PROAPIAccessing, the effectBase seam, the host attribute helpers, the custom creation API, and the extension system dispatch of properties, parameters, changes, and flush.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripDictionary.h>
@@ -96,6 +96,7 @@
 	self.host.center = [NSNotificationCenter new];
 }
 
+/*! @abstract A subclassed FxGripTileableEffect conforms to the FxGripEffectHost protocol. */
 - (void)testTheEffectBaseConformsToTheHostProtocol
 {
 	XCTAssertTrue([NSClassFromString(@"FxGripTileableEffect")
@@ -103,6 +104,7 @@
 				  @"a subclassed effect satisfies every host-typed entry point");
 }
 
+/*! @abstract A minimal host registers a standard float parameter, and the creation call reaches its API manager with the right ID. */
 - (void)testAMinimalHostRegistersAStandardParameter
 {
 	NSDictionary *parameter = @{
@@ -117,6 +119,7 @@
 	XCTAssertEqualObjects(call[@"id"], @101);
 }
 
+/*! @abstract A minimal host registers a custom status control through the creation API. */
 - (void)testAMinimalHostRegistersACustomControl
 {
 	NSDictionary *parameter = @{
@@ -128,6 +131,7 @@
 	XCTAssertNotNil(self.host.manager.paramCreateAPIv5.lastCall);
 }
 
+/*! @abstract A font menu on a host without a default font name registers with the shipped default font. */
 - (void)testTheFontMenuFallsBackToTheDefaultFontOnAMinimalHost
 {
 	NSDictionary *parameter = @{
@@ -141,6 +145,7 @@
 						  @"no defaultFontName on the host; the shipped default is used");
 }
 
+/*! @abstract A color with a color space registers unconverted when the host supplies no gamut flags. */
 - (void)testAColorWithAColorSpaceSkipsConversionOnAMinimalHost
 {
 	NSDictionary *parameter = @{
@@ -154,6 +159,7 @@
 				  @"the gamut flags are absent, so the color registers unconverted");
 }
 
+/*! @abstract A group on a minimal host emits an open and a close call without recursing into children. */
 - (void)testAGroupOnAMinimalHostOpensAndClosesWithoutRecursion
 {
 	NSDictionary *parameter = @{
@@ -166,6 +172,7 @@
 	XCTAssertEqual(calls.count, 2u, @"the group opens and closes; the host adds its own children");
 }
 
+/*! @abstract FxGripPluginHost wraps a bare PROAPIAccessing, conforms to the host protocol, and stands up the API and notifier. */
 - (void)testThePluginHostWrapsARawAPIManager
 {
 	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxGripAdoptionStubPRO new]];
@@ -176,6 +183,7 @@
 
 #pragma mark The effectBase seam
 
+/*! @abstract A plain host and a plugin host both report a nil effect base. */
 - (void)testHostsWithoutABaseReportANilEffectBase
 {
 	XCTAssertNil(self.host.effectBase, @"a plain plug-in host has no effect base");
@@ -183,6 +191,7 @@
 	XCTAssertNil(pluginHost.effectBase);
 }
 
+/*! @abstract Base-only reads through a nil effect base return nil rather than crashing. */
 - (void)testRichReadsDegradeThroughANilEffectBase
 {
 	// The API layer reads base-only members as host.effectBase.<member>; nil messaging makes a
@@ -192,6 +201,7 @@
 	XCTAssertNil([base configurationForParameter:1]);
 }
 
+/*! @abstract The host attribute helpers read a host's own direct members when no effect base is present. */
 - (void)testTheHostAttributeHelpersPreferTheDirectMembers
 {
 	FxGripAdoptionAttributedHost *host = [FxGripAdoptionAttributedHost new];
@@ -201,6 +211,7 @@
 	XCTAssertNil(host.effectBase, @"the attributes did not come from a base");
 }
 
+/*! @abstract The host attribute helpers degrade to nil or false on a host with no attributes and no base. */
 - (void)testTheHostAttributeHelpersDegradeToNilWithoutABase
 {
 	XCTAssertNil(FxGripHostPluginProperties(self.host));
@@ -210,6 +221,7 @@
 	XCTAssertNil(FxGripHostParameterData(self.host));
 }
 
+/*! @abstract The plugin host answers the plugin UUID from its wrapped manager. */
 - (void)testThePluginHostAnswersThePluginUUIDFromItsManager
 {
 	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxGripAdoptionStubPRO new]];
@@ -219,6 +231,7 @@
 
 #pragma mark Custom creation API
 
+/*! @abstract The custom creation API registers status, banner, and random controls Apple-style, and returns nil without a host. */
 - (void)testTheCustomCreationAPICreatesControlsAppleStyle
 {
 	FxGripCustomCreationAPI_v1 *api = [[FxGripCustomCreationAPI_v1 alloc] initWithEffect:self.host];
@@ -237,6 +250,7 @@
 				 @"no effect host, no API");
 }
 
+/*! @abstract The plugin host vends the custom creation API through its routing layer, registered against the owning host. */
 - (void)testThePluginHostVendsTheCustomCreationAPIThroughTheRoutingLayer
 {
 	FxGripPluginHost *host = [[FxGripPluginHost alloc] initWithAPIManager:[FxGripAdoptionStubPRO new]];
@@ -303,12 +317,14 @@
 	XCTAssertTrue([self.system loadExtension:self.extension]);
 }
 
+/*! @abstract The extension system finds a loaded extension by its class and counts it once. */
 - (void)testTheSystemFindsALoadedExtensionByClass
 {
 	XCTAssertEqual([self.system extensionForClass:FxGripSysTestExtension.class], self.extension);
 	XCTAssertEqual(self.system.extensions.count, 1u);
 }
 
+/*! @abstract A properties dispatch reaches the extension and returns its edits merged with the base properties. */
 - (void)testPropertiesDispatchReachesTheExtensionAndReturnsItsEdits
 {
 	NSMutableDictionary *result = [self.system dispatchProperties:@{ @"base": @1 }];
@@ -317,6 +333,7 @@
 	XCTAssertEqualObjects(result[@"base"], @1);
 }
 
+/*! @abstract An add-parameters dispatch lets the extension append its own parameter to the plug-in's. */
 - (void)testAddParametersDispatchLetsTheExtensionAppend
 {
 	NSMutableArray *result = [self.system dispatchAddParameters:@[ @{ @"mine": @1 } ]];
@@ -324,6 +341,7 @@
 	XCTAssertEqual(result.count, 2u, @"the plug-in's parameter plus the extension's");
 }
 
+/*! @abstract A parameter-changed dispatch delivers the changed ID, and a flush reaches the extension. */
 - (void)testParameterChangedAndFlushDispatch
 {
 	CMTime time = { .value = 0, .timescale = 30, .flags = kCMTimeFlags_Valid };

@@ -1,10 +1,24 @@
-
+/*!
+	@file       FxGripTileableEffect+Versioning.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+Versioning
+	@abstract   Implements plugin-version reporting and the project upgrade path.
+	@discussion Introduced in FxGrip 0.1.0. The category reads the plugin version from the
+	            registration record and the installed version from the FxPlug versioning API. When
+	            the plugin version is greater, it runs the upgrade hook and records the new version.
+*/
 
 #import "FxGripTileableEffect+Versioning.h"
 #import "FxGripTileableEffect.h"
 #import <BEFoundation/NSString+BExtension.h>
 
 
+/*!
+	@abstract	The category that reports the plugin version and upgrades stored project data.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation FxGripTileableEffect (Versioning)
 
 
@@ -44,6 +58,14 @@
 	return [versioningAPI versionAtCreation];
 }
 
+/*!
+	@method		checkVersion:
+	@abstract	Upgrades the project when the plugin version is newer than the stored version.
+	@param		error	On failure, the error from the missing versioning API or the upgrade hook.
+	@return		YES when an upgrade runs and records the new version; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The method reads the installed version, and when the
+				plugin version is greater it runs upgradeFromVersion:currentVersion:error: and then
+				records the plugin version through the versioning API. */
 - (BOOL)checkVersion:(NSError * _Nullable * _Nullable)error
 {
 	id<FxVersioningAPI> versioningAPI = self.apiManager.versioningAPIv1;

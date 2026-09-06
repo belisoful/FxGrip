@@ -1,7 +1,15 @@
-//
-//  FxGripMLImageGenerator.h
-//  FxGrip
-//
+/*!
+	@file       FxGripMLImageGenerator.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLImageGenerator
+	@abstract   The generator template whose model produces each frame's image from no source.
+	@discussion Introduced in FxGrip 0.1.0. The generator is the counterpart of FxGripMLImageEffect.
+	            There is no source clip, so the request carries only the generator inputs and the
+	            inherited parameters. The per-frame cache applies unchanged. A generator has no
+	            source to fall back to, so until the backend is ready rendering draws a placeholder.
+*/
 
 #ifndef FxGripMLImageGenerator_h
 #define FxGripMLImageGenerator_h
@@ -13,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripMLImageGenerator
 	@abstract   A generator template whose model produces each frame's image from no source.
-	@discussion Introduced in FxGrip 1.0. The generator counterpart of ``FxGripMLImageEffect``:
+	@discussion Introduced in FxGrip 0.1.0. The generator counterpart of ``FxGripMLImageEffect``:
 				there is no source clip, so the request carries only generatorInputsAtTime: (a
 				prompt, conditioning data) and the inherited inferenceParametersAtTime:. The
 				per-frame cache applies unchanged, so a slow model still runs once per frame.

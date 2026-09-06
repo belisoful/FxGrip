@@ -1,7 +1,17 @@
-//
-//  FxGripOnScreenControl.m
-//  FxGrip
-//
+/*!
+	@file       FxGripOnScreenControl.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOnScreenControl
+	@abstract   Implements the on-screen control base: the Metal draw scaffold, the shadow pass, the
+	            draw kit, and mouse and key routing to parts.
+	@discussion Introduced in FxGrip 0.1.0. drawOSCWithWidth: renders a shadow phase, one offscreen
+	            render and blur per distinct blur radius, then the crisp foreground on top. The mouse
+	            handlers track the last object-space position, apply the Option fine-drag and Shift
+	            axis-constrain at the base, and route the drag delta to the active part. A double-click
+	            is synthesized from two clicks on one part, since FxPlug carries no click count.
+*/
 
 #import "FxGripOnScreenControl.h"
 #import "FxGripOSCPart.h"
@@ -13,6 +23,7 @@
 #import "FxGrip_ARC.h"
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 
+/*! Converts a canvas point to the OSC pipeline's viewport-centered Metal coordinates. */
 CGPoint FxGripOSCMetalPointFromCanvasPoint(CGPoint canvasPoint, CGSize canvasSize)
 {
 	// The flip matches the OSC surface's row order; centering matches the vertex
@@ -67,8 +78,15 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 }
 @end
 
+/*!
+	@abstract	The base class for FxPlug on-screen controls.
+	@discussion	Introduced in FxGrip 0.1.0. The base drives the Metal drawing scaffold and shadow pass,
+				converts coordinates and reads and writes parameters through the wrapped host APIs, and
+				routes mouse and key events to the parts.
+*/
 @implementation FxGripOnScreenControl
 
+/*! Initializes the control as its own plugin entry, with no bound effect instance. */
 - (nullable instancetype)initWithAPIManager:(nonnull id<PROAPIAccessing>)apiManager
 {
 	self = [super init];
@@ -228,6 +246,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 
 #pragma mark Subclass hooks
 
+/*! @abstract Returns the part number under the point, asking the parts last-added first. */
 - (NSInteger)hitTestObjectPoint:(CGPoint)objectPoint canvasPoint:(CGPoint)canvasPoint atTime:(CMTime)time
 {
 	for (FxGripOSCPart *part in _parts.reverseObjectEnumerator) {
@@ -238,6 +257,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	return 0;
 }
 
+/*! @abstract Routes the drag to the part whose partID equals activePart; returns YES to re-render. */
 - (BOOL)dragActivePart:(NSInteger)activePart
 		 toObjectPoint:(CGPoint)objectPoint
 		   objectDelta:(CGPoint)objectDelta
@@ -255,6 +275,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	return NO;
 }
 
+/*! @abstract Draws the parts in order, marking the part whose partID equals activePart selected. */
 - (void)drawOSC:(nonnull FxImageTile *)destinationImage
  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder
 	 canvasSize:(CGSize)canvasSize
@@ -330,6 +351,12 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	return radii;
 }
 
+/*!
+	@method		drawOSCWithWidth:height:activePart:destinationImage:atTime:
+	@abstract	Renders the control into the destination tile: the shadow phase, then the crisp foreground.
+	@discussion	Introduced in FxGrip 0.1.0. Sets up the command queue, the FxGrip OSC pipeline, and the
+				viewport, renders one offscreen shadow render and blur per distinct blur radius, then
+				draws the crisp control on top through drawOSC:commandEncoder:canvasSize:activePart:atTime:. */
 - (void)drawOSCWithWidth:(NSInteger)width
 				  height:(NSInteger)height
 			  activePart:(NSInteger)activePart
@@ -775,6 +802,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 
 #pragma mark FxOnScreenControl_v4 events
 
+/*! @abstract Converts the mouse to object space and writes the part number under it to activePart. */
 - (void)hitTestOSCAtMousePositionX:(double)mousePositionX
 					mousePositionY:(double)mousePositionY
 						activePart:(NSInteger *)activePart
@@ -786,6 +814,11 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 									atTime:time];
 }
 
+/*!
+	@method		mouseDownAtPositionX:positionY:activePart:modifiers:forceUpdate:atTime:
+	@abstract	Records the drag origin and forwards the click, or a synthesized double-click, to the active part.
+	@discussion	Introduced in FxGrip 0.1.0. A second click on the same part within the system
+				double-click interval and a small canvas-pixel radius is delivered as a double-click. */
 - (void)mouseDownAtPositionX:(double)mousePositionX
 				   positionY:(double)mousePositionY
 				  activePart:(NSInteger)activePart
@@ -844,6 +877,12 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	_lastMouseDownPart = activePart;
 }
 
+/*!
+	@method		mouseDraggedAtPositionX:positionY:activePart:modifiers:forceUpdate:atTime:
+	@abstract	Applies the Option fine-drag and Shift axis-constrain, then routes the drag delta to the active part.
+	@discussion	Introduced in FxGrip 0.1.0. The scaled per-event travel accumulates, so toggling Option
+				mid-drag never jumps the point. A part that claims Option or Shift for its own gesture
+				keeps that modifier. */
 - (void)mouseDraggedAtPositionX:(double)mousePositionX
 					  positionY:(double)mousePositionY
 					 activePart:(NSInteger)activePart
@@ -918,6 +957,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	return NO;
 }
 
+/*! @abstract Repeats the final drag delta, then clears the tracked position to end the drag. */
 - (void)mouseUpAtPositionX:(double)mousePositionX
 				 positionY:(double)mousePositionY
 				activePart:(NSInteger)activePart
@@ -936,6 +976,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	[_lastPositionLock unlock];
 }
 
+/*! @abstract Forwards the key press to every part, since a key event carries no active part. */
 - (void)keyDownAtPositionX:(double)mousePositionX
 				 positionY:(double)mousePositionY
 				keyPressed:(unsigned short)asciiKey
@@ -987,6 +1028,7 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 	[oscAPI setCursor:cursor ?: NSCursor.arrowCursor];
 }
 
+/*! @abstract Applies the hovered part's cursor. */
 - (void)mouseMovedAtPositionX:(double)mousePositionX
 					positionY:(double)mousePositionY
 				   activePart:(NSInteger)activePart

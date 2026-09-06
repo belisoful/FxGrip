@@ -1,7 +1,16 @@
-//
-//  FxGripBanner.h
-//  FxGrip
-//
+/*!
+	@file       FxGripBanner.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripBanner
+	@abstract   The value dictionary keys and defaults for the banner parameter.
+	@discussion Introduced in FxGrip 0.1.0. A banner carries its title, title point size, and
+	            background color under the shared custom keys, and its subtitle, text color, and
+	            corner radius under dedicated keys. The image-mode keys switch the banner from a text
+	            strip to a graphic and make it clickable. The defaults set the title point size, the
+	            square-corner sentinel, and the maximum graphic width.
+*/
 
 #ifndef FxGripBanner_h
 #define FxGripBanner_h

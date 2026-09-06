@@ -1,13 +1,23 @@
-//
-//  MasterFXAPIManager.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripTimingAPI_v4.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTimingAPI_v4
+	@abstract   Implements the timing wrapper over the host FxTimingAPI_v4.
+	@discussion Introduced in FxGrip 0.1.0. Each out-parameter query forwards to the host API only
+	            when the caller's pointer is non-NULL. The frame-rate, field-order, and conversion
+	            queries forward directly.
+*/
 
 #import "FxGripTimingAPI_v4.h"
 #import "FxGripTileableEffect.h"
 
+/*!
+	@abstract	FxGrip's wrapper around the host FxTimingAPI_v4.
+	@discussion	Introduced in FxGrip 0.1.0. Forwards timing queries to the host API, guarding each
+				out-parameter against a NULL pointer.
+*/
 @implementation FxGripTimingAPI_v4
 
 #define hasMeta(returnValue) { if (!self.hostHasMeta) return (returnValue); }

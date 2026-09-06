@@ -1,10 +1,14 @@
-//
-//  FxGripTileableEffect.m
-//  FxGripTileableEffect
-//
-//  Created by Apple on 1/7/20.
-//  Copyright © 2020-2023 Apple, Inc. All rights reserved.
-//
+/*!
+	@file       FxGripTileableEffect+Extensions.m
+	@copyright  Copyright © 2020-2023 Apple, Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+Extensions
+	@abstract   Implements extension installation, flushing, and lookup for a tileable effect.
+	@discussion Introduced in FxGrip 0.1.0. The category orders the loaded extensions by load
+	            priority, calls each one's load callback, and keys the survivors by extension key.
+	            The lookup methods scan the extension dictionary by protocol, class, or key.
+*/
 
 #import "FxGripTileableEffect+Extensions.h"
 #import "FxGripTileableEffect.h"
@@ -14,6 +18,10 @@
 
 NSString * _Nonnull const FxGripTileableEffectExtKey = @"FxTileableEffect";
 
+/*!
+	@abstract	The category that returns the effect as its own extension host.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation FxGripTileableEffect (FxGripExtensionBase)
 
 - (nonnull id)effect {
@@ -24,8 +32,21 @@ NSString * _Nonnull const FxGripTileableEffectExtKey = @"FxTileableEffect";
 
 
 
+/*!
+	@abstract	The category that manages the effect's extension dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. The extensions load in priority order and resolve by
+				protocol, class, or key.
+*/
 @implementation FxGripTileableEffect (Extensions)
 
+/*!
+	@method		initializeExtensions
+	@abstract	Loads, orders, activates, and keys the effect's extensions.
+	@return		The extension dictionary keyed by extension key.
+	@discussion	Introduced in FxGrip 0.1.0. The method sorts by load priority, then calls each
+				extension's load callback, tracking a per-class index so a repeated extension class
+				receives an increasing index. An extension that fails its load callback, or is
+				inactive and excluded when disabled, is dropped. */
 - (nullable NSMutableDictionary<NSString*, id<FxGripExtension>>*)initializeExtensions
 {
 	
@@ -79,6 +100,10 @@ NSString * _Nonnull const FxGripTileableEffectExtKey = @"FxTileableEffect";
 }
 
 
+/*!
+	@method		extensionsFlush
+	@abstract	Posts the flush notification and returns any observer error.
+	@return		The error an observer reports, or nil. */
 - (nullable NSError*)extensionsFlush
 {
 	NSMutableDictionary *userInfo = @{}.mutableCopy;

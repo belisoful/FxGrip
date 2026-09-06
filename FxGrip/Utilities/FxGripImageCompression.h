@@ -1,7 +1,16 @@
-//
-//  FxGripImageCompression.h
-//  FxGrip
-//
+/*!
+	@file       FxGripImageCompression.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripImageCompression
+	@abstract   Pixel-format descriptors and the lossless and lossy codecs FxGripImageBuffer uses.
+	@discussion Introduced in FxGrip 0.1.0. FxGripPixelFormat packs a channel count and component
+	            type, and the format functions report its geometry. FxGripCompression names the
+	            lossless buffer codecs and the lossy image codecs. The envelope functions wrap a
+	            payload in a self-describing container that records the codec and original length,
+	            and pass small or incompressible data through unchanged.
+*/
 
 #ifndef FxGripImageCompression_h
 #define FxGripImageCompression_h
@@ -11,7 +20,7 @@
 /*!
 	@enum       FxGripComponentType
 	@abstract   The storage type of one pixel component.
-	@discussion Introduced in FxGrip 1.0. Raw values are stable; they participate in the
+	@discussion Introduced in FxGrip 0.1.0. Raw values are stable; they participate in the
 				packed FxGripPixelFormat values encodeWithCoder: writes.
 */
 typedef NS_ENUM(NSInteger, FxGripComponentType) {
@@ -30,7 +39,7 @@ typedef NS_ENUM(NSInteger, FxGripComponentType) {
 /*!
 	@enum       FxGripPixelFormat
 	@abstract   The interleaved pixel formats FxGripImageBuffer stores.
-	@discussion Introduced in FxGrip 1.0. Every combination of 1...4 channels and the
+	@discussion Introduced in FxGrip 0.1.0. Every combination of 1...4 channels and the
 				five component types is valid:
 				- 1 channel: Gray
 				- 2 channels: GrayAlpha
@@ -118,7 +127,7 @@ BOOL FxGripCompressionIsLossy(FxGripCompression compression);
 /*!
 	@function   FxGripCompressionTypeIdentifier
 	@abstract   The ImageIO type identifier a lossy codec encodes under.
-	@discussion Introduced in FxGrip 1.0. Nil for the buffer codecs, which have no
+	@discussion Introduced in FxGrip 0.1.0. Nil for the buffer codecs, which have no
 				container type.
 */
 NSString *_Nullable FxGripCompressionTypeIdentifier(FxGripCompression compression);
@@ -126,7 +135,7 @@ NSString *_Nullable FxGripCompressionTypeIdentifier(FxGripCompression compressio
 /*!
 	@function   FxGripCompressionIsAvailable
 	@abstract   Whether the running OS can encode with the codec.
-	@discussion Introduced in FxGrip 1.0. The buffer codecs are always available; each
+	@discussion Introduced in FxGrip 0.1.0. The buffer codecs are always available; each
 				lossy codec is answered individually by ImageIO's destination registry
 				at run time (JPEG and HEIC on every supported OS, AVIF where the OS
 				provides an encoder). An unavailable codec fails its encode and the
@@ -138,7 +147,7 @@ BOOL FxGripCompressionIsAvailable(FxGripCompression compression);
 /*!
 	@function   FxGripCompressedData
 	@abstract   Compresses data with a lossless codec.
-	@discussion Introduced in FxGrip 1.0. Returns nil for FxGripCompressionNone, for a
+	@discussion Introduced in FxGrip 0.1.0. Returns nil for FxGripCompressionNone, for a
 				lossy or unknown codec (image codecs need image geometry and live on
 				FxGripImageBuffer), and when the codec does not shrink the data; the
 				caller keeps the original in those cases.
@@ -160,7 +169,7 @@ extern NSString *_Nonnull const FxGripCompressionErrorDomain;
 	@const      FxGripCompressionEnvelopeThresholdDefault
 	@abstract   The default byte count below which FxGripEnvelopeCompressedData leaves data
 				uncompressed.
-	@discussion Introduced in FxGrip 1.0. A lossless codec's per-call cost outweighs its
+	@discussion Introduced in FxGrip 0.1.0. A lossless codec's per-call cost outweighs its
 				saving on a small payload, so data shorter than this passes through raw.
 */
 extern const NSUInteger FxGripCompressionEnvelopeThresholdDefault;
@@ -169,7 +178,7 @@ extern const NSUInteger FxGripCompressionEnvelopeThresholdDefault;
 	@function   FxGripEnvelopeCompressedData
 	@abstract   Wraps data in a self-describing FxGrip compression envelope when a lossless
 				codec shrinks it, and returns the data unchanged otherwise.
-	@discussion Introduced in FxGrip 1.0. The envelope records the codec and the exact
+	@discussion Introduced in FxGrip 0.1.0. The envelope records the codec and the exact
 				uncompressed length, so FxGripEnvelopeDecompressedData restores the original
 				with no out-of-band metadata. Compression is attempted only when every
 				condition holds:
@@ -185,7 +194,7 @@ NSData *_Nonnull FxGripEnvelopeCompressedData(NSData *_Nonnull data, FxGripCompr
 /*!
 	@function   FxGripEnvelopeDecompressedData
 	@abstract   Restores data wrapped by FxGripEnvelopeCompressedData.
-	@discussion Introduced in FxGrip 1.0. The envelope signature is detected in the leading
+	@discussion Introduced in FxGrip 0.1.0. The envelope signature is detected in the leading
 				bytes, and the recorded codec decompresses the payload. Data that lacks the
 				signature is returned unchanged, so an uncompressed or pre-envelope payload
 				passes through. A truncated or corrupt envelope returns nil and sets `error`

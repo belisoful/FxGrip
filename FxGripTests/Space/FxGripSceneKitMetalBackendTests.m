@@ -1,7 +1,12 @@
-//
-//  FxGripSceneKitMetalBackendTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripSceneKitMetalBackendTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSceneKitMetalBackendTests
+	@abstract   Tests for FxGripSceneKitMetalBackend, the SceneKit-to-Metal-texture render backend.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the backend identity, its failure when no texture is supplied, its rendering of scene geometry into a Metal texture, and that concurrent renders draw independent results from a renderer pool.
+*/
 
 #import <XCTest/XCTest.h>
 #import <Metal/Metal.h>
@@ -66,6 +71,7 @@
 	free(pixels);
 }
 
+/*! @abstract A backend reports itself ready and identifies as "scenekit-metal". */
 - (void)testBackendIdentity
 {
 	FxGripSceneKitMetalBackend *backend = [FxGripSceneKitMetalBackend backend];
@@ -73,6 +79,7 @@
 	XCTAssertEqualObjects(backend.backendIdentifier, @"scenekit-metal");
 }
 
+/*! @abstract Rendering with a nil target texture fails and reports an error. */
 - (void)testMissingTextureFails
 {
 	FxGripSceneKitMetalBackend *backend = [FxGripSceneKitMetalBackend backend];
@@ -82,6 +89,7 @@
 	XCTAssertNotNil(error);
 }
 
+/*! @abstract Rendering a red plane fills the texture center with red rather than the black clear color. */
 - (void)testRendersSceneGeometryIntoTexture
 {
 	if (self.device == nil) {
@@ -111,6 +119,7 @@
 	XCTAssertGreaterThan((int)rgba[0] - (int)rgba[2], 50);
 }
 
+/*! @abstract Red and green scenes rendered concurrently each draw their own color, so the renderer pool isolates in-flight renders. */
 - (void)testConcurrentRendersProduceIndependentResults
 {
 	if (self.device == nil) {

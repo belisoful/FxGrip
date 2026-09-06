@@ -1,7 +1,12 @@
-//
-//  FxGripSceneKitPhysicsBackendTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripSceneKitPhysicsBackendTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSceneKitPhysicsBackendTests
+	@abstract   Tests for FxGripSceneKitPhysicsBackend, the render backend that simulates SceneKit physics to a target time.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the backend identity, the reproducible catch-up simulation of a freely falling body, the recompute mode that re-simulates on every render, and the session cache that replays a memoized pose without further simulation steps.
+*/
 
 #import <XCTest/XCTest.h>
 #import <Metal/Metal.h>
@@ -64,6 +69,7 @@
 	return ball.presentationNode.simdWorldPosition.y;
 }
 
+/*! @abstract A backend reports itself ready and identifies as "scenekit-metal-physics". */
 - (void)testIdentity
 {
 	FxGripSceneKitPhysicsBackend *backend = [FxGripSceneKitPhysicsBackend backend];
@@ -71,6 +77,7 @@
 	XCTAssertEqualObjects(backend.backendIdentifier, @"scenekit-metal-physics");
 }
 
+/*! @abstract Simulating to a target time reproduces the same ball height across fresh scenes, the ball falls under gravity, and a shorter time falls less. */
 - (void)testCatchUpSimulationIsReproducibleAndAdvances
 {
 	if (self.device == nil) {
@@ -93,6 +100,7 @@
 	XCTAssertGreaterThan(quarter, halfFirst, @"less time simulated means the ball has fallen less");
 }
 
+/*! @abstract In the default recompute mode, a second render of the same time doubles the total simulation steps. */
 - (void)testRecomputeModeReSimulatesEveryRender
 {
 	if (self.device == nil) {
@@ -111,6 +119,7 @@
 	XCTAssertEqual(afterSecond, afterFirst * 2, @"recompute mode simulates again on the second render");
 }
 
+/*! @abstract In session-cache mode, a re-rendered time and an earlier memoized time add no simulation steps and replay the computed pose. */
 - (void)testSessionCacheHitSkipsSimulationAndMatchesTheComputedResult
 {
 	if (self.device == nil) {

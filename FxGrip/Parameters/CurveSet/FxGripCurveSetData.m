@@ -1,7 +1,15 @@
-//
-//  FxGripCurveSetData.m
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveSetData.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveSetData
+	@abstract   Implements the custom value that holds a filter's full set of curves.
+	@discussion Introduced in FxGrip 0.1.0. The keyframe interpolation blends each mapping
+	            curve-aware. Matching point count, role, and domain interpolate pairwise; any
+	            mismatch blends the two evaluated curves on a fixed sample grid. A curve present
+	            on only one side blends toward the role's identity.
+*/
 
 #import "FxGripCurveSetData.h"
 #import "FxGrip_ARC.h"
@@ -9,6 +17,11 @@
 // The grid the mismatched-curve blend samples on; odd, so x = 0.5 is a sample.
 #define kFxGripCurveBlendSampleCount	33
 
+/*!
+	@abstract	The custom value that holds a filter's full set of curves.
+	@discussion	Introduced in FxGrip 0.1.0. Only edited curves are stored; an absent key stands
+				for the mapping's neutral curve.
+*/
 @implementation FxGripCurveSetData
 
 + (NSOrderedSet<Class>*)classesForParameter
@@ -127,6 +140,12 @@ static FxGripCurveData *FxGripCurveGridBlend(FxGripCurveData *left, FxGripCurveD
 									 domain:left.domain];
 }
 
+/*!
+	@method		customInterpolateValue:rightValue:path:withWeight:
+	@abstract	Blends two curve values at one mapping key.
+	@return		The blended curve, or the base result when either value is not a curve.
+	@discussion	Introduced in FxGrip 0.1.0. Curves with matching point count, role, and domain
+				interpolate point by point. Any mismatch falls back to the sampled-grid blend. */
 - (id)customInterpolateValue:(id)left rightValue:(id)right path:(NSString*)path withWeight:(float)weight
 {
 	if (![left isKindOfClass:FxGripCurveData.class] || ![right isKindOfClass:FxGripCurveData.class]) {

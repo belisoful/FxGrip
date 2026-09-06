@@ -1,16 +1,26 @@
-//
-//  MasterFXAPIManager.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
-
+/*!
+	@file       FxGripParameterGroupingAPI_v1.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterGroupingAPI_v1
+	@abstract   Implements the parameter subgroup queries against the effect's parameter model.
+	@discussion Introduced in FxGrip 0.1.0. Each query resolves the parameter through the effect
+	            and inspects its FxGripSubParameters conformance for subgroup membership and
+	            counts. Setting a parameter's subgroup is not supported.
+*/
 
 #import "FxGripParameterGroupingAPI_v1.h"
 //#import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTileableEffect.h"
 #import "../Parameters/FxGripParameter.h"
 
+/*!
+	@abstract	FxGrip's implementation of the parameter grouping queries.
+	@discussion	Introduced in FxGrip 0.1.0. Subgroup membership and counts read the parameter's
+				FxGripSubParameters conformance; the subgroup type check uses the parameter-info
+				API.
+*/
 @implementation FxGripParameterGroupingAPI_v1
 
 //---------------------------------------------------------
@@ -36,12 +46,14 @@
 }
 
 
+/*! @abstract YES when the parameter's type is FxParameterType_Group. */
 - (BOOL)isSubGroup:(FxParameterId)parameterID
 {
 	return [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Group;
 }
 
 
+/*! @abstract YES when the parameter conforms to FxGripSubParameters and holds at least one member. */
 - (BOOL)hasSubParameters:(FxParameterId)parameterID
 {
 	id<FxGripParameter> param = self.effect[parameterID];
@@ -74,25 +86,12 @@
 }
 
 /*!
-	@method     parameterIDAtIndex:
-	@abstract   Returns the ID of the parameter at the given index
-	@param      index   The 0-based index of the parameter whose ID you wish to get
-	@discussion During -addParameters: your plugin tells the host to create parameters. Later,
-				while running, your plugin can create new parameters using the
-				FxParameterCreationAPI (just like in -addParameters), or it can remove them
-				using the -removeParameter: method of this protocol. Each parameter must have
-				a unique ID within the plugin. This method allows you to retrieve the ID of a
-				parameter at a given index in the list of parameters. The IDs need not be
-				sequential or even increasing. You could for example have the following:
-<pre>@textblock
-				index   ID      parameter
-				-----   --      ---------
-				0       1       slider
-				1       1000    checkbox
-				2       10      popup menu
-@/textblock</pre>
+	@method		parameterIDAtSubIndex:fromParameter:
+	@abstract	Returns the ID of the subparameter at an index within a parameter.
+	@param		index	The 0-based index into the parameter's subparameters.
+	@param		parameterID	The parameter whose subparameters to index.
+	@return		The subparameter's ID, or 0 when the parameter has no subparameter at the index.
 */
-	
 - (FxParameterId)parameterIDAtSubIndex:(UInt32)index fromParameter:(FxParameterId) parameterID
 {
 	id<FxGripParameter> param = self.effect[parameterID];
@@ -112,10 +111,11 @@
 
 
 /*!
-	 @method     getParameterSubGroup:withError:
-	 @param      parameterID    - The parameter to return its parent SubGroup.
-	 @abstract   This returns the Parent SubGroup of a particular parameterID.
- */
+	@method		getParameterSubGroup:
+	@abstract	Returns the parent subgroup of a parameter.
+	@param		parameterID	The parameter whose parent subgroup to return.
+	@return		The parent subgroup's ID, or -1 when the parameter does not resolve.
+*/
 - (FxParameterId)getParameterSubGroup:(FxParameterId)parameterID
 {
 	id<FxGripParameter> param = self.effect[parameterID];
@@ -126,6 +126,7 @@
 }
 
 
+/*! @abstract Setting a parameter's subgroup is not supported; always returns NO. */
 - (BOOL)setParameterSubGroup:(FxParameterId)subGroupID toParameter:(FxParameterId)parameterID
 {
 	// Not supported

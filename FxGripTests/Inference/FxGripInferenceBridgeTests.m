@@ -1,7 +1,12 @@
-//
-//  FxGripInferenceBridgeTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripInferenceBridgeTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInferenceBridgeTests
+	@abstract   Verifies the FxGripInferenceBridge adapter over an InferKit-shaped backend.
+	@discussion Introduced in FxGrip 0.1.0. FxGrip does not link InferKit, so local doubles mimic its request, result, and backend contract. The tests confirm the presence check reports InferKit unavailable, the public bridge entry points are no-ops without the framework, the bridge rejects nil and non-backend objects, and a bridged backend forwards readiness, identity, request and result conversion, failure propagation, and prepare.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripInferenceBridge.h>
@@ -79,12 +84,14 @@
 
 #pragma mark Presence check
 
+/*! @abstract The required InferKit class names are the request and result value types. */
 - (void)testRequiredClassNamesAreTheInferKitValueTypes
 {
 	XCTAssertEqualObjects(FxGripInferenceBridge.requiredInferKitClassNames,
 						  (@[ @"NFKInferenceRequest", @"NFKInferenceResult" ]));
 }
 
+/*! @abstract Without InferKit linked, availability is false and every required class name is reported missing. */
 - (void)testInferKitReportedUnavailableWhenNotLinked
 {
 	XCTAssertFalse(FxGripInferenceBridge.isInferKitAvailable);
@@ -92,6 +99,7 @@
 						  FxGripInferenceBridge.requiredInferKitClassNames);
 }
 
+/*! @abstract The absent-class-names query returns only the names that no loaded class matches. */
 - (void)testAbsentClassNamesDetectsLoadedAndMissing
 {
 	NSArray<NSString *> *allPresent = @[ @"NSString", @"NSArray" ];
@@ -102,6 +110,7 @@
 
 #pragma mark Bridging guards
 
+/*! @abstract The public bridge factories return nil while InferKit is absent. */
 - (void)testPublicBridgeIsANoOpWithoutInferKit
 {
 	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
@@ -109,6 +118,7 @@
 	XCTAssertNil([FxGripInferenceBridge backendWithInferKitBackendClassNamed:@"NFKPassthroughBackend"]);
 }
 
+/*! @abstract Bridging returns nil for a nil backend, a Nil request class, or an object that lacks the run selector. */
 - (void)testBridgingRejectsNilAndNonBackends
 {
 	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:nil requestClass:FxGripBridgeKitRequest.class]);
@@ -120,6 +130,7 @@
 
 #pragma mark Adapter behavior
 
+/*! @abstract The bridged backend reports the wrapped backend's readiness and identifier. */
 - (void)testBridgedBackendForwardsReadinessAndIdentity
 {
 	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
@@ -131,6 +142,7 @@
 	XCTAssertEqualObjects(bridged.backendIdentifier, @"test-kit");
 }
 
+/*! @abstract A bridged run converts the request into the InferKit request, passes inputs and parameters through unchanged, and returns the InferKit outputs in the result. */
 - (void)testBridgedRunConvertsRequestAndResult
 {
 	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
@@ -156,6 +168,7 @@
 	XCTAssertEqualObjects(forwarded.parameters[@"seed"], @7, @"parameters pass through unchanged");
 }
 
+/*! @abstract A failure from the wrapped backend surfaces as a nil result and the same error domain and code. */
 - (void)testBridgedRunPropagatesBackendFailure
 {
 	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
@@ -170,6 +183,7 @@
 	XCTAssertEqual(error.code, 123);
 }
 
+/*! @abstract The bridged prepare call reaches the wrapped backend's prepare method. */
 - (void)testBridgedPrepareForwardsToBackend
 {
 	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];

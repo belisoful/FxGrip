@@ -1,7 +1,15 @@
-//
-//  FxGripMLVideoGenerator.h
-//  FxGrip
-//
+/*!
+	@file       FxGripMLVideoGenerator.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLVideoGenerator
+	@abstract   The generator template whose model produces a whole clip from no source.
+	@discussion Introduced in FxGrip 0.1.0. The generator is the counterpart of FxGripMLVideoEffect.
+	            The generation lifecycle, the clip handling, and the state hooks are inherited
+	            unchanged. There is no source clip, so until the generated clip is ready, and when a
+	            frame of it fails, rendering draws a placeholder.
+*/
 
 #ifndef FxGripMLVideoGenerator_h
 #define FxGripMLVideoGenerator_h
@@ -13,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripMLVideoGenerator
 	@abstract   A generator template whose model produces a whole clip from no source.
-	@discussion Introduced in FxGrip 1.0. The generator counterpart of ``FxGripMLVideoEffect``:
+	@discussion Introduced in FxGrip 0.1.0. The generator counterpart of ``FxGripMLVideoEffect``:
 				the generation lifecycle, the clip handling, and the state hooks are inherited
 				unchanged; the generator supplies its inputs through the inherited
 				generationInputsAtTime:. There is no source clip, so until the generated clip is

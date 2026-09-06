@@ -1,10 +1,12 @@
-//
-//  FxGripParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripIntParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripIntParameter
+	@abstract   Implements the parameter model for a host integer slider.
+	@discussion Introduced in FxGrip 0.1.0. The class registers an integer slider through the parameter-creation API. It reads and writes the value at a render time and encodes the value into the FxPlug plugin-state coder.
+*/
 
 #import "FxGripIntParameter.h"
 #import "NSDictionary+FxGripTileableEffect.h"
@@ -12,6 +14,10 @@
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"
 
+/*!
+	@abstract	The parameter model for a host integer slider.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers an integer slider, reads and writes its value at a render time, and encodes the value into the plugin-state coder.
+*/
 @implementation FxGripIntParameter
 
 - (BOOL)flagIgnoreMinMax {
@@ -39,6 +45,13 @@
 }
 
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Registers the integer slider with the effect's host.
+	@param		parameter	The parameter configuration dictionary.
+	@param		effect		The host that receives the parameter.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter range defaults to 0 to 100, the slider range defaults to the parameter range, and the delta defaults to 1. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	int defaultValue = 0, defaultDelta = 1;
@@ -90,6 +103,12 @@
 													 parameterFlags: parameter.parameterFlags];
 }
 
+/*!
+	@method		valueAtTime:
+	@abstract	Reads the integer value at a render time.
+	@param		renderTime	The time to sample the parameter at.
+	@return		The integer value, or 0 when FxParameterRetrievalAPI_v6 is unavailable.
+	@discussion	Introduced in FxGrip 0.1.0. A retrieval failure sets the parameter's error. */
 - (int)valueAtTime:(CMTime)renderTime
 {
 	int intValue = 0;
@@ -102,15 +121,22 @@
 }
 
 
+/*!
+	@method		setValue:atTime:
+	@abstract	Writes the integer value at a time through FxParameterSettingAPI_v5.
+	@param		value	The integer value to set.
+	@param		time	The time to set the value at. */
 - (void)setValue:(int)value atTime:(CMTime)time
 {
 	[self.effect.apiManager.paramSetAPIv5 setIntValue:value toParameter:self.parameterID atTime:time];
 }
 
 
-/**
- * This encodes the parameter type into the dictionary pluginState
- */
+/*!
+	@method		encodeWithCoder:
+	@abstract	Encodes the integer value at the coder's render time into the plugin-state coder.
+	@param		coder	The coder that receives the value.
+	@discussion	Introduced in FxGrip 0.1.0. The value encodes only when the coder is an FxPlug plugin-state encoder. */
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder
 {
 	[super encodeWithCoder:coder];

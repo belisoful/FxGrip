@@ -1,10 +1,12 @@
-//
-//  FxGripParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripRGBParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripRGBParameter
+	@abstract   Implements the parameter model for a host RGB color well with a separate alpha parameter.
+	@discussion Introduced in FxGrip 0.1.0. The class registers an RGB color parameter through the parameter-creation API. The alpha component comes from a separately bound float or percent parameter when one is set.
+*/
 
 #import "FxGripRGBParameter.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -35,6 +37,10 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	return config;
 }
 
+/*!
+	@abstract	The parameter model for a host RGB color well.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers an RGB color parameter, caches the color value, and reads its alpha from a separately bound parameter.
+*/
 @implementation FxGripRGBParameter
 {
 	@protected
@@ -64,6 +70,13 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Registers the RGB color parameter with the effect's host.
+	@param		parameter	The parameter configuration dictionary.
+	@param		effect		The host that receives the parameter.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The default red, green, and blue are 0.0. The policy observers resolve the declared default color to the working gamut before registration. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The host's policy observers convert a declared color space to the working gamut.
@@ -85,6 +98,12 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		valueAtTime:
+	@abstract	Reads the color at a render time.
+	@param		renderTime	The time to sample the parameter at.
+	@return		The color, with alpha read from the bound alpha parameter when one is set.
+	@discussion	Introduced in FxGrip 0.1.0. A retrieval failure sets the parameter's error. */
 -(FxGripColor) valueAtTime:(CMTime)renderTime
 {
 	_colorValue.red = _colorValue.green = _colorValue.blue = 0;
@@ -104,6 +123,11 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		setValue:atTime:
+	@abstract	Writes the red, green, and blue components at a time.
+	@param		color	The color to set. A NULL value performs no write.
+	@param		time	The time to set the color at. */
 - (void)setValue:(FxGripColor*_Nullable)color atTime:(CMTime)time
 {
 	if (!color) {
@@ -113,6 +137,11 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		setRGBAValue:atTime:
+	@abstract	Writes the red, green, and blue components at a time and caches the alpha.
+	@param		color	The color to set. A NULL value performs no write.
+	@param		time	The time to set the color at. */
 - (void)setRGBAValue:(FxGripColor*_Nullable)color atTime:(CMTime)time
 {
 	if (!color) {
@@ -122,6 +151,10 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		setRedValue:greenValue:blueValue:alphaValue:atTime:
+	@abstract	Caches the alpha and writes the red, green, and blue components at a time.
+	@discussion	Introduced in FxGrip 0.1.0. When an alpha parameter is bound the cached alpha is refreshed from it. */
 - (void)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue alphaValue:(double)alpha atTime:(CMTime)time
 {
 	self.alpha = alpha;
@@ -136,12 +169,17 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*! @abstract Writes the red, green, and blue components at a time through FxParameterSettingAPI_v5. */
 - (void)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue atTime:(CMTime)time
 {
 	[self.effect.apiManager.paramSetAPIv5 setRedValue:red greenValue:green blueValue:blue toParameter:self.parameterID atTime:time];
 }
 
 
+/*!
+	@method		validate
+	@abstract	Checks that the bound alpha parameter exists and is a float or percent.
+	@return		YES when no alpha parameter is bound, or the bound parameter exists and is a float or percent; NO otherwise. */
 - (BOOL)validate
 {
 	if (self.alphaParameter

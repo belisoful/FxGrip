@@ -1,7 +1,16 @@
-//
-//  FxGripTileableEffect+CustomUI.h
-//  FxGrip
-//
+/*!
+	@file       FxGripTileableEffect+CustomUI.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+CustomUI
+	@abstract   The category that hosts custom parameter views for the effect.
+	@discussion Introduced in FxGrip 0.1.0. The base implements createViewForParameterID: without
+	            claiming the FxCustomParameterViewHost_v2 protocol. A plugin with custom controls
+	            declares that protocol on its own subclass, and a plugin without them advertises
+	            nothing to the host. The created view comes from the runtime parameter's
+	            newParameterView and is attached to the parameter so data pushes reach it.
+*/
 
 #ifndef FxGripTileableEffect_CustomUI_h
 #define FxGripTileableEffect_CustomUI_h
@@ -11,9 +20,8 @@
 #import "FxGripTileableEffect.h"
 
 /*!
-	@category   FxGripTileableEffect (CustomUI)
 	@abstract   The custom parameter view host.
-	@discussion Introduced in FxGrip 1.0. The base implements
+	@discussion Introduced in FxGrip 0.1.0. The base implements
 				createViewForParameterID: but claims no protocol: a plugin with custom
 				controls declares FxCustomParameterViewHost_v2 conformance on its own
 				subclass, and a plugin without them advertises nothing to the host.

@@ -1,7 +1,15 @@
-//
-//  FxGripWebViewParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripWebViewParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripWebViewParameter
+	@abstract   Implements the web page view and its custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. The view loads a whitelisted URL in a WKWebView and
+	            blocks any navigation off the whitelist. The web view is created only when the
+	            control enters a window. The parameter seeds a default all-sites whitelist and
+	            sets the row's parameter flags.
+*/
 
 #import "FxGripWebViewParameter.h"
 #import "FxGripWebView.h"
@@ -15,6 +23,11 @@
 @interface FxGripWebPageView () <WKNavigationDelegate>
 @end
 
+/*!
+	@abstract	The web page display backing a web-view parameter.
+	@discussion	Introduced in FxGrip 0.1.0. A WKWebView gated by a URL whitelist. A blocked URL
+				shows a placeholder.
+*/
 @implementation FxGripWebPageView
 {
 	WKWebView *_webView;
@@ -75,6 +88,11 @@
 	}
 }
 
+/*!
+	@method		applyContent
+	@abstract	Loads the current URL when the whitelist allows it, or shows the blocked placeholder.
+	@discussion	Introduced in FxGrip 0.1.0. A missing URL or one off the whitelist shows the
+				placeholder instead of loading. */
 - (void)applyContent
 {
 	NSURL *url = _urlString.length ? [NSURL URLWithString:_urlString] : nil;
@@ -98,6 +116,11 @@
 	_webView = nil;
 }
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Reads the whitelist, height, and URL from the value the host pushes.
+	@discussion	Introduced in FxGrip 0.1.0. A value that is not an FxGripDictionary is ignored.
+				The content reapplies when the view is in a window. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripDictionary.class]) {
@@ -143,6 +166,12 @@
 @end
 
 
+/*!
+	@abstract	The custom parameter that hosts a whitelisted web page view.
+	@discussion	Introduced in FxGrip 0.1.0. The value is an FxGripDictionary. Creation seeds an
+				all-sites whitelist and sets the custom-UI, not-animatable, full-view-width, and
+				no-state flags.
+*/
 @implementation FxGripWebViewParameter
 
 + (nullable NSString*)parameterTypeString
@@ -162,6 +191,13 @@
 	return classes;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Adds the web page view as a custom parameter to the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. A declared value without a whitelist defaults to all
+				sites. Creation sets the custom-UI, not-animatable, full-view-width, and no-state
+				flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id declared = parameter.parameterDefaultValue;

@@ -42,7 +42,7 @@ The engine consumes the `CIImage` the analysis pass builds from the frame's
 ## Configuring a tracker
 
 The configuration is read from the parameter's default value and edited in the
-inspector through ``FxGripObjectTrackerView``:
+inspector through `FxGripObjectTrackerView`:
 
 | Option | Values |
 | --- | --- |

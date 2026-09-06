@@ -1,12 +1,14 @@
-//
-//  FxGripDynamicAPITestSupport.h
-//  FxGripTests
-//
-//  Shared test doubles and a base XCTestCase for the dynamic parameter wrappers. The v3
-//  forwarding wrapper, the parameter info queries, and the single-bound convenience setters
-//  are exercised against the same host stub; this unit holds it so the per-class test files
-//  carry only their own assertions.
-//
+/*!
+	@file       FxGripDynamicAPITestSupport.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDynamicAPITestSupport
+	@abstract   Shared test doubles and a base XCTestCase for the dynamic parameter API wrappers.
+	@discussion Introduced in FxGrip 0.1.0. The v3 forwarding wrapper, the parameter info queries, and
+	            the single-bound convenience setters are exercised against the same host stub. This unit
+	            holds the stub so the per-class test files carry only their own assertions.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxPlugSDK.h>

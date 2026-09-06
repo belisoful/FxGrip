@@ -1,7 +1,17 @@
-//
-//  FxGripMLImageEffect.m
-//  FxGrip
-//
+/*!
+	@file       FxGripMLImageEffect.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLImageEffect
+	@abstract   Implements the image-to-image template: source tile through a backend to destination tile.
+	@discussion Introduced in FxGrip 0.1.0. renderMLFromSourceTile:toDestinationTile:atTime:error:
+	            drives the pass. It reads the frame cache when enabled, runs the backend when it is
+	            ready, and writes the output to the destination tile. When the backend is not ready,
+	            the source is written unchanged. The default image representation is an id<MTLTexture>,
+	            and the write seam blits it into the destination texture. An FxGripMLCache extension
+	            loaded in loadExtensions holds the per-frame results.
+*/
 
 #import "FxGripMLImageEffect.h"
 #import "FxGripInferenceBridge.h"
@@ -17,6 +27,11 @@
 
 static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 
+/*!
+	@abstract	The tileable-effect template that renders one source image through an inference backend.
+	@discussion	Introduced in FxGrip 0.1.0. The backend defaults to an FxGripPassthroughBackend. The
+				per-frame cache stores each result so a slow model runs once per frame.
+*/
 @implementation FxGripMLImageEffect
 {
 	id<FxGripInferenceBackend> _inferenceBackend;
@@ -37,6 +52,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	SUPER_DEALLOC();
 }
 
+/*! Adds the FxGripMLCache extension to the inherited extensions so per-frame results persist. */
 - (NSMutableArray<id<FxGripExtension>> *)loadExtensions
 {
 	NSMutableArray<id<FxGripExtension>> *extensions = [super loadExtensions];
@@ -54,6 +70,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	return _inferenceBackend;
 }
 
+/*! The backend used when none is set: an FxGripPassthroughBackend. A subclass overrides this. */
 - (id<FxGripInferenceBackend>)defaultInferenceBackend
 {
 	return [FxGripPassthroughBackend backend];
@@ -67,6 +84,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	}
 }
 
+/*! Bridges an InferKit backend and installs it as inferenceBackend; NO leaves the backend unchanged. */
 - (BOOL)useInferKitBackend:(id)inferKitBackend
 {
 	id<FxGripInferenceBackend> bridged = [FxGripInferenceBridge backendBridgingInferKitBackend:inferKitBackend];
@@ -96,6 +114,10 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 
 #pragma mark Orchestration
 
+/*!
+	@method		runInferenceForImageInput:atTime:error:
+	@abstract	Builds the request from the image input and parameters, runs the backend, returns its result.
+	@discussion	Introduced in FxGrip 0.1.0. Returns nil with an error when the backend is not ready. */
 - (nullable FxGripInferenceResult *)runInferenceForImageInput:(id)imageInput
 													  atTime:(CMTime)time
 													   error:(NSError * _Nullable *)outError
@@ -111,6 +133,12 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	return [backend runInferenceForRequest:request error:outError];
 }
 
+/*!
+	@method		renderMLFromSourceTile:toDestinationTile:atTime:error:
+	@abstract	The full pass: source tile to image input to backend to image output to destination tile.
+	@discussion	Introduced in FxGrip 0.1.0. When cacheEnabled, a cache hit writes the stored output and
+				returns. When the backend is ready, its output is written and cached. When the backend
+				is not ready, the source image is written unchanged. */
 - (BOOL)renderMLFromSourceTile:(nullable FxImageTile *)sourceTile
 			 toDestinationTile:(nullable FxImageTile *)destinationTile
 						atTime:(CMTime)time
@@ -157,6 +185,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	return [self writeImageOutput:output toDestinationTile:destinationTile atTime:time error:outError];
 }
 
+/*! The device a cached output is reconstructed for: the tile's device, else the input texture's. */
 - (nullable id<MTLDevice>)renderDeviceForTile:(nullable FxImageTile *)tile imageInput:(id)imageInput
 {
 	if (tile != nil && tile.device != nil) {
@@ -170,6 +199,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 
 #pragma mark Cache seams
 
+/*! The cache key for a frame: the render time normalized to a 600 timescale. Invalid time maps to 0. */
 - (NSInteger)cacheFrameIndexForTime:(CMTime)time
 {
 	if (!CMTIME_IS_VALID(time)) {
@@ -179,12 +209,14 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	return (NSInteger)canonical.value;
 }
 
+/*! The cache-validity signature: the backend identifier and the frame's parameters. */
 - (NSString *)cacheSignatureForParametersAtTime:(CMTime)time
 {
 	NSDictionary<NSString *, id> *parameters = [self inferenceParametersAtTime:time] ?: @{};
 	return [NSString stringWithFormat:@"%@|%@", self.inferenceBackend.backendIdentifier, parameters];
 }
 
+/*! The cached output for a frame rebuilt as a texture for device, or nil on a miss. */
 - (nullable id)cachedOutputForFrameIndex:(NSInteger)index device:(nullable id<MTLDevice>)device
 {
 	if (device == nil) {
@@ -197,6 +229,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	return [(FxGripImageBuffer *)record newTextureWithDevice:device];
 }
 
+/*! Stores an output texture for a frame as an FxGripImageBuffer copy in the cache. */
 - (void)storeOutput:(id)output forFrameIndex:(NSInteger)index
 {
 	if (![output conformsToProtocol:@protocol(MTLTexture)]) {
@@ -213,6 +246,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	}
 }
 
+/*! Clears every cached frame when signature differs from the stored one, then records signature. */
 - (void)invalidateCacheIfSignatureChanged:(NSString *)signature
 {
 	FxGripFrameData *cache = self.mlCacheData;
@@ -229,6 +263,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	[cache setObject:signature forKey:FxGripMLCacheSignatureKey];
 }
 
+/*! The FxGrip render entry point. Runs the ML pass on the first source tile. */
 - (BOOL)renderDestinationImage:(FxImageTile *)destinationImage
 				  sourceImages:(NSArray<FxImageTile *> *)sourceImages
 				   pluginCoder:(NSCoder *)pluginCoder
@@ -243,6 +278,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 
 #pragma mark Metal pre/post seams
 
+/*! The backend's image input from the source tile: the tile's Metal texture. nil on failure. */
 - (nullable id)imageInputForSourceTile:(nullable FxImageTile *)sourceTile
 								atTime:(CMTime)time
 								 error:(NSError * _Nullable *)outError
@@ -259,6 +295,12 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 	return texture;
 }
 
+/*!
+	@method		writeImageOutput:toDestinationTile:atTime:error:
+	@abstract	Blits the output Metal texture into the destination tile's texture.
+	@discussion	Introduced in FxGrip 0.1.0. Returns NO with an error when the output is not a Metal
+				texture, the destination tile is missing, or no command queue is available. When the
+				output and destination textures are the same, the write is a no-op. */
 - (BOOL)writeImageOutput:(id)output
 	   toDestinationTile:(nullable FxImageTile *)destinationTile
 				  atTime:(CMTime)time
@@ -312,6 +354,7 @@ static NSString * const FxGripMLCacheSignatureKey = @"__mlCacheSignature";
 
 #pragma mark Helpers
 
+/*! Fills outError with an FxGrip-domain error carrying code and reason. */
 - (void)setError:(NSError * _Nullable *)outError code:(NSInteger)code reason:(NSString *)reason
 {
 	if (outError != NULL) {

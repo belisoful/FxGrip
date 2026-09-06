@@ -1,7 +1,15 @@
-//
-//  FxGripLiveImage.h
-//  FxGrip
-//
+/*!
+	@file       FxGripLiveImage.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripLiveImage
+	@abstract   The value dictionary keys and defaults for the live image parameter's configuration.
+	@discussion Introduced in FxGrip 0.1.0. A live image control's value carries only its
+	            configuration; the pixels it shows are published in-process and never reach the host
+	            document. The labels array names each slot and sets the slot count. The remaining keys
+	            set the row height, info caption, checkerboard, vertical flip, and snapshot size.
+*/
 
 #ifndef FxGripLiveImage_h
 #define FxGripLiveImage_h

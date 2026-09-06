@@ -1,7 +1,15 @@
-//
-//  FxGripVideoViewParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripVideoViewParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripVideoViewParameter
+	@abstract   Implements the video player view and its custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. A local file URL or a direct media URL plays through
+	            an AVPlayerView; any other whitelisted remote URL loads in a WKWebView. A remote
+	            URL off the whitelist is blocked with a placeholder. The player is created only
+	            when the view enters a window.
+*/
 
 #import "FxGripVideoViewParameter.h"
 #import "FxGripVideoView.h"
@@ -27,6 +35,11 @@ static NSSet<NSString *> *FxGripDirectMediaExtensions(void)
 @interface FxGripVideoView () <WKNavigationDelegate>
 @end
 
+/*!
+	@abstract	The video player backing a video parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The view routes a URL to AV playback or a web view by
+				scheme and extension, and blocks a remote URL that is off the whitelist.
+*/
 @implementation FxGripVideoView
 {
 	WKWebView *_webView;
@@ -86,6 +99,12 @@ static NSSet<NSString *> *FxGripDirectMediaExtensions(void)
 	return [FxGripDirectMediaExtensions() containsObject:url.pathExtension.lowercaseString];
 }
 
+/*!
+	@method		applyContent
+	@abstract	Routes the current URL to AV playback, web loading, or the placeholder.
+	@discussion	Introduced in FxGrip 0.1.0. A remote URL off the whitelist shows a blocked
+				placeholder. A file URL or a direct media URL plays through AV; any other URL
+				loads in the web view. */
 - (void)applyContent
 {
 	NSURL *url = _urlString.length ? [NSURL URLWithString:_urlString] : nil;
@@ -109,6 +128,11 @@ static NSSet<NSString *> *FxGripDirectMediaExtensions(void)
 
 #pragma mark AV playback
 
+/*!
+	@method		playMediaURL:
+	@abstract	Plays a media URL through an inline AVPlayerView.
+	@discussion	Introduced in FxGrip 0.1.0. The player is created on first use. A loop flag
+				restarts the item at the end, and an autoplay flag starts playback. */
 - (void)playMediaURL:(NSURL *)url
 {
 	[self teardownWebView];
@@ -199,6 +223,11 @@ static NSSet<NSString *> *FxGripDirectMediaExtensions(void)
 
 #pragma mark Data
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Reads the URL, whitelist, height, and flags from the value the host pushes.
+	@discussion	Introduced in FxGrip 0.1.0. A value that is not an FxGripDictionary is ignored. The
+				content reapplies when the view is in a window. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripDictionary.class]) {
@@ -234,6 +263,11 @@ static NSSet<NSString *> *FxGripDirectMediaExtensions(void)
 
 #pragma mark WKNavigationDelegate
 
+/*!
+	@method		webView:decidePolicyForNavigationAction:decisionHandler:
+	@abstract	Cancels a web navigation to a URL that is off the whitelist.
+	@discussion	Introduced in FxGrip 0.1.0. The whitelist gates every navigation the embedded page
+				attempts, so a hosted player cannot navigate away from the allowed domains. */
 - (void)webView:(WKWebView *)webView
 	decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
 				decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
@@ -249,6 +283,12 @@ static NSSet<NSString *> *FxGripDirectMediaExtensions(void)
 @end
 
 
+/*!
+	@abstract	The custom parameter that hosts a whitelisted video player.
+	@discussion	Introduced in FxGrip 0.1.0. The value is an FxGripDictionary, and creation seeds a
+				default whitelist and sets the custom-UI, not-animatable, full-view-width, and
+				no-state flags.
+*/
 @implementation FxGripVideoViewParameter
 
 + (nullable NSString*)parameterTypeString
@@ -268,6 +308,13 @@ static NSSet<NSString *> *FxGripDirectMediaExtensions(void)
 	return classes;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Adds the video player as a custom parameter to the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The default value seeds the common video-hosting
+				whitelist when the declared value names none. Creation sets the custom-UI,
+				not-animatable, full-view-width, and no-state flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id declared = parameter.parameterDefaultValue;

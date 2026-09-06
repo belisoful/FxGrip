@@ -1,9 +1,17 @@
-//
-//  FxGripDynamicParameterAPI_v4.h
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripDynamicParameterAPI_v4.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDynamicParameterAPI_v4
+	@abstract   FxGrip additions to the dynamic-parameter API for existence, type, single-edge
+	            bounds, and per-parameter metadata.
+	@discussion Introduced in FxGrip 0.1.0. The API extends FxDynamicParameterAPI_v3 with checks for
+	            a parameter's existence and type, single-edge value and slider bounds setters, and
+	            metadata storage. The single-edge setters and the metadata methods now have their
+	            own APIs, FxGripParameterBoundsAPI_v1 and FxGripMetaAPI_v1, so FxGrip does not extend
+	            Apple's dynamic-parameter protocol.
+*/
 
 #ifndef FxGripDynamicParameterAPI_v4_h
 #define FxGripDynamicParameterAPI_v4_h
@@ -54,12 +62,11 @@
 #pragma mark -
 
 /*!
-	@protocol   FxGripDynamicParameterAPI_v4
-	@abstract   More dynamic features: parameter exists, parameter type, parameter tags,
- 				parameter meta, individual parameter value setting
-	@discussion With this API your plugin can check for parameter existence by ID, get a
-				a parameter's type, get/set/remove a parameter tags and meta data, and
- 				sets a parameter's individual slider configuration.
+	@protocol	FxGripDynamicParameterAPI_v4
+	@abstract	Adds existence, type, single-edge bounds, and metadata queries to the dynamic API.
+	@discussion	Introduced in FxGrip 0.1.0. The plug-in checks whether a parameter exists by ID,
+				reads a parameter's type, sets one edge of a Float or Int parameter's value or
+				slider range, and reads or writes a parameter's metadata.
 */
 @protocol FxGripDynamicParameterAPI_v4 <FxDynamicParameterAPI_v3>
 
@@ -172,11 +179,13 @@
 #pragma mark -
 
 /*!
-	@interface  FxGripDynamicParameterAPI_v4:
-	@abstract   Initializes the API manager for your plug-in.
-	@discussion Accesses the apis with error checking.
-
- */
+	@class		FxGripDynamicParameterAPI_v4
+	@abstract	FxGrip's implementation of FxGripDynamicParameterAPI_v4 over the v3 wrapper.
+	@discussion	Introduced in FxGrip 0.1.0. Subclasses FxGripDynamicParameterAPI_v3 and adds the
+				existence, type, menu-entry, single-edge bounds, and metadata methods. The bounds
+				setters read the current range and write it back with one edge changed. The metadata
+				methods forward to the host's meta manager.
+*/
 
 @interface FxGripDynamicParameterAPI_v4 : FxGripDynamicParameterAPI_v3 <FxGripDynamicParameterAPI_v4> {
 }

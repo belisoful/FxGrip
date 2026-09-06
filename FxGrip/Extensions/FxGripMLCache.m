@@ -1,7 +1,14 @@
-//
-//  FxGripMLCache.m
-//  FxGrip
-//
+/*!
+	@file       FxGripMLCache.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLCache
+	@abstract   Implements the per-frame inference cache extension.
+	@discussion Introduced in FxGrip 0.1.0. The extension registers the hidden MLCache custom
+	            parameter, resolves its FxGripFrameData from the document, and reattaches the project
+	            media cache after each load.
+*/
 
 #import "FxGripMLCache.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -14,6 +21,11 @@
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The extension that owns an ML effect's per-frame inference cache.
+	@discussion	Introduced in FxGrip 0.1.0. The frame data is created on demand and reloaded from the
+				document when the effect is added.
+*/
 @implementation FxGripMLCache
 {
 	FxGripFrameData *_frameData;
@@ -46,6 +58,11 @@
 	return _frameData;
 }
 
+/*!
+	@method		extAddParameters:
+	@abstract	Registers the hidden MLCache custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter carries no state, is never presented or
+				animated, and stays out of presets; its frame data is machine-local cache-backed. */
 // The hidden MLCache parameter carries no state, is never presented or animated, and stays
 // out of presets; its FrameData is machine-local cache-backed.
 - (void)extAddParameters:(nonnull NSNotification*)notification
@@ -62,6 +79,11 @@
 	[notification.userInfo.fxEffectParameters addObject:[cacheParameter mutableCopy]];
 }
 
+/*!
+	@method		extAddedToDocument:
+	@abstract	Loads the cached frame data from the document and reattaches the media cache.
+	@discussion	Introduced in FxGrip 0.1.0. The cache is transient, so it is re-resolved after every
+				document load. */
 - (void)extAddedToDocument:(nonnull NSNotification*)notification
 {
 	NSObject<NSCopying, NSSecureCoding> *object = nil;
@@ -80,6 +102,10 @@
 @end
 
 
+/*!
+	@abstract	The effect-side accessors for the ML cache extension and its frame data.
+	@discussion	Introduced in FxGrip 0.1.0. mlCacheData resolves the loaded extension's cache.
+*/
 @implementation FxGripTileableEffect (MLCache)
 
 - (nullable FxGripFrameData *)mlCacheData

@@ -1,12 +1,12 @@
-//
-//  NSCoderFxPlugTests.m
-//  FxGripTests
-//
-//  Unit tests for the NSCoder (FxPlug) category: the associated render time and
-//  quality level, the byte-blob encoders and decoders for the FxPlug value types,
-//  the Fx3D and FxLighting host-API captures, and the double-to-float matrix
-//  conversion.
-//
+/*!
+	@file       NSCoderFxPlugTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     NSCoderFxPlugTests
+	@abstract   Verifies the NSCoder (FxPlug) category that archives FxPlug value types and host-API captures.
+	@discussion Introduced in FxGrip 0.1.0. The tests round-trip the FxPlug geometry structs and the matrix blob through NSKeyedArchiver, and they capture Fx3DAPI and FxLightingAPI mocks into an archive to check the composed keys and the accessor-failure stop points. FxPlug.framework is weak-linked and absent outside a host, so stubs and mocks stand in for the SDK types.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGrip/FxGripTypes.h"
@@ -230,6 +230,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - Render Time
 
+/*! @abstract A coder with no assigned render time reports an invalid, zero-timescale CMTime. */
 - (void)testRenderTimeIsInvalidBeforeItIsAssigned
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -239,6 +240,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(time.timescale, 0);
 }
 
+/*! @abstract An assigned render time reads back with every CMTime field intact. */
 - (void)testRenderTimeRoundTripsThroughTheAssociatedObject
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -249,6 +251,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue(FxGripCoderTimesEqual(archiver.renderTime, time));
 }
 
+/*! @abstract Assigning a render time to one coder leaves another coder's render time unassigned. */
 - (void)testRenderTimeIsIndependentPerCoder
 {
 	NSKeyedArchiver *first = FxGripCoderArchiver();
@@ -260,6 +263,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(first.renderTime.timescale, 30);
 }
 
+/*! @abstract isFxPluginStateEncoder is NO until a render time is assigned and YES afterward. */
 - (void)testIsFxPluginStateEncoderTracksWhetherARenderTimeWasAssigned
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -273,6 +277,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - Quality Level
 
+/*! @abstract A decoder with no stored quality level reports kFxQuality_HIGH. */
 - (void)testQualityLevelDefaultsToHighWhenTheKeyIsAbsent
 {
 	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(FxGripCoderArchiver());
@@ -280,6 +285,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(unarchiver.qualityLevel, (FxQuality)kFxQuality_HIGH);
 }
 
+/*! @abstract Each of the low, medium, and high quality levels reads back unchanged. */
 - (void)testQualityLevelRoundTripsForEveryLevel
 {
 	FxQuality levels[3] = { kFxQuality_LOW, kFxQuality_MEDIUM, kFxQuality_HIGH };
@@ -294,6 +300,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	}
 }
 
+/*! @abstract The quality level is stored as an int64 under kFxPlugCoderQualityLevelKey. */
 - (void)testQualityLevelUsesTheDocumentedArchiveKey
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -307,6 +314,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - FxPoint2D
 
+/*! @abstract An encoded FxPoint2D reads back with its x and y preserved. */
 - (void)testFxPoint2DRoundTrips
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -319,6 +327,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.y, -3.25);
 }
 
+/*! @abstract Decoding an FxPoint2D from an absent key yields a zero point. */
 - (void)testFxPoint2DDecodesToZeroWhenTheKeyIsMissing
 {
 	FxPoint2D decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxPoint2D:@"absent"];
@@ -327,6 +336,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.y, 0.0);
 }
 
+/*! @abstract Decoding an FxPoint2D from a blob of a different size yields a zero point. */
 - (void)testFxPoint2DDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -340,6 +350,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - FxSize
 
+/*! @abstract An encoded FxSize reads back with its width and height preserved. */
 - (void)testFxSizeRoundTrips
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -352,6 +363,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.height, 1080.0);
 }
 
+/*! @abstract Decoding an FxSize from an absent key yields a zero size. */
 - (void)testFxSizeDecodesToZeroWhenTheKeyIsMissing
 {
 	FxSize decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxSize:@"absent"];
@@ -360,6 +372,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.height, 0.0);
 }
 
+/*! @abstract Decoding an FxSize from a blob of a different size yields a zero size. */
 - (void)testFxSizeDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -373,6 +386,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - FxPoint3D
 
+/*! @abstract An encoded FxPoint3D reads back with its x, y, and z preserved. */
 - (void)testFxPoint3DRoundTrips
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -386,6 +400,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.z, 3.75);
 }
 
+/*! @abstract Decoding an FxPoint3D from an absent key yields a zero point. */
 - (void)testFxPoint3DDecodesToZeroWhenTheKeyIsMissing
 {
 	FxPoint3D decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxPoint3D:@"absent"];
@@ -395,6 +410,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.z, 0.0);
 }
 
+/*! @abstract Decoding an FxPoint3D from a blob of a different size yields a zero point. */
 - (void)testFxPoint3DDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -408,6 +424,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - FxRect
 
+/*! @abstract An encoded FxRect reads back with its four edges preserved. */
 - (void)testFxRectRoundTrips
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -422,6 +439,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.top, 40);
 }
 
+/*! @abstract Decoding an FxRect from an absent key yields a zero rect. */
 - (void)testFxRectDecodesToZeroWhenTheKeyIsMissing
 {
 	FxRect decoded = [FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeFxRect:@"absent"];
@@ -432,6 +450,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(decoded.top, 0);
 }
 
+/*! @abstract Decoding an FxRect from a blob of a different size yields a zero rect. */
 - (void)testFxRectDecodesToZeroWhenTheStoredBlobIsADifferentSize
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -445,6 +464,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - Matrix44Data
 
+/*! @abstract An encoded Matrix44Data reads back byte-identical to the original. */
 - (void)testMatrix44DataRoundTrips
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -462,11 +482,13 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(memcmp(decoded, &matrix, sizeof(Matrix44Data)), 0);
 }
 
+/*! @abstract Decoding a Matrix44Data from an absent key yields NULL. */
 - (void)testMatrix44DataDecodesToNullWhenTheKeyIsMissing
 {
 	XCTAssertTrue([FxGripCoderUnarchiver(FxGripCoderArchiver()) decodeMatrix44Data:@"absent"] == NULL);
 }
 
+/*! @abstract Decoding a Matrix44Data from a blob of a different size yields NULL. */
 - (void)testMatrix44DataDecodesToNullWhenTheStoredBlobIsADifferentSize
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -476,6 +498,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue([FxGripCoderUnarchiver(archiver) decodeMatrix44Data:@"m"] == NULL);
 }
 
+/*! @abstract encodeFxMatrix44: writes the object's raw matrix data, which decodes byte-identical. */
 - (void)testEncodeFxMatrix44WritesTheObjectsRawMatrixData
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -512,6 +535,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - Fx3DAPI Capture
 
+/*! @abstract encodeFx3DAPI:atTime:forKey: writes the focal length, frustum edges, and model, view, and projection matrices under the given key. */
 - (void)testEncodeFx3DAPIWritesEveryCameraValueUnderTheGivenKey
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -533,6 +557,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(memcmp([unarchiver decodeFx3DProjectionMatrixData:@"K"], api.projection.matrix, sizeof(Matrix44Data)), 0);
 }
 
+/*! @abstract encodeFx3DAPI:atTime:forKey: composes each archive key from the prefix and the documented suffix. */
 - (void)testEncodeFx3DAPIComposesKeysFromThePrefixAndTheDocumentedSuffixes
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -548,6 +573,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue([unarchiver containsValueForKey:[@"K" stringByAppendingString:FxGrip3DCoderFrustumFarKey]]);
 }
 
+/*! @abstract encodeFx3DAPI: with no key writes under the current-time key, which the keyless decoders read back. */
 - (void)testEncodeFx3DAPIWithoutAKeyWritesUnderTheCurrentTimeKey
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -563,6 +589,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue([unarchiver decodeFx3DProjectionMatrixData] != NULL);
 }
 
+/*! @abstract encodeFx3DAPI: queries the host API at the coder's render time. */
 - (void)testEncodeFx3DAPIPassesTheRenderTimeToTheHostAPI
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -575,6 +602,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue(FxGripCoderTimesEqual(api.lastRequestedTime, time));
 }
 
+/*! @abstract encodeFx3DAPI:atTime:forKey: under the current-time key writes nothing when the time differs from the render time. */
 - (void)testEncodeFx3DAPIUnderTheCurrentTimeKeySkipsATimeOtherThanTheRenderTime
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -619,6 +647,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	}
 }
 
+/*! @abstract encodeFx3DAPI:atTime:forKey: writes no frustum values when the frustum call fails, keeping the values captured before it. */
 - (void)testEncodeFx3DAPIWritesNoFrustumWhenTheFrustumCallFails
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -633,6 +662,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual([unarchiver decodeFx3DFrustumFar:@"K"], 0.0);
 }
 
+/*! @abstract The Fx3D decoders return zero scalars, NULL matrix data, and nil matrix objects for an empty archive. */
 - (void)testFx3DDecodersReturnZeroAndNullForAnEmptyArchive
 {
 	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(FxGripCoderArchiver());
@@ -657,6 +687,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - FxLightingAPI Capture
 
+/*! @abstract encodeFxLightingAPI:atTime:forKey: writes the light count under the composed key. */
 - (void)testEncodeFxLightingAPIWritesTheLightCount
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -669,6 +700,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual([unarchiver decodeIntegerForKey:[@"L" stringByAppendingString:FxGripLightingCoderLightCountKey]], (NSInteger)3);
 }
 
+/*! @abstract encodeFxLightingAPI: with no key writes the count and each light under the current-time key. */
 - (void)testEncodeFxLightingAPIWithoutAKeyWritesUnderTheCurrentTimeKey
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -684,6 +716,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue([unarchiver containsValueForKey:FxGripCoderLightKey(FxGrip3DCoderCurrentTimeKey, 1)]);
 }
 
+/*! @abstract encodeFxLightingAPI:atTime:forKey: under the current-time key writes nothing when the time differs from the render time. */
 - (void)testEncodeFxLightingAPIUnderTheCurrentTimeKeySkipsATimeOtherThanTheRenderTime
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -699,6 +732,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual([unarchiver decodeFxLightCount], 0L);
 }
 
+/*! @abstract encodeFxLightingAPI:atTime:forKey: writes each FxLight struct under its indexed key with the version, type, intensity, and position preserved. */
 - (void)testEncodeFxLightingAPIWritesEachLightUnderItsIndexedKey
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -721,6 +755,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	}
 }
 
+/*! @abstract encodeFxLightingAPI:atTime:forKey: skips a light whose info call fails while writing the lights before and after it. */
 - (void)testEncodeFxLightingAPISkipsALightWhoseInfoCallFails
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -737,6 +772,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue([unarchiver containsValueForKey:FxGripCoderLightKey(@"L", 2)]);
 }
 
+/*! @abstract The light count is stored under the composed light-count archive key. */
 - (void)testLightCountUsesTheDocumentedArchiveKey
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -769,6 +805,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual([unarchiver decodeFxLightCount:@"L"], 3L);
 }
 
+/*! @abstract decodeFxLightCount reads zero from an empty archive, with and without a key. */
 - (void)testLightCountIsZeroForAnEmptyArchive
 {
 	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(FxGripCoderArchiver());
@@ -777,6 +814,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual([unarchiver decodeFxLightCount:@"L"], 0L);
 }
 
+/*! @abstract decodeFxLight:forKey: returns NULL for a negative index, an index at the count, and an index beyond it. */
 - (void)testDecodeFxLightRejectsAnIndexOutsideTheStoredCount
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -792,6 +830,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertTrue([unarchiver decodeFxLight:0] == NULL);	// nothing under the current-time key
 }
 
+/*! @abstract The struct-filling decodeFxLight variants report failure for an index outside the stored count. */
 - (void)testDecodeFxLightIntoAStructReportsFailureForAnIndexOutsideTheStoredCount
 {
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
@@ -838,6 +877,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 
 #pragma mark - Matrix Conversion
 
+/*! @abstract floatMatrix:fromDoubleMatrix: copies every element of the double matrix as its float value. */
 - (void)testFloatMatrixCopiesEveryElementOfTheDoubleMatrix
 {
 	Matrix44Data source = {
@@ -858,6 +898,7 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	}
 }
 
+/*! @abstract floatMatrix:fromDoubleMatrix: preserves the identity matrix. */
 - (void)testFloatMatrixPreservesTheIdentityMatrix
 {
 	Matrix44Data source = {

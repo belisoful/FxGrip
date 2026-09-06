@@ -1,7 +1,12 @@
-//
-//  FxGripDynamicRegistrarTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripDynamicRegistrarTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDynamicRegistrarTests
+	@abstract   Unit tests for FxGripDynamicRegistrar group and plugin registration.
+	@discussion Introduced in FxGrip 0.1.0. The tests verify that the dynamic registrar registers groups and plugin classes from well-formed input, rejects malformed or non-conforming input without crashing, and discovers conforming plugin classes across the superclass chain.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGrip/FxGripStaticRegistrar.h"
@@ -86,6 +91,7 @@
 
 #pragma mark registerGroup:
 
+/*! @abstract A well-formed group dictionary registers, and the registrar then reports containing its UUID. */
 - (void)testRegisterGroup_WellFormedDictionary_RegistersGroup {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 	NSString *uuid = NSUUID.UUID.UUIDString;
@@ -98,6 +104,7 @@
 	XCTAssertTrue([registrar containsGroupUUID:uuid]);
 }
 
+/*! @abstract A nil group argument neither throws nor registers any group. */
 - (void)testRegisterGroup_NilInput_DoesNotCrashOrRegister {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 
@@ -105,6 +112,7 @@
 	XCTAssertFalse([registrar containsGroupUUID:NSUUID.UUID.UUIDString]);
 }
 
+/*! @abstract Wrong-typed group input is ignored without throwing, and a well-formed group still registers afterward. */
 - (void)testRegisterGroup_WrongTypeInput_DoesNotCrashOrRegister {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 
@@ -122,6 +130,7 @@
 	XCTAssertTrue([registrar containsGroupUUID:uuid]);
 }
 
+/*! @abstract A FxGripPluginGroupData instance passed to -registerGroup: registers under its group UUID. */
 - (void)testRegisterGroup_FxPluginGroupDataInstance_RegistersGroup {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 	NSString *uuid = NSUUID.UUID.UUIDString;
@@ -134,6 +143,7 @@
 
 #pragma mark registerPluginClass:
 
+/*! @abstract A conforming plugin class with complete information registers and returns YES. */
 - (void)testRegisterPluginClass_ValidClass_RegistersAndReturnsYes {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 
@@ -143,6 +153,7 @@
 	XCTAssertTrue([registrar containsPluginUUID:kDynPlugin1UUID]);
 }
 
+/*! @abstract A class that does not conform to the plugin protocol returns NO without throwing. */
 - (void)testRegisterPluginClass_NonConformingClass_ReturnsNoWithoutCrash {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 
@@ -151,6 +162,7 @@
 	XCTAssertFalse(success);
 }
 
+/*! @abstract A Nil class argument returns NO without throwing. */
 - (void)testRegisterPluginClass_NilClass_ReturnsNoWithoutCrash {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 	Class degenerateClass = Nil;
@@ -160,6 +172,7 @@
 	XCTAssertFalse(success);
 }
 
+/*! @abstract A class that reports +isRegisteredPlugIn as NO is not registered and returns NO. */
 - (void)testRegisterPluginClass_DisabledPlugin_ReturnsNo {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 
@@ -168,6 +181,7 @@
 	XCTAssertFalse(success);
 }
 
+/*! @abstract A class returning non-nil but incomplete information returns YES yet the plugin is not stored, because the missing version field fails the registration pipeline. */
 - (void)testRegisterPluginClass_IncompleteInformation_ReturnsYesButDoesNotStore {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 
@@ -181,6 +195,7 @@
 
 #pragma mark globalRegisteredPluginClasses
 
+/*! @abstract +globalRegisteredPluginClasses returns the conforming plugin classes and excludes NSObject. */
 - (void)testGlobalRegisteredPluginClasses_ReturnsConformingClasses {
 	NSArray<Class> *classes = nil;
 	XCTAssertNoThrow(classes = [FxGripDynamicRegistrar globalRegisteredPluginClasses]);
@@ -191,6 +206,7 @@
 	XCTAssertFalse([classes containsObject:NSObject.class]);
 }
 
+/*! @abstract +globalRegisteredPluginClasses includes a subclass that conforms only through its superclass. */
 - (void)testGlobalRegisteredPluginClasses_IncludesSubclassOfConformingClass {
 	NSArray<Class> *classes = [FxGripDynamicRegistrar globalRegisteredPluginClasses];
 
@@ -199,6 +215,7 @@
 
 #pragma mark plugInsWithError:
 
+/*! @abstract -plugInsWithError: registers the discovered conforming classes as a side effect, returns nil, and sets no error. */
 - (void)testPlugInsWithError_RegistersConformingClassesWithoutCrashing {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 	NSError *error = nil;
@@ -214,6 +231,7 @@
 
 #pragma mark plugInGroupsWithError:
 
+/*! @abstract -plugInGroupsWithError: returns without throwing. */
 - (void)testPlugInGroupsWithError_ReturnsWithoutCrashing {
 	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
 	NSError *error = nil;

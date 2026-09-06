@@ -1,7 +1,12 @@
-//
-//  FxGripParticleSystemTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripParticleSystemTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParticleSystemTests
+	@abstract   Tests for FxGripParticleSystem, the deterministic SCNParticleSystem subclass.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the class is a drop-in SCNParticleSystem, copies properties from a source system, and drives every reimplemented variation from its seed. A seed reproduces its rendered frame, and different seeds diverge.
+*/
 
 #import <XCTest/XCTest.h>
 #import <Metal/Metal.h>
@@ -21,12 +26,14 @@
 	self.device = MTLCreateSystemDefaultDevice();
 }
 
+/*! @abstract FxGripParticleSystem is a kind of SCNParticleSystem, so it substitutes for the stock system on an SCNNode. */
 - (void)testIsDropInSubclassOfSCNParticleSystem
 {
 	FxGripParticleSystem *system = [FxGripParticleSystem.alloc init];
 	XCTAssertTrue([system isKindOfClass:SCNParticleSystem.class]);
 }
 
+/*! @abstract -initWithParticleSystem: copies the source system's birth rate and particle life span onto the new instance. */
 - (void)testInitWithParticleSystemCopiesProperties
 {
 	SCNParticleSystem *source = [SCNParticleSystem particleSystem];
@@ -99,6 +106,7 @@
 	return pixels;
 }
 
+/*! @abstract Two renders that share a seed produce byte-identical frames. */
 - (void)testSameSeedRendersIdenticalPixels
 {
 	if (self.device == nil) {
@@ -116,6 +124,7 @@
 	XCTAssertEqualObjects(first, second, @"the same seed reproduces the same frame");
 }
 
+/*! @abstract Two renders with different seeds produce different frames. */
 - (void)testDifferentSeedsProduceDifferentFrames
 {
 	if (self.device == nil) {

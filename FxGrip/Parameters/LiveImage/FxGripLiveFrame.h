@@ -1,7 +1,16 @@
-//
-//  FxGripLiveFrame.h
-//  FxGrip
-//
+/*!
+	@file       FxGripLiveFrame.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripLiveFrame
+	@abstract   One immutable published image: tightly packed pixels with a CGImage built on demand.
+	@discussion Introduced in FxGrip 0.1.0. A frame is the unit a live image parameter carries from
+	            the render pass to its inspector view. It owns a copy of its pixels in a supported
+	            Metal pixel format, so it outlives the texture or image it was read from. A CGImage is
+	            built lazily, converting a float format to 8-bit on first use. Frames stay in the
+	            plugin process and never persist in the host document.
+*/
 
 #ifndef FxGripLiveFrame_h
 #define FxGripLiveFrame_h
@@ -18,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 	@class      FxGripLiveFrame
 	@abstract   One published image: tightly packed pixels in a Metal pixel format, with a
 				CGImage built on demand.
-	@discussion Introduced in FxGrip 1.0. A frame is the unit a live image parameter carries
+	@discussion Introduced in FxGrip 0.1.0. A frame is the unit a live image parameter carries
 				from the render pass to its inspector view. It is immutable and owns a copy
 				of its pixels, so it outlives the texture or image it was read from. Frames
 				stay in the plugin process and never persist in the host document.

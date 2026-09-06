@@ -1,14 +1,27 @@
-//
-//  FxGripMetaAPI_v1.m
-//  FxGrip
-//
+/*!
+	@file       FxGripMetaAPI_v1.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMetaAPI_v1
+	@abstract   Implements per-parameter metadata storage over the host's meta manager.
+	@discussion Introduced in FxGrip 0.1.0. Each method checks for a host meta manager and forwards
+	            to it. When the host has no meta manager, the method answers the type's not-found
+	            result: a count of -1, NO, or an error in the FxGrip plugin error domain.
+*/
 
 #import "FxGripMetaAPI_v1.h"
 #import "FxGripMeta.h"
 #import "FxGripErrors.h"
 
+/*!
+	@abstract	FxGrip's per-parameter metadata API over the host meta manager.
+	@discussion	Introduced in FxGrip 0.1.0. Forwards every call to hostMeta and returns a not-found
+				result when the host has no meta manager.
+*/
 @implementation FxGripMetaAPI_v1
 
+// Returns the not-found value early when the host has no meta manager.
 #define hasMeta(returnValue) { if (!self.hostHasMeta) return (returnValue); }
 #define noMetaError(parameterID) ([NSError errorWithDomain:FxGripPlugErrorDomain \
 	code:kFxError_ThirdPartyDeveloperStart + (parameterID) \

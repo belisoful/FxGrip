@@ -1,7 +1,18 @@
-//
-//  FxGripEffectHost.h
-//  FxGrip
-//
+/*!
+	@file       FxGripEffectHost.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripEffectHost
+	@abstract   The narrow owner contract FxGrip's parameter subsystem depends on.
+	@discussion Introduced in FxGrip 0.1.0. The parameter classes, custom controls, and
+	            out-of-band access context reach their owner only through this protocol. The
+	            required members are the wrapped API manager, the notification center, and the
+	            optional effect base. FxGripTileableEffect conforms, and a plain FxPlug plug-in
+	            conforms directly or through FxGripPluginHost. Inline helpers and exported
+	            functions read the host's richer attributes, falling back to the effect base or a
+	            resolve notification when the host does not answer directly.
+*/
 
 #ifndef FxGripEffectHost_h
 #define FxGripEffectHost_h
@@ -22,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@protocol   FxGripEffectHost
 	@abstract   The narrow contract FxGrip's parameter subsystem requires of its owner.
-	@discussion Introduced in FxGrip 1.0. The parameter classes, the custom controls, and the
+	@discussion Introduced in FxGrip 0.1.0. The parameter classes, the custom controls, and the
 				out-of-band access context reach their owner only through this protocol: the
 				wrapped API manager and the notification center. FxGripTileableEffect conforms, so
 				a subclassed effect passes itself. An existing FxPlug plug-in that does not use the

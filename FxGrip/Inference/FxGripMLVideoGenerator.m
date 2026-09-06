@@ -1,15 +1,29 @@
-//
-//  FxGripMLVideoGenerator.m
-//  FxGrip
-//
+/*!
+	@file       FxGripMLVideoGenerator.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLVideoGenerator
+	@abstract   Implements the generator template whose model produces a whole clip from no source.
+	@discussion Introduced in FxGrip 0.1.0. The generator geometry reports the full output bounds as
+	            the destination rect and an empty source tile rect. The render path samples the ready
+	            clip and otherwise draws the placeholder, since a generator has no source to fall
+	            back to. The generation lifecycle is inherited from FxGripMLVideoEffect.
+*/
 
 #import "FxGripMLVideoGenerator.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The generator template whose model produces a whole clip from no source.
+	@discussion	Introduced in FxGrip 0.1.0. The generation lifecycle, the clip handling, and the
+				state hooks are inherited unchanged.
+*/
 @implementation FxGripMLVideoGenerator
 
 #pragma mark Generator geometry
 
+/*! The destination rect is the output's full pixel bounds. */
 - (BOOL)destinationImageRect:(FxRect *)destinationImageRect
 				sourceImages:(NSArray<FxImageTile *> *)sourceImages
 			destinationImage:(nonnull FxImageTile *)destinationImage
@@ -21,6 +35,7 @@
 	return YES;
 }
 
+/*! There is no source, so the source tile rect is empty. */
 - (BOOL)sourceTileRect:(FxRect *)sourceTileRect
 	  sourceImageIndex:(NSUInteger)sourceImageIndex
 		  sourceImages:(NSArray<FxImageTile *> *)sourceImages

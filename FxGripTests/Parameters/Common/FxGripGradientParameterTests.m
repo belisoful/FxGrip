@@ -1,11 +1,15 @@
-//
-//  FxGripGradientParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripGradientParameter: the type identity, the name-ID-flags payload it
-//  hands the creation API, the host-refusal result, and the sample-count and depth the
-//  value read asks of the retrieval API.
-//
+/*!
+	@file       FxGripGradientParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripGradientParameterTests
+	@abstract   Tests FxGripGradientParameter: its FxPlug type identity and the name-ID-flags
+	            payload it hands the creation API.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the flag forwarding, the
+	            host-refusal result, and the sample count and depth the value read asks of the
+	            retrieval API.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -52,6 +56,7 @@ static const FxParameterId kGradientTestParameter = 51;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug gradient type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripGradientParameter.parameterType, FxParameterType_Gradient);
@@ -60,6 +65,7 @@ static const FxParameterId kGradientTestParameter = 51;
 
 #pragma mark Creation payload
 
+/*! @abstract A gradient hands the creation call only the name, ID, and flags. */
 - (void)testGradientForwardsOnlyTheNameIDAndFlags
 {
 	XCTAssertTrue([self add:FxGripGradientParameter.class type:kFxParameterType_Gradient extra:nil]);
@@ -70,6 +76,7 @@ static const FxParameterId kGradientTestParameter = 51;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A gradient carries the declared flag into the flag bitmask sent to the host. */
 - (void)testGradientCarriesTheConfiguredFlags
 {
 	NSArray *declared = @[kParameterFlagString_HIDDEN];
@@ -80,6 +87,7 @@ static const FxParameterId kGradientTestParameter = 51;
 	XCTAssertEqualObjects(self.call[@"flags"], @(kFxParameterFlag_HIDDEN));
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -89,6 +97,7 @@ static const FxParameterId kGradientTestParameter = 51;
 
 #pragma mark Values
 
+/*! @abstract -valueAtTime: asks the retrieval API for the configured sample count and depth. */
 - (void)testGradientValueAtTimeAsksForTheConfiguredSampleCountAndDepth
 {
 	FxGripGradientParameter *parameter = [self makeGradientParameter];
@@ -106,6 +115,7 @@ static const FxParameterId kGradientTestParameter = 51;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"depth"], @(kFxDepth_FLOAT32));
 }
 
+/*! @abstract -valueAtTime: returns NULL when the retrieval read fails. */
 - (void)testGradientValueAtTimeIsNullWhenTheReadFails
 {
 	FxGripGradientParameter *parameter = [self makeGradientParameter];
@@ -117,6 +127,7 @@ static const FxParameterId kGradientTestParameter = 51;
 	XCTAssertTrue([parameter valueAtTime:FxGripParamClassTestTime(0, 1)] == NULL);
 }
 
+/*! @abstract A second value read reuses the parameter and issues a fresh retrieval read. */
 - (void)testRepeatedGradientReadsReplaceTheBuffer
 {
 	FxGripGradientParameter *parameter = [self makeGradientParameter];

@@ -1,7 +1,15 @@
-//
-//  FxGripCurveSetEditorView.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveSetEditorView.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveSetEditorView
+	@abstract   The inspector composite that edits a curve-set value as labeled strips.
+	@discussion Introduced in FxGrip 0.1.0. The composite stacks one FxGripCurveEditorView per
+	            mapping over a single curve-set value. A strip's continuous edits update the
+	            working set, and its commit writes the set to the host through an out-of-band
+	            access context. A committed identity curve removes the mapping's key.
+*/
 
 #ifndef FxGripCurveSetEditorView_h
 #define FxGripCurveSetEditorView_h
@@ -17,7 +25,7 @@
 /*!
 	@class      FxGripCurveSetEditorView
 	@abstract   The inspector composite: labeled curve strips over one curve-set value.
-	@discussion Introduced in FxGrip 1.0. A filter's parameter class builds the
+	@discussion Introduced in FxGrip 0.1.0. A filter's parameter class builds the
 				composite by declaring each mapping (addEditorForKey:...) in FCP strip
 				order, and createViewForParameterID: returns it, so one custom
 				parameter carries the filter's whole curve set.

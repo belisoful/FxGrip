@@ -1,9 +1,16 @@
-//
-//  FxGripAPIManager.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripAPIAccessing.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAPIAccessing
+	@abstract   Implements the FxGrip layer that wraps the FxPlug host API manager.
+	@discussion Introduced in FxGrip 0.1.0. apiForProtocol:bypass: resolves the host object for a
+	            protocol, then returns FxGrip's wrapper when FxGrip augments that protocol. The
+	            version-ordered branches place each versioned wrapper after the branch it does not
+	            conform to, so a higher-version request falls through to its own branch. The typed
+	            accessors resolve one protocol each and log when the host provides no object.
+*/
 
 #import "FxGripAPIAccessing.h"
 #import "FxGripCustomCreationAPI_v1.h"
@@ -110,6 +117,12 @@
 @property (assign, readonly) unsigned int pluginVersion;
 @end
 
+/*!
+	@abstract	The FxGrip layer over the host's PROAPIAccessing manager.
+	@discussion	Introduced in FxGrip 0.1.0. Reads pluginUUID and sessionID from the host manager
+				when it responds to them, retains the manager and effect, and vends wrapped or raw
+				APIs on request.
+*/
 @implementation FxGripAPIAccessing
 {
 	//FxGripParameterRetrievalAPI_v6 *mParamGetAPI_v6;
@@ -236,11 +249,24 @@
 #pragma mark -
 #pragma mark FxGrip ProPlug API Layer
 
+/*! @abstract Resolves a protocol through the FxGrip wrapper layer. */
 - (id)apiForProtocol:(Protocol *)apiProtocol
 {
 	return [self apiForProtocol:apiProtocol bypass:NO];
 }
 
+/*!
+	@method		apiForProtocol:bypass:
+	@abstract	Resolves the host API for a protocol, wrapping it in FxGrip's layer unless bypassed.
+	@param		apiProtocol			The FxPlug or FxGrip API protocol to resolve.
+	@param		bypassFxGripLayer	YES returns the raw host object; NO returns the FxGrip wrapper when one applies.
+	@return		The wrapped or raw API, or nil when the host provides none and no FxGrip API backs the protocol.
+	@discussion	Introduced in FxGrip 0.1.0. Each branch tests whether an FxGrip wrapper conforms to
+				the requested protocol and builds it over the host object. FxGrip-implemented APIs,
+				such as the tags and presets APIs, build without a host object. Higher-version
+				wrappers sit after the branch they do not conform to, so a version request lands on
+				its own branch.
+*/
 - (id)apiForProtocol:(Protocol *)apiProtocol bypass:(BOOL)bypassFxGripLayer
 {
 	id api = [_apiAccessing apiForProtocol:apiProtocol];

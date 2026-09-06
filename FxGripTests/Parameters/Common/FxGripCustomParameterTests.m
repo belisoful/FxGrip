@@ -1,11 +1,15 @@
-//
-//  FxGripCustomParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripCustomParameter: the type identity, the fresh empty dictionary the
-//  creation hands the API, the codable data classes it accepts, the value plumbing through
-//  the retrieval and version-six setting APIs, and the subclass data-initialization hook.
-//
+/*!
+	@file       FxGripCustomParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCustomParameterTests
+	@abstract   Tests FxGripCustomParameter: its FxPlug type identity and the fresh empty
+	            dictionary the creation hands the host.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the codable data classes it
+	            accepts, the value plumbing through the retrieval and version-six setting APIs,
+	            and the subclass data-initialization hook.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -58,6 +62,7 @@ static const FxParameterId kCustomTestParameter = 51;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug custom type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripCustomParameter.parameterType, FxParameterType_Custom);
@@ -66,6 +71,7 @@ static const FxParameterId kCustomTestParameter = 51;
 
 #pragma mark Creation payload
 
+/*! @abstract The custom creation hands the host a fresh empty mutable dictionary as its default. */
 - (void)testCustomSendsAFreshEmptyDictionaryAsItsDefault
 {
 	XCTAssertTrue([self add:FxGripCustomParameter.class type:kFxParameterType_Custom extra:nil]);
@@ -85,6 +91,7 @@ static const FxParameterId kCustomTestParameter = 51;
 	XCTAssertEqualObjects(self.call[@"default"], NSMutableDictionary.new);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -94,6 +101,7 @@ static const FxParameterId kCustomTestParameter = 51;
 
 #pragma mark Values
 
+/*! @abstract The dataClasses set lists the codable classes the parameter decodes and excludes others. */
 - (void)testTheCustomParameterAdvertisesTheCodableDataClassesItAccepts
 {
 	NSSet<Class> *classes = [self makeCustomParameter].dataClasses;
@@ -106,6 +114,7 @@ static const FxParameterId kCustomTestParameter = 51;
 	XCTAssertFalse([classes containsObject:XCTestCase.class]);
 }
 
+/*! @abstract -valueAtTime: returns the object the retrieval API supplies for the render time. */
 - (void)testCustomValueAtTimeReturnsWhatTheRetrievalAPIProvides
 {
 	FxGripCustomParameter *parameter = [self makeCustomParameter];
@@ -117,6 +126,7 @@ static const FxParameterId kCustomTestParameter = 51;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @3);
 }
 
+/*! @abstract The value accessor reads at the zero time. */
 - (void)testTheCustomValueAccessorReadsAtTheZeroTime
 {
 	FxGripCustomParameter *parameter = [self makeCustomParameter];
@@ -126,6 +136,7 @@ static const FxParameterId kCustomTestParameter = 51;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @0);
 }
 
+/*! @abstract -valueAtTime: is nil when the retrieval read fails. */
 - (void)testCustomValueAtTimeIsNilWhenTheReadFails
 {
 	FxGripCustomParameter *parameter = [self makeCustomParameter];
@@ -135,6 +146,7 @@ static const FxParameterId kCustomTestParameter = 51;
 	XCTAssertNil([parameter valueAtTime:FxGripParamClassTestTime(0, 1)]);
 }
 
+/*! @abstract -setValue:atTime: writes the object and render time through the version-six setting API. */
 - (void)testSettingTheCustomValueWritesThroughTheVersionSixSettingAPI
 {
 	FxGripCustomParameter *parameter = [self makeCustomParameter];
@@ -148,6 +160,7 @@ static const FxParameterId kCustomTestParameter = 51;
 							 @"timevalue": @5}));
 }
 
+/*! @abstract The value setter writes at the zero time. */
 - (void)testTheCustomValueSetterWritesAtTheZeroTime
 {
 	FxGripCustomParameter *parameter = [self makeCustomParameter];
@@ -157,6 +170,7 @@ static const FxParameterId kCustomTestParameter = 51;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv6.lastWrite[@"timevalue"], @0);
 }
 
+/*! @abstract The base data-initialization hook leaves the staged value nil. */
 - (void)testTheCustomDataInitializationHookLeavesTheValueUntouched
 {
 	FxGripCustomParameter *parameter = [self makeCustomParameter];

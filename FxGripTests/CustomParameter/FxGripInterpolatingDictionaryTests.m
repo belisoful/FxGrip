@@ -1,7 +1,12 @@
-//
-//  FxGripInterpolatingDictionaryTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripInterpolatingDictionaryTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInterpolatingDictionaryTests
+	@abstract   Tests for FxGripInterpolatingDictionary, the keyframe blend used by custom parameter interpolation.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover scalar interpolation across number types, container interpolation over arrays and dictionaries, the underscore-prefixed key and exempt-path rules, and the -interpolateBetween:withWeight: host entry point.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxTypes.h>
@@ -47,12 +52,14 @@
 
 #pragma mark - Inheritance
 
+/*! @abstract The interpolating dictionary is an FxGripDictionary and supports secure coding. */
 - (void)testTheInterpolatingDictionaryIsAnFxGripDictionary
 {
 	XCTAssertTrue([self.dict isKindOfClass:FxGripDictionary.class]);
 	XCTAssertTrue([FxGripInterpolatingDictionary supportsSecureCoding]);
 }
 
+/*! @abstract The inherited keyed store still reads and counts entries. */
 - (void)testTheKeyedStoreStillWorks
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -63,6 +70,7 @@
 
 #pragma mark - Exempt Keys
 
+/*! @abstract Reading exemptKeys seeds the two reserved keys and writes the array back under its reserved key. */
 - (void)testExemptKeysSeedsTheReservedKeysAndWritesItselfBack
 {
 	NSMutableArray *exempt = self.dict.exemptKeys;
@@ -71,6 +79,7 @@
 	XCTAssertEqualObjects([self.dict objectForKey:kCustomAPI_ExemptKeysKey], exempt);
 }
 
+/*! @abstract Reading exemptKeys twice returns the same two-entry array without re-seeding. */
 - (void)testExemptKeysIsIdempotent
 {
 	NSMutableArray *first = self.dict.exemptKeys;
@@ -80,6 +89,7 @@
 	XCTAssertEqual(second.count, 2u);
 }
 
+/*! @abstract A caller-supplied exempt array keeps its entries and gains the two reserved keys. */
 - (void)testExemptKeysPreservesCallerSuppliedEntries
 {
 	[self.dict setObject:@[@"mine"] forKey:kCustomAPI_ExemptKeysKey];
@@ -87,6 +97,7 @@
 	XCTAssertEqualObjects(self.dict.exemptKeys, (@[@"mine", kCustomAPI_ExemptKeysKey, kCustomAPI_LastChangedKey]));
 }
 
+/*! @abstract A non-array value under the exempt key is wrapped into an array alongside the reserved keys. */
 - (void)testExemptKeysWrapsANonArrayValue
 {
 	[self.dict setObject:@"solo" forKey:kCustomAPI_ExemptKeysKey];
@@ -94,6 +105,7 @@
 	XCTAssertEqualObjects(self.dict.exemptKeys, (@[@"solo", kCustomAPI_ExemptKeysKey, kCustomAPI_LastChangedKey]));
 }
 
+/*! @abstract An immutable exempt array is upgraded to a mutable one stored back under its key, so later additions persist. */
 - (void)testExemptKeysUpgradesAnImmutableArrayInPlace
 {
 	[self.dict setObject:@[@"mine"] forKey:kCustomAPI_ExemptKeysKey];
@@ -106,16 +118,19 @@
 
 #pragma mark - Scalar Interpolation
 
+/*! @abstract Interpolating operands of mismatched classes returns nil. */
 - (void)testMismatchedOperandClassesInterpolateToNil
 {
 	XCTAssertNil([self.dict interpolateValue:@"text" rightValue:@(1) withWeight:0.5f]);
 }
 
+/*! @abstract Interpolating two nil operands returns nil. */
 - (void)testTwoNilOperandsInterpolateToNil
 {
 	XCTAssertNil([self.dict interpolateValue:nil rightValue:nil withWeight:0.5f]);
 }
 
+/*! @abstract Doubles interpolate linearly, returning the endpoints at weight zero and one. */
 - (void)testDoublesInterpolateLinearly
 {
 	XCTAssertEqualObjects([self.dict interpolateValue:@(0.0) rightValue:@(10.0) withWeight:0.25f], @(2.5));
@@ -123,12 +138,14 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:@(0.0) rightValue:@(10.0) withWeight:1.0f], @(10.0));
 }
 
+/*! @abstract Weights outside zero to one extrapolate past the endpoints. */
 - (void)testWeightsOutsideZeroToOneExtrapolate
 {
 	XCTAssertEqualObjects([self.dict interpolateValue:@(0.0) rightValue:@(10.0) withWeight:2.0f], @(20.0));
 	XCTAssertEqualObjects([self.dict interpolateValue:@(0.0) rightValue:@(10.0) withWeight:-1.0f], @(-10.0));
 }
 
+/*! @abstract Float operands interpolate at float precision. */
 - (void)testFloatsInterpolateAtFloatPrecision
 {
 	NSNumber *left = [NSNumber numberWithFloat:1.0f];
@@ -139,6 +156,7 @@
 	XCTAssertEqualWithAccuracy(result.floatValue, 1.5f, 1e-6);
 }
 
+/*! @abstract Integer operands interpolate with rounding, breaking a half tie away from zero. */
 - (void)testIntegersInterpolateWithRounding
 {
 	XCTAssertEqualObjects([self.dict interpolateValue:@(0) rightValue:@(11) withWeight:0.5f], @(6));
@@ -147,6 +165,7 @@
 						  @"round() breaks the -2.5 tie away from zero");
 }
 
+/*! @abstract Short operands interpolate with rounding and read back as a short. */
 - (void)testShortsInterpolateWithRounding
 {
 	NSNumber *left = [NSNumber numberWithShort:0];
@@ -155,6 +174,7 @@
 	XCTAssertEqual([[self.dict interpolateValue:left rightValue:right withWeight:0.5f] shortValue], (short)5);
 }
 
+/*! @abstract Long long operands interpolate with rounding and read back as a long long. */
 - (void)testLongLongsInterpolateWithRounding
 {
 	NSNumber *left = [NSNumber numberWithLongLong:3];
@@ -173,6 +193,7 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:@(NO) rightValue:@(YES) withWeight:0.9f], @(NO));
 }
 
+/*! @abstract Strings copy the left operand rather than blending. */
 - (void)testStringsCopyTheLeftOperand
 {
 	NSMutableString *left = [NSMutableString stringWithString:@"left"];
@@ -183,6 +204,7 @@
 	XCTAssertEqualObjects(result, @"left");
 }
 
+/*! @abstract An uninterpolatable class, such as NSDate, returns the left operand. */
 - (void)testAnUninterpolatableClassCopiesTheLeftOperand
 {
 	NSDate *left = [NSDate dateWithTimeIntervalSince1970:0];
@@ -191,6 +213,7 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:left rightValue:right withWeight:0.5f], left);
 }
 
+/*! @abstract The -customInterpolateValue: subclass hook returns nil by default. */
 - (void)testCustomInterpolateValueIsANilHookByDefault
 {
 	XCTAssertNil([self.dict customInterpolateValue:@(1.0) rightValue:@(2.0) path:@"/a" withWeight:0.5f]);
@@ -198,6 +221,7 @@
 
 #pragma mark - Container Interpolation
 
+/*! @abstract Arrays interpolate element by element. */
 - (void)testArraysInterpolateElementwise
 {
 	NSArray *left = @[@(0.0), @(0.0)];
@@ -206,6 +230,7 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:left rightValue:right withWeight:0.5f], (@[@(1.0), @(2.0)]));
 }
 
+/*! @abstract Array interpolation runs over the left operand and drops elements the right operand does not pair. */
 - (void)testArrayInterpolationIsDrivenByTheLeftOperandAndDropsUnpairedElements
 {
 	NSArray *left = @[@(0.0), @(0.0), @(0.0)];
@@ -214,6 +239,7 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:left rightValue:right withWeight:0.5f], (@[@(1.0)]));
 }
 
+/*! @abstract Nested arrays interpolate recursively. */
 - (void)testNestedArraysInterpolateRecursively
 {
 	NSArray *left = @[@[@(0.0), @(0.0)]];
@@ -222,6 +248,7 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:left rightValue:right withWeight:0.25f], (@[@[@(1.0), @(2.0)]]));
 }
 
+/*! @abstract Dictionaries interpolate value by value under matching keys. */
 - (void)testDictionariesInterpolateByKey
 {
 	NSDictionary *left = @{@"a": @(0.0), @"b": @(10.0)};
@@ -231,6 +258,7 @@
 						  (@{@"a": @(2.0), @"b": @(15.0)}));
 }
 
+/*! @abstract Dictionary keys prefixed with an underscore are dropped from the result. */
 - (void)testDictionaryKeysPrefixedWithUnderscoreAreDropped
 {
 	NSDictionary *left = @{@"a": @(0.0), @"_b": @(0.0)};
@@ -239,6 +267,7 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:left rightValue:right withWeight:0.25f], (@{@"a": @(1.0)}));
 }
 
+/*! @abstract Keys absent from the right operand are dropped from the result. */
 - (void)testKeysMissingFromTheRightOperandAreDropped
 {
 	NSDictionary *left = @{@"a": @(0.0), @"orphan": @(1.0)};
@@ -249,6 +278,7 @@
 
 #pragma mark - Exempt Paths
 
+/*! @abstract An exempt path copies the left operand instead of blending. */
 - (void)testAnExemptPathCopiesTheLeftOperandInsteadOfBlending
 {
 	[self.dict setObject:[@[@"/locked"] mutableCopy] forKey:kCustomAPI_ExemptKeysKey];
@@ -258,6 +288,7 @@
 	XCTAssertEqualObjects(result, @(0.0));
 }
 
+/*! @abstract A path not in the exempt list still blends. */
 - (void)testANonExemptPathStillBlends
 {
 	[self.dict setObject:[@[@"/locked"] mutableCopy] forKey:kCustomAPI_ExemptKeysKey];
@@ -265,6 +296,7 @@
 	XCTAssertEqualObjects([self.dict interpolateValue:@(0.0) rightValue:@(10.0) path:@"/open" withWeight:0.5f], @(5.0));
 }
 
+/*! @abstract Nested dictionary paths are built from the key names, so an exempt nested key is copied while its sibling blends. */
 - (void)testNestedDictionaryPathsAreBuiltFromTheKeyNames
 {
 	[self.dict setObject:[@[@"/outer/inner"] mutableCopy] forKey:kCustomAPI_ExemptKeysKey];
@@ -278,6 +310,7 @@
 	XCTAssertEqualObjects(result[@"outer"][@"other"], @(4.0));
 }
 
+/*! @abstract Array paths are built from the element index, so an exempt index is copied while the others blend. */
 - (void)testArrayPathsAreBuiltFromTheElementIndex
 {
 	[self.dict setObject:[@[@"/1"] mutableCopy] forKey:kCustomAPI_ExemptKeysKey];
@@ -307,6 +340,7 @@
 	XCTAssertEqualObjects([result objectForKey:@"f"], @(5.0));
 }
 
+/*! @abstract -interpolateBetween:withWeight: returns the receiver's and the right dictionary's values at weight zero and one. */
 - (void)testInterpolateBetweenReturnsTheEndpointsAtWeightZeroAndOne
 {
 	FxGripInterpolatingDictionary *right = [FxGripInterpolatingDictionary.alloc init];
@@ -320,6 +354,7 @@
 	XCTAssertEqualObjects([atOne objectForKey:@"f"], @(10.0));
 }
 
+/*! @abstract -interpolateBetween:withWeight: blends numbers, copies strings from the left, and drops underscore-prefixed keys. */
 - (void)testInterpolateBetweenCopiesStringsAndDropsUnderscoreKeys
 {
 	FxGripInterpolatingDictionary *right = [FxGripInterpolatingDictionary.alloc init];
@@ -338,6 +373,7 @@
 	XCTAssertEqual([result count], 2u);
 }
 
+/*! @abstract -interpolateBetween:withWeight: drops keys the right dictionary does not carry. */
 - (void)testInterpolateBetweenDropsKeysMissingFromTheRightOperand
 {
 	FxGripInterpolatingDictionary *right = [FxGripInterpolatingDictionary.alloc init];

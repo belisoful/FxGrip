@@ -1,9 +1,15 @@
-//
-//  FxGripParameterUtility.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterUtility.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterUtility
+	@abstract   Implements parameter type and flag conversion and configuration preprocessing.
+	@discussion Introduced in FxGrip 0.1.0. The type and flag maps are static tables, inverted on
+	            demand for the reverse lookups. Flattening unfolds group parameters into the flat
+	            list and stamps each child's parent ID. The target-preset pass builds a dispatch
+	            table keyed by parameter ID and rewrites the named configurations in place.
+*/
 
 #import "FxGripParameterUtility.h"
 #import "FxGripPluginInfo.h"
@@ -12,6 +18,10 @@
 #import <BEFoundation/NSDictionary+BExtension.h>
 #import <BEFoundation/BEMutable.h>
 
+/*!
+	@abstract	Converts FxPlug parameter types and flags and preprocesses configurations.
+	@discussion	Introduced in FxGrip 0.1.0. The class is a stateless collection of class methods.
+*/
 @implementation FxGripParameterUtility
 
 
@@ -69,6 +79,12 @@
 }
 
 
+/*!
+	@method		parameterTypeFromString:
+	@abstract	The FxParameterType for a type string.
+	@discussion	Introduced in FxGrip 0.1.0. A known lowercase name maps through the table. A
+				four-character name that names no entry decodes as its big-endian FourCC.
+				Otherwise the result is FxParameterType_None. */
 + (FxParameterType)parameterTypeFromString:(NSString* _Nullable)type
 {
 	if (type != nil) {
@@ -84,6 +100,7 @@
 }
 
 
+/*! @abstract The type string for an FxParameterType, or nil when the type has no name. */
 + (NSString* _Nullable)parameterTypeString:(FxParameterType)type
 {
 	return self.typeParameters[@(type)];
@@ -130,6 +147,7 @@
 	return valueFlags;
 }
 
+/*! @abstract The flag string for a single-bit flag value; nil when zero or more than one bit is set. */
 + (NSString* _Nullable) convertToFlag:(FxParameterFlags)flag
 {
 	//__builtin_popcountl for long
@@ -141,6 +159,7 @@
 	}
 	return nil;
 }
+/*! @abstract The flag strings for every bit set in the mask. */
 + (NSArray<NSString*>*) convertToFlags:(FxParameterFlags)flag
 {
 	//__builtin_popcountl for long
@@ -155,6 +174,7 @@
 	return [arr copy];
 }
 
+/*! @abstract The flag bit for a flag string; the default flag when the string names none. */
 + (FxParameterFlags) convertFlag:(nullable NSString*)flag
 {
 	NSDictionary *flagValues = self.flagValues;
@@ -167,6 +187,11 @@
 	return kFxParameterFlag_DEFAULT;
 }
 
+/*!
+	@method		convertFlags:
+	@abstract	The combined flag mask for a flag string, dictionary, or array of flag strings.
+	@discussion	Introduced in FxGrip 0.1.0. A string splits on the separator set. A dictionary
+				contributes its values. Each named flag is OR-ed into the result. */
 + (FxParameterFlags)convertFlags:(nullable id)flags
 {
 	FxParameterFlags result = kFxParameterFlag_DEFAULT;
@@ -187,6 +212,12 @@
 }
 
 
+/*!
+	@method		flattenDictionaryParameters:
+	@abstract	Unfolds group parameters into the flat list, stamping each child's parent ID.
+	@discussion	Introduced in FxGrip 0.1.0. A group's inner parameters are inserted after the
+				group and are themselves visited, so nested groups flatten fully. A child without
+				a parent ID gets the group's ID. */
 + (void)flattenDictionaryParameters:(nullable NSMutableArray<NSMutableDictionary*> *)parameters
 {
 	if (!parameters) {
@@ -357,6 +388,12 @@ static void FxGripApplyDefaultValue(NSMutableDictionary *target, id value)
 	}
 }
 
+/*!
+	@method		applyTargetPresetDefaults:pluginPresets:
+	@abstract	Applies each Menu and Toggle parameter's default target preset to the configurations.
+	@discussion	Introduced in FxGrip 0.1.0. The pass builds a dispatch table keyed by parameter
+				ID, then for each Menu or Toggle resolves its target-preset definition, selects
+				the entry its declared default indexes, and rewrites the named configurations. */
 + (void)applyTargetPresetDefaults:(nullable NSMutableArray<NSMutableDictionary*> *)parameters
 					pluginPresets:(nullable NSDictionary *)pluginPresets
 {
@@ -414,6 +451,13 @@ static void FxGripApplyDefaultValue(NSMutableDictionary *target, id value)
 	}
 }
 
+/*!
+	@method		applyPresetDefaults:toDispatch:
+	@abstract	Rewrites the target configurations named by one preset's sections.
+	@discussion	Introduced in FxGrip 0.1.0. The names section sets each target's name, the flags
+				and tags sections apply +/- entries to the target's string arrays, and the values
+				section writes each target's default by its type. A named parameter that is absent
+				is logged and skipped. */
 // Callers hold the flattened dispatch table.
 + (void)applyPresetDefaults:(NSDictionary *)preset toDispatch:(NSDictionary<NSNumber*, NSMutableDictionary*> *)dispatch
 {
@@ -462,11 +506,17 @@ static void FxGripApplyDefaultValue(NSMutableDictionary *target, id value)
 
 #pragma mark Click Selectors
 
+/*! @abstract The click selector name for a button parameter: the prefix plus the decimal ID. */
 + (nonnull NSString *)clickSelectorNameForParameter:(FxParameterId)parameterID
 {
 	return [NSString stringWithFormat:@"%@%u", kFxGripClickSelectorPrefix, parameterID];
 }
 
+/*!
+	@method		getParameterID:fromClickSelector:
+	@abstract	Decodes the parameter ID from a synthesized click selector.
+	@return		YES when the selector is the strict synthesized form, with the decoded ID written
+				to parameterID; NO otherwise. */
 + (BOOL)getParameterID:(nonnull FxParameterId *)parameterID fromClickSelector:(nullable SEL)selector
 {
 	if (!selector || !parameterID) {

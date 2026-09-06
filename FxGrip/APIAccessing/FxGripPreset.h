@@ -1,7 +1,16 @@
-//
-//  FxGripPreset.h
-//  FxGrip
-//
+/*!
+	@file       FxGripPreset.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPreset
+	@abstract   The preset model and its FxFactory-compatible file form.
+	@discussion Introduced in FxGrip 0.1.0. The model holds a preset's parameter values, tags, and
+	            meta, plus the identity of the plugin that produced them. The on-disk form is an
+	            XML property list in FxFactory's .fxpreset format, extended with flat FxGripPreset*
+	            keys. The class also converts between encoded preset values and live parameters
+	            through a setting API.
+*/
 
 #ifndef FxGripPreset_h
 #define FxGripPreset_h
@@ -9,6 +18,7 @@
 #import <FxPlug/FxPlugSDK.h>
 #import "FxGripTypes.h"
 
+/*! The system-key names for a preset's fields. Written to and read from the file form. */
 #define kFxPresetProperty_CreatedByParameterId @"createdByParameterId"
 #define kFxPresetProperty_ParameterValues @"parameterValues"
 #define kFxPresetProperty_Framework		@"framework"
@@ -52,7 +62,7 @@
 	@class      FxGripPreset
 	@abstract   The preset model: parameter values, tags, and meta plus the identity of
 				the plugin that produced them.
-	@discussion Introduced in FxGrip 1.0. The on-disk form is an XML property list in
+	@discussion Introduced in FxGrip 0.1.0. The on-disk form is an XML property list in
 				FxFactory's `.fxpreset` format, extended with flat `FxGripPreset*` keys.
 				`presetDictionary` and `initWithPresetDictionary:` are the canonical
 				round-trip; `savePresetToURL:` and `loadPresetFromURL:` add the file I/O.
@@ -61,29 +71,43 @@
  */
 @interface FxGripPreset : NSObject
 
+	/*! The ID of the parameter that created the preset, or 0 when none. */
 	@property (assign) FxParameterId createdByParameterId;
 
+	/*! The captured parameter values, keyed by parameter ID. */
 	@property (copy, nullable) NSDictionary *parameterValues; // key=paramId, value= [int, float, string, bool, dict]
+	/*! The captured parameter meta, keyed by parameter ID. */
 	@property (copy, nullable) NSDictionary *parameterMeta;
+	/*! The captured parameter tags, keyed by parameter ID. */
 	@property (copy, nullable) NSDictionary *parameterTags;
 
+	/*! The framework that produced the preset, such as FxGrip or FxFactory. */
 	@property (copy, nullable) NSString *framework; // FxGrip, FxFactory, etc
+	/*! The preset's own UUID. */
 	@property (copy, nullable) NSString *uuid; //preset uuid
+	/*! The preset's display name. */
 	@property (copy, nullable) NSString *name; //display name
+	/*! The tag the preset applies under. */
 	@property (copy, nullable) NSString *tag;
+	/*! The preset's creation timestamp, in ISO 8601. */
 	@property (copy, nullable) NSString *createdTime;
 
+	/*! The plugin author. */
 	@property (copy, nullable) NSString *pluginAuthor;
+	/*! The plugin's localized name; a string or FxFactory's per-language dictionary. */
 	// NSString, or the per-language NSDictionary FxFactory writes; round-trips verbatim.
 	@property (copy, nullable) id pluginLocalizedName;
+	/*! The plugin's UUID; drives preset compatibility. */
 	@property (copy, nullable) NSString *pluginUuid;
+	/*! The plugin's version string. */
 	@property (copy, nullable) NSString *pluginVersion;
+	/*! The plugin's product ID. */
 	@property (copy, nullable) NSString *productId;
 
 /*!
 	@method     initWithPresetDictionary:
 	@abstract   Builds a preset from a file-form dictionary.
-	@discussion Introduced in FxGrip 1.0. Reads the FxFactory keys and the FxGripPreset*
+	@discussion Introduced in FxGrip 0.1.0. Reads the FxFactory keys and the FxGripPreset*
 				keys; unknown keys are ignored. Returns nil when the argument is not a
 				dictionary.
 */
@@ -92,7 +116,7 @@
 /*!
 	@method     presetDictionary
 	@abstract   The file-form dictionary: FxFactory keys plus FxGripPreset* keys.
-	@discussion Introduced in FxGrip 1.0. Nil properties are omitted. Parameter-keyed
+	@discussion Introduced in FxGrip 0.1.0. Nil properties are omitted. Parameter-keyed
 				dictionaries are written with string keys.
 */
 - (nonnull NSDictionary*)presetDictionary;
@@ -100,14 +124,14 @@
 /*!
 	@method     presetSections
 	@abstract   The values/tags/meta sections in the shape applyPreset: consumes.
-	@discussion Introduced in FxGrip 1.0. Sections a preset does not carry are omitted.
+	@discussion Introduced in FxGrip 0.1.0. Sections a preset does not carry are omitted.
 */
 - (nonnull NSDictionary*)presetSections;
 
 /*!
 	@method     savePresetToURL:
 	@abstract   Writes the preset as an XML property list.
-	@discussion Introduced in FxGrip 1.0. Returns NO when a carried value is not a
+	@discussion Introduced in FxGrip 0.1.0. Returns NO when a carried value is not a
 				property-list type or the write fails.
 */
 - (BOOL)savePresetToURL:(nonnull NSURL*)url;
@@ -115,7 +139,7 @@
 /*!
 	@method     loadPresetFromURL:
 	@abstract   Reads a preset written by savePresetToURL: or by FxFactory.
-	@discussion Introduced in FxGrip 1.0. Returns nil when the file is missing or is not
+	@discussion Introduced in FxGrip 0.1.0. Returns nil when the file is missing or is not
 				a property-list dictionary.
 */
 + (nullable FxGripPreset*)loadPresetFromURL:(nonnull NSURL*)url;
@@ -123,7 +147,7 @@
 /*!
 	@method     setParameterValue:toParameter:atTime:withAPI:
 	@abstract   Writes one encoded preset value to a parameter.
-	@discussion Introduced in FxGrip 1.0. Dispatches on the parameter's type, resolved
+	@discussion Introduced in FxGrip 0.1.0. Dispatches on the parameter's type, resolved
 				through the FxGrip setting wrapper's dynamic API; when no type source is
 				available the encoded value's own shape selects the setter.
 

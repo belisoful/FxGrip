@@ -1,10 +1,17 @@
-//
-//  FxGripPluginInfo.m
-//  XPC Service
-//
-//  Created on 3/11/24.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripPluginInfo.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPluginInfo
+	@abstract   Implements the plug-in registration and host-identity singleton.
+	@discussion Introduced in FxGrip 0.1.0. The registration accessors read the plug-in and group
+	            lists from the Info.plist, or instantiate the dynamic registrar the Info.plist
+	            names and query it. Every registration value passes through localizeObject: for
+	            the bundle's localized strings. Property lookups scan the plug-in list by class
+	            name or UUID.
+*/
+
 /*!
  *
  * FxGripPluginInfo cannot conform to protocol FxPrincipalDelegate because the
@@ -26,6 +33,11 @@
 // The common plugin info
 static NSCharacterSet*		gSeparatorSet = nil;
 
+/*!
+	@abstract	Reads the plug-in's registration lists, properties, and host identity.
+	@discussion	Introduced in FxGrip 0.1.0. The registration accessors read the Info.plist or a
+				dynamic registrar and localize the result.
+*/
 // Implementation
 @implementation FxGripPluginInfo
 
@@ -60,6 +72,7 @@ static NSCharacterSet*		gSeparatorSet = nil;
 }
 
 
+/*! @abstract Records the host bundle identifier and version when FxPlug connects. */
 - (void)didEstablishConnectionWithHost:(NSString *)hostBundleIdentifier
 							   version:(NSString *)hostVersion
 {
@@ -71,17 +84,20 @@ static NSCharacterSet*		gSeparatorSet = nil;
 }
 
 
+/*! @abstract YES when the recorded host bundle identifier is Motion's. */
 - (BOOL)hostIsMotion
 {
 	return FxGripHostBundleIdentifierIsMotion(self.hostBundleIdentifier);
 }
 
+/*! @abstract YES when the identifier names Motion (com.apple.motionapp or com.apple.motionappApp). */
 BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifier)
 {
 	return [hostBundleIdentifier isEqualToString:@"com.apple.motionapp"]
 		|| [hostBundleIdentifier isEqualToString:@"com.apple.motionappApp"];
 }
 
+/*! @abstract The flag-separator set, built once: whitespace, newline, period, comma, semicolon. */
 // White Space plus period, comma, and semicolon.
 + (NSCharacterSet*_Nonnull)separatorSet
 {
@@ -96,6 +112,12 @@ BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifie
 }
 
 
+/*!
+	@method		localizeObject:
+	@abstract	Localizes registration strings against the bundle's localized info dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. A string maps through the localized dictionary. A
+				collection recurses over its members. A mutable collection localizes in place; an
+				immutable collection returns a localized copy of its own class. */
 +(id _Nullable) localizeObject:(id _Nullable)object
 {
 	if (!object)
@@ -142,6 +164,7 @@ BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifie
 #pragma mark Plugin Information from Info.plist & Dynamic Registration
 
 
+/*! @abstract A value from the main bundle's Info.plist for a key, or nil. */
 + (nullable id)propertyForKey:(NSString*_Nullable) key
 {
 	NSBundle *mainBundle = [NSBundle mainBundle];
@@ -170,6 +193,12 @@ BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifie
 }
 
 
+/*!
+	@method		plugIns
+	@abstract	The registered plug-in list.
+	@discussion	Introduced in FxGrip 0.1.0. Static registration reads the list from the
+				Info.plist. Dynamic registration instantiates the principal class and queries it,
+				returning nil when the class is missing, non-conforming, or yields no plug-ins. */
 + (nullable NSArray *) plugIns
 {
 	if (!self.isDynamicRegistration) {
@@ -215,6 +244,12 @@ BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifie
 }
 
 
+/*!
+	@method		plugInGroups
+	@abstract	The registered plug-in group list.
+	@discussion	Introduced in FxGrip 0.1.0. Static registration reads the group list from the
+				Info.plist. Dynamic registration instantiates the principal class and queries it,
+				returning nil when the class is missing, non-conforming, or yields no groups. */
 + (NSArray *)plugInGroups
 {
 	if (!self.isDynamicRegistration) {
@@ -260,6 +295,7 @@ BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifie
 }
 
 
+/*! @abstract The plug-in properties whose class name matches, case-insensitively, or an empty dictionary. */
 // return the plugin properties based on the class
 + (nonnull NSDictionary *)pluginPropertiesByClassName:(nonnull NSString *)pluginClassName
 {
@@ -274,6 +310,7 @@ BOOL FxGripHostBundleIdentifierIsMotion(NSString * _Nullable hostBundleIdentifie
 }
 
 
+/*! @abstract The plug-in properties whose UUID matches, case-insensitively, or an empty dictionary. */
 // return the plugin properties based on the UUID
 + (nonnull NSDictionary *)pluginPropertiesByUUID:(nonnull NSString *)pluginUUID
 {

@@ -1,7 +1,16 @@
-//
-//  FxGripBannerParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripBannerParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripBannerParameter
+	@abstract   Implements the banner message strip view and its custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. The view draws a rounded colored strip with a title,
+	            optional subtitle, and optional graphic, and sizes its height to the content.
+	            updateFromCustomData: reads the FxGripDictionary value and applies the title, colors,
+	            point size, corner radius, image, and link. The parameter creates the custom control
+	            and falls back to the parameter name for a text banner's title.
+*/
 
 #import "FxGripBannerParameter.h"
 #import "FxGripBanner.h"
@@ -18,6 +27,11 @@ static const CGFloat kFxGripBannerTitleGap = 2.0;
 // The companion action button is a small square in the top-right corner.
 static const CGFloat kFxGripBannerButtonSize = 18.0;
 
+/*!
+	@abstract	The full-width message strip backing a banner parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The view draws a rounded colored background with a bold
+				title, an optional subtitle, and an optional graphic. A link makes the strip clickable
+				and shows a companion action button. It sizes its height to the content plus padding. */
 @implementation FxGripBannerView
 {
 	NSImageView *_imageView;
@@ -230,6 +244,13 @@ static const CGFloat kFxGripBannerButtonSize = 18.0;
 	return NSMakeSize(displayWidth, ceil(size.height * scale));
 }
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Applies the title, colors, point size, corner radius, image, and link from the value.
+	@param		value	The parameter value; ignored when it is not an FxGripDictionary.
+	@discussion	Introduced in FxGrip 0.1.0. A template image is tinted by the text color. A link makes
+				the strip clickable and gates the companion action button. The view relays out after
+				applying the value. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripDictionary.class]) {
@@ -294,8 +315,13 @@ static const CGFloat kFxGripBannerButtonSize = 18.0;
 @end
 
 
+/*!
+	@abstract	The read-only, full-width message banner custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Creation stores the configuration in an FxGripDictionary
+				and adds the custom-UI, not-animatable, full-view-width, and no-state flags. */
 @implementation FxGripBannerParameter
 
+/*! @abstract The registry type string for the banner parameter. */
 + (nullable NSString*)parameterTypeString
 {
 	return kFxParameterType_Banner;
@@ -306,6 +332,7 @@ static const CGFloat kFxGripBannerButtonSize = 18.0;
 	return FxParameterType_Banner;
 }
 
+/*! @abstract The value classes the custom parameter decodes: FxGripDictionary and its element classes. */
 + (NSSet<Class> *_Nullable)customValueClasses
 {
 	NSMutableSet *classes = [NSMutableSet setWithObject:FxGripDictionary.class];
@@ -313,6 +340,13 @@ static const CGFloat kFxGripBannerButtonSize = 18.0;
 	return classes;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Creates the banner custom parameter on the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. A text banner with no declared title falls back to the
+				parameter name; an image banner takes no title fallback. Creation adds the custom-UI,
+				not-animatable, full-view-width, and no-state flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id declared = parameter.parameterDefaultValue;
@@ -339,6 +373,11 @@ static const CGFloat kFxGripBannerButtonSize = 18.0;
 									| kFxParameterFlag_NOSTATE];
 }
 
+/*!
+	@method		newParameterView
+	@abstract	Creates the banner view and seeds it from the declared configuration.
+	@return		A new FxGripBannerView.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (NSView *_Nullable)newParameterView
 {
 	FxGripBannerView *view = [FxGripBannerView.alloc initWithFrame:NSMakeRect(0, 0, 200, 28)];

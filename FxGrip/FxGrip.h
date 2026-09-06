@@ -1,9 +1,15 @@
-//
-//  FxGrip.h
-//  FxGrip
-//
-//  Created by ~ ~ on 12/29/24.
-//
+/*!
+	@file       FxGrip.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGrip
+	@abstract   The umbrella header for the FxGrip framework.
+	@discussion Introduced in FxGrip 0.1.0. Importing <FxGrip/FxGrip.h> brings in the framework's public
+	            API: types and errors, the parameter model, the plugin registrars, the effect and
+	            generator base classes, the host API wrappers, and the extension system. The header
+	            also declares the framework version symbols the linker exports.
+*/
 
 #import <Foundation/Foundation.h>
 

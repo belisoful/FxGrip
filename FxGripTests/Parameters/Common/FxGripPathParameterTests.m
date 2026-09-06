@@ -1,11 +1,14 @@
-//
-//  FxGripPathParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPathParameter: the type identity, the name-ID-flags payload it hands
-//  the creation API, the host-refusal result, and the path ID the value read requests for
-//  its parameter.
-//
+/*!
+	@file       FxGripPathParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPathParameterTests
+	@abstract   Tests FxGripPathParameter: its FxPlug type identity and the name-ID-flags payload
+	            it hands the creation API.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the host-refusal result and the
+	            path ID the value read requests for its parameter.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -52,6 +55,7 @@ static const FxParameterId kPathTestParameter = 51;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug path type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripPathParameter.parameterType, FxParameterType_PathID);
@@ -60,6 +64,7 @@ static const FxParameterId kPathTestParameter = 51;
 
 #pragma mark Creation payload
 
+/*! @abstract A path picker hands the creation call only the name, ID, and flags. */
 - (void)testPathPickerForwardsOnlyTheNameIDAndFlags
 {
 	XCTAssertTrue([self add:FxGripPathParameter.class type:kFxParameterType_PathID extra:nil]);
@@ -70,6 +75,7 @@ static const FxParameterId kPathTestParameter = 51;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -79,6 +85,7 @@ static const FxParameterId kPathTestParameter = 51;
 
 #pragma mark Values
 
+/*! @abstract -valueAtTime: reads the path ID for its parameter and render time from the retrieval API. */
 - (void)testPathValueAtTimeReadsThePathIDForItsParameter
 {
 	FxGripPathParameter *parameter = [self makePathParameter];

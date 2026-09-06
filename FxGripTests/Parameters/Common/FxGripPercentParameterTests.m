@@ -1,11 +1,14 @@
-//
-//  FxGripPercentParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPercentParameter: the type identity, the payload
-//  +addParameter:toEffect: derives from a configuration, the delta fallback, and the
-//  host-refusal result.
-//
+/*!
+	@file       FxGripPercentParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPercentParameterTests
+	@abstract   Tests FxGripPercentParameter: its FxPlug type identity and the creation payload
+	            +addParameter:toEffect: derives from a configuration.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the defaults matching the float
+	            parameter, the delta fallback, and the host-refusal result.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -46,6 +49,7 @@ static const FxParameterId kPercentTestParameter = 21;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug percent type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripPercentParameter.parameterType, FxParameterType_Percent);
@@ -54,6 +58,7 @@ static const FxParameterId kPercentTestParameter = 21;
 
 #pragma mark Creation payload
 
+/*! @abstract A percent created with no bounds uses the same zero-to-one defaults as a float. */
 - (void)testPercentWithoutBoundsMatchesTheFloatDefaults
 {
 	XCTAssertTrue([self add:FxGripPercentParameter.class type:kFxParameterType_Percent extra:nil]);
@@ -70,6 +75,7 @@ static const FxParameterId kPercentTestParameter = 21;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A percent forwards every declared bound and the declared delta to the creation call. */
 - (void)testPercentForwardsEveryDeclaredBoundAndTheDeclaredDelta
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @0.75,
@@ -93,6 +99,7 @@ static const FxParameterId kPercentTestParameter = 21;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract The delta falls back to one when the declared range is wider than a unit. */
 - (void)testPercentDeltaFallsBackToOneWhenTheRangeIsNotUnit
 {
 	NSDictionary *extra = @{kFxParameterProperty_Maximum: @4.0};
@@ -102,6 +109,7 @@ static const FxParameterId kPercentTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"delta"], @1.0);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testPercentReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;

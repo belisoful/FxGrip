@@ -1,3 +1,14 @@
+/*!
+	@file       FxGripDynamicRegistrar.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDynamicRegistrar
+	@abstract   Implements the registrar that discovers plugins from the loaded runtime classes.
+	@discussion Introduced in FxGrip 0.1.0. Plugin discovery scans the runtime class list for
+	            FxGripRegisteredPlugin conformance. Group discovery follows and names each referenced
+	            group from the class, the host bundle, or a placeholder.
+*/
 
 #import <objc/runtime.h>
 #import "FxGripDynamicRegistrar.h"
@@ -5,10 +16,21 @@
 #import "FxGripPluginInfo.h"
 #import "FxGripRegisteredPlugin.h"
 
+/*!
+	@abstract	The static registrar that finds conforming plugin classes by runtime introspection.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers every loaded FxGripRegisteredPlugin class
+				and resolves the groups those plugins reference.
+*/
 @implementation FxGripDynamicRegistrar
 
 
-
+/*!
+	@method		plugInGroupsWithError:
+	@abstract	Resolves and registers a group name for every group the active plugins reference.
+	@discussion	Introduced in FxGrip 0.1.0. The method collects the group UUIDs from the registered
+				plugins, then names each unregistered group. A name is taken from the plugin class
+				through groupNameForUUID: or groupName, then from the host bundle's group list, then
+				from a numbered placeholder. A caught exception sets kFxGripError_Exception. */
 - (nullable NSArray *) plugInGroupsWithError:(NSError * _Nullable * _Nonnull)error
 {
 #if DEBUG
@@ -99,6 +121,12 @@
 }
 
 
+/*!
+	@method		globalRegisteredPluginClasses
+	@abstract	Returns every loaded class that conforms to FxGripRegisteredPlugin.
+	@discussion	Introduced in FxGrip 0.1.0. The method walks the runtime class list with C introspection
+				calls, so classes that trap on a message send are skipped safely. Each class's superclass
+				chain is checked, matching the semantics of conformsToProtocol:. */
 + (nonnull NSArray<Class> *)globalRegisteredPluginClasses
 {
 	NSMutableArray *clss = NSMutableArray.new;
@@ -123,10 +151,12 @@
 	return clss.copy;
 }
 
-/**
- 	Go through all classes, find the FxGripRegisteredPlugin, and if active, include it.
- */
-
+/*!
+	@method		plugInsWithError:
+	@abstract	Registers every loaded FxGripRegisteredPlugin class.
+	@discussion	Introduced in FxGrip 0.1.0. The method enumerates the conforming classes from
+				globalRegisteredPluginClasses and registers each one. A caught exception sets
+				kFxGripError_Exception. */
 - (nullable NSArray *) plugInsWithError:(NSError * _Nullable * _Nonnull)error;
 {
 #if DEBUG

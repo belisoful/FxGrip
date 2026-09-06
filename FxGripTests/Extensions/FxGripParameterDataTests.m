@@ -1,12 +1,12 @@
-//
-//  FxGripParameterDataTests.m
-//  FxGripTests
-//
-//  Unit tests for the FxGripParameterData extension: the hidden ParameterData
-//  parameter registration, the record it seeds from the creation API payload,
-//  the flag merge and store passes, the menu-item store, the stored* accessors
-//  that read the records back, and the flush that persists the cache.
-//
+/*!
+	@file       FxGripParameterDataTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterDataTests
+	@abstract   Unit tests for the FxGripParameterData extension record cache.
+	@discussion Introduced in FxGrip 0.1.0. Stub host API objects supply the stored document value and record the flush writes. The tests cover the hidden ParameterData parameter registration and handler priorities, the record seeding from the creation-API payload, the flag merge and store passes, the menu-item store, the stored accessors, removal, document load, direct record access, and the flush that persists the cache.
+*/
 
 #import <XCTest/XCTest.h>
 #import <CoreMedia/CoreMedia.h>
@@ -218,6 +218,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Registration
 
+/*! @abstract A freshly initialized extension targets the ParameterData parameter id, starts unloaded and clean, and keys to its class name. */
 - (void)testInitTargetsTheParameterDataParameterAndStartsUnloaded
 {
 	FxGripParameterData *extension = [FxGripParameterData.alloc init];
@@ -230,6 +231,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqualObjects(extension.extKey, @"FxGripParameterData");
 }
 
+/*! @abstract The handler priorities order the add, added-to-document, and flush passes around the effect's own passes. */
 - (void)testHandlerPriorityOrdersTheRecordPassesAroundTheEffect
 {
 	XCTAssertEqual([self.extension ncPriority:FxGripNotifyAPI_ParameterAddName], (NSInteger)-20);
@@ -241,6 +243,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqual([self.extension ncPriority:nil], FxGripExtensionDefaultPriority);
 }
 
+/*! @abstract Adding parameters registers the hidden custom ParameterData parameter with its factory and hidden, no-state flags. */
 - (void)testExtAddParametersRegistersTheHiddenParameterDataParameter
 {
 	NSMutableArray *parameters = NSMutableArray.new;
@@ -269,6 +272,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Record Seeding
 
+/*! @abstract A parameter add seeds the record from the nested payload and marks the cache loaded and dirty. */
 - (void)testParameterAddSeedsTheRecordFromTheNestedPayload
 {
 	[self seedParameter:kPDataTestParamA];
@@ -282,6 +286,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqualObjects(record[kFxParameterProperty_Name], @"Test Parameter");
 }
 
+/*! @abstract A parameter add falls back to the top-level id when the nested payload omits it. */
 - (void)testParameterAddFallsBackToTheTopLevelIdWhenTheNestedPayloadOmitsIt
 {
 	NSMutableDictionary *userInfo = @{
@@ -297,6 +302,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqualObjects(self.extension.data[@(kPDataTestParamA)][kFxParameterProperty_Name], @"No Nested Id");
 }
 
+/*! @abstract A parameter add carrying no id at either level seeds nothing and leaves the cache unloaded. */
 - (void)testParameterAddWithoutAnyIdSeedsNothing
 {
 	[self.extension extAPIParameterAdd:FxGripPDataTestNotification(FxGripNotifyAPI_ParameterAddName,
@@ -307,6 +313,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertFalse(self.extension.isCacheDirty);
 }
 
+/*! @abstract A parameter add stores a copy detached from the posted payload, so mutating the payload afterward does not change the record. */
 - (void)testParameterAddStoresACopyDetachedFromThePostedPayload
 {
 	NSMutableDictionary *userInfo = [self seedParameter:kPDataTestParamA];
@@ -318,6 +325,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 						  @"Test Parameter");
 }
 
+/*! @abstract A parameter add replaces an earlier record for the same parameter, discarding its stored custom entries. */
 - (void)testParameterAddReplacesAnEarlierRecordForTheSameParameter
 {
 	[self seedParameter:kPDataTestParamA];
@@ -329,6 +337,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqual(self.extension.data.count, (NSUInteger)1);
 }
 
+/*! @abstract A parameter add flushes the cache immediately once the parameter is live in the document. */
 - (void)testParameterAddFlushesImmediatelyOnceTheParameterIsLiveInTheDocument
 {
 	[self attachToLiveParameter];
@@ -340,6 +349,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertFalse(self.extension.isCacheDirty);
 }
 
+/*! @abstract A parameter add defers the write and leaves the cache dirty while the effect is not yet in the document. */
 - (void)testParameterAddDefersTheWriteWhileTheEffectIsNotInTheDocument
 {
 	[self seedParameter:kPDataTestParamA];
@@ -350,6 +360,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Stored Accessors
 
+/*! @abstract The stored accessors read back the type, flags, parent id, and selector the seeding stored, with nil menus. */
 - (void)testStoredAccessorsReadBackTheEntriesTheSeedingStored
 {
 	[self seedParameter:kPDataTestParamA];
@@ -362,6 +373,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertNil([self.extension storedMenus:kPDataTestParamA]);
 }
 
+/*! @abstract The record key constants equal the matching parameter-property key constants. */
 - (void)testStoredAccessorsAndTheRecordKeysNameTheSameEntries
 {
 	XCTAssertEqualObjects(kExtParameterData_Type, kFxParameterProperty_Type);
@@ -372,6 +384,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqualObjects(kExtParameterData_MenuItems, @"items");
 }
 
+/*! @abstract The stored accessors return sentinel values before anything is seeded. */
 - (void)testStoredAccessorsReturnSentinelsBeforeAnythingIsSeeded
 {
 	XCTAssertEqual([self.extension storedType:kPDataTestParamA], (FxParameterType)0);
@@ -381,6 +394,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertNil([self.extension storedSelector:kPDataTestParamA]);
 }
 
+/*! @abstract The stored accessors return sentinel values for a parameter with no record. */
 - (void)testStoredAccessorsReturnSentinelsForAnUnknownParameter
 {
 	[self seedParameter:kPDataTestParamA];
@@ -394,6 +408,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Flags
 
+/*! @abstract The get-flags handler merges the stored application flag bits into the host payload flags. */
 - (void)testGetFlagsMergesTheStoredApplicationBitsIntoThePayload
 {
 	[self seedParameter:kPDataTestParamA];
@@ -413,6 +428,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 											  | kFxParameterFlag_HIDDEN_PROXY));
 }
 
+/*! @abstract The get-flags handler leaves the host flags unchanged when the record carries no flags. */
 - (void)testGetFlagsLeavesTheHostBitsAloneWhenTheRecordCarriesNoFlags
 {
 	[self.extension extAPIParameterAdd:FxGripPDataTestNotification(FxGripNotifyAPI_ParameterAddName, self.effect,
@@ -429,6 +445,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DISABLED));
 }
 
+/*! @abstract The get-flags handler leaves the host flags unchanged for a parameter with no record. */
 - (void)testGetFlagsLeavesTheHostBitsAloneForAnUnknownParameter
 {
 	[self seedParameter:kPDataTestParamA];
@@ -441,6 +458,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DISABLED));
 }
 
+/*! @abstract The set-flags handler stores only the application flag bits, dropping the host and temporary bits, and marks the cache dirty. */
 - (void)testSetFlagsStoresOnlyTheApplicationBits
 {
 	[self seedParameter:kPDataTestParamA];
@@ -461,6 +479,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertTrue(self.extension.isCacheDirty);
 }
 
+/*! @abstract The set-flags handler ignores a parameter with no record and leaves the cache clean. */
 - (void)testSetFlagsIgnoresAParameterWithNoRecord
 {
 	[self seedParameter:kPDataTestParamA];
@@ -476,6 +495,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Menus
 
+/*! @abstract The set-menu handler stores the items under the menu-items key the accessor reads and marks the cache dirty. */
 - (void)testSetMenuStoresTheItemsUnderTheKeyTheAccessorReads
 {
 	[self seedParameter:kPDataTestParamA];
@@ -491,6 +511,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertTrue(self.extension.isCacheDirty);
 }
 
+/*! @abstract The set-menu handler ignores a parameter with no record and leaves the cache clean. */
 - (void)testSetMenuIgnoresAParameterWithNoRecord
 {
 	[self seedParameter:kPDataTestParamA];
@@ -506,6 +527,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Removal
 
+/*! @abstract A parameter remove drops the record the dynamic API names and leaves the others, marking the cache dirty. */
 - (void)testParameterRemoveDropsTheRecordTheDynamicAPINames
 {
 	[self seedParameter:kPDataTestParamA];
@@ -520,6 +542,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertTrue(self.extension.isCacheDirty);
 }
 
+/*! @abstract A parameter remove before anything is loaded leaves the cache unloaded and clean. */
 - (void)testParameterRemoveBeforeAnythingIsLoadedDoesNothing
 {
 	[self.extension extAPIParameterRemove:
@@ -530,6 +553,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertFalse(self.extension.isCacheDirty);
 }
 
+/*! @abstract A parameter remove flushes the cache immediately once the parameter is live in the document. */
 - (void)testParameterRemoveFlushesImmediatelyOnceTheParameterIsLiveInTheDocument
 {
 	[self seedParameter:kPDataTestParamA];
@@ -545,6 +569,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Persistence
 
+/*! @abstract Flush writes the cache to the ParameterData parameter once per dirty cycle and skips an unchanged cache. */
 - (void)testFlushWritesTheCacheOncePerDirtyCycle
 {
 	[self seedParameter:kPDataTestParamA];
@@ -566,6 +591,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqual(self.setAPI.values.count, (NSUInteger)2);
 }
 
+/*! @abstract Flush writes nothing before anything is loaded. */
 - (void)testFlushWritesNothingBeforeAnythingIsLoaded
 {
 	[self.extension extFlush:FxGripPDataTestNotification(FxGripTileableEffectFlushName, self.effect, nil)];
@@ -575,6 +601,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Document Load
 
+/*! @abstract Added-to-document adopts the dictionary stored in the document and reads its records through the stored accessors. */
 - (void)testAddedToDocumentAdoptsTheDictionaryStoredInTheDocument
 {
 	NSMutableDictionary *stored = @{
@@ -591,6 +618,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqualObjects([self.extension storedSelector:kPDataTestParamA], @"storedSelector");
 }
 
+/*! @abstract Added-to-document keeps the records seeded before the document arrived and does not replace the seeded cache. */
 - (void)testAddedToDocumentKeepsRecordsSeededBeforeTheDocumentArrived
 {
 	[self seedParameter:kPDataTestParamA];
@@ -604,6 +632,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertEqual(self.getAPI.requestCount, (NSUInteger)0, @"the seeded cache is not replaced");
 }
 
+/*! @abstract Added-to-document leaves the cache unloaded when the document holds nothing, after one host read. */
 - (void)testAddedToDocumentLeavesTheCacheUnloadedWhenTheDocumentHoldsNothing
 {
 	[self.extension extAddedToDocument:FxGripPDataTestNotification(FxGripTileableEffectAddedToDocumentName,
@@ -615,6 +644,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Direct Record Access
 
+/*! @abstract setObject:forKey:toParameter: and objectForKey:fromParameter: round-trip a value on a seeded record and mark the cache dirty. */
 - (void)testSetObjectAndObjectForKeyRoundTripOnASeededRecord
 {
 	[self seedParameter:kPDataTestParamA];
@@ -626,6 +656,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertTrue(self.extension.isCacheDirty);
 }
 
+/*! @abstract Writing the same value for a key leaves the cache clean and schedules no write. */
 - (void)testSetObjectWithTheSameValueLeavesTheCacheClean
 {
 	[self seedParameter:kPDataTestParamA];
@@ -637,6 +668,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	XCTAssertFalse(self.extension.isCacheDirty, @"an unchanged entry does not schedule a write");
 }
 
+/*! @abstract objectForKey:fromParameter: returns nil for an unknown parameter or an absent key. */
 - (void)testObjectForKeyReturnsNilForAnUnknownParameter
 {
 	[self seedParameter:kPDataTestParamA];
@@ -650,6 +682,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 	was never announced has nowhere to store the entry. The write is dropped, no record
 	appears, and the cache stays clean.
 */
+/*! @abstract setObject:forKey:toParameter: for a parameter with no record stores nothing and leaves the cache clean. */
 - (void)testSetObjectForAParameterWithNoRecordStoresNothing
 {
 	[self seedParameter:kPDataTestParamA];
@@ -664,6 +697,7 @@ static NSMutableDictionary *FxGripPDataTestParameterUserInfo(FxParameterId param
 
 #pragma mark Effect Category
 
+/*! @abstract FxGripTileableEffect exposes the parameterData accessor and its new-extension factory. */
 - (void)testTheEffectCategoryBuildsAParameterDataExtension
 {
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(parameterData)]);

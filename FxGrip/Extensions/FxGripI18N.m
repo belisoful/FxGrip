@@ -1,9 +1,15 @@
-//
-//  FxGripI18N.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripI18N.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripI18N
+	@abstract   Implements the parameter text localization extension.
+	@discussion Introduced in FxGrip 0.1.0. The forward table is loaded from the plugin bundle's
+	            Localizable.strings and cached; the reverse table is built on first delocalization.
+	            The parameter API handlers localize on writes and delocalize on reads for names,
+	            string values, and menu items.
+*/
 
 #import "FxGripI18N.h"
 #import "FxGripTileableEffect.h"
@@ -13,6 +19,11 @@
 #import "FxGrip_ARC.h"
 #import <BEFoundation/NSArray+BExtension.h>
 
+/*!
+	@abstract	The internationalization extension for effect parameter text.
+	@discussion	Introduced in FxGrip 0.1.0. Localization and delocalization are independently switched
+				per text kind and applied in the parameter API notification handlers.
+*/
 @implementation FxGripI18N
 
 
@@ -31,6 +42,11 @@
 	return self;
 }
 
+/*!
+	@method		extLoadWithEffect:
+	@abstract	Binds the extension and reads the delocalization switches from the plugin properties.
+	@discussion	Introduced in FxGrip 0.1.0. An unset values switch defaults to the names switch, and an
+				unset menus switch defaults to the values switch. */
 // The plist properties are read here: the effect is nil until load.
 - (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect
 {
@@ -79,9 +95,7 @@
 // access: the payloads are thin (no type/name for every key), so the guarded
 // NSDictionary accessors cannot read them.
 
-/*
-	delocalize the parameter names where requested
- */
+/*! @abstract Delocalizes a parameter's name on a name read when name delocalization is enabled. */
 - (void)extAPIParameterGetName:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -90,9 +104,7 @@
 	}
 }
 
-/*
- 	Localize the parameter names
- */
+/*! @abstract Localizes a parameter's name on a name write when name localization is enabled. */
 - (void)extAPIParameterSetNamePre:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -103,6 +115,7 @@
 }
 
 
+/*! @abstract Localizes the name, and for a String or Menu the value or items, as a parameter is added. */
 - (void)extAPIParameterAdd:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -131,9 +144,7 @@
 
 
 
-/*
-	delocalize the parameter string values where requested
- */
+/*! @abstract Delocalizes a string parameter's value on a value read when value delocalization is enabled. */
 - (void)extAPIParameterGetStringValue:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -142,9 +153,7 @@
 	}
 }
 
-/*
-	Localize the parameter string values
- */
+/*! @abstract Localizes a string parameter's value on a value write when value localization is enabled. */
 - (void)extAPIParameterSetStringValuePre:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -156,9 +165,7 @@
 
 
 
-/*
-	Localize the parameter menu items
- */
+/*! @abstract Localizes a menu parameter's items on a menu write when menu localization is enabled. */
 - (void)extAPIParameterSetMenuPre:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -172,9 +179,7 @@
 	}
 }
 
-/*
-	delocalize the parameter menu items where requested
- */
+/*! @abstract Delocalizes a menu parameter's items on a menu read when menu delocalization is enabled. */
 - (void)extAPIParameterGetMenu:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -261,6 +266,11 @@
 
 
 
+/*!
+	@abstract	The effect-side accessors for the internationalization extension.
+	@discussion	Introduced in FxGrip 0.1.0. isInternationalized reads the plugin property that gates
+				the extension.
+*/
 @implementation FxGripTileableEffect (I18N)
 
 - (FxGripI18N*)i18n

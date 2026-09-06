@@ -1,12 +1,12 @@
-//
-//  FxGripPresetTests.m
-//  FxGripTests
-//
-//  Unit tests for the typed preset value primitives: the type-directed dispatch of
-//  +setParameterValue:toParameter:atTime:withAPI:, the shape-based fallback used when
-//  no dynamic API is reachable, the recursive merge of custom values, and the inverse
-//  encoding produced by +getParameterValue:toParameter:atTime:withAPI:.
-//
+/*!
+	@file       FxGripPresetTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPresetTests
+	@abstract   Tests the typed preset value primitives that write and read FxParameter values through the FxGrip setting APIs.
+	@discussion Introduced in FxGrip 0.1.0. The tests exercise type-directed dispatch in +setParameterValue:toParameter:atTime:withAPI:. They cover the shape-based fallback used when no dynamic API is reachable. They cover the recursive merge of custom dictionary values. They cover the inverse encoding produced by +getParameterValue:toParameter:atTime:withAPI:.
+*/
 
 #import <XCTest/XCTest.h>
 #import <CoreMedia/CoreMedia.h>
@@ -349,6 +349,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Set path — numeric types
 
+/*! @abstract An Int type routes the value to setIntValue:toParameter:atTime: with the parameter ID and time preserved. */
 - (void)testSetIntTypeCallsIntSetterWithParameterAndTime
 {
 	XCTAssertTrue([self setValue:@7 withType:FxParameterType_Int]);
@@ -360,6 +361,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(_setter.dynamicAPI.lastParameterID, kPresetTestParamID);
 }
 
+/*! @abstract A Menu type routes the value to the integer setter. */
 - (void)testSetMenuTypeCallsIntSetter
 {
 	XCTAssertTrue([self setValue:@3 withType:FxParameterType_Menu]);
@@ -367,6 +369,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(_setter.recordedInt, 3);
 }
 
+/*! @abstract A Toggle type routes the value to the boolean setter. */
 - (void)testSetToggleTypeCallsBoolSetter
 {
 	XCTAssertTrue([self setValue:@YES withType:FxParameterType_Toggle]);
@@ -374,6 +377,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(_setter.recordedBool);
 }
 
+/*! @abstract A Float type routes the value to setFloatValue:toParameter:atTime: as a double at the supplied time. */
 - (void)testSetFloatTypeCallsFloatSetterWithDoubleValue
 {
 	XCTAssertTrue([self setValue:@0.25 withType:FxParameterType_Float]);
@@ -382,6 +386,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(FxGripPresetTestTimesEqual(_setter.recordedTime, FxGripPresetTestTime()));
 }
 
+/*! @abstract A Percent type falls to the default float branch and calls the float setter. */
 - (void)testSetPercentTypeTakesTheDefaultFloatBranch
 {
 	XCTAssertTrue([self setValue:@1.5 withType:FxParameterType_Percent]);
@@ -389,6 +394,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(_setter.recordedFloat, 1.5);
 }
 
+/*! @abstract An Angle type falls to the default float branch and calls the float setter. */
 - (void)testSetAngleTypeTakesTheDefaultFloatBranch
 {
 	XCTAssertTrue([self setValue:@(-45.0) withType:FxParameterType_Angle]);
@@ -398,6 +404,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Set path — string types
 
+/*! @abstract A String type routes the value to the untimed setStringParameterValue:toParameter: setter. */
 - (void)testSetStringTypeCallsUntimedStringSetter
 {
 	XCTAssertTrue([self setValue:@"headline" withType:FxParameterType_String]);
@@ -406,6 +413,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(_setter.recordedParameterID, kPresetTestParamID);
 }
 
+/*! @abstract A FontMenu type routes the value to the string setter. */
 - (void)testSetFontMenuTypeCallsStringSetter
 {
 	XCTAssertTrue([self setValue:@"Helvetica" withType:FxParameterType_FontMenu]);
@@ -415,6 +423,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Set path — color and point
 
+/*! @abstract An RGB type reads the red, green, and blue keys and calls the three-component color setter. */
 - (void)testSetRGBTypeCallsThreeComponentColorSetter
 {
 	NSDictionary *color = @{kFxParameterProperty_Red: @0.1,
@@ -428,6 +437,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(FxGripPresetTestTimesEqual(_setter.recordedTime, FxGripPresetTestTime()));
 }
 
+/*! @abstract An RGBA type carrying an alpha key calls the four-component color setter with all four components. */
 - (void)testSetRGBATypeWithAlphaCallsFourComponentColorSetter
 {
 	NSDictionary *color = @{kFxParameterProperty_Red: @0.4,
@@ -442,6 +452,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(_setter.recordedAlpha, 0.7);
 }
 
+/*! @abstract An RGBA type carrying no alpha key falls through to the three-component color setter. */
 - (void)testSetRGBATypeWithoutAlphaFallsThroughToThreeComponentColorSetter
 {
 	NSDictionary *color = @{kFxParameterProperty_Red: @0.4,
@@ -454,6 +465,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(_setter.recordedBlue, 0.6);
 }
 
+/*! @abstract A Point type reads the x and y keys and calls the point setter. */
 - (void)testSetPointTypeCallsPointSetter
 {
 	NSDictionary *point = @{kFxParameterProperty_X: @0.75, kFxParameterProperty_Y: @0.25};
@@ -465,6 +477,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Set path — custom
 
+/*! @abstract A Custom dictionary value merges recursively into the parameter's current dictionary before the custom setter is called. */
 - (void)testSetCustomTypeMergesRecursivelyIntoTheCurrentDictionary
 {
 	_setter.retrievalAPI.customToReturn = (NSDictionary*)@{@"keptTop": @1,
@@ -494,6 +507,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(nested[@"nestedShared"], @99);
 }
 
+/*! @abstract A Custom value with no current dictionary is set directly without merging. */
 - (void)testSetCustomTypeWithNoCurrentDictionarySetsTheSuppliedValueDirectly
 {
 	_setter.retrievalAPI.customToReturn = nil;
@@ -506,6 +520,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Set path — shape inference
 
+/*! @abstract Without a dynamic API the setter infers RGBA from the color component keys. */
 - (void)testSetInfersRGBAFromComponentKeysWhenNoDynamicAPI
 {
 	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
@@ -520,6 +535,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(bare.recordedAlpha, 0.4);
 }
 
+/*! @abstract Without a dynamic API the setter infers a point from the x and y keys. */
 - (void)testSetInfersPointFromXYKeysWhenNoDynamicAPI
 {
 	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
@@ -532,6 +548,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(bare.recordedY, 0.9);
 }
 
+/*! @abstract Without a dynamic API the setter infers a string from an NSString value. */
 - (void)testSetInfersStringFromNSStringWhenNoDynamicAPI
 {
 	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
@@ -542,6 +559,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(bare.recordedString, @"inferred");
 }
 
+/*! @abstract Without a dynamic API the setter infers a float from an NSNumber value. */
 - (void)testSetInfersFloatFromNSNumberWhenNoDynamicAPI
 {
 	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
@@ -552,6 +570,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(bare.recordedFloat, 2.5);
 }
 
+/*! @abstract The setter infers the value shape when the dynamic API is nil. */
 - (void)testSetInfersShapeWhenTheDynamicAPIIsNil
 {
 	_setter.dynamicAPI = nil;
@@ -563,36 +582,42 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Set path — rejections
 
+/*! @abstract The set path rejects a nil value without calling a setter. */
 - (void)testSetRejectsNilValueWithoutCallingASetter
 {
 	XCTAssertFalse([self setValue:nil withType:FxParameterType_Float]);
 	XCTAssertEqual(_setter.callCount, 0u);
 }
 
+/*! @abstract The set path rejects NSNull without calling a setter. */
 - (void)testSetRejectsNSNullWithoutCallingASetter
 {
 	XCTAssertFalse([self setValue:NSNull.null withType:FxParameterType_Float]);
 	XCTAssertEqual(_setter.callCount, 0u);
 }
 
+/*! @abstract The set path rejects a nil setter API. */
 - (void)testSetRejectsNilSetterAPI
 {
 	XCTAssertFalse([FxGripPreset setParameterValue:@1 toParameter:kPresetTestParamID
 											atTime:FxGripPresetTestTime() withAPI:nil]);
 }
 
+/*! @abstract The set path rejects a non-number value for an Int type without calling a setter. */
 - (void)testSetRejectsNonNumberForIntType
 {
 	XCTAssertFalse([self setValue:@"twelve" withType:FxParameterType_Int]);
 	XCTAssertEqual(_setter.callCount, 0u);
 }
 
+/*! @abstract The set path rejects a non-dictionary value for a Point type without calling a setter. */
 - (void)testSetRejectsNonDictionaryForPointType
 {
 	XCTAssertFalse([self setValue:@5 withType:FxParameterType_Point]);
 	XCTAssertEqual(_setter.callCount, 0u);
 }
 
+/*! @abstract The set path rejects a non-string value for a String type without calling a setter. */
 - (void)testSetRejectsNonStringForStringType
 {
 	XCTAssertFalse([self setValue:@5 withType:FxParameterType_String]);
@@ -601,6 +626,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Get path
 
+/*! @abstract The get path for an RGBA type produces all four color component keys. */
 - (void)testGetRGBAProducesAllFourComponentKeys
 {
 	_setter.retrievalAPI.red = 0.1;
@@ -618,6 +644,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value[kFxParameterProperty_Alpha], @0.4);
 }
 
+/*! @abstract The get path for an RGB type produces three color component keys and no alpha. */
 - (void)testGetRGBProducesThreeComponentKeysWithoutAlpha
 {
 	_setter.retrievalAPI.red = 0.5;
@@ -634,6 +661,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil(value[kFxParameterProperty_Alpha]);
 }
 
+/*! @abstract The get path for a Point type produces the x and y keys. */
 - (void)testGetPointProducesXAndYKeys
 {
 	_setter.retrievalAPI.x = 0.125;
@@ -647,6 +675,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value[kFxParameterProperty_Y], @0.875);
 }
 
+/*! @abstract The get path for a String type produces the string. */
 - (void)testGetStringProducesTheString
 {
 	_setter.retrievalAPI.stringToReturn = @"caption";
@@ -657,6 +686,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value, @"caption");
 }
 
+/*! @abstract The get path for a FontMenu type produces the string. */
 - (void)testGetFontMenuProducesTheString
 {
 	_setter.retrievalAPI.stringToReturn = @"Futura";
@@ -667,6 +697,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value, @"Futura");
 }
 
+/*! @abstract The get path for a Toggle type produces a boolean number. */
 - (void)testGetToggleProducesABooleanNumber
 {
 	_setter.retrievalAPI.boolToReturn = YES;
@@ -677,6 +708,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value, @YES);
 }
 
+/*! @abstract The get path for an Int type produces an integer number. */
 - (void)testGetIntProducesAnIntegerNumber
 {
 	_setter.retrievalAPI.intToReturn = 12;
@@ -687,6 +719,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value, @12);
 }
 
+/*! @abstract The get path for a Menu type produces an integer number. */
 - (void)testGetMenuProducesAnIntegerNumber
 {
 	_setter.retrievalAPI.intToReturn = 4;
@@ -697,6 +730,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value, @4);
 }
 
+/*! @abstract The get path for a default type produces a double number. */
 - (void)testGetDefaultTypeProducesADoubleNumber
 {
 	_setter.retrievalAPI.floatToReturn = 3.75;
@@ -707,6 +741,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value, @3.75);
 }
 
+/*! @abstract The get path for a Custom type produces the custom object. */
 - (void)testGetCustomProducesTheCustomObject
 {
 	NSDictionary *custom = @{@"payload": @[@1, @2]};
@@ -720,6 +755,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Get path — rejections
 
+/*! @abstract The get path rejects a NULL out-pointer. */
 - (void)testGetRejectsNullOutPointer
 {
 	_setter.dynamicAPI.typeToReturn = FxParameterType_Float;
@@ -727,6 +763,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 											atTime:FxGripPresetTestTime() withAPI:(id)_setter]);
 }
 
+/*! @abstract The get path rejects a nil setter API and leaves the out-value nil. */
 - (void)testGetRejectsNilSetterAPI
 {
 	id value = nil;
@@ -735,6 +772,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil(value);
 }
 
+/*! @abstract The get path rejects a setter that exposes no retrieval API. */
 - (void)testGetRejectsASetterWithoutARetrievalAPI
 {
 	FxGripPresetTestSetter *bare = [[FxGripPresetTestSetter alloc] init];
@@ -744,6 +782,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil(value);
 }
 
+/*! @abstract The get path rejects a nil retrieval API and leaves the out-value nil. */
 - (void)testGetRejectsANilRetrievalAPI
 {
 	_setter.retrievalAPI = nil;
@@ -753,6 +792,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil(value);
 }
 
+/*! @abstract The get path returns NO and no value when the underlying getter fails. */
 - (void)testGetReturnsNoWhenTheUnderlyingGetterFails
 {
 	_setter.retrievalAPI.succeeds = NO;
@@ -763,6 +803,7 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil(value);
 }
 
+/*! @abstract The get path returns NO and no value for the None type. */
 - (void)testGetReturnsNoForTheNoneType
 {
 	BOOL success = YES;

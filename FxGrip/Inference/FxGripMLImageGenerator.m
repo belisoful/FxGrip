@@ -1,7 +1,15 @@
-//
-//  FxGripMLImageGenerator.m
-//  FxGrip
-//
+/*!
+	@file       FxGripMLImageGenerator.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLImageGenerator
+	@abstract   Implements the generator template whose model produces each frame's image from no source.
+	@discussion Introduced in FxGrip 0.1.0. The generator geometry reports the full output bounds as
+	            the destination rect and an empty source tile rect. renderMLFromSourceTile: runs the
+	            cache and the backend over the generator inputs. A not-ready backend draws the
+	            placeholder.
+*/
 
 #import "FxGripMLImageGenerator.h"
 #import "FxGripInferenceRequest.h"
@@ -9,10 +17,16 @@
 #import "FxGripErrors.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The generator template whose model produces each frame's image from no source.
+	@discussion	Introduced in FxGrip 0.1.0. The generator supplies its request inputs through
+				generatorInputsAtTime: and inherits the per-frame cache.
+*/
 @implementation FxGripMLImageGenerator
 
 #pragma mark Generator geometry
 
+/*! The destination rect is the output's full pixel bounds. */
 - (BOOL)destinationImageRect:(FxRect *)destinationImageRect
 				sourceImages:(NSArray<FxImageTile *> *)sourceImages
 			destinationImage:(nonnull FxImageTile *)destinationImage
@@ -24,6 +38,7 @@
 	return YES;
 }
 
+/*! There is no source, so the source tile rect is empty. */
 - (BOOL)sourceTileRect:(FxRect *)sourceTileRect
 	  sourceImageIndex:(NSUInteger)sourceImageIndex
 		  sourceImages:(NSArray<FxImageTile *> *)sourceImages

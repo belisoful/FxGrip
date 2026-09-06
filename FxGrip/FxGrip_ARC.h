@@ -1,15 +1,18 @@
-//
-//  FxGrip_ARC.h
-//  XPC Service
-//
-//  Created by ~ ~ on 3/19/24.
-//
-//		#import "FxGrip_ARC.h"
+/*!
+	@file       FxGrip_ARC.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGrip_ARC
+	@abstract   Memory-management macros that compile under both ARC and manual retain/release.
+	@discussion Introduced in FxGrip 0.1.0. FxPlug hosts load plugins that may be built either way, so
+	            the framework's retain, release, autorelease, dealloc, and block-copy operations go
+	            through these macros. Under ARC each macro expands to a no-op or a plain assignment;
+	            under manual retain/release each expands to the matching runtime call.
+*/
 
 #ifndef FxGrip_ARC_h
 #define FxGrip_ARC_h
-
-//
 
 #if __has_feature(objc_arc)
 

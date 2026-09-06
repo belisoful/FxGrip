@@ -1,11 +1,15 @@
-//
-//  FxGripPointParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPointParameter: the type identity, the payload
-//  +addParameter:toEffect: derives from the nested, top-level, array, and string default
-//  forms, and the value plumbing through the retrieval and setting APIs.
-//
+/*!
+	@file       FxGripPointParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPointParameterTests
+	@abstract   Tests FxGripPointParameter: its FxPlug type identity and the creation payload
+	            +addParameter:toEffect: derives from the several default forms.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the nested, top-level, array, and
+	            string default forms, and the value plumbing through the retrieval and setting
+	            APIs.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -52,6 +56,7 @@ static const FxParameterId kPointTestParameter = 31;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug point type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripPointParameter.parameterType, FxParameterType_Point);
@@ -60,6 +65,7 @@ static const FxParameterId kPointTestParameter = 31;
 
 #pragma mark Creation
 
+/*! @abstract A point created with no default is centered at (0.5, 0.5). */
 - (void)testPointWithoutADefaultCentersTheParameter
 {
 	XCTAssertTrue([self add:FxGripPointParameter.class type:kFxParameterType_Point extra:nil]);
@@ -72,6 +78,7 @@ static const FxParameterId kPointTestParameter = 31;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A point forwards both coordinates of its nested default record. */
 - (void)testPointForwardsBothCoordinatesOfTheNestedDefault
 {
 	NSDictionary *point = @{kFxParameterProperty_X: @0.25, kFxParameterProperty_Y: @0.75};
@@ -97,6 +104,7 @@ static const FxParameterId kPointTestParameter = 31;
 	XCTAssertEqualObjects(self.call[@"y"], @0.0);
 }
 
+/*! @abstract Top-level x and y configuration keys supply the default coordinates. */
 - (void)testTopLevelCoordinateKeysSupplyTheDefault
 {
 	NSDictionary *extra = @{kFxParameterProperty_X: @0.25, kFxParameterProperty_Y: @0.75};
@@ -118,6 +126,7 @@ static const FxParameterId kPointTestParameter = 31;
 	XCTAssertEqualObjects(self.call[@"y"], @0.75);
 }
 
+/*! @abstract An array default supplies the x then y coordinate in order. */
 - (void)testAnArrayPointDefaultIsReadInOrder
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @[@0.25, @0.75]};
@@ -139,6 +148,7 @@ static const FxParameterId kPointTestParameter = 31;
 	XCTAssertEqualObjects(self.call[@"y"], @0.75);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testPointReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -148,6 +158,7 @@ static const FxParameterId kPointTestParameter = 31;
 
 #pragma mark Values
 
+/*! @abstract -valueAtTime: reads both coordinates from the retrieval API. */
 - (void)testPointValueAtTimeReadsBothCoordinates
 {
 	FxGripPointParameter *parameter = [self makePointParameter];
@@ -161,6 +172,7 @@ static const FxParameterId kPointTestParameter = 31;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"point");
 }
 
+/*! @abstract -valueAtTime: returns the origin when the retrieval read fails. */
 - (void)testPointValueAtTimeIsTheOriginWhenTheReadFails
 {
 	FxGripPointParameter *parameter = [self makePointParameter];
@@ -173,6 +185,7 @@ static const FxParameterId kPointTestParameter = 31;
 	XCTAssertEqual(point.y, 0.0);
 }
 
+/*! @abstract -setValue:atTime: writes both coordinates through the setting API. */
 - (void)testPointSetValueWritesBothCoordinates
 {
 	FxGripPointParameter *parameter = [self makePointParameter];
@@ -187,6 +200,7 @@ static const FxParameterId kPointTestParameter = 31;
 							 @"y": @0.8}));
 }
 
+/*! @abstract -setValue:atTime: writes nothing when the point pointer is NULL. */
 - (void)testPointSetValueIgnoresANullPoint
 {
 	FxGripPointParameter *parameter = [self makePointParameter];
@@ -196,6 +210,7 @@ static const FxParameterId kPointTestParameter = 31;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.writes, @[]);
 }
 
+/*! @abstract -setXValue:YValue:atTime: writes the two coordinates directly. */
 - (void)testPointSetXValueYValueWritesTheCoordinatesDirectly
 {
 	FxGripPointParameter *parameter = [self makePointParameter];

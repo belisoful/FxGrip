@@ -1,7 +1,17 @@
-//
-//  FxGripInferenceBridge.h
-//  FxGrip
-//
+/*!
+	@file       FxGripInferenceBridge.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInferenceBridge
+	@abstract   The runtime bridge that adapts an optional InferKit backend to the FxGrip backend protocol.
+	@discussion Introduced in FxGrip 0.1.0. InferKit is an optional dependency that FxGrip does not
+	            link. The bridge finds the InferKit classes by name at runtime and reports their
+	            presence through isInferKitAvailable. A host that links InferKit passes an InferKit
+	            backend to the bridge, and the bridge returns an id<FxGripInferenceBackend> an FxGrip
+	            ML effect uses like any other backend. When InferKit is absent, the bridge methods
+	            return nil.
+*/
 
 #ifndef FxGripInferenceBridge_h
 #define FxGripInferenceBridge_h
@@ -15,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 	@class      FxGripInferenceBridge
 	@abstract   Detects InferKit at runtime and adapts an InferKit backend to the FxGrip inference
 				backend protocol.
-	@discussion Introduced in FxGrip 1.0. InferKit is an optional dependency. FxGrip does not link
+	@discussion Introduced in FxGrip 0.1.0. InferKit is an optional dependency. FxGrip does not link
 				it. The bridge finds the InferKit classes by name at runtime and drives them through
 				the selectors the two frameworks share. A host that links InferKit creates an
 				InferKit backend and passes it to backendBridgingInferKitBackend:, which returns an

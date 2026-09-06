@@ -1,15 +1,25 @@
-//
-//  FxGripMTLDeviceCache.h
-//  PlugIn
-//
-//  Created by Apple on 1/24/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
+/*!
+	@file       FxGripMTLDeviceCache.h
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMTLDeviceCache
+	@abstract   A thread-safe process-wide cache of Metal devices, command queues, pipeline states, and libraries.
+	@discussion Introduced in FxGrip 0.1.0. The cache extends the MetalDeviceCache pattern from
+	            Apple's FxPlug samples. It keys a cache item by device registry ID, pixel format,
+	            and plugin ID, creating items on first request and dropping them when Metal reports
+	            a device removed. Command queues are pooled and handed back after use, and
+	            FxGripMTLCommandQueue wraps one to return itself on dealloc. FxGripMTLLibraryCache
+	            memoizes the functions a library compiles.
+*/
 
 #import <Metal/Metal.h>
 #import <BEFoundation/BESingleton.h>
 #import <FxGrip/FxTileImage+FxGrip.h>
 
+/*! The plugin ID that selects the shared, non-per-plugin cache item. */
 #define kDefaultPluginID			nil
+/*! The pixel format that matches a cache item of any pixel format. */
 #define FxGripMTLPixelFormatAny		((MTLPixelFormat)-1)
 
 @class FxGripMTLDeviceCacheItem;
@@ -21,7 +31,7 @@
 	@class      FxGripMTLDeviceCache
 	@abstract   Process-wide cache of Metal devices, command queues, pipeline states, and
 				shader libraries keyed by device registry ID, pixel format, and plugin ID.
-	@discussion Introduced in FxGrip 1.0. Extends the `MetalDeviceCache` pattern from Apple's
+	@discussion Introduced in FxGrip 0.1.0. Extends the `MetalDeviceCache` pattern from Apple's
 				FxPlug samples. One `FxGripMTLDeviceCacheItem` exists per (device, pixel format,
 				plugin ID) triple; items are created on first request and dropped when Metal
 				reports the device's removal.
@@ -44,17 +54,21 @@
 
 	id <NSObject>	_metalDeviceObserver;
 }
+/*! The default library cache for a device; nil when no cache item matches. */
 + (nullable FxGripMTLLibraryCache*)libraryCacheForDevice:(nullable id<MTLDevice>)device;
+/*! The default library cache for a device registry ID; nil when no cache item matches. */
 + (nullable FxGripMTLLibraryCache*)libraryCacheForRegistryID:(uint64_t)registryID;
 
+/*! A pooled command queue for the tile's device and pixel format; return it with returnCommandQueue:. */
 + (nullable id<MTLCommandQueue>)commandQueueForImageTile:(FxImageTile *_Null_unspecified)imageTile;
+/*! A pooled command queue for the tile's device, pixel format, and plugin ID. */
 + (nullable id<MTLCommandQueue>)commandQueueForImageTile:(FxImageTile *_Null_unspecified)imageTile pluginID:(nullable NSString *)pluginID;
 
 /*!
 	@method     scopedCommandQueueForImageTile:
 	@abstract   Checks out a command queue for the tile's device and pixel format, wrapped so it
 				returns itself to the cache on dealloc.
-	@discussion Introduced in FxGrip 1.0. Equivalent to `+commandQueueForImageTile:` followed by
+	@discussion Introduced in FxGrip 0.1.0. Equivalent to `+commandQueueForImageTile:` followed by
 				`+returnCommandQueue:` when the wrapper is released. Do not pass the wrapper to
 				`+returnCommandQueue:`.
 	@param      imageTile  The tile whose device and pixel format select the cache item.
@@ -66,28 +80,38 @@
 	@method     scopedCommandQueueForImageTile:pluginID:
 	@abstract   Checks out a command queue for the tile's device, pixel format, and plugin ID,
 				wrapped so it returns itself to the cache on dealloc.
-	@discussion Introduced in FxGrip 1.0.
+	@discussion Introduced in FxGrip 0.1.0.
 	@param      imageTile  The tile whose device and pixel format select the cache item.
 	@param      pluginID   Selects a per-plugin cache item; `nil` selects the shared item.
 	@result     The wrapper, or `nil` when no device matches the tile.
 */
 + (nullable FxGripMTLCommandQueue*)scopedCommandQueueForImageTile:(FxImageTile*_Null_unspecified)imageTile pluginID:(nullable NSString *)pluginID;
+/*! Returns a pooled command queue checked out with commandQueueForImageTile: to its cache item. */
 + (void)returnCommandQueue:(id<MTLCommandQueue>_Null_unspecified)commandQueue;
 
+/*! The shared device-cache singleton. */
 + (nonnull FxGripMTLDeviceCache*)deviceCache;
+/*! The Metal pixel format for a tile's IOSurface. */
 + (MTLPixelFormat)MTLPixelFormatForImageTile:(nullable FxImageTile*)imageTile;
+/*! The MTLDevice for a device registry ID; nil when none matches. */
 + (nullable id<MTLDevice>)metalDeviceFromID:(uint64_t)registryID;
 
+/*! A depth texture sized to bounds on a device; nil on allocation failure. */
 + (nullable id<MTLTexture>)depthTexture:(FxRect)bounds forDevice:(nonnull id<MTLDevice>)device;
 
+/*! The cache item for a device registry ID, of any pixel format and the default plugin ID. */
 - (nullable FxGripMTLDeviceCacheItem*)deviceWithRegistryID:(uint64_t)registryID;
+/*! The cache item for a device registry ID and pixel format, default plugin ID. */
 - (nullable FxGripMTLDeviceCacheItem*)deviceWithRegistryID:(uint64_t)registryID
 									  pixelFormat:(MTLPixelFormat)pixFormat;
+/*! The cache item for a device registry ID, pixel format, and plugin ID; created when absent. */
 - (nullable FxGripMTLDeviceCacheItem*)deviceWithRegistryID:(uint64_t)registryID
 									  pixelFormat:(MTLPixelFormat)pixFormat
 									  andPluginID:(nullable NSString*)pluginID;
 
+/*! The depth-stencil state for a device registry ID; nil when none matches. */
 - (nullable id<MTLDepthStencilState>)depthStateWithRegistryID:(uint64_t)registryID;
+/*! Returns a pooled command queue to whichever cache item owns it. */
 - (void)returnCommandQueueToCache:(nullable id<MTLCommandQueue>)commandQueue;
 
 @end
@@ -98,7 +122,7 @@
 	@class      FxGripMTLCommandQueue
 	@abstract   An `MTLCommandQueue` pass-through that returns the wrapped queue to its
 				`FxGripMTLDeviceCacheItem` on dealloc.
-	@discussion Introduced in FxGrip 1.0. The queue is checked out of the item at init and
+	@discussion Introduced in FxGrip 0.1.0. The queue is checked out of the item at init and
 				checked back in at dealloc, so a render method that keeps the wrapper in a local
 				variable releases the queue when the variable goes out of scope. Obtain one from
 				`+[FxGripMTLDeviceCache scopedCommandQueueForImageTile:]`.
@@ -188,7 +212,7 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 /*!
 	@class      FxGripMTLLibraryCache
 	@abstract   An `MTLLibrary` pass-through that memoizes the `MTLFunction` objects it creates.
-	@discussion Introduced in FxGrip 1.0. Functions are cached by name, or by specialized name
+	@discussion Introduced in FxGrip 0.1.0. Functions are cached by name, or by specialized name
 				when a descriptor supplies one. A lookup that yields no function is not cached.
 				All methods are safe to call concurrently.
 
@@ -203,19 +227,27 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 	NSMutableDictionary *__functionCache;
 }
 
+/*! The wrapped MTLLibrary. */
 @property (readonly, retain, nonnull)	id<MTLLibrary>	library;
+/*! A snapshot of the memoized functions, keyed by name. */
 @property (readonly, retain, nonnull)	NSDictionary<NSString*, id<MTLFunction>>*	functionCache;
 
+/*! Wraps an existing library. */
 - (nullable instancetype)initWithLibrary:(nonnull id<MTLLibrary>)library;
+/*! Wraps a device's default library; nil when the device has none. */
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device;
 - (void)dealloc;
 
+/*! Drops the memoized function for a name; NO when none was cached. */
 - (BOOL)clearFunctionWithName:(nonnull NSString *)name;
 
 
 
+/*! The memoized function for a name, compiling and caching it on first request. */
 - (nullable id <MTLFunction>)objectForKeyedSubscript:(NSString * _Nullable)key;
+/*! YES while an asynchronous compile for a name is in flight. */
 - (BOOL)isLoading:(nonnull NSString *)name;
+/*! YES when a function for a name is memoized. */
 - (BOOL)isLoaded:(nonnull NSString *)name;
 
 // MTLLibrary caching and passthrough
@@ -321,51 +353,78 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 	@class      FxGripMTLDeviceCacheItem
 	@abstract   One Metal device's pooled command queues, cached pipeline states, default
 				library, and depth-stencil state for a given pixel format and plugin ID.
-	@discussion Introduced in FxGrip 1.0. The command-queue pool starts with a fixed number of
+	@discussion Introduced in FxGrip 0.1.0. The command-queue pool starts with a fixed number of
 				queues and grows when every pooled queue is checked out. Pipeline states are keyed
 				by vertex and fragment function names. All methods are safe to call concurrently.
 */
 @interface FxGripMTLDeviceCacheItem : NSObject
 
+/*! The Metal device this item caches for. */
 @property (readonly, nonnull)   		id<MTLDevice>                           gpuDevice;
+/*! The device's default shader library. */
 @property (readonly, nonnull)   		id<MTLLibrary>                          defaultLibrary;
+/*! The memoizing cache over the default library. */
 @property (readonly, nonnull)   		FxGripMTLLibraryCache*                  defaultLibraryCache;
+/*! The render pipeline states, keyed by vertex and fragment function names. */
 @property (retain, nonnull)     		NSMutableDictionary<NSString*, id<MTLRenderPipelineState>>*   pipelineStates;
+/*! The depth-stencil state for this item's pixel format. */
 @property (readonly, retain, nonnull, nonatomic) id<MTLDepthStencilState>		depthState;
+/*! The pooled command queues and their checked-out state. */
 @property (retain, nonnull)     		NSMutableArray<NSMutableDictionary*>*   commandQueueCache;
+/*! The lock guarding the command-queue pool. */
 @property (readonly, nonnull)   		NSLock*                                 commandQueueCacheLock;
+/*! The pixel format this item's pipeline and depth states are built for. */
 @property (readonly)    				MTLPixelFormat                          pixelFormat;
+/*! The plugin ID this item is keyed under; nil for the shared item. */
 @property (readonly, nullable)   		NSString*                               pluginID;
 
+/*! The device registry ID this item is keyed under. */
 @property (readonly)    				uint64_t                          		registryID;
 
+/*! Creates an item for a device, pixel format, and plugin ID. */
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device
 				   pixelFormat:(MTLPixelFormat)pixFormat
 				   andPluginID:(nullable NSString*)newPluginID;
+/*! The device's maximum 1D texture width. */
 - (unsigned int)max1DTextureWidth;
+/*! The device's maximum 2D texture width. */
 - (unsigned int)max2DTextureWidth;
+/*! The device's maximum cube-map texture width. */
 - (unsigned int)maxCubeMapTextureWidth;
+/*! The device's maximum 3D texture width. */
 - (unsigned int)max3DTextureWidth;
+/*! The device's maximum 2D texture area in pixels. */
 - (unsigned int)maxTexturePixels;
 
+/*! A free command queue from the pool, growing the pool when every queue is checked out. */
 - (nullable id<MTLCommandQueue>)getNextFreeCommandQueue;
+/*! Marks a command queue free in the pool. */
 - (void)returnCommandQueue:(nullable id<MTLCommandQueue>)commandQueue;
+/*! YES when the command queue belongs to this item's pool. */
 - (BOOL)containsCommandQueue:(nullable id<MTLCommandQueue>)commandQueue;
 
+/*! The render pipeline state for a vertex and fragment function pair, cached by name. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader;
+/*! The pipeline state for a function pair with function constants applied. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader constantValues:(nullable MTLFunctionConstantValues *)constantValues;
+/*! The pipeline state for a function pair with function constants, cached under a specialized format key. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader constantValues:(nullable MTLFunctionConstantValues *)constantValues specializedFormat:(nullable NSString*)specializedFormat;
 
 
+/*! The pipeline state for a function pair from a given library, with function constants. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader
 										constantValues:(nullable MTLFunctionConstantValues *)constantValues;
+/*! The pipeline state for a function pair from a given library, with function constants and a specialized format key. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader
 										constantValues:(nullable MTLFunctionConstantValues *)constantValues specializedFormat:(nullable NSString*)specializedFormat;
 
 
+/*! The pipeline state for a vertex and fragment function descriptor pair. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexDescriptor:(nonnull MTLFunctionDescriptor*)vertexDescriptor fragmentDescriptor:(nonnull MTLFunctionDescriptor*)fragmentDescriptor;
+/*! The pipeline state for a function descriptor pair from a given library. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexDescriptor:(nonnull MTLFunctionDescriptor*)vertexDescriptor fragmentDescriptor:(nonnull MTLFunctionDescriptor*)fragmentDescriptor;
 
+/*! The pipeline state for an already-built vertex and fragment function pair. */
 - (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexFunction:(nonnull id<MTLFunction>)vertexFunction fragmentFunction:(nonnull id<MTLFunction>)fragmentFunction;
 
 @end

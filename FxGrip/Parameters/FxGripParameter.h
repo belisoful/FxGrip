@@ -1,10 +1,18 @@
-//
-//  FxGripParameter.h
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripParameter.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameter
+	@abstract   The parameter model: the base protocols and classes every FxGrip parameter adopts.
+	@discussion Introduced in FxGrip 0.1.0. FxGripParameterBase defines the flags, identity, and
+	            host wiring shared by group and regular parameters. FxGripParameter adds the
+	            value, min/max, and custom-view surface of a leaf parameter. FxGripSubParameters
+	            models a parameter that holds children. FxGripStateParameter marks a parameter
+	            whose value belongs in the plugin state. FxGripParameterBase (the class) is the
+	            concrete root that stores the parameter dictionary, registers flag observers on
+	            the effect's notifier, and encodes the parameter type into the plugin state.
+*/
 
 #ifndef FxGripParameter_h
 #define FxGripParameter_h
@@ -24,6 +32,15 @@
 
 
 
+/*!
+	@protocol	FxGripParameterBase
+	@abstract	The flags, identity, and host wiring shared by group and regular parameters.
+	@discussion	Introduced in FxGrip 0.1.0. Each flagXxx property mirrors one bit of the
+				parameter's FxParameterFlags, reading and writing it through the effect's
+				parameter APIs. The protocol also exposes the parameter's ID, type, name, parent
+				ID, and error, and the class methods that register a parameter type and add a
+				parameter to an effect.
+*/
 // Flags that Group and Regular Parameters share
 @protocol FxGripParameterBase <NSObject, NSSecureCoding>
 
@@ -81,10 +98,22 @@
 - (BOOL)validate;
 @end
 
+/*!
+	@protocol	FxGripParameterMinMax
+	@abstract	The min/max opt-out shared by numeric parameters.
+	@discussion	Introduced in FxGrip 0.1.0. flagIgnoreMinMax lets a value pass outside the
+				declared bounds.
+*/
 @protocol FxGripParameterMinMax
 @property (readwrite, nonatomic) BOOL flagIgnoreMinMax;
 @end
 
+/*!
+	@protocol	FxGripParameterMinMaxInt
+	@abstract	The integer value bounds and slider range of a numeric parameter.
+	@discussion	Introduced in FxGrip 0.1.0. minimum and maximum bound the value; sliderMinimum
+				and sliderMaximum bound the slider track.
+*/
 @protocol FxGripParameterMinMaxInt <FxGripParameterMinMax>
 @property (readwrite, nonatomic) int minimum;
 @property (readwrite, nonatomic) int maximum;
@@ -92,6 +121,12 @@
 @property (readwrite, nonatomic) int sliderMaximum;
 @end
 
+/*!
+	@protocol	FxGripParameterMinMaxDouble
+	@abstract	The floating-point value bounds and slider range of a numeric parameter.
+	@discussion	Introduced in FxGrip 0.1.0. minimum and maximum bound the value; sliderMinimum
+				and sliderMaximum bound the slider track.
+*/
 @protocol FxGripParameterMinMaxDouble <FxGripParameterMinMax>
 @property (readwrite, nonatomic) double minimum;
 @property (readwrite, nonatomic) double maximum;
@@ -101,6 +136,15 @@
 
 
 
+/*!
+	@protocol	FxGripParameter
+	@abstract	A leaf parameter: a value, its bounds, and its optional custom view.
+	@discussion	Introduced in FxGrip 0.1.0. The protocol adds the value flags a leaf parameter
+				carries (not-animatable, don't-save, custom-UI, curve-editor-hidden,
+				full-view-width), the read-only value bounds and defaults, the string and bool
+				value accessors, and the custom view. defaultParameterAction supplies a
+				parameter's built-in click behavior.
+*/
 @protocol FxGripParameter <FxGripParameterBase>
 
 @property (readwrite, nonatomic) BOOL flagNotAnimatable;
@@ -145,7 +189,7 @@
 /*!
 	@method     defaultParameterAction
 	@abstract   The parameter's built-in click behavior.
-	@discussion Introduced in FxGrip 1.0. `FxGripTileableEffect parameterClicked:` performs
+	@discussion Introduced in FxGrip 0.1.0. `FxGripTileableEffect parameterClicked:` performs
 				this when the effect subclass implements no configuration-declared click
 				selector for the parameter.
 */
@@ -155,6 +199,14 @@
 
 
 
+/*!
+	@protocol	FxGripSubParameters
+	@abstract	A parameter that holds child parameters, such as a group.
+	@discussion	Introduced in FxGrip 0.1.0. The protocol adds and removes children, counts and
+				enumerates the direct children, and counts and enumerates the whole descendant
+				tree (allCount, allChildren). A child is reachable by index through
+				objectAtIndexedSubscript:, and the parameter conforms to NSFastEnumeration.
+*/
 @protocol FxGripSubParameters <FxGripParameter, NSFastEnumeration>
 
 - (BOOL)addChildParameter:(id<FxGripParameter>_Nonnull)parameter;
@@ -177,6 +229,13 @@
 
 
 
+/*!
+	@protocol	FxGripStateParameter
+	@abstract	Marks a parameter whose value belongs in the plugin state.
+	@discussion	Introduced in FxGrip 0.1.0. A conforming parameter is added to the plugin state
+				automatically unless its NO_STATE flag is set. Group, Help, and PushButton
+				parameters do not conform, so they carry no state.
+*/
 // Some Parameters are not for the pluginState, like Group, Help, and PushButton
 // The Parameter should be added automatically by the pluginState unless "NO_STATE"
 //	flag is set.
@@ -186,9 +245,21 @@
 
 
 
+/*! The bool value returned when a bool parameter read fails. */
 #define kFxGripParameterErrorBool (-1)
+/*! The suffix of the plugin-state key that stores a parameter's type, keyed by parameter ID. */
 #define kFxGripPluginStateParameterTypeString @"-_-type"
 
+/*!
+	@class		FxGripParameterBase
+	@abstract	The concrete root of the parameter model.
+	@discussion	Introduced in FxGrip 0.1.0. The class stores the parameter dictionary, resolves
+				the flags, identity, and name through the effect's parameter APIs, and registers
+				flag observers on the effect's notifier. It encodes the parameter type into the
+				plugin state and supports secure coding. parameterType, and the class factory
+				addParameter:toEffect:, are unavailable on the base and are overridden by a
+				concrete parameter class.
+*/
 //This is to differentiate the Group Parameter
 @interface FxGripParameterBase : NSObject <FxGripParameterBase, NSNotificationObjectPriorityItem> //NSCopying
 {
@@ -206,7 +277,7 @@
 /*!
 	@method     installNotifications
 	@abstract   Registers the parameter's observers on the effect's notifier.
-	@discussion Introduced in FxGrip 1.0. The designated initializer calls this; a
+	@discussion Introduced in FxGrip 0.1.0. The designated initializer calls this; a
 				subclass overrides it to register additional observers and calls super.
 				The notifier holds selector observers weakly; removeObservers (called
 				from dealloc) unregisters them.
@@ -240,11 +311,19 @@
 @end
 
 
+/*!
+	@class		FxGripParameter
+	@abstract	The concrete root of a leaf parameter that carries a value and an optional view.
+	@discussion	Introduced in FxGrip 0.1.0. The class adds the custom inspector view surface
+				(newParameterView, attachCustomView:), the secure-coding allow-list for a
+				custom value (customValueClasses), and the parameter's description, tags, meta,
+				custom classes, and default and reset values.
+*/
 @interface FxGripParameter : FxGripParameterBase <FxGripParameter> //NSCopying
 /*!
 	@method     newParameterView
 	@abstract   Creates the parameter's custom inspector view.
-	@discussion Introduced in FxGrip 1.0. The view host
+	@discussion Introduced in FxGrip 0.1.0. The view host
 				(createViewForParameterID:) calls this for a parameter whose class
 				provides a view and hands the result to the host application. The base
 				returns nil; a parameter class with custom UI overrides. The returned
@@ -255,7 +334,7 @@
 /*!
 	@method     attachCustomView:
 	@abstract   Records the view backing this parameter.
-	@discussion Introduced in FxGrip 1.0. The view host attaches the created view (or
+	@discussion Introduced in FxGrip 0.1.0. The view host attaches the created view (or
 				its retained root, when the returned view wraps it) so the parameter can
 				reach its view for data pushes; nil detaches.
 */
@@ -264,19 +343,26 @@
 /*!
 	@method     customValueClasses
 	@abstract   The secure-coding allow-list for this parameter class's custom value.
-	@discussion Introduced in FxGrip 1.0. classesForCustomParameterID: consults the
+	@discussion Introduced in FxGrip 0.1.0. classesForCustomParameterID: consults the
 				parameter class registered for the configured type; a class whose custom
 				value is its own model type overrides. The base returns nil.
 */
 + (NSSet<Class> *_Nullable)customValueClasses;
 
 //@property (readwrite, retain, nonnull) NSString *name;
+/*! The parameter's descriptive text. */
 @property (readwrite, retain, nullable) NSString *paramDescription;
+/*! The parameter's tags. */
 @property (readonly, retain, nonnull) NSMutableDictionary *tags;
+/*! The parameter's meta dictionary. */
 @property (readonly, retain, nonnull) NSMutableDictionary *meta;
+/*! The declared custom class name for a custom parameter, or nil. */
 @property (readonly, retain, nullable) NSString* customClass;
+/*! The declared custom data class names for a custom parameter, or nil. */
 @property (readonly, retain, nullable) NSSet<NSString*>* customDataClasses;
+/*! The parameter's declared default value, or nil. */
 @property (readonly, retain, nullable) id defaultValue;
+/*! The value the parameter resets to, or nil. */
 @property (readonly, retain, nullable) id resetValue;
 
 

@@ -1,7 +1,12 @@
-//
-//  FxGripDynamicAPITestSupport.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripDynamicAPITestSupport.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDynamicAPITestSupport
+	@abstract   Shared stubs and an XCTestCase base for the dynamic-parameter API wrapper tests.
+	@discussion Introduced in FxGrip 0.1.0. The stub host API records every call and vends canned values, the stub effect carries a priority notification center resolved by name, and the test-case base wires them together, observes the recorded notification names, and vends the wrapper instances under test.
+*/
 
 #import "FxGripDynamicAPITestSupport.h"
 #import <FxGrip/FxGripAPINotifications.h>
@@ -16,16 +21,22 @@ static NSNotificationCenter *FxGripDynamicTestMakePriorityCenter(void)
 	return [[cls alloc] init];
 }
 
+/*! @abstract Returns a fixed valid CMTime used across the dynamic-API tests. */
 CMTime FxGripDynamicTestTime(void)
 {
 	return (CMTime){.value = 4, .timescale = 25, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
+/*! @abstract Returns a fixed error used to drive the wrappers' failure paths. */
 NSError *FxGripDynamicTestError(void)
 {
 	return [NSError errorWithDomain:@"FxGripDynamicTest" code:7 userInfo:nil];
 }
 
+/*!
+	@abstract A stub host dynamic-parameter API that records every call and returns configured values.
+	@discussion Introduced in FxGrip 0.1.0. Each protocol method appends its arguments to the calls array and returns the configured value or error, so a test asserts on the recorded calls and the values the wrapper reads back.
+*/
 @implementation FxGripDynamicTestStubAPI
 
 - (instancetype)init
@@ -39,6 +50,7 @@ NSError *FxGripDynamicTestError(void)
 	return self;
 }
 
+/*! @abstract Records a call under its method name and returns the configured next error. */
 - (NSError *)record:(NSString *)method arguments:(NSDictionary *)arguments
 {
 	NSMutableDictionary *call = arguments.mutableCopy;
@@ -159,6 +171,10 @@ NSError *FxGripDynamicTestError(void)
 
 @end
 
+/*!
+	@abstract A stub effect that stands in for the host effect and carries a priority notification center.
+	@discussion Introduced in FxGrip 0.1.0. It answers -effectBase with itself so rich reads route back to the stub, and it creates its notifier from NSPriorityNotificationCenter resolved at runtime.
+*/
 @implementation FxGripDynamicTestStubEffect
 
 - (id)effectBase
@@ -183,6 +199,10 @@ NSError *FxGripDynamicTestError(void)
 
 @end
 
+/*!
+	@abstract An XCTestCase base that wires the stub effect and host API together and observes the recorded notifications.
+	@discussion Introduced in FxGrip 0.1.0. It builds the stubs in -setUp, subscribes to the recorded notification names, and vends the dynamic, info, and bounds wrapper instances under test. Helper accessors expose the posted notifications and recorded host calls.
+*/
 @implementation FxGripDynamicAPITestCase
 
 - (void)setUp
@@ -211,6 +231,7 @@ NSError *FxGripDynamicTestError(void)
 	[super tearDown];
 }
 
+/*! @abstract Returns the notification names the base subscribes to in -setUp. */
 - (NSArray<NSNotificationName> *)recordedNotificationNames
 {
 	return @[FxGripNotifyAPI_ParameterRemoveName,
@@ -225,12 +246,14 @@ NSError *FxGripDynamicTestError(void)
 			 FxGripNotifyAPI_ParameterSetMenuName];
 }
 
+/*! @abstract Adds a notification observer to the effect's notifier and tracks its token for teardown. */
 - (void)observeName:(NSNotificationName)name usingBlock:(void (^)(NSNotification *notification))block
 {
 	id token = [self.effect.notifier addObserverForName:name object:nil queue:nil usingBlock:block];
 	[self.observerTokens addObject:token];
 }
 
+/*! @abstract Returns the names of the notifications posted so far, in order. */
 - (NSArray<NSNotificationName> *)postedNames
 {
 	NSMutableArray<NSNotificationName> *names = NSMutableArray.new;
@@ -240,6 +263,7 @@ NSError *FxGripDynamicTestError(void)
 	return names;
 }
 
+/*! @abstract Returns the first posted notification with the given name, or nil. */
 - (NSNotification *)notificationNamed:(NSNotificationName)name
 {
 	for (NSNotification *notification in self.posted) {
@@ -250,6 +274,7 @@ NSError *FxGripDynamicTestError(void)
 	return nil;
 }
 
+/*! @abstract Returns the recorded host-call method names, in order. */
 - (NSArray<NSString *> *)hostMethods
 {
 	NSMutableArray<NSString *> *methods = NSMutableArray.new;
@@ -259,6 +284,7 @@ NSError *FxGripDynamicTestError(void)
 	return methods;
 }
 
+/*! @abstract Returns the first recorded host call with the given method name, or nil. */
 - (NSDictionary *)hostCallNamed:(NSString *)method
 {
 	for (NSDictionary *call in self.hostAPI.calls) {
@@ -269,16 +295,19 @@ NSError *FxGripDynamicTestError(void)
 	return nil;
 }
 
+/*! @abstract Vends a dynamic-parameter v3 wrapper over the stub host API and effect. */
 - (FxGripDynamicParameterAPI_v3 *)apiV3
 {
 	return [FxGripDynamicParameterAPI_v3.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
 }
 
+/*! @abstract Vends a parameter-info v1 wrapper over the stub host API and effect. */
 - (FxGripParameterInfoAPI_v1 *)apiInfo
 {
 	return [FxGripParameterInfoAPI_v1.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];
 }
 
+/*! @abstract Vends a parameter-bounds v1 wrapper over the stub host API and effect. */
 - (FxGripParameterBoundsAPI_v1 *)apiBounds
 {
 	return [FxGripParameterBoundsAPI_v1.alloc initWithAPI:(id)self.hostAPI effect:(id)self.effect];

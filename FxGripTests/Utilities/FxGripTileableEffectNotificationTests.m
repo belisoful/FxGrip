@@ -1,11 +1,12 @@
-//
-//  FxGripTileableEffectNotificationTests.m
-//  FxGripTests
-//
-//  Unit tests for the FxTileableEffect notification contract: the name/key
-//  constants and the userInfo payload shape carried by the parameter-changed
-//  notification.
-//
+/*!
+	@file       FxGripTileableEffectNotificationTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffectNotificationTests
+	@abstract   Unit tests for the FxTileableEffect notification name and key constants and the parameter-changed payload.
+	@discussion Introduced in FxGrip 0.1.0. The tests assert that every notification name and userInfo key constant is non-empty and mutually distinct. They deliver a parameter-changed notification through a private priority notification center and confirm the id and CMTime payload round-trips to a direct observer and to an extension observer.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -120,6 +121,7 @@ static CMTime FxGripNotifTestMakeTime(int64_t value, int32_t timescale)
 	];
 }
 
+/*! @abstract Every notification name and key constant is non-nil and non-empty. */
 - (void)testNotificationConstantsAreNonNilAndNonEmpty
 {
 	for (NSString *constant in [self allNotificationConstants]) {
@@ -128,6 +130,7 @@ static CMTime FxGripNotifTestMakeTime(int64_t value, int32_t timescale)
 	}
 }
 
+/*! @abstract The notification name and key constants hold mutually distinct values with no collisions. */
 - (void)testNotificationConstantsAreMutuallyDistinct
 {
 	NSArray<NSString *> *constants = [self allNotificationConstants];
@@ -135,6 +138,7 @@ static CMTime FxGripNotifTestMakeTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(unique.count, constants.count, @"notification names and keys must not collide");
 }
 
+/*! @abstract A parameter-changed notification posted through a priority center delivers its id and CMTime payload unchanged to a block observer. */
 - (void)testParameterChangedPayloadRoundTripThroughPriorityCenter
 {
 	NSNotificationCenter *center = FxGripNotifTestMakePriorityCenter();
@@ -171,6 +175,7 @@ static CMTime FxGripNotifTestMakeTime(int64_t value, int32_t timescale)
 	[center removeObserver:token];
 }
 
+/*! @abstract A parameter-changed notification reaches a loaded extension's extParameterChanged: with its id and CMTime payload intact. */
 - (void)testParameterChangedPayloadDeliveredToExtensionObserver
 {
 	FxGripNotifTestStubEffect *effect = [FxGripNotifTestStubEffect.alloc init];
@@ -197,6 +202,7 @@ static CMTime FxGripNotifTestMakeTime(int64_t value, int32_t timescale)
 	XCTAssertTrue(FxGripNotifTestTimesEqual(recovered, time));
 }
 
+/*! @abstract The render notification userInfo keys are distinct from the parameter-changed keys. */
 - (void)testRenderNotificationKeysAreDistinctFromParameterKeys
 {
 	NSArray<NSString *> *renderKeys = @[

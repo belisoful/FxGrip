@@ -1,13 +1,12 @@
-//
-//  FxGripPresetFileTests.m
-//  FxGripTests
-//
-//  Unit tests for the preset model and its file form: the presetDictionary /
-//  initWithPresetDictionary round trip over the seven FxFactory keys and the seven FxGrip
-//  keys, nil omission, the string keying of parameter-keyed sections, the presetSections
-//  shape, the XML property list I/O, and fidelity against the FxFactory sample shipped
-//  with the repository.
-//
+/*!
+	@file       FxGripPresetFileTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPresetFileTests
+	@abstract   Verifies the preset model and its file form: the dictionary round trip, section shape, XML property list I/O, and fidelity against the FxFactory sample.
+	@discussion Introduced in FxGrip 0.1.0. The round trip covers the seven FxFactory keys and the seven FxGrip keys, nil omission, and the string keying of parameter-keyed sections. The file I/O writes and reads an XML property list and drops malformed sections at load. The fidelity tests read and rewrite the FxFactory sample shipped beside the repository.
+*/
 
 #import <XCTest/XCTest.h>
 #import <CoreMedia/CoreMedia.h>
@@ -105,6 +104,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 
 #pragma mark presetDictionary
 
+/*! @abstract presetDictionary writes the seven FxFactory keys from the preset's fields. */
 - (void)testPresetDictionaryWritesTheSevenFxFactoryKeys
 {
 	NSDictionary *dictionary = [self fullPreset].presetDictionary;
@@ -118,6 +118,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(dictionary[kFxFactoryPresetKey_ProductId], @"fxgrip");
 }
 
+/*! @abstract presetDictionary writes the seven FxGrip keys from the preset's fields. */
 - (void)testPresetDictionaryWritesTheSevenFxGripKeys
 {
 	NSDictionary *dictionary = [self fullPreset].presetDictionary;
@@ -131,11 +132,13 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(dictionary[kFxGripPresetKey_ParameterTags][@"104"], (@[@"warm", @"cool"]));
 }
 
+/*! @abstract presetDictionary of a full preset carries exactly fourteen keys. */
 - (void)testPresetDictionaryOfAFullPresetCarriesExactlyFourteenKeys
 {
 	XCTAssertEqual([self fullPreset].presetDictionary.count, 14u);
 }
 
+/*! @abstract presetDictionary of a bare preset is empty. */
 - (void)testPresetDictionaryOfABarePresetIsEmpty
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -143,6 +146,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqual(preset.presetDictionary.count, 0u);
 }
 
+/*! @abstract presetDictionary omits a zero created-by parameter ID. */
 - (void)testPresetDictionaryOmitsAZeroCreatedByParameterId
 {
 	FxGripPreset *preset = [self fullPreset];
@@ -151,6 +155,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil(preset.presetDictionary[kFxFactoryPresetKey_CreatedByParameterId]);
 }
 
+/*! @abstract presetDictionary omits each nil property. */
 - (void)testPresetDictionaryOmitsEachNilProperty
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -161,6 +166,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(dictionary[kFxGripPresetKey_DisplayName], @"Only");
 }
 
+/*! @abstract presetDictionary writes number-keyed parameter values under string keys. */
 - (void)testPresetDictionaryWritesNumberKeyedValuesWithStringKeys
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -170,6 +176,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(written, (@{@"104": @12, @"112": @"text"}));
 }
 
+/*! @abstract presetDictionary writes number-keyed tags and meta under string keys. */
 - (void)testPresetDictionaryWritesNumberKeyedTagsAndMetaWithStringKeys
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -180,6 +187,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(preset.presetDictionary[kFxGripPresetKey_ParameterMeta], (@{@"112": @{@"note": @"center"}}));
 }
 
+/*! @abstract presetDictionary keeps string parameter keys unchanged. */
 - (void)testPresetDictionaryKeepsStringParameterKeysUnchanged
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -188,6 +196,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(preset.presetDictionary[kFxFactoryPresetKey_ParameterValues], (@{@"104": @12}));
 }
 
+/*! @abstract presetDictionary writes an empty parameter values section. */
 - (void)testPresetDictionaryWritesAnEmptyParameterValuesSection
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -198,6 +207,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 
 #pragma mark initWithPresetDictionary:
 
+/*! @abstract initWithPresetDictionary: reads every file key into the matching field. */
 - (void)testInitWithPresetDictionaryReadsEveryFileKey
 {
 	NSDictionary *dictionary = @{
@@ -235,6 +245,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(preset.parameterMeta, (@{@"112": @{@"note": @"center"}}));
 }
 
+/*! @abstract initWithPresetDictionary: with an empty dictionary leaves every field unset. */
 - (void)testInitWithAnEmptyDictionaryLeavesEveryFieldUnset
 {
 	FxGripPreset *preset = [FxGripPreset.alloc initWithPresetDictionary:@{}];
@@ -243,6 +254,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	[self assertPreset:preset matchesFieldsOf:[FxGripPreset.alloc init]];
 }
 
+/*! @abstract initWithPresetDictionary: ignores unknown keys and keeps the known ones. */
 - (void)testInitWithPresetDictionaryIgnoresUnknownKeys
 {
 	FxGripPreset *preset = [FxGripPreset.alloc initWithPresetDictionary:@{@"SomeFutureKey": @"value",
@@ -252,6 +264,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqual(preset.presetDictionary.count, 1u);
 }
 
+/*! @abstract initWithPresetDictionary: is nil for a nil dictionary. */
 - (void)testInitWithANilDictionaryIsNil
 {
 	NSDictionary *dictionary = nil;
@@ -259,6 +272,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil([FxGripPreset.alloc initWithPresetDictionary:dictionary]);
 }
 
+/*! @abstract initWithPresetDictionary: is nil for a non-dictionary argument. */
 - (void)testInitWithANonDictionaryIsNil
 {
 	XCTAssertNil([FxGripPreset.alloc initWithPresetDictionary:(id)@"not a dictionary"]);
@@ -266,6 +280,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 
 #pragma mark Round trip
 
+/*! @abstract The dictionary round trip preserves every field. */
 - (void)testTheFileFormRoundTripsEveryField
 {
 	FxGripPreset *original = [self fullPreset];
@@ -275,6 +290,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	[self assertPreset:reread matchesFieldsOf:original];
 }
 
+/*! @abstract The dictionary round trip preserves a localized name dictionary verbatim. */
 - (void)testTheFileFormRoundTripsALocalizedNameDictionaryVerbatim
 {
 	FxGripPreset *original = [self fullPreset];
@@ -285,6 +301,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(reread.pluginLocalizedName, (@{@"English": @"Circle", @"French": @"Cercle"}));
 }
 
+/*! @abstract The dictionary round trip normalizes number parameter keys to strings. */
 - (void)testTheFileFormRoundTripNormalizesNumberParameterKeysToStrings
 {
 	FxGripPreset *original = [FxGripPreset.alloc init];
@@ -296,6 +313,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil(reread.parameterValues[@104]);
 }
 
+/*! @abstract A second dictionary round trip is stable. */
 - (void)testASecondRoundTripIsStable
 {
 	NSDictionary *once = [self fullPreset].presetDictionary;
@@ -306,6 +324,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 
 #pragma mark presetSections
 
+/*! @abstract presetSections carries the values, tags, and meta sections under the target-preset keys. */
 - (void)testPresetSectionsCarriesTheThreeSectionsUnderTheTargetPresetKeys
 {
 	FxGripPreset *preset = [self fullPreset];
@@ -317,6 +336,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(sections[kFxParameterProperty_TargetPresetMeta], preset.parameterMeta);
 }
 
+/*! @abstract presetSections omits the sections the preset does not carry. */
 - (void)testPresetSectionsOmitsTheSectionsThePresetDoesNotCarry
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -329,11 +349,13 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil(sections[kFxParameterProperty_TargetPresetMeta]);
 }
 
+/*! @abstract presetSections of a bare preset is empty. */
 - (void)testPresetSectionsOfABarePresetIsEmpty
 {
 	XCTAssertEqual([FxGripPreset.alloc init].presetSections.count, 0u);
 }
 
+/*! @abstract presetSections carries neither a flags nor a names section. */
 - (void)testPresetSectionsCarriesNeitherFlagsNorNames
 {
 	NSDictionary *sections = [self fullPreset].presetSections;
@@ -342,6 +364,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil(sections[kFxParameterProperty_TargetPresetNames]);
 }
 
+/*! @abstract presetSections keeps the parameter keys as the preset carries them. */
 - (void)testPresetSectionsKeepsTheParameterKeysAsCarried
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -353,6 +376,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 
 #pragma mark savePresetToURL: / loadPresetFromURL:
 
+/*! @abstract savePresetToURL: writes an XML property list carrying the file keys. */
 - (void)testSavePresetWritesAnXMLPropertyList
 {
 	NSURL *url = [self fileURLNamed:@"Sunset.fxpreset"];
@@ -366,6 +390,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertTrue([text containsString:kFxGripPresetKey_DisplayName]);
 }
 
+/*! @abstract A saved file parses back to the preset dictionary. */
 - (void)testASavedFileParsesBackToThePresetDictionary
 {
 	FxGripPreset *original = [self fullPreset];
@@ -378,6 +403,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(plist, original.presetDictionary);
 }
 
+/*! @abstract loadPresetFromURL: reloads a saved file field for field. */
 - (void)testASavedFileReloadsFieldForField
 {
 	FxGripPreset *original = [self fullPreset];
@@ -387,6 +413,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	[self assertPreset:[FxGripPreset loadPresetFromURL:url] matchesFieldsOf:original];
 }
 
+/*! @abstract A bare preset survives the file save and reload. */
 - (void)testABarePresetSurvivesTheFileRoundTrip
 {
 	FxGripPreset *original = [FxGripPreset.alloc init];
@@ -396,6 +423,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	[self assertPreset:[FxGripPreset loadPresetFromURL:url] matchesFieldsOf:original];
 }
 
+/*! @abstract savePresetToURL: returns NO for a nil URL. */
 - (void)testSavePresetToANilURLReturnsNo
 {
 	NSURL *url = nil;
@@ -403,6 +431,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertFalse([[self fullPreset] savePresetToURL:url]);
 }
 
+/*! @abstract savePresetToURL: returns NO for a missing directory. */
 - (void)testSavePresetToAMissingDirectoryReturnsNo
 {
 	NSURL *url = [[self.folderURL URLByAppendingPathComponent:@"absent" isDirectory:YES]
@@ -411,11 +440,13 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertFalse([[self fullPreset] savePresetToURL:url]);
 }
 
+/*! @abstract loadPresetFromURL: is nil for a missing file. */
 - (void)testLoadPresetFromAMissingFileIsNil
 {
 	XCTAssertNil([FxGripPreset loadPresetFromURL:[self fileURLNamed:@"absent.fxpreset"]]);
 }
 
+/*! @abstract loadPresetFromURL: is nil for a nil URL. */
 - (void)testLoadPresetFromANilURLIsNil
 {
 	NSURL *url = nil;
@@ -423,6 +454,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil([FxGripPreset loadPresetFromURL:url]);
 }
 
+/*! @abstract loadPresetFromURL: is nil for an array property list. */
 - (void)testLoadPresetFromAnArrayPropertyListIsNil
 {
 	NSURL *url = [self fileURLNamed:@"array.fxpreset"];
@@ -435,6 +467,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil([FxGripPreset loadPresetFromURL:url]);
 }
 
+/*! @abstract loadPresetFromURL: is nil for data that is not a property list. */
 - (void)testLoadPresetFromDataThatIsNotAPropertyListIsNil
 {
 	NSURL *url = [self fileURLNamed:@"garbage.fxpreset"];
@@ -443,6 +476,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil([FxGripPreset loadPresetFromURL:url]);
 }
 
+/*! @abstract loadPresetFromURL: is nil for an empty file. */
 - (void)testLoadPresetFromAnEmptyFileIsNil
 {
 	NSURL *url = [self fileURLNamed:@"empty.fxpreset"];
@@ -460,6 +494,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil(preset.presetSections[kFxParameterProperty_TargetPresetValues]);
 }
 
+/*! @abstract savePresetToURL: returns NO for a value that is not a property list type. */
 - (void)testSavePresetReturnsNoForAValueThatIsNotAPropertyListType
 {
 	FxGripPreset *preset = [FxGripPreset.alloc init];
@@ -468,6 +503,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertFalse([preset savePresetToURL:[self fileURLNamed:@"bad.fxpreset"]]);
 }
 
+/*! @abstract A non-dictionary values section is dropped at load, and the rest of the preset still saves and reloads. */
 - (void)testANonDictionaryValuesSectionIsDroppedAtLoadAndTheRestStillSaves
 {
 	FxGripPreset *preset = [FxGripPreset.alloc initWithPresetDictionary:@{kFxFactoryPresetKey_ParameterValues: @"oops",
@@ -505,12 +541,14 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	return preset;
 }
 
+/*! @abstract The FxFactory sample reads the created-by parameter ID. */
 - (void)testFxFactorySampleReadsTheCreatedByParameterId
 {
 	FxGripPreset *preset = [self fxFactorySample];
 	XCTAssertEqual(preset.createdByParameterId, 117u);
 }
 
+/*! @abstract The FxFactory sample reads the parameter values under string keys. */
 - (void)testFxFactorySampleReadsTheParameterValuesUnderStringKeys
 {
 	NSDictionary *values = [self fxFactorySample].parameterValues;
@@ -521,6 +559,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil(values[@104]);
 }
 
+/*! @abstract The FxFactory sample reads the plugin identity fields. */
 - (void)testFxFactorySampleReadsThePluginIdentity
 {
 	FxGripPreset *preset = [self fxFactorySample];
@@ -532,6 +571,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertEqualObjects(preset.productId, @"fxfactorypro");
 }
 
+/*! @abstract The FxFactory sample carries none of the FxGrip-only fields. */
 - (void)testFxFactorySampleCarriesNoneOfTheFxGripOnlyFields
 {
 	FxGripPreset *preset = [self fxFactorySample];
@@ -545,6 +585,7 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	XCTAssertNil(preset.parameterMeta);
 }
 
+/*! @abstract The FxFactory sample rewrites to a property list identical to the original. */
 - (void)testFxFactorySampleRewritesToTheSameFileKeys
 {
 	FxGripPreset *preset = [self fxFactorySample];

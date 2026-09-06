@@ -1,11 +1,22 @@
+/*!
+	@file       FxGripPluginGroupData.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPluginGroupData
+	@abstract   Implements the typed accessor over one plugin group's registration dictionary.
+	@discussion Introduced in FxGrip 0.1.0. The uuid and name accessors read and write the group
+	            dictionary's two entries. Any change invalidates the cached data snapshot.
+*/
 
 #import "FxGripPluginGroupData.h"
 
 
 /*!
- Within the mainBundle, the property `FxGripRegisteredPlugins` contains the list of plugin effect classes via `NSString*` (human separated), NSArray, or NSDictionary values.
- */
-
+	@abstract	The mutable model of one plugin group's registration dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. The backing dictionary holds the group UUID and name, and
+				data vends an immutable copy.
+*/
 @implementation FxGripPluginGroupData
 {
 	NSMutableDictionary<NSString*, NSString*> *__data;

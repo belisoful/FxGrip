@@ -1,7 +1,12 @@
-//
-//  FxGripParameterCreationAPI_v6Tests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripParameterCreationAPI_v6Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterCreationAPI_v6Tests
+	@abstract   Verifies that the v6 creation wrapper forwards the tagged popup menu to the host, posts the add notification, and remains a v5 wrapper.
+	@discussion Introduced in FxGrip 0.1.0. The tests drive the wrapper against a recording stub host and an isolated notifier. They assert the forwarded arguments, the notification on success, the suppressed notification on failure, and the v5 protocol conformance.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripParameterCreationAPI_v6.h>
@@ -92,6 +97,7 @@
 	[super tearDown];
 }
 
+/*! @abstract Adding a tagged popup menu forwards the name, ID, default value, and entries to the host and posts the add notification on success. */
 - (void)testAddTaggedPopupForwardsToTheHostAndPostsTheAddNotification
 {
 	NSArray *entries = @[NSObject.new, NSObject.new];
@@ -109,6 +115,7 @@
 	XCTAssertTrue([self.posted containsObject:FxGripNotifyAPI_ParameterAddName], @"a successful add posts the notification");
 }
 
+/*! @abstract A failing host add returns NO and posts no add notification. */
 - (void)testAFailingHostAddReturnsNOAndDoesNotPostTheAdd
 {
 	self.host.stagedResult = NO;
@@ -122,6 +129,7 @@
 	XCTAssertFalse([self.posted containsObject:FxGripNotifyAPI_ParameterAddName], @"a failed add does not post the add notification");
 }
 
+/*! @abstract The v6 wrapper conforms to both the v6 and v5 creation protocols and subclasses the v5 wrapper. */
 - (void)testTheV6WrapperIsAlsoAV5Wrapper
 {
 	XCTAssertTrue([self.wrapper conformsToProtocol:@protocol(FxParameterCreationAPI_v6)]);

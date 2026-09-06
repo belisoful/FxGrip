@@ -1,7 +1,15 @@
-//
-//  FxGripCustomCreationAPI_v1.m
-//  FxGrip
-//
+/*!
+	@file       FxGripCustomCreationAPI_v1.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCustomCreationAPI_v1
+	@abstract   Implements the creation API for FxGrip's custom inspector controls.
+	@discussion Introduced in FxGrip 0.1.0. Each add method builds the control's default-value
+	            payload and forwards it to addParameterOfClass:…, which assembles the shared
+	            configuration record and registers the parameter through its parameter class on the
+	            effect host.
+*/
 
 #import "FxGripCustomCreationAPI_v1.h"
 #import "FxGripTypes.h"
@@ -26,6 +34,11 @@
 #import "FxGripLiveImage.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	Creates FxGrip's custom parameters in the style of Apple's creation APIs.
+	@discussion	Introduced in FxGrip 0.1.0. Registers each control through its parameter class on
+				the retained effect host. initWithEffect: returns nil when the effect is nil.
+*/
 @implementation FxGripCustomCreationAPI_v1
 {
 	id<FxGripEffectHost> _effect;

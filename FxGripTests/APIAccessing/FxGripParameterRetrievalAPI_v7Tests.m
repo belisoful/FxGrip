@@ -1,7 +1,12 @@
-//
-//  FxGripParameterRetrievalAPI_v7Tests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripParameterRetrievalAPI_v7Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterRetrievalAPI_v7Tests
+	@abstract   Verifies the v7 retrieval wrapper forwards the image-size query to the host, propagates failure, and remains a v6 wrapper.
+	@discussion Introduced in FxGrip 0.1.0. The tests drive the wrapper against a recording stub host. They assert the forwarded parameter ID and returned size, the failure result, and the v6 protocol conformance.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripParameterRetrievalAPI_v7.h>
@@ -68,6 +73,7 @@ static CMTime FxGripV7Time(void)
 													  effect:(id)FxGripV7StubEffect.new];
 }
 
+/*! @abstract imageSize: forwards the parameter ID to the host and returns the host's staged size. */
 - (void)testImageSizeForwardsToTheHostAPI
 {
 	FxGripV7StubAPI *host = FxGripV7StubAPI.new;
@@ -84,6 +90,7 @@ static CMTime FxGripV7Time(void)
 	XCTAssertEqual(host.lastParameterID, (UInt32)42);
 }
 
+/*! @abstract imageSize: propagates a host failure as NO. */
 - (void)testImageSizePropagatesFailure
 {
 	FxGripV7StubAPI *host = FxGripV7StubAPI.new;
@@ -94,6 +101,7 @@ static CMTime FxGripV7Time(void)
 	XCTAssertFalse([wrapper imageSize:&size fromParameter:1 atTime:FxGripV7Time() error:NULL]);
 }
 
+/*! @abstract The v7 wrapper conforms to both the v7 and v6 retrieval protocols and subclasses the v6 wrapper. */
 - (void)testTheV7WrapperIsAlsoAV6Wrapper
 {
 	FxGripParameterRetrievalAPI_v7 *wrapper = [self wrapperWithHost:FxGripV7StubAPI.new];

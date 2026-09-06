@@ -1,7 +1,17 @@
-//
-//  FxGripMLVideoEffect.h
-//  FxGrip
-//
+/*!
+	@file       FxGripMLVideoEffect.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLVideoEffect
+	@abstract   The tileable-effect template whose model generates a whole clip rather than a frame.
+	@discussion Introduced in FxGrip 0.1.0. A generated clip is not a per-frame pure function. The
+	            model runs once, for seconds to minutes, and produces a movie file. The template
+	            owns that lifecycle: the state moves Idle to Generating to Ready or Failed on the
+	            generation queue. While the clip is not ready, rendering draws the source unchanged.
+	            Once ready, rendering delegates each frame to the clip-sampling seam. The per-frame
+	            cache is disabled because the clip file is the cache.
+*/
 
 #ifndef FxGripMLVideoEffect_h
 #define FxGripMLVideoEffect_h
@@ -24,7 +34,7 @@ typedef NS_ENUM(NSInteger, FxGripMLVideoState) {
 /*!
 	@class      FxGripMLVideoEffect
 	@abstract   A tileable-effect template whose model generates a whole clip rather than a frame.
-	@discussion Introduced in FxGrip 1.0. A generated clip is not a per-frame pure function: the
+	@discussion Introduced in FxGrip 0.1.0. A generated clip is not a per-frame pure function: the
 				model runs once, for seconds to minutes, and produces a movie file. This template
 				owns that lifecycle. beginGenerationAtTime: assembles the request and runs the
 				backend on the generation queue; the state moves Idle → Generating → Ready or

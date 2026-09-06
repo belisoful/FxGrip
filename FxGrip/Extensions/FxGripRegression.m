@@ -1,9 +1,13 @@
-//
-//  FxGripRegression.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripRegression.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripRegression
+	@abstract   Implements the DEBUG-only plist validation pass.
+	@discussion Introduced in FxGrip 0.1.0. The pass runs on load, checking the plugin UUID and version
+	            and reporting each problem without blocking the load.
+*/
 
 #import "FxGripRegression.h"
 #import "FxGripTileableEffect.h"
@@ -13,9 +17,8 @@
 #import <BEFoundation/NSString+BExtension.h>
 
 /*!
-	@class      FxGripRegression
 	@abstract   Validates a plugin's plist properties at load time.
-	@discussion Introduced in FxGrip 1.0. A DEBUG-only pass that reports problems; it never
+	@discussion Introduced in FxGrip 0.1.0. A DEBUG-only pass that reports problems; it never
 				blocks the plugin from loading. It checks:
 				- the plist UUID string parses as a UUID and the effect's resolved pluginUUID
 				  is present;
@@ -25,6 +28,11 @@
 @implementation FxGripRegression
 
 
+/*!
+	@method		extLoadWithEffect:
+	@abstract	Runs the UUID and version validation checks on load.
+	@return		YES once the extension binds, whatever the checks report.
+	@discussion	Introduced in FxGrip 0.1.0. Both checks report and continue. */
 - (BOOL)extLoadWithEffect:(id<FxGripTileableEffect>)effect
 {
 	if(![super extLoadWithEffect:effect]) {
@@ -85,6 +93,11 @@
 
 
 
+/*!
+	@abstract	The effect-side accessors for the regression extension.
+	@discussion	Introduced in FxGrip 0.1.0. isRegression reads the plugin property that gates the
+				extension.
+*/
 @implementation FxGripTileableEffect (Regression)
 
 - (FxGripRegression*)regression

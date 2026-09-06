@@ -1,9 +1,15 @@
-//
-//  NSCoder+FxPlug.h
-//  XPC Service
-//
-//  Created by ~ ~ on 3/19/24.
-//
+/*!
+	@file       NSCoder+FxPlug.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     NSCoder+FxPlug
+	@abstract   Implements NSCoder encoding and decoding of FxPlug types, 3D state, and lights.
+	@discussion Introduced in FxGrip 0.1.0. Value types encode as keyed bytes and decode with a
+	            size check that yields a zero value on mismatch. The 3D and lighting encoders walk
+	            a host API at a time and store each attribute under a key prefix plus a suffix.
+	            The render time and quality level ride on the coder as associated objects.
+*/
 
 #import <objc/runtime.h>
 #import <FxPlug/FxTypes.h>
@@ -35,6 +41,11 @@ NSString * const FxGripLightingCoderLightingKey = @"_fxlighting";
 NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 
 
+/*!
+	@abstract	Encodes and decodes FxPlug value types, 3D scene state, and lights.
+	@discussion	Introduced in FxGrip 0.1.0. The render time and quality level associate with the
+				coder, so the current-time convenience methods act only at the coder's own time.
+*/
 @implementation NSCoder (FxPlug)
 
 - (CMTime) renderTime
@@ -68,6 +79,7 @@ NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 
 
 
+/*! @abstract YES when a render time has been associated with the coder. */
 - (BOOL)isFxPluginStateEncoder
 {
 	return objc_getAssociatedObject(self, @selector(renderTime)) != nil;
@@ -111,6 +123,12 @@ NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 	[self encodeFx3DAPI:api atTime:self.renderTime forKey:FxGrip3DCoderCurrentTimeKey];
 }
 
+/*!
+	@method		encodeFx3DAPI:atTime:forKey:
+	@abstract	Encodes the model, view, and projection matrices, focal length, and frustum.
+	@discussion	Introduced in FxGrip 0.1.0. Each attribute stores under key plus its suffix. A
+				current-time key with a mismatched time is skipped. A host retrieval error is
+				logged and stops the encode. */
 - (void)encodeFx3DAPI:(id<Fx3DAPI_v5>)api atTime:(CMTime)time forKey:(nonnull NSString *)key
 {
 	if ([key isEqualToString:FxGrip3DCoderCurrentTimeKey] && CMTimeCompare(self.renderTime, time)) {
@@ -167,6 +185,11 @@ NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 	[self encodeFxLightingAPI:api atTime:self.renderTime forKey:FxGrip3DCoderCurrentTimeKey];
 }
 
+/*!
+	@method		encodeFxLightingAPI:atTime:forKey:
+	@abstract	Encodes the light count and each FxLight under key.
+	@discussion	Introduced in FxGrip 0.1.0. A current-time key with a mismatched time is skipped.
+				A light the host cannot supply is logged and omitted. */
 - (void)encodeFxLightingAPI:(nonnull id<FxLightingAPI_v3>)api atTime:(CMTime)time forKey:(nonnull NSString *)key
 {
 	if ([key isEqualToString:FxGrip3DCoderCurrentTimeKey] && CMTimeCompare(self.renderTime, time)) {
@@ -364,6 +387,11 @@ NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 	return [self decodeFxLight:lightIndex forKey:FxGrip3DCoderCurrentTimeKey];
 }
 
+/*!
+	@method		decodeFxLight:forKey:
+	@abstract	An inner pointer to the FxLight at an index under a scene key prefix.
+	@return		A pointer into the decoded bytes, or nil when the index is out of range or the
+				stored size is wrong. */
 - (struct FxLight *)decodeFxLight:(long)lightIndex forKey:(NSString *_Null_unspecified)key
 {
 	long count = [self decodeFxLightCount:key];
@@ -398,6 +426,7 @@ NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 }
 
 
+/*! @abstract Narrows a 4x4 double matrix to a matrix_float4x4 through two simd eight-wide loads. */
 + (void)floatMatrix:(nonnull matrix_float4x4*)outputMatrix fromDoubleMatrix:(nonnull Matrix44Data*)inputMatrix
 {    // Cast the input matrix to a double pointer for sequential access
 	double *doublePtr = (double *)inputMatrix;

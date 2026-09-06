@@ -1,5 +1,15 @@
-
-
+/*!
+	@file       FxGripParameterLibrary.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterLibrary
+	@abstract   The FxGripParameter leaf-value flag accessors.
+	@discussion Introduced in FxGrip 0.1.0. FxGripParameter.m includes this fragment into the
+	            FxGripParameter class. Each accessor reads or toggles one value flag
+	            (not-animatable, don't-save, curve-editor-hidden, custom-UI, full-view-width)
+	            on the parameter's flags.
+*/
 
 - (BOOL)flagNotAnimatable {
 	return flagNotAnimatable(self.parameterFlags);

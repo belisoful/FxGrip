@@ -1,16 +1,12 @@
-//
-//  FxGripTileableEffectCategoriesTests.m
-//  FxGripTests
-//
-//  Unit tests for the FxGripTileableEffect categories: extension loading and
-//  lookup, the flush pass, the color-gamut, plugin-property, versioning, timing
-//  and project-property delegations to the effect's API manager.
-//
-//  FxGripTileableEffect registers its observers with the notification center its
-//  -notifier getter returns. Every effect built here is an instance of a local
-//  subclass that returns a private NSPriorityNotificationCenter, so no test
-//  touches the process-wide center.
-//
+/*!
+	@file       FxGripTileableEffectCategoriesTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffectCategoriesTests
+	@abstract   Unit tests for the FxGripTileableEffect categories: extension loading and lookup, flush, color gamut, plugin properties, versioning, timing, and project properties.
+	@discussion Introduced in FxGrip 0.1.0. Each effect under test is a local subclass whose notifier getter returns a private priority notification center, so no test touches the process-wide center. Stub host API objects stand in for the color-gamut, versioning, timing, and project APIs. The tests cover extension loading through each load selector, extension lookup by class, protocol, and key, the flush pass, the gamut and matrix delegations, plugin-property reads, version upgrade decisions, timing conversions, and analysis storage activation.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -579,6 +575,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 #pragma mark Construction
 
+/*! @abstract An effect built without a host has a valid API manager, extensions, plugin properties, a private notifier, and the tileable-effect extension key. */
 - (void)testEffectConstructsWithoutAHostAndKeepsItsNotificationTrafficPrivate
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -592,6 +589,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqualObjects(effect.extKey, FxGripTileableEffectExtKey);
 }
 
+/*! @abstract An effect whose plugin properties enable no managed features loads no extensions. */
 - (void)testEffectWithoutManagedPropertiesLoadsNoExtensions
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -601,6 +599,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 #pragma mark Extension Loading
 
+/*! @abstract Loaded extensions are keyed by extension key, bound to the effect, indexed, and sent the init notification. */
 - (void)testExtensionsAreKeyedByExtensionKeyAndSurviveLoading
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -617,6 +616,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(loaded.initCount, (NSUInteger)1, @"the load posts the init notification to the extension");
 }
 
+/*! @abstract The effect resolves a custom parameter type and class through a loaded extension while unknown names resolve to none and built-in types resolve from the map. */
 - (void)testTheEffectResolvesACustomParameterTypeThroughALoadedExtension
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -636,6 +636,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 // The loader must configure a parameter-backed extension through parameterForDictionary:
 // (which marks it addedToEffect and syncs its id/name/flags) rather than returning it
 // raw; returning it unconfigured left custom parameter values permanently nil.
+/*! @abstract parameterForDictionary: configures the backing extension through its parameterForDictionary: and returns the configured extension. */
 - (void)testParameterForDictionaryConfiguresTheBackingExtension
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -662,6 +663,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 // The tracking gate consults the plugin property (opt-in, default off) instead of a
 // hardcoded NO, so a plugin can enable neighbour-instance tracking through its plist.
+/*! @abstract isTrackingInstances is off by default and turns on when the track-instances plugin property is set. */
 - (void)testInstanceTrackingGateFollowsThePluginProperty
 {
 	NSDictionary *base = @{
@@ -681,6 +683,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertTrue(on.isTrackingInstances, @"the plist property turns tracking on");
 }
 
+/*! @abstract Two instances of one extension class get distinct keys and load in priority order, highest priority first. */
 - (void)testRepeatedExtensionClassesGetDistinctKeysInPriorityOrder
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -703,6 +706,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(second.extKeyIndex, (NSInteger)1);
 }
 
+/*! @abstract An individuated extension is keyed with its index appended to the first key. */
 - (void)testAnIndividuatedExtensionCarriesItsIndexInTheFirstKey
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -714,6 +718,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil(effect.extensions[@"FxGripCatTestIndividuatedExtension"]);
 }
 
+/*! @abstract A disabled extension is dropped during loading unless it asks to be included when disabled. */
 - (void)testADisabledExtensionIsDroppedUnlessItAsksToBeIncluded
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -730,6 +735,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil(effect.extensions[@"FxGripCatTestExtension"]);
 }
 
+/*! @abstract An effect whose loadExtensions returns nil still gets an empty extensions dictionary. */
 - (void)testAnEffectThatLoadsNoExtensionListStillGetsAnExtensionDictionary
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -741,6 +747,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(effect.extensions.count, (NSUInteger)0);
 }
 
+/*! @abstract The loader calls the effect-taking load selector, the index-taking load selector, or both in turn, and drops an extension that announces neither and asks for nothing. */
 - (void)testEachLoadSelectorAnExtensionAnnouncesIsUsedInTurn
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -770,6 +777,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 				 @"an extension that announces no load selector and asks for nothing is dropped");
 }
 
+/*! @abstract An extension whose load selector returns NO is dropped. */
 - (void)testAnExtensionThatRefusesTheEffectIsDropped
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -782,6 +790,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(effect.extensions.count, (NSUInteger)0);
 }
 
+/*! @abstract An extension that announces no load selector is kept when it asks to be included when disabled. */
 - (void)testAnExtensionWithNoLoadSelectorIsKeptWhenItAsksToBeIncluded
 {
 	gCatTestExtensionBuilder = ^NSMutableArray *{
@@ -807,6 +816,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	return [self makeEffect];
 }
 
+/*! @abstract The effect finds a loaded extension by class, by protocol, and by key. */
 - (void)testLookupFindsALoadedExtensionByClassProtocolAndKey
 {
 	FxGripCatTestEffect *effect = [self effectWithMarkerAndPlainExtensions];
@@ -822,6 +832,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 						  @"FxGripCatTestMarkerExtension1");
 }
 
+/*! @abstract The has and extensionFor lookups report nothing for an unknown class, protocol, key, or nil argument. */
 - (void)testLookupReportsNothingForUnknownClassesProtocolsAndKeys
 {
 	FxGripCatTestEffect *effect = [self effectWithMarkerAndPlainExtensions];
@@ -839,6 +850,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil([effect extensionForKey:nil]);
 }
 
+/*! @abstract The plural lookups collect every extension matching a class, protocol, or key, and return nil for a nil argument. */
 - (void)testPluralLookupCollectsEveryMatchingExtension
 {
 	FxGripCatTestEffect *effect = [self effectWithMarkerAndPlainExtensions];
@@ -854,6 +866,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil([effect extensionsForKey:nil]);
 }
 
+/*! @abstract extensionCount reports the number of loaded instances of the extension's own class. */
 - (void)testExtensionCountReportsTheInstancesOfTheOwnClass
 {
 	FxGripCatTestEffect *effect = [self effectWithMarkerAndPlainExtensions];
@@ -867,6 +880,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 #pragma mark Extension Flush
 
+/*! @abstract extensionsFlush reaches every extension's flush handler and returns nil when none reports an error. */
 - (void)testExtensionsFlushReachesEveryExtensionAndReportsNoError
 {
 	__block FxGripCatTestFlushExtension *flusher = nil;
@@ -880,6 +894,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(flusher.flushCount, (NSUInteger)1);
 }
 
+/*! @abstract extensionsFlush returns the error an extension writes into the flush notification. */
 - (void)testExtensionsFlushReturnsTheErrorAnExtensionReports
 {
 	NSError *reported = [NSError errorWithDomain:@"FxGripCatTest" code:99 userInfo:nil];
@@ -894,6 +909,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqualObjects([effect extensionsFlush], reported);
 }
 
+/*! @abstract extensionsFlush passes back whatever object an extension reports, even when it is not an NSError. */
 - (void)testExtensionsFlushPassesBackAnObjectThatIsNotAnError
 {
 	__block FxGripCatTestFlushExtension *flusher = nil;
@@ -909,6 +925,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 #pragma mark Color Gamut
 
+/*! @abstract The effect's color primaries and Rec.709/Rec.2020 gamut flags follow the host color-gamut API. */
 - (void)testColorPrimariesFollowTheHostGamutAPI
 {
 	[self makeEffect];
@@ -926,6 +943,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertFalse(self.effect.isRec2020Gamut);
 }
 
+/*! @abstract The effect falls back to Rec.709 primaries when the host has no color-gamut API. */
 - (void)testColorPrimariesFallBackToRec709WithoutTheGamutAPI
 {
 	[self makeEffect];
@@ -935,6 +953,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertTrue(self.effect.isRec709Gamut);
 }
 
+/*! @abstract The effect's luminance weights, RGB-to-XYZ matrix, and gamut conversion matrices follow the working gamut reported by the host. */
 - (void)testColorMatricesFollowTheWorkingGamut
 {
 	[self makeEffect];
@@ -965,6 +984,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqualWithAccuracy(identity.columns[1].x, 0.0f, 1e-5);
 }
 
+/*! @abstract The linear and gamma color-parameter flags follow the effect's desired processing color info. */
 - (void)testColorParameterModeFollowsTheDesiredProcessingColorInfo
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -980,6 +1000,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 #pragma mark Plugin Properties
 
+/*! @abstract isEffectPropertiesInInfo is NO, so effect properties are not read from the Info.plist. */
 - (void)testEffectPropertiesAreNotReadFromTheInfoPlist
 {
 	XCTAssertFalse([self makeEffect].isEffectPropertiesInInfo);
@@ -987,6 +1008,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 #pragma mark Versioning
 
+/*! @abstract pluginVersion reads the version number from the plugin properties, coercing a numeric string. */
 - (void)testPluginVersionReadsTheNumberFromThePluginProperties
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -998,6 +1020,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(effect.pluginVersion, (UInt32)11);
 }
 
+/*! @abstract pluginVersion falls back to 1 when the version property is missing or not a plain integer. */
 - (void)testPluginVersionFallsBackToOneForAMissingOrUnusableVersion
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -1009,6 +1032,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(effect.pluginVersion, (UInt32)1);
 }
 
+/*! @abstract pluginStringVersion reads the short version string and is nil when it is absent. */
 - (void)testPluginStringVersionReadsTheShortVersionString
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -1020,6 +1044,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil(effect.pluginStringVersion);
 }
 
+/*! @abstract installedVersion is zero when the host has no versioning API. */
 - (void)testInstalledVersionIsZeroWithoutTheVersioningAPI
 {
 	[self makeEffect];
@@ -1028,6 +1053,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(self.effect.installedVersion, (UInt32)0);
 }
 
+/*! @abstract installedVersion reads the version-at-creation from the host versioning API. */
 - (void)testInstalledVersionReadsTheVersionAtCreation
 {
 	[self makeEffect];
@@ -1039,6 +1065,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(self.effect.installedVersion, (UInt32)4);
 }
 
+/*! @abstract checkVersion: fails with an API-unavailable error when the host has no versioning API. */
 - (void)testCheckVersionFailsWithAnUnavailableAPIError
 {
 	[self makeEffect];
@@ -1051,6 +1078,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(error.code, (NSInteger)kFxError_APIUnavailable);
 }
 
+/*! @abstract checkVersion: upgrades and records the plugin version when the document version is older. */
 - (void)testCheckVersionUpgradesWhenTheDocumentIsOlderThanThePlugin
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -1067,6 +1095,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(versioning.updatedVersion, (UInt32)5);
 }
 
+/*! @abstract checkVersion: does not record a new version when the document version already matches the plugin. */
 - (void)testCheckVersionDoesNothingWhenTheDocumentIsCurrent
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -1081,6 +1110,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(versioning.updateCount, (NSUInteger)0);
 }
 
+/*! @abstract upgradeFromVersion:currentVersion:error: accepts every upgrade by default. */
 - (void)testUpgradeFromVersionAcceptsEveryUpgradeByDefault
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -1088,6 +1118,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertTrue([effect upgradeFromVersion:1 currentVersion:2 error:NULL]);
 }
 
+/*! @abstract checkVersion: fails when the host refuses to record the new version. */
 - (void)testCheckVersionFailsWhenTheHostRefusesToRecordTheNewVersion
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -1102,6 +1133,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(versioning.updateCount, (NSUInteger)1);
 }
 
+/*! @abstract checkVersion: fails and records nothing when the effect refuses the upgrade. */
 - (void)testCheckVersionFailsWhenTheEffectRefusesTheUpgrade
 {
 	FxGripCatTestRefusingEffect *effect = [FxGripCatTestRefusingEffect.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -1128,6 +1160,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	return timing;
 }
 
+/*! @abstract The effect's timing properties read the frame, sample, effect, and input times from the host timing API. */
 - (void)testTimingPropertiesReadTheHostTimingAPI
 {
 	[self makeEffect];
@@ -1143,6 +1176,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertTrue(FxGripCatTestTimesEqual(self.effect.effectOutPointOfTimeLine, timing.outPoint));
 }
 
+/*! @abstract The effect's timing properties are invalid CMTime values when the host has no timing API. */
 - (void)testTimingPropertiesAreInvalidWithoutTheTimingAPI
 {
 	[self makeEffect];
@@ -1156,6 +1190,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertTrue(FxGripCatTestTimeIsInvalid(self.effect.inputDurationTime));
 }
 
+/*! @abstract FxGripTimeByOffsettingFrames moves a time forward, backward, and not at all by whole frames. */
 - (void)testFrameOffsetFunctionMovesTimeByWholeFrames
 {
 	CMTime base = FxGripCatTestMakeTime(0, 30);
@@ -1172,6 +1207,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(unchanged.value, 90);
 }
 
+/*! @abstract timeByOffsettingTime:byFrames: offsets by whole frames using the host frame duration. */
 - (void)testTimeByOffsettingUsesTheHostFrameDuration
 {
 	[self makeEffect];
@@ -1182,6 +1218,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(result.timescale, 30);
 }
 
+/*! @abstract The effect's frame-count properties convert the host times using the timeline frame rate. */
 - (void)testFrameCountsConvertTheTimesWithTheTimelineFrameRate
 {
 	[self makeEffect];
@@ -1198,6 +1235,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual([self.effect frameForTime:FxGripCatTestMakeTime(1, 2)], (NSInteger)15);
 }
 
+/*! @abstract The effect reports the timeline frame rate as a numerator, denominator, frame duration, frame rate, and floating-point fps. */
 - (void)testTimelineFrameRateIsReportedAsFractionAndSeconds
 {
 	[self makeEffect];
@@ -1268,6 +1306,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	return timing;
 }
 
+/*! @abstract The drop-frame queries report NO when the host has no v5 timing API. */
 - (void)testDropFrameQueriesReportNoWithoutTheV5TimingAPI
 {
 	[self makeEffect];
@@ -1278,6 +1317,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertFalse([self.effect isDropFrameOfImageParameter:9]);
 }
 
+/*! @abstract The drop-frame queries read the v5 timing API, passing the effect-clip and parameter sources with the parameter id. */
 - (void)testDropFrameQueriesReadTheV5TimingAPI
 {
 	[self makeEffect];
@@ -1295,6 +1335,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(timing.lastDropFrameParameterID, (UInt32)9);
 }
 
+/*! @abstract timelineTimecodeStringForTime: formats using the timeline time, frame rate, and project drop-frame flag. */
 - (void)testTimelineTimecodeUsesTheTimelineTimeRateAndProjectDropFrame
 {
 	[self makeEffect];
@@ -1310,6 +1351,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertTrue(FxGripCatTestTimesEqual(timing.lastInputTimeArgument, FxGripCatTestMakeTime(7, 30)));
 }
 
+/*! @abstract inputTimecodeStringForTime: formats using the clip frame duration and input drop-frame flag. */
 - (void)testInputTimecodeUsesTheClipFrameDurationAndInputDropFrame
 {
 	[self makeEffect];
@@ -1322,6 +1364,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqualObjects(timecode, @"00:01:00:00");
 }
 
+/*! @abstract The timeline and input timecode strings are the dashed placeholder when the host has no timing API. */
 - (void)testTimecodeStringsArePlaceholdersWithoutTheTimingAPI
 {
 	[self makeEffect];
@@ -1346,6 +1389,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual([self.effect frameForTime:FxGripCatTestMakeTime(3000000, 100000000)], (NSInteger)0);
 }
 
+/*! @abstract The timeline conversion properties and methods forward to the host timing API and pass the correct source times. */
 - (void)testTimelineConversionsForwardToTheHostTimingAPI
 {
 	[self makeEffect];
@@ -1378,6 +1422,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	return project;
 }
 
+/*! @abstract A non-zero document id identifies a Final Cut Pro project. */
 - (void)testDocumentIdentifiesAFinalCutProProject
 {
 	[self makeEffect];
@@ -1390,6 +1435,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertFalse(self.effect.isProjectMotion);
 }
 
+/*! @abstract A zero document id identifies a Motion project. */
 - (void)testAZeroDocumentIdentifiesAMotionProject
 {
 	[self makeEffect];
@@ -1402,6 +1448,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertFalse(self.effect.isProjectFinalCutPro);
 }
 
+/*! @abstract projectDocumentIDWithError: returns zero and reports the host error when the host query fails. */
 - (void)testDocumentIDReportsTheHostError
 {
 	[self makeEffect];
@@ -1413,6 +1460,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqualObjects(error.domain, @"FxGripCatTest");
 }
 
+/*! @abstract The projectDocumentID property returns zero and reads as Motion when the host query fails. */
 - (void)testTheDocumentIDPropertySwallowsTheHostError
 {
 	[self makeEffect];
@@ -1423,6 +1471,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertTrue(self.effect.isProjectMotion, @"a project that cannot be identified reads as Motion");
 }
 
+/*! @abstract projectMediaFolder returns the host media URL and is nil when the host query fails. */
 - (void)testMediaFolderReturnsTheHostURLOrNothing
 {
 	[self makeEffect];
@@ -1436,6 +1485,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil(self.effect.projectMediaFolder);
 }
 
+/*! @abstract projectAspectRatio returns the host aspect ratio and falls back to 16:9 when the host query fails. */
 - (void)testAspectRatioFallsBackToSixteenByNine
 {
 	[self makeEffect];
@@ -1451,6 +1501,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 
 #pragma mark Extension Accessors
 
+/*! @abstract The optional extension accessors are nil until asked for, and the new-extension factories build the expected extension classes. */
 - (void)testTheEffectBuildsAndFindsItsOptionalExtensions
 {
 	FxGripCatTestEffect *effect = [self makeEffect];
@@ -1476,6 +1527,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	return effect;
 }
 
+/*! @abstract An effect conforming to FxAnalyzer loads the analysis extension and exposes analysis data. */
 - (void)testConformingToFxAnalyzerLoadsTheAnalysisExtension
 {
 	FxGripAnalysisTestEffect *effect = [self makeAnalysisEffect];
@@ -1483,6 +1535,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNotNil(effect.analysisData);
 }
 
+/*! @abstract An effect that does not conform to FxAnalyzer loads no analysis extension and has no analysis data. */
 - (void)testANonConformingEffectDoesNotLoadAnalysis
 {
 	FxGripCatTestEffect *effect = [self makeEffect];   // FxGripCatTestEffect does not conform to FxAnalyzer
@@ -1490,6 +1543,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil(effect.analysisData);
 }
 
+/*! @abstract analysisFrameIndexForTime: converts a time to a frame index using the analysis frame duration. */
 - (void)testTheFrameIndexUsesTheAnalysisFrameDuration
 {
 	FxGripAnalysisTestEffect *effect = [self makeAnalysisEffect];
@@ -1501,6 +1555,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual([effect analysisFrameIndexForTime:FxGripAnalysisTestCMTime(0, 1)], (NSInteger)0);
 }
 
+/*! @abstract analyzeFrame:atTime:error: stores the subclass record, which analysisRecordAtTime: reads back at or after the analyzed frame and returns nil before it. */
 - (void)testAnalyzeFrameStoresTheSubclassRecordAndReadsItBack
 {
 	FxGripAnalysisTestEffect *effect = [self makeAnalysisEffect];
@@ -1518,6 +1573,7 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertNil([effect analysisRecordAtTime:FxGripAnalysisTestCMTime(0, 1)]);
 }
 
+/*! @abstract desiredAnalysisTimeRange:forInputWithTimeRange:error: defaults the desired range to the full input range. */
 - (void)testDesiredRangeDefaultsToTheFullInput
 {
 	FxGripAnalysisTestEffect *effect = [self makeAnalysisEffect];

@@ -1,7 +1,17 @@
-//
-//  FxGripLiveImageParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripLiveImageParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripLiveImageParameter
+	@abstract   Implements the live image slot strip, its parameter, and the async texture readback.
+	@discussion Introduced in FxGrip 0.1.0. The view draws one slot per label, aspect-fitting each
+	            frame over a checkerboard with a caption. The parameter stores the latest frame per
+	            slot under a lock and coalesces redraws onto the main thread. A published texture is
+	            blitted into a reused staging texture, downscaled through its mipmap chain, and read
+	            back when the command buffer completes. Publishing is suppressed while no parameter
+	            view is on screen.
+*/
 
 #import "FxGripLiveImageParameter.h"
 #import "FxGripLiveImage.h"
@@ -61,6 +71,11 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 
 #pragma mark - View
 
+/*!
+	@abstract	The slot strip backing a live image parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The view draws one slot per configured label, each showing
+				its latest frame aspect-fit over a checkerboard with a caption. It reports its window
+				visibility to the parameter so publishing can gate on an on-screen view. */
 @implementation FxGripLiveImageView
 {
 	NSMutableArray *_frames;
@@ -126,6 +141,12 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 
 #pragma mark Data
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Applies the slot labels, height, and display flags from the configuration.
+	@param		value	The parameter value; ignored when it is not a dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. The label count sets the slot count. The height, info,
+				checkerboard, and flip flags style the strip. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:NSDictionary.class]) {
@@ -155,6 +176,7 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	self.needsDisplay = YES;
 }
 
+/*! Replaces the frame shown in a slot and redraws it; nil empties the slot. Main thread. */
 - (void)showFrame:(nullable FxGripLiveFrame *)frame inSlot:(NSUInteger)slot
 {
 	if (slot >= _slotCount) {
@@ -289,6 +311,11 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	CGContextRestoreGState(context);
 }
 
+/*!
+	@method		drawRect:
+	@abstract	Draws each slot: the checkerboard or fill, the aspect-fit frame, and the caption.
+	@discussion	Introduced in FxGrip 0.1.0. The image area is clipped to a rounded rect. The caption
+				row is drawn below the image when it fits. */
 - (void)drawRect:(NSRect)dirtyRect
 {
 	NSDictionary *attributes = [self captionAttributes];
@@ -341,6 +368,11 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 @end
 
 
+/*!
+	@abstract	The read-only strip of live images fed from the render pass.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter stores the latest frame per slot under a
+				lock, coalesces redraws onto the main thread, and gates publishing on an on-screen
+				view. A published texture is blitted, downscaled, and read back asynchronously. */
 @implementation FxGripLiveImageParameter
 {
 	NSLock *_lock;
@@ -368,6 +400,7 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	return FxParameterType_LiveImage;
 }
 
+/*! @abstract The value classes the custom parameter decodes: FxGripDictionary and its element classes. */
 + (NSSet<Class> *_Nullable)customValueClasses
 {
 	NSMutableSet *classes = [NSMutableSet setWithObject:FxGripDictionary.class];
@@ -375,6 +408,13 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	return classes;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Creates the live image custom parameter on the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The configuration seeds the slot labels and count in the
+				value. Creation adds the custom-UI, not-animatable, full-view-width, and no-state
+				flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id declared = parameter.parameterDefaultValue;
@@ -395,6 +435,10 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 
 #pragma mark Instance
 
+/*!
+	@method		initWithDictionary:effect:
+	@abstract	Reads the slot count and snapshot size from the configuration and builds the frame store.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (instancetype _Nullable)initWithDictionary:(NSDictionary*_Nonnull)dictionary effect:(id<FxGripEffectHost>_Nonnull)effect
 {
 	self = [super initWithDictionary:dictionary effect:effect];
@@ -442,6 +486,11 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 
 #pragma mark Views
 
+/*!
+	@method		newParameterView
+	@abstract	Creates the slot strip view, seeds it from the configuration, and registers it.
+	@return		A new FxGripLiveImageView.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (NSView *_Nullable)newParameterView
 {
 	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 200, kFxGripLiveImageDefaultHeight)];
@@ -547,6 +596,10 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	}
 }
 
+/*!
+	@method		publishFrame:inSlot:
+	@abstract	Stores a ready frame in a slot.
+	@return		NO with no view on screen, for an out-of-range slot, or for a nil frame; else YES. */
 - (BOOL)publishFrame:(FxGripLiveFrame *)frame inSlot:(NSUInteger)slot
 {
 	if (frame == nil || slot >= _slotCount || ![self hasOnscreenView]) {
@@ -556,11 +609,13 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	return YES;
 }
 
+/*! Draws the image into an RGBA8 frame and stores it. */
 - (BOOL)publishCGImage:(CGImageRef)image inSlot:(NSUInteger)slot
 {
 	return [self publishFrame:[FxGripLiveFrame frameWithCGImage:image] inSlot:slot];
 }
 
+/*! Wraps the buffer's pixels in a frame and stores it. */
 - (BOOL)publishImageBuffer:(FxGripImageBuffer *)buffer inSlot:(NSUInteger)slot
 {
 	return [self publishFrame:[FxGripLiveFrame frameWithImageBuffer:buffer] inSlot:slot];
@@ -582,6 +637,7 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 
 #pragma mark Metal
 
+/*! Publishes the tile's Metal texture through publishTexture:inSlot:. */
 - (BOOL)publishImageTile:(FxImageTile *)tile inSlot:(NSUInteger)slot
 {
 	id<MTLTexture> texture = tile.metalTexture;
@@ -591,6 +647,11 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	return [self publishTexture:texture inSlot:slot];
 }
 
+/*!
+	@method		publishTexture:inSlot:
+	@abstract	Copies a texture into a slot's snapshot asynchronously.
+	@return		NO with no view on screen, for an out-of-range slot, or when nothing is encoded; else YES.
+	@discussion	Introduced in FxGrip 0.1.0. The texture is encoded into a single-slot publish batch. */
 - (BOOL)publishTexture:(id<MTLTexture>)texture inSlot:(NSUInteger)slot
 {
 	if (texture == nil || slot >= _slotCount) {
@@ -664,6 +725,15 @@ static NSArray<NSString *> *FxGripLiveImageLabelsForConfiguration(NSDictionary *
 	return staging;
 }
 
+/*!
+	@method		publishTextures:
+	@abstract	Copies several textures in one command buffer, array index to slot index.
+	@param		textures	The per-slot source textures; an NSNull entry skips its slot.
+	@return		NO with no view on screen or when nothing is encoded; else YES.
+	@discussion	Introduced in FxGrip 0.1.0. Every texture must belong to the same device. A slot still
+				reading back its previous texture is skipped. Each source is blitted into a staging
+				texture, downscaled to the snapshot size through its mipmap chain, and read back when
+				the command buffer completes. */
 - (BOOL)publishTextures:(NSArray *)textures
 {
 	if (![self hasOnscreenView]) {

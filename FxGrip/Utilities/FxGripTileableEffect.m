@@ -1,10 +1,18 @@
-//
-//  FxGripTileableEffect.m
-//  FxGripTileableEffect
-//
-//  Created by Apple on 1/7/20.
-//  Copyright © 2020-2023 Apple, Inc. All rights reserved.
-//
+/*!
+	@file       FxGripTileableEffect.m
+	@copyright  Copyright © 2020-2023 Apple, Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect
+	@abstract   Implements the FxPlug tileable-effect base class and its render, parameter, and notification behavior.
+	@discussion Introduced in FxGrip 0.1.0. The implementation wires the effect's setup, properties,
+	            parameter creation, and render callbacks to the priority notification center so
+	            extensions participate at each stage. It encodes render state through an
+	            NSKeyedArchiver with an optional compression envelope and decodes it on the render
+	            side. It synthesizes per-button click selectors at runtime and dispatches them
+	            through parameterClicked:, and it builds parameter objects from configuration
+	            records.
+*/
 
 #import "FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"
@@ -44,6 +52,15 @@
 #import <objc/message.h>
 
 
+/*!
+	@abstract	The concrete base class a FxGrip tileable effect plugin subclasses.
+	@discussion	Introduced in FxGrip 0.1.0. The class implements the FxPlug FxTileableEffect
+				callbacks and routes each stage through the priority notification center so
+				extensions participate. It builds parameters from the plugin configuration,
+				encodes render state through an NSKeyedArchiver with optional compression, and
+				decodes it on the render side. The class synthesizes per-button click selectors
+				at runtime and dispatches them through parameterClicked:.
+*/
 @implementation FxGripTileableEffect
 {
 	NSMutableDictionary<NSNumber*, id<FxGripParameter>> *__parameters;
@@ -81,6 +98,17 @@
 //	@required
 //---------------------------------------------------------
 
+/*!
+	@method		initWithAPIManager:
+	@abstract	Creates the effect, reads its plugin identity and properties, and installs the framework observers.
+	@param		apiManager	The host API accessor the FxPlug host supplies.
+	@return		The initialized effect, or nil when the plugin declines to load.
+	@discussion	Introduced in FxGrip 0.1.0. The initializer wraps the host API accessor, reads the
+				plugin UUID, session ID, and registration properties, and sets the default FxPlug
+				property values. It registers block-based observers for the parameter add, load,
+				flush, policy, group, and remove notifications, then installs the extensions and
+				posts the init notification. The observer blocks capture self weakly so the
+				notification center does not keep the effect alive. */
 - (nullable instancetype)initWithAPIManager:(id<PROAPIAccessing>)apiManager;
 {
     self = [super init];
@@ -211,6 +239,16 @@
 
 #pragma mark Sub-class implementation Methods
 
+/*!
+	@method		loadExtensions
+	@abstract	Builds the extension list from the effect's protocol conformances and plugin properties.
+	@return		A mutable array of extensions to install.
+	@discussion	Introduced in FxGrip 0.1.0. The effect itself joins the list when it conforms to
+				FxGripExtension. Instance tracking, parameter-data management, meta management, and
+				frame analysis activate from the matching conformance or plugin property. The
+				debug menu, about menu, internationalization, Google Analytics, and FxFactory
+				extensions are opt-in through plugin properties. The regression extension is added
+				only in a DEBUG build. */
 - (nullable NSMutableArray<id<FxGripExtension>>*)loadExtensions
 {
 	NSMutableArray<id<FxGripExtension>> *extensions = [NSMutableArray.alloc initWithCapacity:13];
@@ -264,6 +302,12 @@
 	return extensions;
 }
 
+/*!
+	@method		parametersConfiguration
+	@abstract	Returns the parameter configuration records from the plugin's registration properties.
+	@return		A mutable array of parameter configuration dictionaries, empty when none are declared.
+	@discussion	Introduced in FxGrip 0.1.0. The base implementation returns the declared plugin
+				parameters, so a plugin defines its parameters in the registration record. */
 - (NSMutableArray<NSDictionary *> *)parametersConfiguration
 {
 	NSArray<NSDictionary *> *declared = self.pluginProperties.pluginParameters;
@@ -275,10 +319,19 @@
 
 
 
+/*!
+	@method		addParametersWithGroupID:error:
+	@abstract	Creates the configured parameters whose parent matches the group.
+	@param		groupID	The parameter group whose child parameters are created.
+	@param		error	Unused by the base implementation.
+	@return		YES when every parameter in the group is created; NO when the configuration is missing.
+	@discussion	Introduced in FxGrip 0.1.0. The method walks the configuration records in creation
+				order, skips records whose parent is not the group and records already created, and
+				delegates creation to the parameter class registered for each record's type. */
 - (BOOL)addParametersWithGroupID:(FxParameterId)groupID error:(NSError*_Nonnull*_Nullable)error
 {
 	BOOL success = YES;
-	
+
 	if (!__configParameters) {
 		return NO;
 	}
@@ -368,6 +421,17 @@
 //	@required
 //---------------------------------------------------------
 
+/*!
+	@method		properties:error:
+	@abstract	Builds the effect's FxPlug property dictionary and posts it for extension processing.
+	@param		properties	On entry, any host-supplied properties. On return, the effect's property dictionary.
+	@param		error		On failure, the error returned by a notification observer.
+	@return		NO when the properties pointer is nil; YES otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The method merges the Info.plist effect properties and
+				the incoming properties, marks finishedProperties YES to lock further changes, and
+				writes each FxPlug property key from the effect's current setting. It posts the
+				properties notification so extensions revise the dictionary, then returns an
+				immutable copy. */
 - (BOOL)properties:(NSDictionary * _Nonnull *)properties
              error:(NSError * _Nullable *)error
 {
@@ -499,6 +563,16 @@
 //	@required
 //---------------------------------------------------------
 
+/*!
+	@method		addParametersWithError:
+	@abstract	Creates the effect's parameters from configuration and registers them with the host.
+	@param		error	On failure, the error from a notification observer or parameter creation.
+	@return		YES when every parameter is created and validated; NO on failure.
+	@discussion	Introduced in FxGrip 0.1.0. The method posts the add-parameters notification so
+				extensions add configuration records, flattens and applies target-preset defaults
+				to the records, then keys them by parameter ID with a preserved creation order. It
+				creates the top-level group's parameters, validates each created parameter, and
+				flushes the extensions. */
 - (BOOL)addParametersWithError:(NSError**)error
 {
 	_addingParameters = YES;
@@ -557,6 +631,13 @@
 // @optional
 //---------------------------------------------------------
 
+/*!
+	@method		finishInitialSetup:
+	@abstract	Finalizes the effect's setup before it belongs to a document.
+	@param		error	On failure, the error returned by a notification observer.
+	@return		YES when setup completes without an observer error; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The method marks finishedSetup YES and posts the
+				finish-initial-setup notification. */
 - (BOOL)finishInitialSetup:(NSError * _Nullable *)error
 {
 	_finishedSetup = YES;
@@ -592,6 +673,13 @@
 	[self extensionsFlush];
 }
 
+/*!
+	@method		classForCustomParameterID:
+	@abstract	Returns the value class the host uses to decode a custom parameter.
+	@param		parameterID	The custom parameter's ID.
+	@return		The value class, or nil when the parameter is not a framework custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The instance-meta parameter decodes as
+				FxGripMetaManager. */
 // @optional
 - (Class)classForCustomParameterID:(UInt32)parameterID
 {
@@ -601,6 +689,14 @@
 	return nil;
 }
 
+/*!
+	@method		classesForCustomParameterID:
+	@abstract	Returns the set of value classes the host uses to decode a custom parameter.
+	@param		parameterID	The custom parameter's ID.
+	@return		The set of value classes, or nil when the parameter declares none.
+	@discussion	Introduced in FxGrip 0.1.0. The instance-meta parameter contributes
+				FxGripMetaManager and its registered classes. Any other custom parameter reads its
+				value classes from the parameter class registered for its configured type. */
 // @optional
 - (NSSet<Class>*)classesForCustomParameterID:(UInt32)parameterID
 {
@@ -620,6 +716,15 @@
 
 
 
+/*!
+	@method		parameterChanged:atTime:error:
+	@abstract	Posts the parameter-changed notification and flushes the extensions.
+	@param		paramID	The ID of the changed parameter.
+	@param		time	The time at which the change occurs.
+	@param		error	On failure, the error returned by a notification observer.
+	@return		YES when the change is processed without error; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The notification carries the parameter ID and the
+				change time so extensions observe the edit. */
 // optional
 - (BOOL)parameterChanged:(UInt32)paramID
 				 atTime:(CMTime)time
@@ -651,6 +756,8 @@
 
 // Trampoline for the synthesized button selectors. The host performs the zero-argument
 // selector registered at parameter creation; the parameter ID is decoded from _cmd.
+/*! The IMP installed for a synthesized button selector. It decodes the parameter ID from the
+	selector and dispatches to parameterClicked:. */
 static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 {
 	FxParameterId parameterID = 0;
@@ -659,6 +766,14 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	}
 }
 
+/*!
+	@method		resolveInstanceMethod:
+	@abstract	Installs the click trampoline for a synthesized button selector.
+	@param		sel	The selector the runtime cannot resolve.
+	@return		YES when the selector encodes a parameter click and the trampoline is installed; otherwise the superclass result.
+	@discussion	Introduced in FxGrip 0.1.0. A button parameter registers a synthesized selector
+				that encodes its ID, and this method binds that selector to the trampoline so one
+				handler serves every button. */
 + (BOOL)resolveInstanceMethod:(SEL)sel
 {
 	FxParameterId parameterID = 0;
@@ -737,6 +852,16 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	}
 }
 
+/*!
+	@method		parameterClicked:
+	@abstract	Dispatches a button or help-button click to the subclass hook or the parameter's default action.
+	@param		parameterID	The clicked parameter's ID.
+	@return		NO when a notification observer reports an error; YES otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The dispatch brackets with the action API's
+				startAction: and endAction: unless the effect is an on-screen control. It posts the
+				parameter-clicked notification, performs the configuration-declared selector when
+				the subclass implements it, and otherwise performs the parameter's
+				defaultParameterAction. */
 - (BOOL)parameterClicked:(FxParameterId)parameterID
 {
 	// OSC plug-ins must not bracket with startAction/endAction; the host already expects
@@ -806,6 +931,19 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	return NARC_AUTORELEASE([NSKeyedUnarchiver.alloc initForReadingFromData:decoded error:error]);
 }
 
+/*!
+	@method		pluginState:atTime:quality:error:
+	@abstract	Encodes the render-time state the host later passes to the render callbacks.
+	@param		pluginState	On return, the encoded state, compressed when the compression settings apply.
+	@param		renderTime	The render time.
+	@param		qualityLevel	The render quality level.
+	@param		error	On failure, the error from a parameter, the coder callback, or an observer.
+	@return		YES when the state is encoded; NO on failure.
+	@discussion	Introduced in FxGrip 0.1.0. The method archives the values of stateful parameters,
+				because the render thread cannot use the retrieval API. It invokes the subclass
+				coder callback when the effect conforms to FxGripTileableEffectCoderState, posts
+				the plugin-state notification, and applies the compression envelope to the encoded
+				data. A new NSData is produced on each call, so the method is render-thread safe. */
 - (BOOL)pluginState:(NSData**)pluginState
              atTime:(CMTime)renderTime
             quality:(FxQuality)qualityLevel
@@ -864,6 +1002,20 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 // multiple threads at the same time.
 // @optional
 //---------------------------------------------------------
+/*!
+	@method		scheduleInputs:withPluginState:atTime:error:
+	@abstract	Builds the input tile requests the host delivers before rendering.
+	@param		inputImageRequests	On return, the input requests when the effect schedules any.
+	@param		pluginState	The encoded render state from pluginState:atTime:quality:error:.
+	@param		renderTime	The render time.
+	@param		error	On failure, the error from decoding, the coder callback, or an observer.
+	@return		YES when scheduling succeeds; NO on failure or a nil plugin state.
+	@discussion	Introduced in FxGrip 0.1.0. The method decodes the plugin state, invokes the
+				subclass coder callback when implemented, and posts the schedule-inputs
+				notification. It appends a request for each image-ref parameter in ascending
+				parameter-ID order. When the effect schedules its own inputs and is not a
+				generator, it prepends a request for the effect clip so the main input still
+				reaches the render side. */
 - (BOOL)scheduleInputs:(NSArray<FxImageTileRequest*>* _Nullable * _Nullable)inputImageRequests
 	   withPluginState:(NSData* _Nullable)pluginState
 				atTime:(CMTime)renderTime
@@ -997,6 +1149,19 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	return unionRect;
 }
 
+/*!
+	@method		destinationImageRect:sourceImages:destinationImage:pluginState:atTime:error:
+	@abstract	Computes the output image bounds for the render time.
+	@param		destinationImageRect	On return, the output image bounds in image space.
+	@param		sourceImages	The source image tiles.
+	@param		destinationImage	The destination image tile.
+	@param		pluginState	The encoded render state.
+	@param		renderTime	The render time.
+	@param		error	On failure, the error from decoding, the coder callback, or an observer.
+	@return		YES when the bounds are computed; NO on failure.
+	@discussion	Introduced in FxGrip 0.1.0. The method defaults the output rect to the image-space
+				union of the sources, decodes the plugin state, invokes the subclass coder callback
+				when implemented, and posts the destination-image-rect notification. */
 - (BOOL)destinationImageRect:(FxRect *)destinationImageRect
                 sourceImages:(NSArray<FxImageTile *> *)sourceImages
             destinationImage:(nonnull FxImageTile *)destinationImage
@@ -1052,6 +1217,24 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 //	@required
 //---------------------------------------------------------
 
+/*!
+	@method		sourceTileRect:sourceImageIndex:sourceImages:destinationTileRect:destinationImage:pluginState:atTime:error:
+	@abstract	Computes the region of a source image needed to render an output tile.
+	@param		sourceTileRect	On return, the required source tile in the source's pixel space.
+	@param		sourceImageIndex	The index of the source image.
+	@param		sourceImages	The source image tiles.
+	@param		destinationTileRect	The output tile being rendered.
+	@param		destinationImage	The destination image tile.
+	@param		pluginState	The encoded render state.
+	@param		renderTime	The render time.
+	@param		error	On failure, the error from an out-of-range index, decoding, the coder callback, or an observer.
+	@return		YES when the source tile is computed; NO on failure.
+	@discussion	Introduced in FxGrip 0.1.0. An effect that does not change output size maps the
+				source tile to the destination tile, and the subclass coder callback still runs so
+				a filter can pad its sample region. An effect that changes output size round-trips
+				the destination tile through image space into the indexed source's pixel space. The
+				method decodes the plugin state, invokes the subclass coder callback when
+				implemented, and posts the source-tile-rect notification. */
 - (BOOL)sourceTileRect:(FxRect *)sourceTileRect
       sourceImageIndex:(NSUInteger)sourceImageIndex
           sourceImages:(NSArray<FxImageTile *> *)sourceImages
@@ -1143,6 +1326,20 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 //	@required
 //---------------------------------------------------------
 
+/*!
+	@method		renderDestinationImage:sourceImages:pluginState:atTime:error:
+	@abstract	Renders an output tile from the source tiles and the encoded render state.
+	@param		destinationImage	The destination image tile to render into.
+	@param		sourceImages	The source image tiles.
+	@param		pluginState	The encoded render state.
+	@param		renderTime	The render time.
+	@param		error	On failure, the error from a nil state, a missing surface, the coder callback, or an observer.
+	@return		YES when the tile renders; NO on failure.
+	@discussion	Introduced in FxGrip 0.1.0. An effect that conforms to
+				FxGripTileableEffectCoderState decodes the state and invokes the subclass render
+				callback. An effect that is neither a coder-state effect nor a generator renders
+				the passthrough blit. On success the method posts the render-destination-image
+				notification. This method runs on multiple threads at once. */
 - (BOOL)renderDestinationImage:(FxImageTile *)destinationImage
                   sourceImages:(NSArray<FxImageTile *> *)sourceImages
                    pluginState:(NSData *)pluginState
@@ -1338,6 +1535,9 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 #pragma mark API Parameters
 
 
+/*! Copies type-dependent configuration onto a parameter as it is created: the extension key for
+	every parameter, and the gradient sample data and depth for a gradient. Observed on
+	FxGripNotifyAPI_ParameterAddPreName. */
 - (void)notifyParameterAddPre:(NSNotification*)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -1371,11 +1571,15 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	}
 }
 
+/*! Constructs the parameter object once the host reports the parameter added. Observed on
+	FxGripNotifyAPI_ParameterAddName. */
 - (void)notifyParameterAdd:(NSNotification*)notification
 {
 	[self constructParameter:notification.userInfo];
 }
 
+/*! Rebuilds the parameter objects from stored configuration when an instance is loaded from a
+	document without an add-parameters pass. Observed on FxGripTileableEffectAddedToDocumentName. */
 - (void)notifyParameterLoad:(NSNotification*)notification
 {
 	if (self.addedParameters) {
@@ -1393,6 +1597,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	_addedParameters = YES;
 }
 
+/*! Reconstructs a group's parameter objects from configuration and recurses into subgroups. */
 - (BOOL)reconstructParametersWithGroupID:(FxParameterId)groupID
 {
 	for(NSNumber* pid in __configParameters ) {
@@ -1410,6 +1615,8 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	return YES;
 }
 
+/*! Builds a parameter object from a configuration record, registers it by ID, and attaches it to
+	its parent group when the record declares one. */
 - (void)constructParameter:(NSDictionary*)parameter
 {
 	id<FxGripParameter> paramObj = [self parameterForDictionary:parameter];
@@ -1429,6 +1636,8 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 }
 
 
+/*! Removes the parameter object when the host reports a parameter removed. Observed on
+	FxGripNotifyAPI_ParameterRemoveName. */
 - (void)notifyParameterRemove:(NSNotification*)notification
 {
 	NSDictionary *parameter = notification.userInfo.fxParameter;
@@ -1444,6 +1653,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 	_parameters = nil;
 }
 
+/*! Flushes every parameter's cached state. Observed on FxGripTileableEffectFlushName. */
 - (void)notifyParametersFlush:(NSNotification*)notification
 {
 	for(NSNumber *key in __parameters) {

@@ -1,12 +1,12 @@
-//
-//  FxGripParameterCreationAPI_v5Tests.m
-//  FxGripTests
-//
-//  Unit tests for the parameter creation wrapper: the payload each addXxxWithName:
-//  method builds, the arguments it forwards to the host creation API, the
-//  pre-notification round-trip that lets an observer rewrite that payload, the
-//  failure paths, and the subgroup stack that supplies each parameter's parent ID.
-//
+/*!
+	@file       FxGripParameterCreationAPI_v5Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterCreationAPI_v5Tests
+	@abstract   Verifies the FxParameterCreationAPI_v5 wrapper's payload building, host forwarding, pre-notification round-trip, failure handling, and subgroup parenting.
+	@discussion Introduced in FxGrip 0.1.0. Each test drives the wrapper against a recording stub host API and an isolated notifier. The tests assert the arguments the wrapper forwards, the notifications it posts, and the parent ID it derives from the subgroup stack.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxPlugSDK.h>
@@ -477,6 +477,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_Maximum], @180.0);
 }
 
+/*! @abstract A four-component color forwards each RGBA component to the host and posts an RGBA-typed add payload. */
 - (void)testAddColorParameterWithAlphaForwardsEveryComponent
 {
 	XCTAssertTrue([self.api addColorParameterWithName:@"Tint"
@@ -498,6 +499,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_RGBA));
 }
 
+/*! @abstract A three-component color forwards only RGB to the host, posts an RGB-typed payload, and carries no alpha. */
 - (void)testAddColorParameterWithoutAlphaForwardsThreeComponents
 {
 	XCTAssertTrue([self.api addColorParameterWithName:@"Tint"
@@ -519,6 +521,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertNil(parameter[kFxParameterProperty_Alpha], @"the three-component payload carries no alpha");
 }
 
+/*! @abstract A custom parameter forwards its default object to the host and posts a custom-typed add payload. */
 - (void)testAddCustomParameterForwardsTheDefaultObject
 {
 	NSString *defaultValue = @"CustomDefault";
@@ -536,6 +539,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Custom));
 }
 
+/*! @abstract A float slider forwards its default, bounds, slider range, and delta to the host and posts a float-typed payload. */
 - (void)testAddFloatSliderForwardsEveryBoundAndTheDelta
 {
 	XCTAssertTrue([self addFloatParameter]);
@@ -553,6 +557,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Float));
 }
 
+/*! @abstract A font menu forwards its font name as the default and posts a font-menu-typed payload holding that name. */
 - (void)testAddFontMenuCarriesTheFontNameAsTheDefault
 {
 	XCTAssertTrue([self.api addFontMenuWithName:@"Typeface"
@@ -570,6 +575,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_Default], @"Helvetica");
 }
 
+/*! @abstract A gradient forwards its name, ID, and flags to the host and posts a gradient-typed payload. */
 - (void)testAddGradientForwardsNameIDAndFlags
 {
 	XCTAssertTrue([self.api addGradientWithName:@"Ramp"
@@ -583,6 +589,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Gradient));
 }
 
+/*! @abstract A help button forwards its selector as a string to the host and posts a help-typed payload carrying that selector string. */
 - (void)testAddHelpButtonRoundTripsTheSelectorThroughTheStringPayload
 {
 	XCTAssertTrue([self.api addHelpButtonWithName:@"Help"
@@ -600,6 +607,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_Selector], @"setUp");
 }
 
+/*! @abstract A histogram forwards its name, ID, and flags to the host and posts a histogram-typed payload. */
 - (void)testAddHistogramForwardsNameIDAndFlags
 {
 	XCTAssertTrue([self.api addHistogramWithName:@"Levels"
@@ -613,6 +621,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Histogram));
 }
 
+/*! @abstract An image reference forwards its name, ID, and flags to the host and posts an image-ref-typed payload. */
 - (void)testAddImageReferenceForwardsNameIDAndFlags
 {
 	XCTAssertTrue([self.api addImageReferenceWithName:@"Source"
@@ -626,6 +635,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_ImageRef));
 }
 
+/*! @abstract An int slider posts its default, bounds, slider range, and delta in the int-typed add payload. */
 - (void)testAddIntSliderPostsEveryBoundInThePayload
 {
 	XCTAssertTrue([self.api addIntSliderWithName:@"Count"
@@ -678,6 +688,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 											@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A path picker forwards its name, ID, and flags to the host and posts a path-typed payload. */
 - (void)testAddPathPickerForwardsNameIDAndFlags
 {
 	XCTAssertTrue([self.api addPathPickerWithName:@"Shape"
@@ -691,6 +702,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_PathID));
 }
 
+/*! @abstract A percent slider forwards its default, bounds, slider range, and delta to the host and posts a percent-typed payload. */
 - (void)testAddPercentSliderForwardsEveryBoundAndTheDelta
 {
 	XCTAssertTrue([self.api addPercentSliderWithName:@"Mix"
@@ -716,6 +728,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Percent));
 }
 
+/*! @abstract A point parameter forwards both default coordinates to the host and posts a point-typed payload. */
 - (void)testAddPointParameterForwardsBothCoordinates
 {
 	XCTAssertTrue([self.api addPointParameterWithName:@"Center"
@@ -733,6 +746,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Point));
 }
 
+/*! @abstract A popup menu forwards its entries to the host and posts a menu-typed payload carrying those entries. */
 - (void)testAddPopupMenuForwardsTheEntriesAndPostsTheMenuPayload
 {
 	NSArray *entries = @[@"One", @"Two", @"Three"];
@@ -767,6 +781,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.hostCall[@"default"], @2);
 }
 
+/*! @abstract A push button forwards its selector as a string to the host and posts a push-button-typed payload. */
 - (void)testAddPushButtonRoundTripsTheSelectorThroughTheStringPayload
 {
 	XCTAssertTrue([self.api addPushButtonWithName:@"Reset"
@@ -782,6 +797,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_PushButton));
 }
 
+/*! @abstract A string parameter forwards its default string to the host and posts a string-typed payload. */
 - (void)testAddStringParameterForwardsTheDefaultString
 {
 	XCTAssertTrue([self.api addStringParameterWithName:@"Label"
@@ -797,6 +813,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_String));
 }
 
+/*! @abstract A toggle button forwards its default boolean state to the host and posts a toggle-typed payload. */
 - (void)testAddToggleButtonForwardsTheDefaultState
 {
 	XCTAssertTrue([self.api addToggleButtonWithName:@"Enabled"
@@ -814,6 +831,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 
 #pragma mark Selector rewriting
 
+/*! @abstract An observer that rewrites the selector string in the pre-notification changes the selector the host receives. */
 - (void)testAnObserverRewritingTheSelectorStringChangesTheSelectorTheHostReceives
 {
 	[self rewriteAddPreKey:kFxParameterProperty_Selector toValue:@"tearDown"];
@@ -828,6 +846,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 
 #pragma mark Preprocess round-trip
 
+/*! @abstract A creation posts the name-pre, then the add-pre, then the add notification in that order. */
 - (void)testEveryCreationPostsTheNamePreThenTheAddPreThenTheAddNotification
 {
 	XCTAssertTrue([self addFloatParameter]);
@@ -837,6 +856,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 											   FxGripNotifyAPI_ParameterAddName]));
 }
 
+/*! @abstract The pre-notification runs while the host has not been called, and the host receives exactly one call afterward. */
 - (void)testThePreNotificationsRunBeforeTheHostIsCalled
 {
 	__block NSUInteger callsAtPre = NSUIntegerMax;
@@ -850,6 +870,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqual(self.hostAPI.calls.count, (NSUInteger)1);
 }
 
+/*! @abstract The add pre-notification carries the parameter ID both in the top-level userInfo and in the nested parameter payload. */
 - (void)testThePreNotificationCarriesTheParameterIDAtBothLevels
 {
 	__block NSDictionary *seen = nil;
@@ -864,6 +885,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 								   @"nested": @(kCreationTestParameter)}));
 }
 
+/*! @abstract The nested parameter payload of the add pre-notification is mutable so an observer can rewrite it. */
 - (void)testTheNestedPreNotificationPayloadIsMutable
 {
 	__block BOOL mutable = NO;
@@ -876,6 +898,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertTrue(mutable);
 }
 
+/*! @abstract An observer that rewrites the name in the pre-notification changes the name the host and the completed add payload receive. */
 - (void)testAnObserverRewritingTheNameChangesTheNameTheHostReceives
 {
 	[self rewriteAddPreKey:kFxParameterProperty_Name toValue:@"Rewritten"];
@@ -886,6 +909,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Name], @"Rewritten");
 }
 
+/*! @abstract An observer that rewrites the default, minimum, maximum, and delta in the pre-notification changes each value the host receives. */
 - (void)testAnObserverRewritingTheDefaultAndBoundsChangesWhatTheHostReceives
 {
 	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
@@ -904,6 +928,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.hostCall[@"delta"], @0.5);
 }
 
+/*! @abstract An observer that rewrites the flags in the pre-notification changes the flags the host receives. */
 - (void)testAnObserverRewritingTheFlagsChangesTheFlagsTheHostReceives
 {
 	[self rewriteAddPreKey:kFxParameterProperty_Flags
@@ -915,6 +940,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 						  @(kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED));
 }
 
+/*! @abstract The FxGrip-only flag bits are masked off the value the host receives while the payload keeps them for observers. */
 - (void)testTheFxGripOnlyFlagBitsAreMaskedOffBeforeReachingTheHost
 {
 	FxParameterFlags flags = kFxParameterFlag_HIDDEN | kFxParameterFlag_HIDDEN_PROXY
@@ -930,6 +956,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 						  @"the payload keeps the FxGrip bits for the observers");
 }
 
+/*! @abstract An observer's writes to the ID, type, and parent ID in the pre-notification are ignored, and the original values reach the host and the add payload. */
 - (void)testAnObserverCannotChangeTheIDTypeOrParentThroughThePreNotification
 {
 	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
@@ -948,6 +975,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_ParentId], @(kFxParameterId_TopLevelGroup));
 }
 
+/*! @abstract The completed add notification carries a frozen, non-mutable nested parameter payload. */
 - (void)testTheAddNotificationCarriesAnImmutableNestedPayload
 {
 	XCTAssertTrue([self addFloatParameter]);
@@ -960,6 +988,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 
 #pragma mark Failure paths
 
+/*! @abstract An observer that sets an error on the add pre-notification returns NO, skips the host call, and posts no completed add notification. */
 - (void)testAnObserverSettingAnErrorAbortsTheCreationBeforeTheHostIsCalled
 {
 	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
@@ -973,6 +1002,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertNil([self notificationNamed:FxGripNotifyAPI_ParameterAddName]);
 }
 
+/*! @abstract An observer that sets an error on the name pre-notification returns NO and skips the host call. */
 - (void)testAnErrorFromTheNamePreNotificationAlsoAbortsTheCreation
 {
 	[self observeName:FxGripNotifyAPI_ParameterSetNamePreName usingBlock:^(NSNotification *notification) {
@@ -985,6 +1015,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }
 
+/*! @abstract A host refusal returns NO, still calls the host once, posts no completed add notification, and posts only the two pre-notifications. */
 - (void)testAHostRefusalReturnsNOAndPostsNoAddNotification
 {
 	self.hostAPI.succeeds = NO;
@@ -997,6 +1028,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 											   FxGripNotifyAPI_ParameterAddPreName]));
 }
 
+/*! @abstract Every creation method and both subgroup methods return NO on a host refusal and post no completed add notification. */
 - (void)testEveryCreationMethodReportsAHostRefusal
 {
 	self.hostAPI.succeeds = NO;
@@ -1025,6 +1057,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertNil([self notificationNamed:FxGripNotifyAPI_ParameterAddName]);
 }
 
+/*! @abstract An observer error on the add pre-notification aborts every creation method before the host is called and leaves the subgroup stack at the root. */
 - (void)testAnObserverErrorAbortsEveryCreationMethodBeforeTheHostIsCalled
 {
 	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {
@@ -1058,11 +1091,13 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 
 #pragma mark Subgroup stack
 
+/*! @abstract The subgroup stack starts holding only the top-level group sentinel. */
 - (void)testTheStackStartsAtTheTopLevelGroup
 {
 	XCTAssertEqualObjects(self.api.subGroupStack, @[@(kFxParameterId_TopLevelGroup)]);
 }
 
+/*! @abstract A parameter added outside any subgroup names the top-level group as its parent. */
 - (void)testAParameterAddedOutsideAnySubGroupNamesTheTopLevelGroupAsItsParent
 {
 	XCTAssertTrue([self addFloatParameter]);
@@ -1071,6 +1106,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 						  @(kFxParameterId_TopLevelGroup));
 }
 
+/*! @abstract Starting a subgroup forwards the group to the host, pushes it onto the stack, and posts the add and start-group notifications with a group-typed payload. */
 - (void)testStartParameterSubGroupPushesTheGroupAndPostsBothGroupNotifications
 {
 	XCTAssertTrue([self.api startParameterSubGroup:@"Group"
@@ -1090,6 +1126,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_Type], @(FxParameterType_Group));
 }
 
+/*! @abstract A parameter added inside an open subgroup names that group as its parent. */
 - (void)testAParameterAddedInsideASubGroupNamesThatGroupAsItsParent
 {
 	[self.api startParameterSubGroup:@"Group" parameterID:kCreationTestGroup parameterFlags:0];
@@ -1100,6 +1137,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.addedParameter[kFxParameterProperty_ParentId], @(kCreationTestGroup));
 }
 
+/*! @abstract A nested subgroup names its enclosing group as its parent and pushes onto the stack above it. */
 - (void)testNestedSubGroupsNameTheirEnclosingGroup
 {
 	[self.api startParameterSubGroup:@"Outer" parameterID:kCreationTestGroup parameterFlags:0];
@@ -1115,6 +1153,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 													 @(kCreationTestInnerGroup)]));
 }
 
+/*! @abstract Ending a subgroup calls the host, pops the stack, and posts the end-group notification whose payload names the closed group and its parent. */
 - (void)testEndParameterSubGroupPopsTheGroupAndPostsTheEndNotification
 {
 	[self.api startParameterSubGroup:@"Group" parameterID:kCreationTestGroup parameterFlags:0];
@@ -1137,6 +1176,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 						  @"the end payload names the group the closed group sat in");
 }
 
+/*! @abstract Ending a nested subgroup posts an end payload naming the inner group and its enclosing group, and pops back to the enclosing group. */
 - (void)testEndingANestedSubGroupNamesTheEnclosingGroupAsTheParent
 {
 	[self.api startParameterSubGroup:@"Outer" parameterID:kCreationTestGroup parameterFlags:0];
@@ -1152,6 +1192,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 													 @(kCreationTestGroup)]));
 }
 
+/*! @abstract An end with no open group keeps the root sentinel as the stack floor and posts nothing. */
 - (void)testAnEndWithNoOpenGroupReportsTheHostAnswerAndPostsNothing
 {
 	XCTAssertTrue([self.api endParameterSubGroup]);
@@ -1161,6 +1202,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.posted, @[]);
 }
 
+/*! @abstract A subgroup opened after an unbalanced end still pushes and pops correctly and names the top-level group as its parent. */
 - (void)testASubGroupStillOpensAndClosesAfterAnUnbalancedEnd
 {
 	[self.api endParameterSubGroup];
@@ -1177,6 +1219,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_ParentId], @(kFxParameterId_TopLevelGroup));
 }
 
+/*! @abstract A group the host refuses is not pushed onto the stack and posts no start-group notification. */
 - (void)testAGroupTheHostRefusesIsNotPushed
 {
 	self.hostAPI.succeeds = NO;
@@ -1189,6 +1232,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertNil([self notificationNamed:FxGripNotifyAPI_ParameterStartGroupName]);
 }
 
+/*! @abstract An end the host refuses leaves the open group on the stack and posts nothing. */
 - (void)testAnEndTheHostRefusesLeavesTheStackAndPostsNothing
 {
 	[self.api startParameterSubGroup:@"Group" parameterID:kCreationTestGroup parameterFlags:0];
@@ -1202,6 +1246,7 @@ static NSNotificationCenter *FxGripCreationTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.posted, @[]);
 }
 
+/*! @abstract A group aborted by an observer error is not pushed onto the stack and reaches no host call. */
 - (void)testAGroupAbortedByAnObserverErrorIsNotPushedAndReachesNoHost
 {
 	[self observeName:FxGripNotifyAPI_ParameterAddPreName usingBlock:^(NSNotification *notification) {

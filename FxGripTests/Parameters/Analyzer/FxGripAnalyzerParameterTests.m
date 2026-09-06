@@ -1,12 +1,12 @@
-//
-//  FxGripAnalyzerParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripAnalyzerParameter creation: the type identity, the push button it
-//  registers using its parameter name as the title, the configured button title and the
-//  analyze fallback title, the selector-prefix validation, and the safe no-op action on a
-//  host without an analysis pass.
-//
+/*!
+	@file       FxGripAnalyzerParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAnalyzerParameterTests
+	@abstract   Tests FxGripAnalyzerParameter creation and its click action.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the analyzer button's FxPlug type identity, the push button it registers, the button title precedence, the click-selector prefix validation, and the safe no-op action when the host lacks an analysis pass.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -54,6 +54,7 @@ static const FxParameterId kAnalyzerTestParameter = 61;
 
 #pragma mark Type identity
 
+/*! @abstract The analyzer button reports FxParameterType_Analyzer and the matching type string. */
 - (void)testTheAnalyzerButtonReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripAnalyzerParameter.parameterType, FxParameterType_Analyzer);
@@ -62,6 +63,7 @@ static const FxParameterId kAnalyzerTestParameter = 61;
 
 #pragma mark Creation
 
+/*! @abstract Creation registers a push button whose title is the parameter name and whose selector is the synthesized click selector. */
 - (void)testTheAnalyzerButtonRegistersAPushButtonUsingItsParameterNameAsTheTitle
 {
 	XCTAssertTrue([self add:FxGripAnalyzerParameter.class type:kFxParameterType_Analyzer declaredSelector:nil]);
@@ -73,6 +75,7 @@ static const FxParameterId kAnalyzerTestParameter = 61;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A configured button title overrides the parameter name for the registered button. */
 - (void)testTheAnalyzerButtonPrefersTheConfiguredButtonTitle
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kAnalyzerTestParameter, kFxParameterType_Analyzer, @"Reset",
@@ -83,6 +86,7 @@ static const FxParameterId kAnalyzerTestParameter = 61;
 	XCTAssertEqualObjects(self.call[@"name"], @"Detect Motion");
 }
 
+/*! @abstract With neither a name nor a button title, the button falls back to the default analyze title. */
 - (void)testTheAnalyzerButtonFallsBackToAnalyzeWhenNoNameOrTitleIsGiven
 {
 	NSDictionary *config = @{kFxParameterProperty_Id: @(kAnalyzerTestParameter),
@@ -93,6 +97,7 @@ static const FxParameterId kAnalyzerTestParameter = 61;
 	XCTAssertEqualObjects(self.call[@"name"], kFxGripAnalyzerDefaultTitle);
 }
 
+/*! @abstract A declared selector lacking the click prefix is rejected and registers no parameter. */
 - (void)testTheAnalyzerButtonRefusesADeclaredSelectorWithoutTheClickPrefix
 {
 	XCTAssertFalse([self add:FxGripAnalyzerParameter.class type:kFxParameterType_Analyzer declaredSelector:@"runAnalysis"]);

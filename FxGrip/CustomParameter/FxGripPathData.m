@@ -1,7 +1,14 @@
-//
-//  FxGripPathData.m
-//  FxGrip
-//
+/*!
+	@file       FxGripPathData.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPathData
+	@abstract   Implements the immutable FxVertex path list.
+	@discussion Introduced in FxGrip 0.1.0. The vertices store as one flat array of NSNumber, eight
+	            interleaved values per vertex. Edit methods copy the array, apply one change, and return
+	            a new instance. The archive carries a version, the closed flag, and the interleaved array.
+*/
 
 #import "FxGripPathData.h"
 #import "FxGrip_ARC.h"
@@ -28,6 +35,11 @@ static void FxGripPathAppendVertex(NSMutableArray<NSNumber *> *slots, FxVertex v
 	[slots addObject:@(vertex.interpStyle)];
 }
 
+/*!
+	@abstract	The immutable FxVertex path list.
+	@discussion	Introduced in FxGrip 0.1.0. Vertices store as a flat interleaved NSNumber array, eight
+				values per vertex. Edits return new instances.
+*/
 @implementation FxGripPathData
 {
 	NSArray<NSNumber *> *_interleaved;	// eight values per vertex, in list order
@@ -46,6 +58,7 @@ static void FxGripPathAppendVertex(NSMutableArray<NSNumber *> *slots, FxVertex v
 	SUPER_DEALLOC();
 }
 
+/*! @abstract The designated initializer; keeps a copy of the interleaved value array. */
 - (nullable instancetype)initWithInterleaved:(NSArray<NSNumber *> *)interleaved closed:(BOOL)closed
 {
 	self = [super init];
@@ -103,6 +116,7 @@ static void FxGripPathAppendVertex(NSMutableArray<NSNumber *> *slots, FxVertex v
 	return _interleaved.count / kFxGripPathVertexStride;
 }
 
+/*! @abstract Reads back the vertex at an index, or a zeroed linear vertex when out of range. */
 - (FxVertex)vertexAtIndex:(NSUInteger)index
 {
 	FxVertex vertex = { 0 };
@@ -197,6 +211,7 @@ static void FxGripPathAppendVertex(NSMutableArray<NSNumber *> *slots, FxVertex v
 	return NARC_AUTORELEASE(result);
 }
 
+/*! @abstract Writes the vertices into a buffer, at most capacity, and returns the number written. */
 - (NSUInteger)copyVerticesToBuffer:(FxVertex *)buffer capacity:(NSUInteger)capacity
 {
 	NSUInteger written = MIN(capacity, self.vertexCount);
@@ -239,6 +254,7 @@ static void FxGripPathAppendVertex(NSMutableArray<NSNumber *> *slots, FxVertex v
 	[coder encodeObject:_interleaved forKey:kFxGripPathDataKey_Vertices];
 }
 
+/*! @abstract Decodes the closed flag and interleaved array, rejecting a length not a multiple of the stride. */
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder
 {
 	self = [super init];

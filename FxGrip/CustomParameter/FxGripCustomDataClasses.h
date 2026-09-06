@@ -1,10 +1,14 @@
-//
-//  FxGripMutableParameter.h
-//  PlugIn
-//
-//  Created by Apple on 10/22/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
-//
+/*!
+	@file       FxGripCustomDataClasses.h
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCustomDataClasses
+	@abstract   Protocol that reports the secure-coding classes of a custom parameter's stored objects.
+	@discussion Introduced in FxGrip 0.1.0. The host archives and unarchives custom parameter values
+	            on the plugin's behalf. A custom data class conforms to this protocol to supply the
+	            allow-list of classes the host uses to decode the value.
+*/
 
 #ifndef FxGripCustomDataClasses_h
 #define FxGripCustomDataClasses_h
@@ -12,6 +16,12 @@
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
 
+/*!
+	@protocol	FxGripCustomDataClasses
+	@abstract	Reports the secure-coding classes of the objects a custom parameter stores.
+	@discussion	Introduced in FxGrip 0.1.0. The host needs the member classes of a custom parameter
+				value to unarchive it from disk. A conforming class returns that class set.
+*/
 // This is the protocol for Custom Data to hijack the standard api get/set bool, int, float, string, etc.
 @protocol FxGripCustomDataClasses
 

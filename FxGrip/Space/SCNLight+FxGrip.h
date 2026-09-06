@@ -1,7 +1,13 @@
-//
-//  SCNLight+FxGrip.h
-//  FxGrip
-//
+/*!
+	@file       SCNLight+FxGrip.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     SCNLight+FxGrip
+	@abstract   Builds a SceneKit light from an FxPlug FxLight.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the SCNLight category that maps one
+	            FxLightingAPI_v3 FxLight to an SCNLight and to a positioned, oriented SCNNode.
+*/
 
 #ifndef SCNLight_FxGrip_h
 #define SCNLight_FxGrip_h
@@ -12,9 +18,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /*!
-	@category   SCNLight (FxGrip)
 	@abstract   Builds a SceneKit light from an FxPlug `FxLight`.
-	@discussion Introduced in FxGrip 1.0. The `FxLightingAPI_v3` host API reports each scene light as
+	@discussion Introduced in FxGrip 0.1.0. The `FxLightingAPI_v3` host API reports each scene light as
 				an `FxLight` struct. These methods map one `FxLight` to an `SCNLight`, and to an
 				`SCNNode` that carries the light at the reported world position and, for directional
 				and spot lights, pointed along the reported direction (SceneKit lights emit down the

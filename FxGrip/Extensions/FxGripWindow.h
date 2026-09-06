@@ -1,7 +1,15 @@
-//
-//  FxGripWindow.h
-//  FxGrip
-//
+/*!
+	@file       FxGripWindow.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripWindow
+	@abstract   The extension that manages the plug-in's one host window.
+	@discussion Introduced in FxGrip 0.1.0. FxRemoteWindowAPI limits a plug-in instance to a single
+	            host-created window. This extension requests the window through the highest API
+	            version the host vends, installs the content view when the window arrives, and
+	            tracks whether a window is presented.
+*/
 
 #ifndef FxGripWindow_h
 #define FxGripWindow_h
@@ -12,12 +20,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/*! The registry key under which the effect stores the window extension. */
 extern NSString * const FxGripWindowExtensionKey;
 
 /*!
 	@class      FxGripWindow
 	@abstract   The extension that manages the plug-in's one host window.
-	@discussion Introduced in FxGrip 1.0. FxRemoteWindowAPI limits a plug-in instance to a single
+	@discussion Introduced in FxGrip 0.1.0. FxRemoteWindowAPI limits a plug-in instance to a single
 				host-created window: repeat requests return the same parent view, and the user can
 				close the window at any time. This extension owns that lifecycle. It requests the
 				window through the highest FxRemoteWindowAPI version the host vends, installs the

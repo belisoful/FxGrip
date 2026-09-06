@@ -1,16 +1,12 @@
-//
-//  FxGripFrameDataTests.m
-//  FxGripTests
-//
-//  Unit tests for the per-frame record store: inline records under NSNumber frame keys, the
-//  reserved header entries, the seek helpers, and the size-gated spill to the machine-local
-//  cache folder.
-//
-//  Every spill writes below a per-test folder under NSTemporaryDirectory(), removed in
-//  tearDown. FxGripFrameData.h reaches its superclass through a quoted include that does not
-//  resolve outside the framework target, so the surface under test is re-declared here and
-//  the reserved keys mirror the #defines in that header.
-//
+/*!
+	@file       FxGripFrameDataTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripFrameDataTests
+	@abstract   Tests for FxGripFrameData, the per-frame record store with size-gated spill to a cache folder.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover inline records under frame indexes, the sorted frame index that excludes the reserved header keys, the seek helpers, the threshold-driven spill to and reload from the cache folder, media-folder attachment, and secure coding.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripImageBuffer.h>
@@ -137,6 +133,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 #pragma mark Inline records
 
+/*! @abstract A record set at a frame index reads back equal at that index. */
 - (void)testARecordRoundTripsThroughItsFrameIndex
 {
 	XCTAssertTrue([self.store setRecord:@"frame seven" atIndex:7]);
@@ -144,6 +141,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store recordAtIndex:7], @"frame seven");
 }
 
+/*! @abstract An unset frame index has no record. */
 - (void)testAnUnsetFrameIndexHasNoRecord
 {
 	[self.store setRecord:@"frame seven" atIndex:7];
@@ -151,6 +149,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertNil([self.store recordAtIndex:8]);
 }
 
+/*! @abstract A record set at a negative index reads back equal. */
 - (void)testARecordAtANegativeIndexRoundTrips
 {
 	XCTAssertTrue([self.store setRecord:@"before zero" atIndex:-4]);
@@ -158,6 +157,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store recordAtIndex:-4], @"before zero");
 }
 
+/*! @abstract Setting a record twice at one index keeps the last value and one frame index. */
 - (void)testSettingARecordTwiceKeepsTheLastOne
 {
 	[self.store setRecord:@"first" atIndex:3];
@@ -167,6 +167,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqual(self.store.frameIndexes.count, 1u);
 }
 
+/*! @abstract Setting a nil record returns NO and stores nothing. */
 - (void)testSetRecordRefusesANilRecord
 {
 	NSObject<NSSecureCoding, NSCopying> *record = nil;
@@ -175,6 +176,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects(self.store.frameIndexes, @[]);
 }
 
+/*! @abstract Removing a record clears it and drops its frame index. */
 - (void)testRemoveRecordDropsTheFrameIndex
 {
 	[self.store setRecord:@"frame" atIndex:2];
@@ -185,6 +187,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects(self.store.frameIndexes, @[]);
 }
 
+/*! @abstract Removing an absent record leaves the store empty. */
 - (void)testRemovingAnAbsentRecordIsHarmless
 {
 	[self.store removeRecordAtIndex:99];
@@ -194,6 +197,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 #pragma mark frameIndexes
 
+/*! @abstract frameIndexes returns the stored indexes sorted ascending. */
 - (void)testFrameIndexesAreSortedAscending
 {
 	[self.store setRecord:@"c" atIndex:12];
@@ -203,6 +207,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects(self.store.frameIndexes, (@[@(-3), @4, @12]));
 }
 
+/*! @abstract frameIndexes excludes the reserved header keys that share the backing dictionary. */
 - (void)testFrameIndexesExcludeTheHeaderKeys
 {
 	self.store.spillThreshold = 2048;
@@ -214,6 +219,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertNotNil([self.store objectForKey:kFxGripFrameDataKey_InstanceUUID]);
 }
 
+/*! @abstract frameIndexes of a fresh store is empty. */
 - (void)testFrameIndexesOfAFreshStoreAreEmpty
 {
 	XCTAssertEqualObjects(self.store.frameIndexes, @[]);
@@ -221,6 +227,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 #pragma mark latestIndexAtOrBefore:
 
+/*! @abstract -latestIndexAtOrBefore: returns a stored index when queried at that index. */
 - (void)testLatestIndexAtAStoredIndexIsThatIndex
 {
 	[self.store setRecord:@"a" atIndex:10];
@@ -229,6 +236,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqual([self.store latestIndexAtOrBefore:20], 20);
 }
 
+/*! @abstract -latestIndexAtOrBefore: between two stored indexes returns the preceding one. */
 - (void)testLatestIndexBetweenStoredIndexesIsThePrecedingOne
 {
 	[self.store setRecord:@"a" atIndex:10];
@@ -237,6 +245,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqual([self.store latestIndexAtOrBefore:15], 10);
 }
 
+/*! @abstract -latestIndexAtOrBefore: past the last stored index returns that last index. */
 - (void)testLatestIndexBeyondTheLastStoredIndexIsThatIndex
 {
 	[self.store setRecord:@"a" atIndex:10];
@@ -245,6 +254,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqual([self.store latestIndexAtOrBefore:1000], 20);
 }
 
+/*! @abstract -latestIndexAtOrBefore: an index below the first record returns NSNotFound. */
 - (void)testLatestIndexBeforeTheFirstRecordIsNotFound
 {
 	[self.store setRecord:@"a" atIndex:10];
@@ -252,11 +262,13 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqual([self.store latestIndexAtOrBefore:9], (NSInteger)NSNotFound);
 }
 
+/*! @abstract -latestIndexAtOrBefore: on an empty store returns NSNotFound. */
 - (void)testLatestIndexOfAnEmptyStoreIsNotFound
 {
 	XCTAssertEqual([self.store latestIndexAtOrBefore:0], (NSInteger)NSNotFound);
 }
 
+/*! @abstract -latestIndexAtOrBefore: resolves negative indexes and returns NSNotFound below the first. */
 - (void)testLatestIndexResolvesNegativeIndexes
 {
 	[self.store setRecord:@"a" atIndex:-10];
@@ -267,6 +279,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqual([self.store latestIndexAtOrBefore:-11], (NSInteger)NSNotFound);
 }
 
+/*! @abstract -latestIndexAtOrBefore: ignores the reserved header keys and returns NSNotFound when only they are present. */
 - (void)testLatestIndexIgnoresTheHeaderKeys
 {
 	self.store.spillThreshold = 2048;
@@ -277,6 +290,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 #pragma mark latestRecordAtOrBefore:
 
+/*! @abstract -latestRecordAtOrBefore: serves the record at the preceding stored index. */
 - (void)testLatestRecordServesThePrecedingRecord
 {
 	[self.store setRecord:@"a" atIndex:10];
@@ -285,6 +299,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store latestRecordAtOrBefore:19], @"a");
 }
 
+/*! @abstract -latestRecordAtOrBefore: a stored index returns that index's own record. */
 - (void)testLatestRecordAtAStoredIndexIsItsOwnRecord
 {
 	[self.store setRecord:@"a" atIndex:10];
@@ -292,6 +307,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store latestRecordAtOrBefore:10], @"a");
 }
 
+/*! @abstract -latestRecordAtOrBefore: an index below the first record is nil. */
 - (void)testLatestRecordBeforeTheFirstRecordIsNil
 {
 	[self.store setRecord:@"a" atIndex:10];
@@ -301,6 +317,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 #pragma mark Spill
 
+/*! @abstract A record above the spill threshold writes a file into the cache folder. */
 - (void)testARecordAboveTheThresholdWritesToTheCacheFolder
 {
 	[self enableSpillWithThreshold:1024];
@@ -310,6 +327,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertTrue([NSFileManager.defaultManager fileExistsAtPath:[self spillFileURLForIndex:7].path]);
 }
 
+/*! @abstract A spilled record leaves a marker dictionary naming its file and length in the store. */
 - (void)testASpilledRecordLeavesAMarkerInTheStore
 {
 	[self enableSpillWithThreshold:1024];
@@ -322,6 +340,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertGreaterThan(((NSNumber *)((NSDictionary *)marker)[kFxGripFrameDataKey_SpillLength]).unsignedIntegerValue, 1024u);
 }
 
+/*! @abstract A spilled record loads back from its file equal to the original. */
 - (void)testASpilledRecordLoadsBackEqualToTheOriginal
 {
 	[self enableSpillWithThreshold:1024];
@@ -331,6 +350,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store recordAtIndex:7], record);
 }
 
+/*! @abstract A spilled record is served through the seek helpers. */
 - (void)testASpilledRecordServesTheSeekHelpers
 {
 	[self enableSpillWithThreshold:1024];
@@ -341,6 +361,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store latestRecordAtOrBefore:9], record);
 }
 
+/*! @abstract A spilled record at a negative index names its file for the index and loads back equal. */
 - (void)testASpilledRecordAtANegativeIndexNamesItsFileForTheIndex
 {
 	[self enableSpillWithThreshold:1024];
@@ -352,6 +373,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store recordAtIndex:-5], record);
 }
 
+/*! @abstract Removing a spilled record deletes its cache file and clears the record. */
 - (void)testRemovingASpilledRecordDeletesItsCacheFile
 {
 	[self enableSpillWithThreshold:1024];
@@ -364,6 +386,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertNil([self.store recordAtIndex:7]);
 }
 
+/*! @abstract A spilled record whose cache file is gone reads as nil while its frame index remains. */
 - (void)testASpilledRecordWhoseCacheFileIsGoneIsNil
 {
 	[self enableSpillWithThreshold:1024];
@@ -375,6 +398,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects(self.store.frameIndexes, @[@7]);
 }
 
+/*! @abstract A record below the threshold stays inline and writes no cache file. */
 - (void)testARecordBelowTheThresholdStaysInline
 {
 	[self enableSpillWithThreshold:kFrameDataDefaultSpillThreshold];
@@ -386,6 +410,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertFalse([NSFileManager.defaultManager fileExistsAtPath:[self spillFileURLForIndex:7].path]);
 }
 
+/*! @abstract The never-spill threshold keeps every record inline. */
 - (void)testTheNeverSpillThresholdKeepsEveryRecordInline
 {
 	[self enableSpillWithThreshold:kFxGripFrameDataNeverSpill];
@@ -397,6 +422,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertFalse([NSFileManager.defaultManager fileExistsAtPath:[self spillFileURLForIndex:7].path]);
 }
 
+/*! @abstract A zero threshold spills every record, including a tiny one, and loads it back. */
 - (void)testAZeroThresholdSpillsEveryRecord
 {
 	[self enableSpillWithThreshold:0];
@@ -407,6 +433,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store recordAtIndex:7], @"tiny");
 }
 
+/*! @abstract Attaching an effect that has a project media folder activates spilling into that folder. */
 - (void)testAttachingAnEffectWithAMediaFolderActivatesSpilling
 {
 	FxGripFrameDataTestMediaEffect *effect = FxGripFrameDataTestMediaEffect.new;
@@ -433,6 +460,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store objectForKey:@3], @"tiny");
 }
 
+/*! @abstract Attaching a nil effect returns NO and clears the cache URL. */
 - (void)testAttachingANilEffectClearsTheCache
 {
 	[self enableSpillWithThreshold:0];
@@ -442,6 +470,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertNil(self.store.cacheURL);
 }
 
+/*! @abstract Without a cache URL a large record stays inline and reads back equal. */
 - (void)testWithoutACacheURLNothingSpills
 {
 	self.store.spillThreshold = 1024;
@@ -453,6 +482,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store recordAtIndex:7], record);
 }
 
+/*! @abstract The spill folder is named for the store's instance UUID. */
 - (void)testTheSpillFolderIsNamedForTheInstanceUUID
 {
 	[self enableSpillWithThreshold:1024];
@@ -466,11 +496,13 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 #pragma mark Configuration
 
+/*! @abstract The default spill threshold is four megabytes. */
 - (void)testTheDefaultSpillThresholdIsFourMegabytes
 {
 	XCTAssertEqual(self.store.spillThreshold, kFrameDataDefaultSpillThreshold);
 }
 
+/*! @abstract The spill threshold is stored under its reserved key. */
 - (void)testTheSpillThresholdIsStoredUnderItsReservedKey
 {
 	self.store.spillThreshold = 2048;
@@ -479,6 +511,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self.store objectForKey:kFxGripFrameDataKey_SpillThreshold], @2048);
 }
 
+/*! @abstract The instance UUID is a stable, valid UUID across reads. */
 - (void)testTheInstanceUUIDIsStableAcrossReads
 {
 	NSString *first = self.store.instanceUUID;
@@ -487,11 +520,13 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertNotNil([NSUUID.alloc initWithUUIDString:first]);
 }
 
+/*! @abstract Two stores carry different instance UUIDs. */
 - (void)testTwoStoresCarryDifferentInstanceUUIDs
 {
 	XCTAssertNotEqualObjects(self.store.instanceUUID, [FxGripFrameData.alloc init].instanceUUID);
 }
 
+/*! @abstract The cache URL reads back the value that was set. */
 - (void)testTheCacheURLReadsBackWhatWasSet
 {
 	self.store.cacheURL = self.sandboxURL;
@@ -501,12 +536,14 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 
 #pragma mark classesForParameter
 
+/*! @abstract The parameter class list carries FxGripImageBuffer at both the class and instance level. */
 - (void)testTheParameterClassListCarriesTheImageBuffer
 {
 	XCTAssertTrue([FxGripFrameData.classesForParameter containsObject:FxGripImageBuffer.class]);
 	XCTAssertTrue([self.store.classesForParameter containsObject:FxGripImageBuffer.class]);
 }
 
+/*! @abstract The parameter class list adds the image buffer to the classes inherited from the base dictionary. */
 - (void)testTheParameterClassListKeepsTheInheritedClasses
 {
 	NSOrderedSet<Class> *classes = FxGripFrameData.classesForParameter;
@@ -547,6 +584,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([decoded objectForKey:@"key"], @"value");
 }
 
+/*! @abstract An inline record survives the archive round trip. */
 - (void)testAnInlineRecordSurvivesTheArchiveRoundTrip
 {
 	[self.store setRecord:@"frame seven" atIndex:7];
@@ -554,6 +592,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([[self decodedStore] recordAtIndex:7], @"frame seven");
 }
 
+/*! @abstract An inline image-buffer record survives the archive round trip. */
 - (void)testAnInlineImageBufferRecordSurvivesTheArchiveRoundTrip
 {
 	FxGripImageBuffer *record = [self largeRecord];
@@ -562,6 +601,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([[self decodedStore] recordAtIndex:7], record);
 }
 
+/*! @abstract The spill threshold survives the archive round trip. */
 - (void)testTheSpillThresholdSurvivesTheArchiveRoundTrip
 {
 	self.store.spillThreshold = 2048;
@@ -569,6 +609,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqual([self decodedStore].spillThreshold, 2048u);
 }
 
+/*! @abstract The instance UUID survives the archive round trip. */
 - (void)testTheInstanceUUIDSurvivesTheArchiveRoundTrip
 {
 	NSString *uuid = self.store.instanceUUID;
@@ -576,6 +617,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertEqualObjects([self decodedStore].instanceUUID, uuid);
 }
 
+/*! @abstract The cache URL is not encoded, so a decoded store carries no cache URL. */
 - (void)testTheCacheURLIsNotEncoded
 {
 	self.store.cacheURL = self.sandboxURL;
@@ -584,6 +626,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 	XCTAssertNil([self decodedStore].cacheURL);
 }
 
+/*! @abstract A spilled marker survives the archive round trip and resolves to its record once the cache URL is restored. */
 - (void)testASpilledMarkerSurvivesTheArchiveRoundTripAndResolvesOnceTheCacheURLIsRestored
 {
 	[self enableSpillWithThreshold:1024];

@@ -1,13 +1,12 @@
-//
-//  FxGripObjectTrackerAnalysisTests.m
-//  FxGripTests
-//
-//  The analysis-pass driving on the Object Tracker parameter: a live parameter reads its
-//  configuration, seeds from the placed region on the first frame, tracks a moving patch
-//  across the following frames, and writes the accumulated samples back through the setting
-//  API. This exercises the #3 wiring end to end without an FxPlug host, using the shared
-//  parameter-class test harness.
-//
+/*!
+	@file       FxGripObjectTrackerAnalysisTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerAnalysisTests
+	@abstract   Verifies the Object Tracker parameter's analysis pass end to end without an FxPlug host.
+	@discussion Introduced in FxGrip 0.1.0. A live parameter reads its configuration, seeds from the placed region on the first frame, tracks a moving patch across the following frames, and writes the accumulated samples back through the setting API. The tests confirm seeding, tracking, and writeback, keyframing a linked center and anchor point, driving a linked angle point for the quadrilateral shape, half-resolution tracking, and a disabled tracker recording no samples.
+*/
 
 #import <XCTest/XCTest.h>
 #import <CoreImage/CoreImage.h>
@@ -129,6 +128,7 @@ static const FxParameterId kTrackerID = 51;
 	[parameter endObjectTrackingAnalysis];
 }
 
+/*! @abstract The analysis pass seeds from the placed region, tracks the moving patch, and writes the accumulated samples back to the tracker parameter. */
 - (void)testAnalysisSeedsTracksAndWritesSamplesBack
 {
 	[self stagedDataEnabled:YES];
@@ -155,6 +155,7 @@ static const FxParameterId kTrackerID = 51;
 		@"tracked x %.3f did not advance past the seed %.3f", last.location.x, seedCenterX);
 }
 
+/*! @abstract A linked center and anchor point are keyframed across frames, following the patch rightward. */
 - (void)testLinkedCenterPointIsBakedAcrossFrames
 {
 	FxGripObjectTrackerData *data = [self stagedDataEnabled:YES];
@@ -185,6 +186,7 @@ static const FxParameterId kTrackerID = 51;
 	XCTAssertGreaterThan(anchors.count, (NSUInteger)0, @"the anchor point was driven too");
 }
 
+/*! @abstract The quadrilateral shape runs the rotation-capable tracker and drives the linked angle parameter with finite degree values. */
 - (void)testQuadrilateralShapeDrivesTheLinkedAnglePoint
 {
 	FxGripObjectTrackerData *data = [self stagedDataEnabled:YES];
@@ -210,6 +212,7 @@ static const FxParameterId kTrackerID = 51;
 	XCTAssertFalse(isnan([angleWrites.firstObject[@"value"] doubleValue]), @"angle value is finite");
 }
 
+/*! @abstract Half-resolution analysis still records a sample per frame and follows the patch rightward. */
 - (void)testHalfResolutionStillTracksTheMovingPatch
 {
 	FxGripObjectTrackerData *data = [self stagedDataEnabled:YES];
@@ -225,6 +228,7 @@ static const FxParameterId kTrackerID = 51;
 	XCTAssertGreaterThan(last.location.x, seedCenterX + 0.05, @"half-res track followed the patch");
 }
 
+/*! @abstract A disabled tracker writes a result that records no samples. */
 - (void)testDisabledTrackerRecordsNoSamples
 {
 	[self stagedDataEnabled:NO];

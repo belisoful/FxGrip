@@ -1,9 +1,15 @@
-//
-//  FxGripMeta.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripMeta.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMeta
+	@abstract   Implements the per-instance parameter meta storage extension.
+	@discussion Introduced in FxGrip 0.1.0. The extension seeds a record for each parameter after the
+	            other extensions process the add, additively merging the configuration's tags, meta,
+	            reset value, and target-preset definitions. It applies target presets and momentary
+	            reset values on parameter changes and flushes the manager last in the cycle.
+*/
 
 #import "FxGripMeta.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -25,6 +31,11 @@
 }
 @end
 
+/*!
+	@abstract	The extension that owns the effect's FxGripMetaManager.
+	@discussion	Introduced in FxGrip 0.1.0. The manager is loaded from the document, seeded per
+				parameter, and persisted on flush.
+*/
 @implementation FxGripMeta
 {
 	FxGripMetaManager *_manager;
@@ -108,6 +119,11 @@
 	return priority;
 }
 
+/*!
+	@method		extAddParameters:
+	@abstract	Registers the hidden InstanceMeta custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter carries no state, is never presented or
+				animated, and stays out of presets. */
 - (void)extAddParameters:(nonnull NSNotification*)notification
 {
 	NSDictionary *metaData = @{
@@ -123,6 +139,12 @@
 	[notification.userInfo.fxEffectParameters addObject:[metaData mutableCopy]];
 }
 
+/*!
+	@method		extAddedToDocument:
+	@abstract	Loads the meta manager from the document and merges any pre-load seeded records.
+	@discussion	Introduced in FxGrip 0.1.0. When the document has no stored manager, the seeded manager
+				is kept. Otherwise the loaded manager wins and the seeded records fill only its
+				absent entries. */
 - (void)extAddedToDocument:(nonnull NSNotification*)notification
 {
 	@synchronized (self) {
@@ -192,6 +214,11 @@
 	[seeded unlock];
 }
 
+/*!
+	@method		extAPIParameterAdd:
+	@abstract	Seeds the meta record for a newly added parameter and flushes when the instance is live.
+	@discussion	Introduced in FxGrip 0.1.0. The InstanceMeta parameter itself is skipped. A per-add
+				flush runs only once the instance is live, outside a batched flag-cache setup. */
 - (void)extAPIParameterAdd:(nonnull NSNotification*)notification
 {
 	// The id is read directly: the guarded parameterID accessor requires id+type+name,
@@ -262,6 +289,10 @@
 	}
 }
 
+/*!
+	@method		extAPIParameterRemove:
+	@abstract	Removes a parameter's meta record and flushes when the instance is live.
+	@discussion	Introduced in FxGrip 0.1.0. Returns when the manager does not track the parameter. */
 - (void)extAPIParameterRemove:(nonnull NSNotification*)notification
 {
 	NSNumber *pidNumber = notification.userInfo.fxParameter[kFxParameterProperty_Id]
@@ -331,6 +362,7 @@
 	[tagsAPI applyTargetPresetForParameter:pid atTime:time options:FxGripPresetNames];
 }
 
+/*! @abstract Persists the meta manager to the custom parameter. */
 - (void)extFlush:(nonnull NSNotification*)notification
 {
 	@synchronized (self) {
@@ -338,6 +370,7 @@
 	}
 }
 
+/*! @abstract The meta manager, returned as the InstanceMeta parameter's custom value for encoding. */
 - (id<NSSecureCoding, NSCopying> _Nullable)valueAtTime:(CMTime)renderTime
 {
 	// Read under the same lock that guards every _manager reassignment.
@@ -349,6 +382,10 @@
 @end
 
 
+/*!
+	@abstract	The effect-side accessors for the meta extension and its manager.
+	@discussion	Introduced in FxGrip 0.1.0. meta resolves the loaded extension's manager.
+*/
 @implementation FxGripTileableEffect (Meta)
 
 - (nullable FxGripMetaManager *)meta

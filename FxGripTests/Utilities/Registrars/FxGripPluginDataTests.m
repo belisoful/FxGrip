@@ -1,9 +1,12 @@
-//
-//  FxGripPluginTests.m
-//  FxGripPluginTests
-//
-//  Created by ~ ~ on 3/15/24.
-//
+/*!
+	@file       FxGripPluginDataTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPluginDataTests
+	@abstract   Unit tests for the FxGripPluginData model object.
+	@discussion Introduced in FxGrip 0.1.0. The tests verify construction, the typed accessors for uuid, class name, display name, group uuid, protocol names, info string, version, and supported plugins, and the -setData: filter that normalizes and retains only the known plugin keys in an immutable backing dictionary. They cover each property setter and the keyed subscript accessors.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripPluginData.h>
@@ -29,6 +32,7 @@
     // Put teardown code here. This method is called after the invocation of each test method in the class.
 }
 
+/*! @abstract A freshly initialized plugin holds an empty immutable dictionary with every typed accessor nil or zero, for both -init and +new. */
 -(void)testInit
 {
 	FxGripPluginData *plugin = [FxGripPluginData.alloc init];
@@ -65,6 +69,7 @@
 	XCTAssertNil(plugin.supportedPlugins);
 }
 
+/*! @abstract -initWithDictionary: stores every declared field and exposes it through the typed accessors. */
 -(void)testInitWithGroup
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -95,6 +100,7 @@
 }
 
 
+/*! @abstract +newPluginWithDictionary: builds a plugin carrying every declared field. */
 -(void)testNewPluginGroup
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -126,6 +132,7 @@
 
 
 
+/*! @abstract -setData: stores a copy of a full dictionary and exposes every field through the accessors. */
 -(void)testSetData_Full
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -158,6 +165,7 @@
 	XCTAssertEqualObjects(plugin.supportedPlugins, reference[kProPlugPlugIn_SupportedPluginsProperty]);
 }
 
+/*! @abstract -setData: keeps the supplied fields and leaves the undeclared protocol names, version, and supported plugins nil. */
 -(void)testSetData_NoValidationFields
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -187,6 +195,7 @@
 	XCTAssertNil(plugin.supportedPlugins);
 }
 
+/*! @abstract -setData: normalizes a scalar protocol name, version string, and supported-plugin string into their array and number forms. */
 -(void)testSetData_AltValidationFields
 {
 	NSString	*pluginUUID = [NSUUID UUID].UUIDString;
@@ -232,6 +241,7 @@
 	XCTAssertEqualObjects(plugin.supportedPlugins, reference[kProPlugPlugIn_SupportedPluginsProperty]);
 }
 
+/*! @abstract -setData: replaces preset content wholesale with the new dictionary's fields. */
 -(void)testSetData_Preset
 {
 	NSDictionary	*preset = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -283,6 +293,7 @@
 }
 
 
+/*! @abstract Setting uuid updates the UUID and setting it nil clears it, both leaving the other fields intact. */
 -(void)testSetUUID
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -326,6 +337,7 @@
 	XCTAssertEqualObjects(plugin.supportedPlugins, reference[kProPlugPlugIn_SupportedPluginsProperty]);
 }
 
+/*! @abstract Setting pluginClassName updates the class name and setting it nil clears it, both leaving the other fields intact. */
 -(void)testSetPluginClassName
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -369,6 +381,7 @@
 	XCTAssertEqualObjects(plugin.supportedPlugins, reference[kProPlugPlugIn_SupportedPluginsProperty]);
 }
 
+/*! @abstract Setting displayName updates the display name and setting it nil clears it, both leaving the other fields intact. */
 -(void)testSetDisplayName
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -412,6 +425,7 @@
 }
 
 
+/*! @abstract Setting groupUuid updates the group UUID and setting it nil clears it, both leaving the other fields intact. */
 -(void)testSetGroupUUID
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -455,6 +469,7 @@
 }
 
 
+/*! @abstract Setting protocolNames updates the protocol list and setting it nil clears it, both leaving the other fields intact. */
 -(void)testSetProtocolNames
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -498,6 +513,7 @@
 }
 
 
+/*! @abstract Setting infoString updates the info string and setting it nil clears it, both leaving the other fields intact. */
 -(void)testSetInfoString
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -541,6 +557,7 @@
 }
 
 
+/*! @abstract Setting version updates the version number and versionInteger, and setting it nil clears both. */
 -(void)testSetVersion
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -584,6 +601,7 @@
 }
 
 
+/*! @abstract Setting versionInteger updates the version number, and setting it zero clears the version. */
 -(void)testSetVersionInteger
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -627,6 +645,7 @@
 }
 
 
+/*! @abstract Setting supportedPlugins updates the list and setting it nil clears it, both leaving the other fields intact. */
 -(void)testSetSupportedPlugins
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -670,6 +689,7 @@
 }
 
 
+/*! @abstract The keyed subscript setter updates the group UUID field and clears it when set nil. */
 -(void)testObjectForKeyedSubscript
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -716,6 +736,7 @@
 }
 
 
+/*! @abstract The keyed subscript normalizes a scalar protocol name into an array and clears the field when set nil. */
 -(void)testObjectForKeyedSubscript_ProtocolNames
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -775,6 +796,7 @@
 }
 
 
+/*! @abstract The keyed subscript accepts a version number or numeric string and clears the field when set nil. */
 -(void)testObjectForKeyedSubscript_Version
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,
@@ -834,6 +856,7 @@
 }
 
 
+/*! @abstract The keyed subscript normalizes a scalar supported-plugin string into an array and clears the field when set nil. */
 -(void)testObjectForKeyedSubscript_supportedPlugins
 {
 	NSDictionary	*reference = @{kProPlugPlugIn_UuidProperty: [NSUUID UUID].UUIDString,

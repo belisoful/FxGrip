@@ -1,10 +1,17 @@
-//
-//  FxGripTypes.h
-//  FxGrip
-//
-//  Created by ~ ~ on 2/27/24.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripTypes.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTypes
+	@abstract   The framework's shared constants, plugin and parameter property keys, vector types,
+	            and small inline geometry helpers.
+	@discussion Introduced in FxGrip 0.1.0. The file collects the string keys that name entries in the
+	            plugin and parameter property dictionaries, the preset and depth enumerations, the
+	            SIMD-backed vector unions FxGrip passes between the host, the parameter model, and
+	            Metal, and the inline FxRect/CGRect bridges. The property-key groups are marked by
+	            section comments.
+*/
 
 #ifndef FxGripTypes_h
 #define FxGripTypes_h
@@ -41,8 +48,10 @@
 //#import "FxGripParameter.h"
 
 
+/*! Bit flags that select preset behavior, such as ignoring meta or compatibility. */
 //options for the preset, like ignoring meta, ignoring compatability, etc.
 typedef UInt32	FxGripParameterPresetFlags;
+/*! A parameter's numeric identifier. */
 typedef UInt32	FxParameterId;
 
 #define phi (1.618033988749895)
@@ -51,9 +60,11 @@ typedef UInt32	FxParameterId;
 #define kMotionProjectDocumentId		0
 #define kAspectRatio16x9 1.777777777777778
 
+// Dynamic registration Info.plist keys
 #define kProPlugDynamicRegistration_Property				@"ProPlugDynamicRegistration"
 #define kProPlugDynamicRegistrationPrincipalClass_Property	@"ProPlugDynamicRegistrationPrincipalClass"
 
+// Host plugin and group list Info.plist keys
 #ifndef kProPlugPlugInList_Property
 	#define kProPlugPlugInList_Property							@"ProPlugPlugInList"
 #endif
@@ -85,6 +96,7 @@ typedef UInt32	FxParameterId;
 #define kProPlugPlugIn_InfoStringProperty		@"infoString"
 #define kProPlugPlugIn_VersionProperty			@"version"		//eg. NSNumber 1000 = v1.0.0.0
 
+// FxGrip plugin configuration properties
 #define kProPlugPlugInX_DefaultFontNameProperty	@"defaultFontName"
 #define kProPlugPlugInX_PresetsProperty			@"presets"
 #define kProPlugPlugInX_PriorUuidsProperty		@"priorUuids"
@@ -126,6 +138,7 @@ typedef UInt32	FxParameterId;
 // button customizing: text, style, font, font size, icon
 //
 
+// Parameter property keys
 #define kFxParameterProperty_ClassName	kProPlugPlugIn_ClassNameProperty
 #define kFxParameterProperty_Factory	@"_factory"
 #define kFxParameterProperty_ExtensionKey	@"_extKey"
@@ -161,7 +174,7 @@ typedef UInt32	FxParameterId;
 /*!
 	@typedef	FxGripPresetOptions
 	@abstract	Selects which aspects of a target preset apply.
-	@discussion Introduced in FxGrip 1.0.
+	@discussion Introduced in FxGrip 0.1.0.
 */
 typedef NS_OPTIONS(NSUInteger, FxGripPresetOptions) {
 	FxGripPresetAll		= NSUIntegerMax,
@@ -176,7 +189,7 @@ typedef NS_OPTIONS(NSUInteger, FxGripPresetOptions) {
 	@typedef	FxGripPresetSource
 	@abstract	Where a preset definition came from, which determines whether the tag
 				boundary applies.
-	@discussion Introduced in FxGrip 1.0. Definitions that ship with the plugin name
+	@discussion Introduced in FxGrip 0.1.0. Definitions that ship with the plugin name
 				parameter IDs that are current by construction, so the boundary adds
 				nothing and is bypassed. A definition loaded from a file may name IDs a
 				later plugin version reassigned, so every section is filtered by the tag.
@@ -185,6 +198,7 @@ typedef NS_ENUM(NSUInteger, FxGripPresetSource) {
 	FxGripPresetSourcePlugin = 0,	// plist "presets" table or the instance record
 	FxGripPresetSourceFile			// loaded .fxpreset
 };
+// Numeric, color, and control parameter property keys
 #define kFxParameterProperty_Minimum	@"minimum"
 #define kFxParameterProperty_Maximum	@"maximum"
 #define kFxParameterProperty_SliderMinimum	@"slidermin"
@@ -219,6 +233,14 @@ typedef NS_ENUM(NSUInteger, FxGripPresetSource) {
 #define kFxParameterProperty_GradientDepth_half16 @"half"
 #define kFxParameterProperty_GradientDepth_float32 @"float"
 
+/*!
+	@enum		FxGripDepthType
+	@abstract	How a gradient's sample depth is expressed.
+	@discussion	Introduced in FxGrip 0.1.0.
+	@constant	FxGripDepthTypeNone		No depth is specified.
+	@constant	FxGripDepthTypeFxDepth	The depth is an FxDepth constant.
+	@constant	FxGripDepthTypeBytes	The depth is a byte count per component.
+*/
 typedef enum {
 	FxGripDepthTypeNone = 0,
 	FxGripDepthTypeFxDepth = 1,
@@ -260,6 +282,10 @@ typedef enum {
 #endif
 
 
+/*!
+	@function	CGRectFromFxRect
+	@abstract	Converts an FxRect with edge coordinates to a CGRect with an origin and size.
+*/
 CG_INLINE CGRect
 CGRectFromFxRect(FxRect fxRect)
 {
@@ -269,6 +295,10 @@ CGRectFromFxRect(FxRect fxRect)
   return rect;
 }
 
+/*!
+	@function	FxRectFromCGRect
+	@abstract	Converts a CGRect with an origin and size to an FxRect with edge coordinates.
+*/
 CG_INLINE FxRect
 FxRectFromCGRect(CGRect cgRect)
 {
@@ -279,6 +309,7 @@ FxRectFromCGRect(CGRect cgRect)
 }
 
 // Double Structs
+/*! A two-component double vector with x/y, gray/alpha, or u/v accessors. */
 typedef __attribute__((__aligned__(16))) union FxGripDouble2 {
 	union {
 		struct {
@@ -298,6 +329,7 @@ typedef __attribute__((__aligned__(16))) union FxGripDouble2 {
 	float f[2];
 } FxGripDouble2;
 
+/*! A three-component double vector with r/g/b or x/y/z accessors. */
 typedef __attribute__((__aligned__(8))) union FxGripDouble3 {
 	struct {
 		union {
@@ -321,6 +353,7 @@ typedef __attribute__((__aligned__(8))) union FxGripDouble3 {
 } FxGripDouble3;
 
 
+/*! A four-component double vector with r/g/b/a or x/y/z/w accessors. */
 typedef __attribute__((__aligned__(16))) union FxGripDouble4 {
 	struct {
 		union {
@@ -350,6 +383,7 @@ typedef __attribute__((__aligned__(16))) union FxGripDouble4 {
 
 
 // Float Structs
+/*! A two-component float vector with x/y, gray/alpha, or u/v accessors. */
 typedef __attribute__((__aligned__(8))) union FxGripFloat2 {
 	union {
 		struct {
@@ -369,6 +403,7 @@ typedef __attribute__((__aligned__(8))) union FxGripFloat2 {
 	float f[2];
 } FxGripFloat2;
 
+/*! A three-component float vector with r/g/b or x/y/z accessors. */
 typedef __attribute__((__aligned__(4))) union FxGripFloat3 {
 	struct {
 		union {
@@ -391,6 +426,7 @@ typedef __attribute__((__aligned__(4))) union FxGripFloat3 {
 	float f[3];
 } FxGripFloat3;
 
+/*! A four-component float vector with r/g/b/a or x/y/z/w accessors. */
 typedef __attribute__((__aligned__(16))) union FxGripFloat4 {
 	struct {
 		union {
@@ -420,6 +456,7 @@ typedef __attribute__((__aligned__(16))) union FxGripFloat4 {
 
 
 // Half Structs
+/*! A two-component half-float vector with x/y, gray/alpha, or u/v accessors. */
 typedef __attribute__((__aligned__(4))) union FxGripHalf2 {
 	union {
 		struct {
@@ -439,6 +476,7 @@ typedef __attribute__((__aligned__(4))) union FxGripHalf2 {
 	_Float16 f[2];
 } FxGripHalf2;
 
+/*! A three-component half-float vector with r/g/b or x/y/z accessors. */
 typedef __attribute__((__aligned__(2))) union FxGripHalf3 {
 	struct {
 		union {
@@ -461,6 +499,7 @@ typedef __attribute__((__aligned__(2))) union FxGripHalf3 {
 	_Float16 f[3];
 } FxGripHalf3;
 
+/*! A four-component half-float vector with r/g/b/a or x/y/z/w accessors. */
 typedef __attribute__((__aligned__(8))) union FxGripHalf4 {
 	struct {
 		union {
@@ -489,6 +528,7 @@ typedef __attribute__((__aligned__(8))) union FxGripHalf4 {
 } FxGripHalf4;
 
 //8 bit unsigned char
+/*! A two-component unsigned-char vector with x/y, gray/alpha, or u/v accessors. */
 typedef __attribute__((__aligned__(2))) union FxGripUChar2 {
 	union {
 		struct {
@@ -509,6 +549,7 @@ typedef __attribute__((__aligned__(2))) union FxGripUChar2 {
 	unsigned char c[2];
 } FxGripUChar2;
 
+/*! A three-component unsigned-char vector with r/g/b or x/y/z accessors. */
 typedef __attribute__((__aligned__(1))) union FxGripUChar3 {
 	struct {
 		union {
@@ -531,6 +572,7 @@ typedef __attribute__((__aligned__(1))) union FxGripUChar3 {
 	unsigned char c[3];
 } FxGripUChar3;
 
+/*! A four-component unsigned-char vector with r/g/b/a or x/y/z/w accessors. */
 typedef __attribute__((__aligned__(4))) union FxGripUChar4 {
 	struct {
 		union {
@@ -566,7 +608,9 @@ typedef __attribute__((__aligned__(4))) union FxGripUChar4 {
 
 // Custom types
 
+/*! A 2D point, backed by a two-component double vector. */
 typedef FxGripDouble2 FxGripPoint;
+/*! An RGBA color, backed by a four-component double vector. */
 typedef FxGripDouble4 FxGripColor;
 
 #define kFxGripWhiteTransparent {1.0, 1.0, 1.0, 0.0}
@@ -587,6 +631,7 @@ typedef FxGripDouble4 FxGripColor;
 #define gammaToLinear4(x, g) {pow(((x)[0]), 1.0/(g)), pow(((x)[1]), 1.0/(g)), pow(((x)[2]), 1.0/(g)), pow(((x)[3]), (g))}
 
 
+/*! One channel's histogram levels: black and white in and out, gamma, and the channel index. */
 typedef struct {
 	double blackIn;
 	double blackOut;
@@ -598,6 +643,7 @@ typedef struct {
 
 #define kZeroChannelHistogram {0.0, 0.0, 1.0, 1.0, 1.0, -1}
 
+/*! A full histogram: the combined RGB channel and the separate red, green, blue, and alpha channels. */
 typedef __attribute__((__aligned__(16))) union {
 	struct {
 		union {
@@ -642,12 +688,14 @@ typedef __attribute__((__aligned__(16))) union {
 
 #define mtlPixelFormatFromFxDepth(depth) ((depth == kFxDepth_FLOAT32) ? MTLPixelFormatRGBA32Float : ((depth == kFxDepth_FLOAT16) ? MTLPixelFormatRGBA16Float : MTLPixelFormatRGBA8Unorm))
 
+/*! A gradient's header: the sample count and the per-component depth. */
 typedef struct {
 	NSUInteger	count;
 	FxDepth		depth; // 0 = 8b int, 2 = 16b half, 3 = 32b float
 } FxGripGradientHeader;
 
 
+/*! A gradient with float samples: the header followed by a flexible array of FxGripFloat4 samples. */
 typedef struct {
 	union {
 		struct {
@@ -660,6 +708,7 @@ typedef struct {
 } FxGripGradientFloat;
 
 
+/*! A gradient with half-float samples: the header followed by a flexible array of FxGripHalf4 samples. */
 typedef struct {
 	union {
 		struct {
@@ -672,6 +721,7 @@ typedef struct {
 } FxGripGradientHalf;
 
 
+/*! A gradient with 8-bit samples: the header followed by a flexible array of FxGripUChar4 samples. */
 typedef struct {
 	union {
 		struct {
@@ -680,15 +730,23 @@ typedef struct {
 		};
 		FxGripGradientHeader header;
 	};
-	
+
 	FxGripUChar4		samples[];
 } FxGripGradientUInt8;
 
+/*! The default gradient representation, the float-sample gradient. */
 typedef FxGripGradientFloat FxGripGradient;
 
 #define kZeroGradient {0, 3}
 
 
+/*!
+	@enum		FxParameterType
+	@abstract	The kind of a parameter, spanning the FxPlug native types and the FxGrip custom controls.
+	@discussion	Introduced in FxGrip 0.1.0. Values 0 through 19 mirror the FxPlug parameter types. Values
+				from 120 up are FxGrip custom controls. The negative values name the array and dictionary
+				container types.
+*/
 typedef NS_ENUM(NSInteger, FxParameterType) {
 	FxParameterType_None = 0,
 	FxParameterType_Angle = 1,

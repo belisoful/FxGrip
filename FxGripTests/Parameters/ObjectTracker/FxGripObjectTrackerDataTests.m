@@ -1,12 +1,12 @@
-//
-//  FxGripObjectTrackerDataTests.m
-//  FxGripTests
-//
-//  The Object Tracker parameter's persisted value: configuration round-trip under secure
-//  coding, the sparse frame-indexed sample store with hold-forward seek, box-averaging
-//  smoothing, and copy independence. The framework headers use quoted includes that do not
-//  resolve from the test target, so the surface under test is re-declared here.
-//
+/*!
+	@file       FxGripObjectTrackerDataTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerDataTests
+	@abstract   Tests the FxGripObjectTrackerData persisted value behind the object tracker parameter.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the defaults, the secure-coding round trip of the configuration and samples, the sparse frame-indexed sample store with hold-forward seek, the transform and corner-box derivation, box-averaging smoothing, the anchor that rides with box position and scale, the seed frame, and copy independence.
+*/
 
 #import <XCTest/XCTest.h>
 #import <CoreGraphics/CoreGraphics.h>
@@ -74,6 +74,7 @@ typedef struct {
 	return [[FxGripObjectTrackerSample alloc] initWithBoundingBox:CGRectMake(x, 0.4, w, 0.2) confidence:0.9f];
 }
 
+/*! @abstract A default tracker is enabled, uses the rectangle shape and position-and-scale behavior, and holds no samples. */
 - (void)testDefaultsAreSensible
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -83,6 +84,7 @@ typedef struct {
 	XCTAssertEqual(data.sampleCount, 0u);
 }
 
+/*! @abstract The configuration, parameter IDs, and stored samples survive a secure-coding round trip. */
 - (void)testConfigurationSurvivesSecureCoding
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -123,6 +125,7 @@ typedef struct {
 	XCTAssertEqualWithAccuracy([decoded sampleAtFrame:7].boundingBox.origin.x, 0.5, 1e-9);
 }
 
+/*! @abstract The sample store is sparse and holds a sample forward, so a seek before the first sample returns nil and a seek past the last returns the last. */
 - (void)testSparseStoreAndHoldForwardSeek
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -138,6 +141,7 @@ typedef struct {
 	XCTAssertEqual(data.sampleCount, 0u);
 }
 
+/*! @abstract The transform fails with no samples and otherwise returns the sample's center and size. */
 - (void)testTransformReturnsCenterAndSize
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -152,6 +156,7 @@ typedef struct {
 	XCTAssertEqualWithAccuracy(t.rotation, 0.0, 1e-9);
 }
 
+/*! @abstract The transform carries the sample's rotation. */
 - (void)testTransformCarriesSampleRotation
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -165,6 +170,7 @@ typedef struct {
 	XCTAssertEqualWithAccuracy(t.rotation, 0.30, 1e-9);
 }
 
+/*! @abstract Smoothing averages the samples in the window around the requested frame. */
 - (void)testSmoothingAveragesTheWindow
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -185,6 +191,7 @@ typedef struct {
 													  confidence:0.9f];
 }
 
+/*! @abstract The corner box derives the lower-left and upper-right corners and the center from the sample box. */
 - (void)testCornerBoxDerivesCornersAndCenter
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -200,6 +207,7 @@ typedef struct {
 	XCTAssertEqualWithAccuracy(c.y, 0.50, 1e-9);
 }
 
+/*! @abstract An anchor point rides with the box, so its offset from the center translates and scales with the box. */
 - (void)testAnchorRidesWithBoxPositionAndScale
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -214,6 +222,7 @@ typedef struct {
 	XCTAssertEqualWithAccuracy(out.y, 0.50, 1e-9);
 }
 
+/*! @abstract The seed frame is the first sample's frame, or NSNotFound when there are no samples. */
 - (void)testSeedFrameIsFirstSample
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -223,6 +232,7 @@ typedef struct {
 	XCTAssertEqual(data.seedFrame, 5);
 }
 
+/*! @abstract A copy is independent, so later changes to the original's smoothing and samples do not reach it. */
 - (void)testCopyIsIndependent
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];

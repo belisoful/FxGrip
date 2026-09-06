@@ -1,3 +1,14 @@
+/*!
+	@file       FxGripStaticRegistrar.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripStaticRegistrar
+	@abstract   Implements the base singleton that registers a plugin bundle's effects and groups.
+	@discussion Introduced in FxGrip 0.1.0. The class builds the plugin and group records from the
+	            subclass hooks, validates each plugin's required entries, moves on-screen controls to
+	            their supporting plugins, and freezes the results into immutable, localized arrays.
+*/
 
 #import <objc/runtime.h>
 #import <Foundation/NSTask.h>
@@ -13,10 +24,15 @@
  	You may ask yourself, why should there be a constant class for registering FxPlug Plugins?
  Great question.  It allows for easy localization of the  values, storage of the plugin configurations,
  and parameterization of data registration.
- 
+
  The data can be produced the same way or through the Registrar methids.
  */
 
+/*!
+	@abstract	The singleton registrar that validates and stores a plugin bundle's registration records.
+	@discussion	Introduced in FxGrip 0.1.0. The class serves as the FxPlug host's registration entry
+				point, collecting plugins and groups from the subclass hooks and freezing them for the host.
+*/
 @implementation FxGripStaticRegistrar
 @synthesize isLoadable = _isLoadable;
 @synthesize registeredPlugInGroups = _registeredPlugInGroups;
@@ -133,10 +149,14 @@
 }
 
 
-/**
- 	Go through all classes, find the FxGripRegisteredPlugin, and if active, include it.
- */
-
+/*!
+	@method		registeredPlugInsWithError:
+	@abstract	Builds and returns the registered plugin dictionaries on first call.
+	@discussion	Introduced in FxGrip 0.1.0. The method registers the plugins the subclass supplies
+				through plugInReferences and plugInsWithError:, then moves each plugin that names an
+				on-screen control into that control's supportedPlugins list. It freezes every record to
+				immutable, localizes the result, and caches it. A later call returns the cached array.
+				An empty result sets kFxGripError_NoConfigPlugins. */
 - (nullable NSArray *)registeredPlugInsWithError:(NSError **)error
 {
 #if DEBUG
@@ -294,6 +314,11 @@
 	}];
 }
 
+/*!
+	@method		registerGroupUUID:groupName:
+	@abstract	Registers one group under its UUID with its display name.
+	@discussion	Introduced in FxGrip 0.1.0. The method rejects a call made after registration closes and
+				a call missing the UUID or name. Re-registering a UUID with a different name logs an error. */
 - (void)registerGroupUUID:(nonnull NSString*)uuid groupName:(nonnull NSString*)groupName
 {
 	if (!__registeredPlugInGroups) {
@@ -332,6 +357,13 @@
 #pragma mark -
 #pragma mark FxGripRegisteringPlugins Implementation
 
+/*!
+	@method		registerPluginClass:
+	@abstract	Registers a plugin from a class that conforms to FxGripRegisteredPlugin.
+	@discussion	Introduced in FxGrip 0.1.0. The method skips a non-conforming class and a class whose
+				isRegisteredPlugIn returns NO. It reads the class's registration records, registers any
+				carried group list, and registers the plugin records. It returns YES when the class
+				supplied records. */
 - (BOOL)registerPluginClass:(nonnull Class)pluginClass
 {
 	if (![pluginClass conformsToProtocol:@protocol(FxGripRegisteredPlugin)]) {
@@ -358,6 +390,14 @@
 }
 
 
+/*!
+	@method		registerPlugin:
+	@abstract	Registers one plugin from a class or a validated plugin dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. A class argument is forwarded to registerPluginClass:. A
+				dictionary that carries a group name registers the group and drops the name from the
+				stored record. The plugin registers only when it has a UUID, a loadable class name, a
+				display name, a group UUID, protocol names, and a version. A class name that resolves to
+				no loaded class is rejected. The method returns YES when the plugin registers. */
 - (BOOL) registerPlugin:(nullable NSDictionary*)plugin
 {
 	if (!plugin) {

@@ -1,7 +1,15 @@
-//
-//  FxGripPresetsParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripPresetsParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPresetsParameter
+	@abstract   Implements the presets popup menu, its live refresh, and selection handling.
+	@discussion Introduced in FxGrip 0.1.0. The menu builds from the tag's user and plugin presets.
+	            A parameter change routes a preset name to the presets API, an action entry to its
+	            reveal or save handler, and Default to a recorded default. A path watcher on the
+	            managed user preset folder rebuilds the menu and restores the recorded selection.
+*/
 
 #import <AppKit/AppKit.h>
 #import "FxGripPresetsParameter.h"
@@ -29,6 +37,10 @@
 @end
 
 
+/*!
+	@abstract	The popup menu parameter that lists and applies the presets for one tag.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter builds the menu at creation, watches the
+				user preset folder for changes, and applies or records the selection on change. */
 @implementation FxGripPresetsParameter
 
 #pragma mark Host guards
@@ -62,6 +74,7 @@
 	return [tag isKindOfClass:NSString.class] ? tag : nil;
 }
 
+/*! @abstract The non-empty names of the given presets, in order. */
 + (NSArray<NSString*>*)presetNames:(NSArray<FxGripPreset*>*)presets
 {
 	NSMutableArray *names = [NSMutableArray arrayWithCapacity:presets.count];
@@ -73,6 +86,11 @@
 	return names;
 }
 
+/*!
+	@method		menuEntriesForParameter:effect:
+	@abstract	Builds the ordered menu entry list for a configuration.
+	@return		Default, the user and plugin preset names, and the reveal and save entries.
+	@discussion	Introduced in FxGrip 0.1.0. An empty preset section and its separator are omitted. */
 + (nonnull NSArray<NSString*>*)menuEntriesForParameter:(nonnull NSDictionary*)parameter
 											    effect:(nonnull id<FxGripEffectHost>)effect
 {
@@ -98,6 +116,10 @@
 	return entries;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Creates the presets popup menu on the effect with the built entry list.
+	@return		YES when the host creates the parameter. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	return [effect.apiManager.paramCreateAPIv5 addPopupMenuWithName: parameter.parameterName
@@ -110,6 +132,10 @@
 
 #pragma mark Selection Handling
 
+/*!
+	@method		installNotifications
+	@abstract	Observes parameter-change notifications and attaches the user preset watcher.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (void)installNotifications
 {
 	[super installNotifications];
@@ -240,6 +266,7 @@
 	return nil;
 }
 
+/*! @abstract Records the selected preset name in the instance record when the host has meta. */
 - (void)recordSelectedPresetName:(NSString*)name
 {
 	id<FxGripEffectHost> effect = self.effect;
@@ -271,6 +298,11 @@
 	[effect.apiManager.paramSetAPIv5 setIntValue:index toParameter:self.parameterID atTime:time];
 }
 
+/*!
+	@method		revealUserPresetsAtTime:
+	@abstract	Opens the managed user preset folder in Finder and restores the selection.
+	@discussion	Introduced in FxGrip 0.1.0. The folder is created on demand, and the watcher
+				attaches after creation. */
 - (void)revealUserPresetsAtTime:(CMTime)time
 {
 	id<FxGripPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
@@ -287,6 +319,11 @@
 	[self restoreSelectionAtTime:time];
 }
 
+/*!
+	@method		saveCurrentStateAsPresetAtTime:
+	@abstract	Captures the current state as a user preset and refreshes the menu.
+	@discussion	Introduced in FxGrip 0.1.0. A successful save tags the preset, attaches the watcher,
+				and refreshes the menu. A failure restores the previous selection. */
 - (void)saveCurrentStateAsPresetAtTime:(CMTime)time
 {
 	id<FxGripPresetsAPI_v1> presetsAPI = self.effect.apiManager.presetsAPIv1;
@@ -307,6 +344,19 @@
 	[self restoreSelectionAtTime:time];
 }
 
+/*!
+	@method		notifyPresetsParameterChanged:
+	@abstract	Routes a change of this parameter to the selected entry's action.
+	@param		notification	The parameter-changed notification carrying the parameter ID and time.
+	@discussion	Introduced in FxGrip 0.1.0. The handler resolves the selected menu index to an
+				entry name.
+				<ul>
+				<li>Separator entry → no action.</li>
+				<li>Reveal entry → opens the user preset folder.</li>
+				<li>Save entry → captures the current state.</li>
+				<li>Default entry → records the default selection.</li>
+				<li>Preset name → applies the named preset and records its name.</li>
+				</ul> */
 - (void)notifyPresetsParameterChanged:(nonnull NSNotification *)notification
 {
 	NSNumber *pid = notification.userInfo[FxGripTileableEffectParameterChangedIDKey];

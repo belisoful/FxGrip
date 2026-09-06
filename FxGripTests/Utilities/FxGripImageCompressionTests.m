@@ -1,19 +1,12 @@
-//
-//  FxGripImageCompressionTests.m
-//  FxGripTests
-//
-//  Unit tests for the pixel-format helpers and the lossless codec wrappers: the component
-//  geometry of the twenty packed formats, the round trip of each codec, and the nil returns
-//  that tell a caller to keep the original bytes.
-//
-//  The lossy image codecs appear here only through the helpers that classify them and the
-//  raw-data functions that refuse them; their encodes need image geometry and are covered by
-//  FxGripImageBufferTests.
-//
-//  Compressed byte counts are not asserted; the codecs are free to change their output. The
-//  tests assert round trips and length relations instead. Incompressible payloads come from
-//  a fixed linear congruential sequence so every run sees the same bytes.
-//
+/*!
+	@file       FxGripImageCompressionTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripImageCompressionTests
+	@abstract   Unit tests for the pixel-format helpers and the lossless codec wrappers.
+	@discussion Introduced in FxGrip 0.1.0. The tests fix the component geometry of the twenty packed formats and the round trip of each lossless codec. They assert the nil returns that tell a caller to keep the original bytes and cover the compression envelope's threshold, pass-through, and error paths.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripImageCompression.h>
@@ -147,6 +140,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 
 #pragma mark Format geometry
 
+/*! @abstract The RGBA formats report four components and the RGB formats report three. */
 - (void)testComponentsAreFourForTheAlphaFormatsAndThreeOtherwise
 {
 	XCTAssertEqual(FxGripPixelFormatComponents(FxGripPixelFormatRGBA32F), 4u);
@@ -162,12 +156,14 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqual(FxGripPixelFormatComponents(FxGripPixelFormatRGB8U), 3u);
 }
 
+/*! @abstract An invalid or unrecognized format reports zero components. */
 - (void)testComponentsAreZeroForAnUnknownFormat
 {
 	XCTAssertEqual(FxGripPixelFormatComponents(FxGripPixelFormatInvalid), 0u);
 	XCTAssertEqual(FxGripPixelFormatComponents((FxGripPixelFormat)99), 0u);
 }
 
+/*! @abstract Bytes per component are four for 32-bit, two for 16-bit, and one for 8-bit formats. */
 - (void)testBytesPerComponentFollowTheComponentWidth
 {
 	XCTAssertEqual(FxGripPixelFormatBytesPerComponent(FxGripPixelFormatRGBA32F), 4u);
@@ -184,12 +180,14 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqual(FxGripPixelFormatBytesPerComponent(FxGripPixelFormatRGB8U), 1u);
 }
 
+/*! @abstract An invalid or unrecognized format reports zero bytes per component. */
 - (void)testBytesPerComponentIsZeroForAnUnknownFormat
 {
 	XCTAssertEqual(FxGripPixelFormatBytesPerComponent(FxGripPixelFormatInvalid), 0u);
 	XCTAssertEqual(FxGripPixelFormatBytesPerComponent((FxGripPixelFormat)99), 0u);
 }
 
+/*! @abstract Bytes per pixel equal the component count times the bytes per component for every format. */
 - (void)testBytesPerPixelIsComponentsTimesTheComponentWidth
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatCount; index++) {
@@ -200,6 +198,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Representative formats report their expected byte-per-pixel sizes. */
 - (void)testBytesPerPixelOfTheWidestAndNarrowestFormats
 {
 	XCTAssertEqual(FxGripPixelFormatBytesPerPixel(FxGripPixelFormatRGBA32F), 16u);
@@ -210,12 +209,14 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqual(FxGripPixelFormatBytesPerPixel(FxGripPixelFormatRGB8U), 3u);
 }
 
+/*! @abstract An invalid or unrecognized format reports zero bytes per pixel. */
 - (void)testBytesPerPixelIsZeroForAnUnknownFormat
 {
 	XCTAssertEqual(FxGripPixelFormatBytesPerPixel(FxGripPixelFormatInvalid), 0u);
 	XCTAssertEqual(FxGripPixelFormatBytesPerPixel((FxGripPixelFormat)99), 0u);
 }
 
+/*! @abstract A format carries alpha exactly when it has two or four components. */
 - (void)testHasAlphaIsTrueOnlyForTheTwoAndFourChannelFormats
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatCount; index++) {
@@ -228,6 +229,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertFalse(FxGripPixelFormatHasAlpha(FxGripPixelFormatInvalid));
 }
 
+/*! @abstract A format reports float components only for the 16-bit and 32-bit float formats. */
 - (void)testIsFloatIsTrueOnlyForTheFloatFormats
 {
 	XCTAssertTrue(FxGripPixelFormatIsFloat(FxGripPixelFormatRGBA32F));
@@ -246,6 +248,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 
 #pragma mark The packed format table
 
+/*! @abstract Every named format reports the channel count its table entry declares. */
 - (void)testEveryNamedFormatReportsItsChannelCount
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
@@ -256,6 +259,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Every named format reports the component type its table entry declares. */
 - (void)testEveryNamedFormatReportsItsComponentType
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
@@ -266,6 +270,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Every named format reports the bytes per component its table entry declares. */
 - (void)testEveryNamedFormatReportsItsBytesPerComponent
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
@@ -276,6 +281,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Every named format reports bytes per pixel equal to its channels times its bytes per component. */
 - (void)testEveryNamedFormatReportsItsBytesPerPixel
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
@@ -287,6 +293,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Every named format reports the alpha flag its table entry declares. */
 - (void)testEveryNamedFormatReportsWhetherItCarriesAlpha
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
@@ -297,6 +304,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Every named format reports the float flag its table entry declares. */
 - (void)testEveryNamedFormatReportsWhetherItsComponentsAreFloat
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
@@ -307,6 +315,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Packing a channel count and component type reproduces the named format constant. */
 - (void)testPixelFormatMakeProducesTheNamedConstants
 {
 	for (NSUInteger index = 0; index < kCompressionTestFormatSpecCount; index++) {
@@ -317,6 +326,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract The twenty named formats hold distinct values, none equal to the invalid format. */
 - (void)testTheNamedFormatsAreDistinct
 {
 	NSMutableSet<NSNumber *> *values = [NSMutableSet set];
@@ -328,6 +338,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertFalse([values containsObject:@(FxGripPixelFormatInvalid)]);
 }
 
+/*! @abstract The single-channel shader aliases equal their gray and gray-alpha float formats. */
 - (void)testTheShaderAliasesNameTheGrayFloatFormats
 {
 	XCTAssertEqual(FxGripPixelFormatR16F, FxGripPixelFormatGray16F);
@@ -336,6 +347,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqual(FxGripPixelFormatRA32F, FxGripPixelFormatGrayAlpha32F);
 }
 
+/*! @abstract A malformed packed value reports zero components, zero bytes per pixel, and no alpha. */
 - (void)testMalformedPackedValuesHaveNoPixelGeometry
 {
 	for (NSUInteger index = 0; index < kCompressionTestMalformedFormatCount; index++) {
@@ -347,6 +359,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract A component type outside the enumeration reports invalid, zero width, and non-float. */
 - (void)testAComponentTypeOutsideTheEnumerationIsInvalid
 {
 	for (NSUInteger index = 0; index < kCompressionTestMalformedTypeCount; index++) {
@@ -377,6 +390,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 
 #pragma mark Codec classification
 
+/*! @abstract FxGripCompressionIsLossy is true only for the image codecs and false for none, the buffer codecs, and an unknown codec. */
 - (void)testOnlyTheImageCodecsAreLossy
 {
 	XCTAssertTrue(FxGripCompressionIsLossy(FxGripCompressionJPEG));
@@ -392,6 +406,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 
 #pragma mark Compression
 
+/*! @abstract Every lossless codec compresses and then decompresses compressible data back to the original bytes. */
 - (void)testEveryCodecRoundTripsCompressibleData
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -406,6 +421,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Every lossless codec produces output shorter than compressible input. */
 - (void)testEveryCodecShrinksCompressibleData
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -418,11 +434,13 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Compressing with the none codec returns nil. */
 - (void)testCompressionNoneReturnsNil
 {
 	XCTAssertNil(FxGripCompressedData(FxGripCompressionTestCompressibleData(8192), FxGripCompressionNone));
 }
 
+/*! @abstract Compressing with an unknown codec returns nil. */
 - (void)testAnUnknownCodecReturnsNilFromCompression
 {
 	XCTAssertNil(FxGripCompressedData(FxGripCompressionTestCompressibleData(8192), (FxGripCompression)99));
@@ -439,6 +457,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract The raw decompressor returns nil for each lossy image codec. */
 - (void)testTheRawDecompressorRejectsTheLossyImageCodecs
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -449,6 +468,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Compressing empty data returns nil from every lossless codec. */
 - (void)testCompressingEmptyDataReturnsNil
 {
 	for (NSUInteger index = 0; index < kCompressionTestCodecCount; index++) {
@@ -457,6 +477,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Compressing incompressible data returns nil from every lossless codec, so the caller keeps the original bytes. */
 - (void)testIncompressibleDataReturnsNilFromEveryCodec
 {
 	NSData *noise = FxGripCompressionTestIncompressibleData(256);
@@ -467,6 +488,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract A short incompressible payload returns nil rather than growing past its original length. */
 - (void)testAShortIncompressiblePayloadReturnsNilRatherThanGrowing
 {
 	NSData *noise = FxGripCompressionTestIncompressibleData(8);
@@ -479,6 +501,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 
 #pragma mark Decompression
 
+/*! @abstract Decompressing with the none codec returns the input bytes unchanged. */
 - (void)testDecompressionNonePassesTheDataThrough
 {
 	NSData *original = FxGripCompressionTestCompressibleData(64);
@@ -486,6 +509,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqualObjects(FxGripDecompressedData(original, FxGripCompressionNone, original.length), original);
 }
 
+/*! @abstract Decompressing with the none codec ignores the stated length and returns the input unchanged. */
 - (void)testDecompressionNoneIgnoresTheStatedLength
 {
 	NSData *original = FxGripCompressionTestCompressibleData(64);
@@ -493,6 +517,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqualObjects(FxGripDecompressedData(original, FxGripCompressionNone, 999), original);
 }
 
+/*! @abstract Decompressing with an unknown codec returns nil. */
 - (void)testDecompressionWithAnUnknownCodecReturnsNil
 {
 	NSData *original = FxGripCompressionTestCompressibleData(64);
@@ -500,11 +525,13 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertNil(FxGripDecompressedData(original, (FxGripCompression)99, original.length));
 }
 
+/*! @abstract Decompressing empty data returns nil. */
 - (void)testDecompressionOfEmptyDataReturnsNil
 {
 	XCTAssertNil(FxGripDecompressedData([NSData data], FxGripCompressionLZFSE, 64));
 }
 
+/*! @abstract Decompressing with a stated length of zero returns nil. */
 - (void)testDecompressionWithAZeroLengthReturnsNil
 {
 	NSData *compressed = FxGripCompressedData(FxGripCompressionTestCompressibleData(8192), FxGripCompressionLZFSE);
@@ -512,6 +539,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertNil(FxGripDecompressedData(compressed, FxGripCompressionLZFSE, 0));
 }
 
+/*! @abstract Decompressing with a stated length above the original returns nil from every codec. */
 - (void)testDecompressionWithALengthAboveTheOriginalReturnsNil
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -540,6 +568,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract Decompressing LZFSE-compressed data with the LZMA codec returns nil. */
 - (void)testDecompressionWithTheWrongCodecReturnsNil
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -551,6 +580,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 
 #pragma mark Availability
 
+/*! @abstract The none, buffer, JPEG, and HEIC codecs report available, and an unknown codec reports unavailable. */
 - (void)testTheBufferCodecsAreAlwaysAvailableAndJPEGAndHEICOnEverySupportedOS
 {
 	XCTAssertTrue(FxGripCompressionIsAvailable(FxGripCompressionNone));
@@ -563,6 +593,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertFalse(FxGripCompressionIsAvailable((FxGripCompression)99));
 }
 
+/*! @abstract The lossy codecs report their uniform type identifiers and the buffer codecs report nil. */
 - (void)testTheLossyCodecsNameTheirTypeIdentifiersAndTheBufferCodecsHaveNone
 {
 	XCTAssertEqualObjects(FxGripCompressionTypeIdentifier(FxGripCompressionJPEG), @"public.jpeg");
@@ -583,6 +614,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 
 #pragma mark Compression envelope
 
+/*! @abstract The envelope compresses compressible data through every codec to a smaller payload and restores the original with no error. */
 - (void)testEnvelopeRoundTripsCompressibleDataThroughEveryCodec
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -598,6 +630,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	}
 }
 
+/*! @abstract The envelope passes a payload below the length threshold through unchanged. */
 - (void)testEnvelopeLeavesDataBelowTheThresholdUncompressed
 {
 	NSData *original = FxGripCompressionTestCompressibleData(4096);
@@ -606,6 +639,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqualObjects(result, original, @"a payload below the threshold passes through unchanged");
 }
 
+/*! @abstract The envelope compresses a payload at or above the length threshold. */
 - (void)testEnvelopeCompressesDataAtOrAboveTheThreshold
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -615,6 +649,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertNotEqualObjects(result, original);
 }
 
+/*! @abstract The envelope leaves incompressible data raw with no envelope wrapper. */
 - (void)testEnvelopeLeavesIncompressibleDataUncompressed
 {
 	NSData *noise = FxGripCompressionTestIncompressibleData(8192);
@@ -623,6 +658,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqualObjects(result, noise, @"noise the codec cannot shrink stays raw with no envelope");
 }
 
+/*! @abstract The envelope leaves data unchanged for the none and lossy codecs. */
 - (void)testEnvelopeLeavesDataUncompressedForNoneAndLossyCodecs
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -658,6 +694,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqualObjects(result, plist);
 }
 
+/*! @abstract The envelope decoder returns nil and reports an FxGripCompression-domain error on a corrupt payload. */
 - (void)testEnvelopeDecompressReportsAnErrorOnACorruptPayload
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -673,6 +710,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqualObjects(error.domain, FxGripCompressionErrorDomain);
 }
 
+/*! @abstract The envelope decoder returns nil and reports an FxGripCompression-domain error on an unknown envelope version. */
 - (void)testEnvelopeDecompressReportsAnErrorOnAnUnknownVersion
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);
@@ -686,6 +724,7 @@ static NSData *FxGripCompressionTestIncompressibleData(NSUInteger length)
 	XCTAssertEqualObjects(error.domain, FxGripCompressionErrorDomain);
 }
 
+/*! @abstract The envelope decoder returns nil without crashing when the error pointer is NULL on corrupt data. */
 - (void)testEnvelopeDecompressToleratesANullErrorOnCorruptData
 {
 	NSData *original = FxGripCompressionTestCompressibleData(8192);

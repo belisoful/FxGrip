@@ -1,15 +1,12 @@
-//
-//  FxGripTextImageTests.m
-//  FxGripTests
-//
-//  Unit tests for the text rasterizer: an attributed string becomes a Metal texture sized to
-//  the glyphs plus padding, empty text produces no texture, and the color and font
-//  conveniences feed the primary rasterizer.
-//
-//  The test bundle links only FxGrip and XCTest, so the Metal device is reached through the
-//  loaded framework image rather than a link-time reference, and a test skips when no Metal
-//  device is present.
-//
+/*!
+	@file       FxGripTextImageTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTextImageTests
+	@abstract   Tests the text rasterizer that turns an attributed string into a Metal texture.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the texture is sized to the glyphs plus padding, empty or device-less input yields no texture, and the color and font conveniences reach the primary rasterizer. Metal-dependent tests skip when no device is available.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -32,6 +29,7 @@ typedef void *(*FxGripTextImageTestCreateDevice)(void);
 	return (__bridge_transfer id<MTLDevice>)create();
 }
 
+/*! @abstract Empty text returns no texture even when a Metal device is present. */
 - (void)testEmptyTextMakesNoTexture
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -40,11 +38,13 @@ typedef void *(*FxGripTextImageTestCreateDevice)(void);
 	XCTAssertNil([FxGripTextImage textureForText:@"" fontSize:24.0 color:simd_make_float4(1, 1, 1, 1) device:device]);
 }
 
+/*! @abstract A nil device returns no texture. */
 - (void)testNilDeviceMakesNoTexture
 {
 	XCTAssertNil([FxGripTextImage textureForText:@"Frame 01" fontSize:24.0 color:simd_make_float4(1, 1, 1, 1) device:nil]);
 }
 
+/*! @abstract Rasterized text produces an sRGB RGBA8 texture wider and taller than eight pixels. */
 - (void)testTextMakesAnSRGBTextureSizedToTheGlyphs
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -60,6 +60,7 @@ typedef void *(*FxGripTextImageTestCreateDevice)(void);
 	XCTAssertGreaterThan(texture.height, 8u);
 }
 
+/*! @abstract An eight-character string produces a wider texture than a single character at the same font size. */
 - (void)testALongerStringIsWider
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -72,6 +73,7 @@ typedef void *(*FxGripTextImageTestCreateDevice)(void);
 	XCTAssertGreaterThan(longText.width, shortText.width);
 }
 
+/*! @abstract Padding of ten points adds twenty pixels to both the width and the height of the attributed-string texture. */
 - (void)testAttributedStringPaddingWidensTheTexture
 {
 	id<MTLDevice> device = [self metalDevice];

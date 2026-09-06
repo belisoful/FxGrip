@@ -1,7 +1,16 @@
-//
-//  FxGripMLVideoEffect.m
-//  FxGrip
-//
+/*!
+	@file       FxGripMLVideoEffect.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLVideoEffect
+	@abstract   Implements the clip-generation lifecycle for a model that produces a whole movie file.
+	@discussion Introduced in FxGrip 0.1.0. A lock guards the state, progress, clip URL, and error. A
+	            generation token invalidates a cancelled run's late result. beginGenerationAtTime:
+	            runs the backend on the generation queue and finishes Ready with the clip URL or
+	            Failed with the error. The render path samples the ready clip and otherwise draws the
+	            source unchanged.
+*/
 
 #import "FxGripMLVideoEffect.h"
 #import "FxGripInferenceRequest.h"
@@ -9,6 +18,11 @@
 #import "FxGripErrors.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The tileable-effect template whose model generates a whole clip rather than a frame.
+	@discussion	Introduced in FxGrip 0.1.0. The state moves Idle to Generating to Ready or Failed. The
+				per-frame cache is disabled because the clip file is the cache.
+*/
 @implementation FxGripMLVideoEffect
 {
 	NSLock *_stateLock;
@@ -111,6 +125,7 @@
 	[self generationStateDidChange];
 }
 
+/*! The state-change hook. The default does nothing; a subclass mirrors the state and invalidates. */
 - (void)generationStateDidChange
 {
 }
@@ -129,6 +144,12 @@
 
 #pragma mark Generation
 
+/*!
+	@method		beginGenerationAtTime:
+	@abstract	Starts a generation on the generation queue; no-op while one is running.
+	@discussion	Introduced in FxGrip 0.1.0. The method captures a new token, moves to Generating, and
+				dispatches the backend run. A not-ready backend finishes Failed. The finish applies
+				only when the token still matches. */
 - (void)beginGenerationAtTime:(CMTime)time
 {
 	[_stateLock lock];
@@ -211,6 +232,7 @@
 	return nil;
 }
 
+/*! Invalidates the running run's token and returns to idle. The late result is ignored. */
 - (void)cancelGeneration
 {
 	[_stateLock lock];
@@ -222,6 +244,7 @@
 	}
 }
 
+/*! Clears a ready or failed state and the stored clip URL back to idle. */
 - (void)resetGeneration
 {
 	[_stateLock lock];
@@ -257,6 +280,7 @@
 	return [self writeImageOutput:imageInput toDestinationTile:destinationTile atTime:time error:outError];
 }
 
+/*! The clip-sampling seam. The default returns NO, which falls back to the source unchanged. */
 - (BOOL)renderFrameFromGeneratedClip:(NSURL *)clipURL
 				   toDestinationTile:(nullable FxImageTile *)destinationTile
 							  atTime:(CMTime)time

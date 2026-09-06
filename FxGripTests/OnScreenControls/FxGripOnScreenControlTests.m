@@ -1,16 +1,12 @@
-//
-//  FxGripOnScreenControlTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripOnScreenControl and the stock OSC parts: coordinate
-//  conversion, part hit-testing and ordering, the mouse-event drag routing, and
-//  the parameter writes the drags produce.
-//
-//  The control under test is a local subclass whose apiManager getter returns a
-//  stub manager, the FxGripTileableEffectCategoriesTests convention. The stub OSC
-//  API maps canvas to object space by a uniform scale of 100, so canvas (40, 40)
-//  is object (0.4, 0.4). GPU drawing is not exercised; the geometry helpers are.
-//
+/*!
+	@file       FxGripOnScreenControlTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOnScreenControlTests
+	@abstract   Verifies FxGripOnScreenControl and its stock parts across coordinate conversion, hit testing, and drag routing.
+	@discussion Introduced in FxGrip 0.1.0. A control subclass returns a stub API manager whose OSC API maps canvas to object space by a uniform scale of 100, and stub retrieval and setting APIs stage and record parameter values. The tests cover the Metal point conversion, standard colors, coordinate round-trips, part ordering and hit testing, and the mouse-drag pipeline for rect, point, circle, line, gradient, angle dial, rectangle corner, polyline, and box parts, including Shift, Option, and combined modifier behavior.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
@@ -246,6 +242,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Geometry and constants
 
+/*! @abstract The canvas-to-Metal point conversion centers the origin and flips the y axis. */
 - (void)testTheMetalPointConversionFlipsAndCenters
 {
 	CGSize size = CGSizeMake(100, 100);
@@ -262,6 +259,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy(upperRight.y, -50.0, 1e-12);
 }
 
+/*! @abstract The standard OSC fill, outline, and shadow colors carry the host-convention component values. */
 - (void)testTheStandardColorsMatchTheHostConventions
 {
 	XCTAssertEqual(kFxGripOSCUnselectedFillColor.w, 0.25f);
@@ -270,11 +268,13 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual(kFxGripOSCShadowColor.w, 1.0f);
 }
 
+/*! @abstract The control's drawing coordinates default to canvas space. */
 - (void)testTheDrawingCoordinatesDefaultToCanvas
 {
 	XCTAssertEqual(self.control.drawingCoordinates, kFxDrawingCoordinates_CANVAS);
 }
 
+/*! @abstract Canvas-to-object and object-to-canvas conversions round-trip through the OSC API. */
 - (void)testTheCoordinateConversionsRoundTripThroughTheOSCAPI
 {
 	CGPoint object = [self.control objectPointFromCanvasPoint:CGPointMake(40, 80)];
@@ -288,6 +288,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Parts
 
+/*! @abstract Adding parts preserves their order and sets each part's control back-reference. */
 - (void)testAddPartWiresTheControlAndKeepsOrder
 {
 	FxGripOSCPart *first = [[FxGripOSCPart alloc] initWithPartID:1];
@@ -300,6 +301,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualObjects(second.control, self.control);
 }
 
+/*! @abstract A rect part hits a point inside its span and misses a point outside it. */
 - (void)testARectPartHitsInsideAndMissesOutside
 {
 	[self stagedRectPartWithID:1];
@@ -308,6 +310,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:70 y:40], (NSInteger)0);
 }
 
+/*! @abstract The last-added part wins a hit where two parts overlap. */
 - (void)testTheLastAddedPartWinsAnOverlappingHit
 {
 	[self stagedRectPartWithID:1];
@@ -319,6 +322,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:40 y:40], (NSInteger)2);
 }
 
+/*! @abstract A point handle hits within its canvas radius of the parameter position and misses beyond it. */
 - (void)testAPointHandleHitsByCanvasDistance
 {
 	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:21];
@@ -330,6 +334,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:70 y:50], (NSInteger)0);
 }
 
+/*! @abstract A circle part hit test corrects for the input image aspect ratio. */
 - (void)testACirclePartHitCorrectsForTheImageAspect
 {
 	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:31];
@@ -349,6 +354,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Mouse routing
 
+/*! @abstract Dragging a rect body moves both corner parameters by the object-space delta. */
 - (void)testDraggingARectPartMovesBothCornersByTheObjectDelta
 {
 	[self stagedRectPartWithID:1];
@@ -372,6 +378,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.65, 1e-9);
 }
 
+/*! @abstract Mouse-up applies the final drag position and writes the corner parameters. */
 - (void)testMouseUpRepeatsTheFinalDragAndResets
 {
 	[self stagedRectPartWithID:1];
@@ -388,6 +395,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[0][@"x"] doubleValue], 0.3, 1e-9);
 }
 
+/*! @abstract A drag with no active part writes no parameters and forces no update. */
 - (void)testADragWithNoActivePartWritesNothing
 {
 	[self stagedRectPartWithID:1];
@@ -402,6 +410,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual(self.manager.paramSetAPIv5.writes.count, (NSUInteger)0);
 }
 
+/*! @abstract Dragging a point handle writes the absolute object-space pointer position. */
 - (void)testDraggingAPointHandleWritesTheAbsoluteObjectPosition
 {
 	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:21];
@@ -420,6 +429,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([write[@"y"] doubleValue], 0.48, 1e-9);
 }
 
+/*! @abstract Shift constrains a mostly horizontal drag to the x axis and pins y to the click. */
 - (void)testShiftConstrainsADragToTheDominantHorizontalAxis
 {
 	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:21];
@@ -436,6 +446,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([write[@"y"] doubleValue], 0.50, 1e-9, @"Shift pins y to the click");
 }
 
+/*! @abstract Shift constrains a mostly vertical drag to the y axis and pins x to the click. */
 - (void)testShiftConstrainsADragToTheDominantVerticalAxis
 {
 	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:21];
@@ -452,6 +463,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([write[@"y"] doubleValue], 0.58, 1e-9);
 }
 
+/*! @abstract Option slows a drag to a tenth of the pointer travel. */
 - (void)testOptionFineDragMovesAtATenthOfTheTravel
 {
 	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:21];
@@ -469,6 +481,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([write[@"y"] doubleValue], 0.50, 1e-9);
 }
 
+/*! @abstract Dragging a circle body moves only the center parameter. */
 - (void)testDraggingACirclePartMovesOnlyTheCenter
 {
 	[self stagePoint:NSMakePoint(0.5, 0.5) forParameter:31];
@@ -498,6 +511,7 @@ static CMTime FxGripOSCTestTime(void)
 	[self stagePoint:NSMakePoint(0.6, 0.2) forParameter:52];
 }
 
+/*! @abstract A line part hits near its segment and misses points far from it or beyond its endpoints. */
 - (void)testALinePartHitsNearTheSegmentAndMissesFarOrBeyond
 {
 	[self stageLinePoints];
@@ -510,6 +524,7 @@ static CMTime FxGripOSCTestTime(void)
 				   @"10 pixels beyond the endpoint measures to the endpoint, not the infinite line");
 }
 
+/*! @abstract Dragging a line body moves both endpoint parameters by the object-space delta. */
 - (void)testDraggingALinePartMovesBothEndpoints
 {
 	[self stageLinePoints];
@@ -532,6 +547,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.25, 1e-9);
 }
 
+/*! @abstract The gradient composite gives its endpoint handles the hit over the line body beneath them. */
 - (void)testTheGradientCompositeGivesEndpointHandlesTheTopHit
 {
 	[self stageLinePoints];
@@ -562,6 +578,7 @@ static CMTime FxGripOSCTestTime(void)
 	[self.control addPart:dial];
 }
 
+/*! @abstract An angle dial hits at its spoke tip and misses near the center. */
 - (void)testTheAngleDialTipHitsAtTheSpokeTip
 {
 	[self stageDialWithRadiansPerUnit:1.0 angleValue:0.0];
@@ -571,6 +588,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:60 y:50], (NSInteger)0);
 }
 
+/*! @abstract Dragging the angle dial writes the pointer angle around the center. */
 - (void)testDraggingTheAngleDialWritesThePointerAngle
 {
 	[self stageDialWithRadiansPerUnit:1.0 angleValue:0.0];
@@ -588,6 +606,7 @@ static CMTime FxGripOSCTestTime(void)
 							   @"the pointer at canvas (60, 60) sits 45 degrees around the center");
 }
 
+/*! @abstract The angle dial scales the written value by its radians-per-unit, so a degree parameter receives degrees. */
 - (void)testTheAngleDialRespectsRadiansPerUnit
 {
 	[self stageDialWithRadiansPerUnit:M_PI / 180.0 angleValue:0.0];
@@ -603,6 +622,7 @@ static CMTime FxGripOSCTestTime(void)
 							   @"a degree-unit parameter receives degrees");
 }
 
+/*! @abstract Shift snaps the angle dial to the nearest forty-five degrees. */
 - (void)testShiftSnapsTheAngleDialToFortyFiveDegrees
 {
 	[self stageDialWithRadiansPerUnit:1.0 angleValue:0.0];
@@ -621,6 +641,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Rectangle corners
 
+/*! @abstract A rect corner part hits at its corner handle and misses the interior. */
 - (void)testARectCornerHitsItsHandle
 {
 	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:11];
@@ -634,6 +655,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:50 y:50], (NSInteger)0);
 }
 
+/*! @abstract Dragging a lower-right corner writes the x to the upper-right parameter and the y to the lower-left. */
 - (void)testDraggingALowerRightCornerWritesTheMixedComponents
 {
 	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:11];
@@ -660,6 +682,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.6, 1e-9);
 }
 
+/*! @abstract Shift locks a rect corner resize to the original aspect ratio about the fixed opposite corner. */
 - (void)testShiftLocksARectCornerResizeToTheAspectRatio
 {
 	// A 2:1 rectangle: width 0.4, height 0.2.
@@ -687,6 +710,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.4, 1e-9);
 }
 
+/*! @abstract Option keeps the rectangle center fixed and mirrors the opposite corner while resizing. */
 - (void)testOptionDraggingARectCornerResizesAboutTheCenter
 {
 	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:11];
@@ -712,6 +736,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.7, 1e-9);
 }
 
+/*! @abstract Option-Shift resizes a rect corner about the fixed center while holding the aspect ratio. */
 - (void)testOptionShiftResizesARectCornerAboutTheCenterAtTheAspectRatio
 {
 	// A 2:1 rectangle: width 0.4, height 0.2, center (0.4, 0.3).
@@ -739,6 +764,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[1][@"y"] doubleValue], 0.6, 1e-9);
 }
 
+/*! @abstract The rect composite numbers its corners in LL, LR, UR, UL order, and corners win the hit over the body. */
 - (void)testTheRectCompositeNumbersCornersAndCornersWinHits
 {
 	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:11];
@@ -764,6 +790,7 @@ static CMTime FxGripOSCTestTime(void)
 	self.manager.paramGetAPIv6.floats[@32] = @50.0;
 }
 
+/*! @abstract The circle radius handle hits on the rim at angle zero and misses at the center. */
 - (void)testTheCircleRadiusHandleSitsOnTheRim
 {
 	[self stageCircle];
@@ -776,6 +803,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:50 y:50], (NSInteger)0);
 }
 
+/*! @abstract Dragging the radius handle writes the radius in input pixels, aspect-correcting a y offset. */
 - (void)testDraggingTheRadiusHandleWritesTheInputPixelRadius
 {
 	[self stageCircle];
@@ -802,6 +830,7 @@ static CMTime FxGripOSCTestTime(void)
 							   @"a y offset is aspect-corrected before scaling to input pixels");
 }
 
+/*! @abstract The circle composite gives the radius handle the hit over the body. */
 - (void)testTheCircleCompositeRadiusHandleWinsOverTheBody
 {
 	[self stageCircle];
@@ -824,6 +853,7 @@ static CMTime FxGripOSCTestTime(void)
 	self.manager.paramGetAPIv6.floats[@33] = @(angleValue);
 }
 
+/*! @abstract The rotation handle rides the rim at the angle parameter, distinct from the radius handle at angle zero. */
 - (void)testTheRotationHandleRidesTheRimAtTheAngleParameter
 {
 	[self stageRotatableCircleWithAngle:M_PI_2];
@@ -838,6 +868,7 @@ static CMTime FxGripOSCTestTime(void)
 				   @"the rim at angle 0 is the radius handle's spot, not the rotation handle's");
 }
 
+/*! @abstract Dragging the rotation handle writes the pointer angle around the center. */
 - (void)testDraggingTheRotationHandleWritesThePointerAngleAroundTheCenter
 {
 	[self stageRotatableCircleWithAngle:M_PI_2];
@@ -864,6 +895,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([write[@"value"] doubleValue], M_PI_2, 1e-9);
 }
 
+/*! @abstract Shift snaps the rotation handle to the nearest forty-five degrees. */
 - (void)testShiftSnapsTheRotationHandleToFortyFiveDegrees
 {
 	[self stageRotatableCircleWithAngle:M_PI_2];
@@ -885,6 +917,7 @@ static CMTime FxGripOSCTestTime(void)
 							   @"Shift snaps the rotation to the nearest 45 degrees");
 }
 
+/*! @abstract The full circle composite composes the body, radius handle, and rotation handle, each winning its own hit. */
 - (void)testTheFullCircleCompositeComposesBodyRadiusAndRotation
 {
 	[self stageRotatableCircleWithAngle:M_PI_2];
@@ -913,6 +946,7 @@ static CMTime FxGripOSCTestTime(void)
 	return @[@71, @72, @73, @74];
 }
 
+/*! @abstract A closed polyline hits every segment including the wrap from the last vertex to the first, and misses the interior. */
 - (void)testAClosedPolylineHitsEverySegmentIncludingTheWrap
 {
 	NSArray<NSNumber *> *chain = [self stageSquareChain];
@@ -925,6 +959,7 @@ static CMTime FxGripOSCTestTime(void)
 				   @"the interior of the outline is not the outline");
 }
 
+/*! @abstract An open polyline hits its drawn segments and has no wrap segment. */
 - (void)testAnOpenPolylineHasNoWrapSegment
 {
 	NSArray<NSNumber *> *chain = [self stageSquareChain];
@@ -934,6 +969,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:20 y:40], (NSInteger)0);
 }
 
+/*! @abstract Dragging a polyline body moves every vertex parameter by the object-space delta. */
 - (void)testDraggingAPolylineMovesEveryVertex
 {
 	NSArray<NSNumber *> *chain = [self stageSquareChain];
@@ -956,6 +992,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[3][@"y"] doubleValue], 0.7, 1e-9);
 }
 
+/*! @abstract The corner-pin composite numbers its vertex handles in chain order, and handles win the hit over the body. */
 - (void)testTheCornerPinCompositeNumbersHandlesInChainOrder
 {
 	NSArray<NSNumber *> *chain = [self stageSquareChain];
@@ -990,6 +1027,7 @@ static CMTime FxGripOSCTestTime(void)
 					   angleParameterID:84];
 }
 
+/*! @abstract A box hits inside its rotated frame and misses points inside the unrotated frame only. */
 - (void)testABoxHitsInsideItsRotatedFrame
 {
 	[self stageBoxWithAngle:M_PI_2];
@@ -1001,6 +1039,7 @@ static CMTime FxGripOSCTestTime(void)
 				   @"30 pixels along x is inside the unrotated box but outside the rotated one");
 }
 
+/*! @abstract A box with a zero angle hit-tests as axis-aligned. */
 - (void)testABoxWithoutAnAngleStaysAxisAligned
 {
 	[self stageBoxWithAngle:0.0];
@@ -1010,6 +1049,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:50 y:85], (NSInteger)0);
 }
 
+/*! @abstract Dragging a box body moves only the center parameter. */
 - (void)testDraggingABoxBodyMovesOnlyTheCenter
 {
 	[self stageBoxWithAngle:M_PI_2];
@@ -1028,6 +1068,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[0][@"x"] doubleValue], 0.6, 1e-9);
 }
 
+/*! @abstract A box corner handle hits at the rotated position of its local corner. */
 - (void)testABoxCornerRidesTheRotation
 {
 	[self stageBoxWithAngle:M_PI_2];
@@ -1043,6 +1084,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:70 y:70], (NSInteger)0);
 }
 
+/*! @abstract Option keeps the box center fixed and doubles the pointer's local offset into width and height. */
 - (void)testOptionDraggingABoxCornerResizesAboutTheCenter
 {
 	[self stageBoxWithAngle:M_PI_2];
@@ -1070,6 +1112,7 @@ static CMTime FxGripOSCTestTime(void)
 							   @"the pointer's local y of 10 pixels doubles into the height");
 }
 
+/*! @abstract A plain box corner drag anchors the opposite corner and writes the new width, height, and shifted center. */
 - (void)testDraggingABoxCornerAnchorsTheOppositeCornerAndShiftsTheCenter
 {
 	[self stageBoxWithAngle:M_PI_2];
@@ -1100,6 +1143,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[2][@"y"] doubleValue], 0.45, 1e-9);
 }
 
+/*! @abstract Option-Shift resizes a box corner about the fixed center while holding the aspect ratio from the dominant axis. */
 - (void)testOptionShiftLocksABoxCornerResizeToTheAspectRatioAboutTheCenter
 {
 	// The box is 80 x 40 (2:1) at 90°.
@@ -1129,6 +1173,7 @@ static CMTime FxGripOSCTestTime(void)
 							   @"the height follows the dominant x to hold 2:1");
 }
 
+/*! @abstract The box composite composes the body, four corners numbered LL, LR, UR, UL, and a rotation dial. */
 - (void)testTheBoxCompositeComposesBodyCornersAndDial
 {
 	[self stageBoxWithAngle:M_PI_2];
@@ -1160,6 +1205,7 @@ static CMTime FxGripOSCTestTime(void)
 	self.manager.paramGetAPIv6.floats[@14] = @(angleValue);
 }
 
+/*! @abstract A rect part with a linked angle hits inside its rotated frame. */
 - (void)testARotatedRectHitsInItsRotatedFrame
 {
 	[self stageOverlayRectWithAngle:M_PI_2];
@@ -1175,6 +1221,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:65 y:50], (NSInteger)0);
 }
 
+/*! @abstract A rect corner with a linked angle hits at the rotated position of the corner. */
 - (void)testARotatedRectCornerSitsOnTheRotatedCorner
 {
 	[self stageOverlayRectWithAngle:M_PI_2];
@@ -1191,6 +1238,7 @@ static CMTime FxGripOSCTestTime(void)
 				   @"the unrotated corner position is no longer the handle");
 }
 
+/*! @abstract Dragging a rotated rect corner unrotates the pointer into pre-rotation space before writing the corner parameters. */
 - (void)testDraggingARotatedCornerWritesPreRotationComponents
 {
 	[self stageOverlayRectWithAngle:M_PI_2];
@@ -1217,6 +1265,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy([writes[1][@"x"] doubleValue], 0.725, 1e-9);
 }
 
+/*! @abstract The rotated rect composite adds a rotation spoke that writes the pointer angle around the midpoint. */
 - (void)testTheRotatedRectCompositeAddsTheRotationSpoke
 {
 	[self stageOverlayRectWithAngle:M_PI_2];
@@ -1242,6 +1291,7 @@ static CMTime FxGripOSCTestTime(void)
 							   @"the pointer due right of the midpoint is angle 0");
 }
 
+/*! @abstract Shift snaps the rect rotation handle to the nearest forty-five degrees. */
 - (void)testShiftSnapsTheRectRotationHandleToFortyFiveDegrees
 {
 	[self stageOverlayRectWithAngle:M_PI_2];
@@ -1265,6 +1315,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Flag composition
 
+/*! @abstract The flag-form circle composition includes only the requested parts and numbers them consecutively. */
 - (void)testFlagCompositionNumbersOnlyTheIncludedParts
 {
 	NSArray<FxGripOSCPart *> *all =
@@ -1293,6 +1344,7 @@ static CMTime FxGripOSCTestTime(void)
 				   @"numbering counts only the included parts");
 }
 
+/*! @abstract The flag-form box composition omits the rotation dial when no angle parameter is given. */
 - (void)testFlagCompositionOmitsRotationWithoutAnAngleParameter
 {
 	NSArray<FxGripOSCPart *> *parts =
@@ -1307,6 +1359,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertTrue([parts.lastObject isKindOfClass:FxGripOSCBoxCornerPart.class]);
 }
 
+/*! @abstract The flag-form rect composition stamps the angle parameter onto the body and corners and adds a rotation handle. */
 - (void)testTheRectFlagFormStampsTheAngleOverlay
 {
 	NSArray<FxGripOSCPart *> *parts =
@@ -1321,6 +1374,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertTrue([parts.lastObject isKindOfClass:FxGripOSCRectRotationHandlePart.class]);
 }
 
+/*! @abstract The flag-form line and polyline compositions add vertex handles only when requested. */
 - (void)testTheLineAndPolylineFlagFormsComposeVertexHandles
 {
 	NSArray<FxGripOSCPart *> *line =
@@ -1342,6 +1396,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Keys
 
+/*! @abstract Key-down and key-up events default to unhandled. */
 - (void)testKeyEventsDefaultToUnhandled
 {
 	BOOL forceUpdate = NO;
@@ -1368,6 +1423,7 @@ static CMTime FxGripOSCTestTime(void)
 #pragma clang diagnostic pop
 }
 
+/*! @abstract A mouse move over a part applies that part's cursor and forces no re-render. */
 - (void)testMouseMovedAppliesTheHoveredPartCursor
 {
 	id crosshair = [self cursor:@selector(crosshairCursor)];
@@ -1382,6 +1438,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertFalse(forceUpdate, @"a hover does not force a re-render");
 }
 
+/*! @abstract A mouse move over no part applies the arrow cursor. */
 - (void)testMouseMovedOverNoPartUsesTheArrow
 {
 	[self stagedRectPartWithID:5];
@@ -1393,6 +1450,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualObjects(self.manager.onScreenControlAPIv4.lastCursor, [self cursor:@selector(arrowCursor)]);
 }
 
+/*! @abstract A hovered part with no cursor set falls back to the arrow cursor. */
 - (void)testAPartWithoutACursorFallsBackToTheArrow
 {
 	[self stagedRectPartWithID:5];   // no cursor set on the part
@@ -1404,6 +1462,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualObjects(self.manager.onScreenControlAPIv4.lastCursor, [self cursor:@selector(arrowCursor)]);
 }
 
+/*! @abstract Mouse exit restores the arrow cursor after a part cursor was applied. */
 - (void)testMouseExitedRestoresTheArrow
 {
 	id crosshair = [self cursor:@selector(crosshairCursor)];
@@ -1422,6 +1481,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Curve display part
 
+/*! @abstract The curve part constructor sets its ID, point parameters, closed flag, and default shadow properties. */
 - (void)testTheCurvePartConstructorSetsItsProperties
 {
 	FxGripOSCCurvePart *curve = [FxGripOSCCurvePart partWithID:7 pointParameterIDs:@[@1, @2, @3] closed:YES];
@@ -1434,6 +1494,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual(curve.shadowBlur, 0.0);
 }
 
+/*! @abstract A curve part answers no hit and ignores drags. */
 - (void)testACurvePartIsDisplayOnly
 {
 	[self stagePoint:NSMakePoint(0.2, 0.2) forParameter:11];
@@ -1450,6 +1511,7 @@ static CMTime FxGripOSCTestTime(void)
 									 atTime:FxGripOSCTestTime()]);
 }
 
+/*! @abstract The HUD text constructor sets the text and the default anchor, font size, and colors. */
 - (void)testTheHUDPartTextConstructorSetsItsProperties
 {
 	FxGripOSCHUDPart *hud = [FxGripOSCHUDPart partWithID:5 text:@"120%"];
@@ -1465,6 +1527,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqualWithAccuracy(hud.backgroundColor.w, 0.6f, 1e-6, @"a translucent panel by default");
 }
 
+/*! @abstract The HUD block constructor stores the text block. */
 - (void)testTheHUDPartBlockConstructorStoresItsBlock
 {
 	FxGripOSCHUDPart *hud = [FxGripOSCHUDPart partWithID:6 textBlock:^NSString *(CMTime time) {
@@ -1475,6 +1538,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertNotNil(hud.textBlock);
 }
 
+/*! @abstract A HUD part answers no hit and ignores drags. */
 - (void)testAHUDPartIsDisplayOnly
 {
 	FxGripOSCHUDPart *hud = [FxGripOSCHUDPart partWithID:8 text:@"readout"];
@@ -1490,6 +1554,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Correctness fixes
 
+/*! @abstract A rectangle whose corners are inverted still hits any point inside its span. */
 - (void)testAnInvertedRectPartStillHitsInsideItsSpan
 {
 	// Corners dragged past each other invert the rectangle; a hit is still any point in the span.
@@ -1501,6 +1566,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:80 y:40], (NSInteger)0, @"outside the span misses");
 }
 
+/*! @abstract The box composite omits the rotation dial when no angle parameter is given. */
 - (void)testTheBoxCompositeOmitsTheDialWithoutAnAngleParameter
 {
 	NSArray<FxGripOSCPart *> *parts = [FxGripOSCBoxPart boxPartsWithBodyID:30
@@ -1518,6 +1584,7 @@ static CMTime FxGripOSCTestTime(void)
 
 #pragma mark Shadow appearance
 
+/*! @abstract A part casts the standard shadow by default, with the standard distance, blur, and shadow color alpha. */
 - (void)testAPartCastsTheStandardShadowByDefault
 {
 	FxGripOSCPart *part = [[FxGripOSCPart alloc] initWithPartID:1];
@@ -1527,6 +1594,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertTrue(part.castsShadow);
 }
 
+/*! @abstract A part with a zero shadow alpha, or with no offset and no blur, casts no shadow. */
 - (void)testAPartWithNoShadowAlphaOrOffsetDoesNotCastAShadow
 {
 	FxGripOSCPart *transparent = [[FxGripOSCPart alloc] initWithPartID:1];
@@ -1539,6 +1607,7 @@ static CMTime FxGripOSCTestTime(void)
 	XCTAssertFalse(flat.castsShadow, @"no offset and no blur casts nothing");
 }
 
+/*! @abstract Shadow blur grouping returns one ascending pass per distinct radius and skips non-casters. */
 - (void)testShadowBlurGroupingIsDistinctSortedAndSkipsNonCasters
 {
 	FxGripOSCPart *a = [[FxGripOSCPart alloc] initWithPartID:1];   // blur 0

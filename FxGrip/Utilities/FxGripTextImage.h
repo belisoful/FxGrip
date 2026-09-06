@@ -1,7 +1,15 @@
-//
-//  FxGripTextImage.h
-//  FxGrip
-//
+/*!
+	@file       FxGripTextImage.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTextImage
+	@abstract   Rasterizes text into a Metal texture.
+	@discussion Introduced in FxGrip 0.1.0. Each class method draws an attributed string into a
+	            premultiplied RGBA8 sRGB bitmap and uploads it to a new MTLTexture sized to the
+	            text plus padding. The texture carries top-first row order. The class holds no
+	            state, and every call returns an independent texture.
+*/
 
 #ifndef FxGripTextImage_h
 #define FxGripTextImage_h
@@ -16,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripTextImage
 	@abstract   Rasterizes text into a Metal texture.
-	@discussion Introduced in FxGrip 1.0. Each method draws an attributed string into a
+	@discussion Introduced in FxGrip 0.1.0. Each method draws an attributed string into a
 				premultiplied RGBA8 sRGB bitmap and uploads it to a new `MTLTexture` sized to
 				the text plus padding. The texture carries top-first row order, so a sampler
 				reads row 0 as the visual top. The class holds no state; every method is a

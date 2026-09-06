@@ -1,23 +1,12 @@
-//
-//  FxGripCurveEditorViewTests.m
-//  FxGripTests
-//
-//  Unit tests for the curve editor views: the reusable strip (FxGripCurveEditorView) and
-//  the inspector composite (FxGripCurveSetEditorView).
-//
-//  The strip is driven with synthetic NSEvents handed straight to -mouseDown:,
-//  -mouseDragged:, -mouseUp: and -keyDown:. A view with no window converts a window
-//  location through an identity transform, so an event location is the view location; the
-//  first test states that convention and every later interaction relies on it.
-//
-//  The composite's commit path reaches the host through FxGripOOBParameterAccess and
-//  effect.apiManager.paramSetAPIv5, so it runs against the shared parameter-class doubles
-//  with an action API added, the same harness the switch view's write uses.
-//
-//  AppKit is not linked into the test bundle. Its headers supply the view types, the event
-//  types and the drawing signatures; every AppKit class is reached by name through a probe
-//  protocol, so nothing is referenced at link time.
-//
+/*!
+	@file       FxGripCurveEditorViewTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveEditorViewTests
+	@abstract   Tests the curve editor strip and the inspector composite that stacks strips.
+	@discussion Introduced in FxGrip 0.1.0. The strip tests drive FxGripCurveEditorView with synthetic NSEvents to cover geometry mapping, point add, select, drag, removal, reset, modifier gestures, the context menu, and drawing. The composite tests cover FxGripCurveSetEditorView stacking, data push, and the commit path that writes through the host parameter API inside an action bracket.
+*/
 
 #import <XCTest/XCTest.h>
 #import <objc/message.h>
@@ -305,6 +294,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Geometry
 
+/*! @abstract The curve bounds inset the view bounds by the layout inset on every side. */
 - (void)testTheCurveBoundsInsetTheViewBounds
 {
 	NSRect bounds = [self.editor curveBounds];
@@ -315,6 +305,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(bounds.size.height, 100.0 - 2 * kCurveTestInset, 1e-9);
 }
 
+/*! @abstract The unit corners and center map onto the corners and center of the inset rect. */
 - (void)testTheCornersAndCenterMapOntoTheInsetRect
 {
 	NSPoint origin = [self.editor viewPointForCurvePoint:CGPointMake(0.0, 0.0)];
@@ -329,6 +320,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(center.y, 50.0, 1e-9);
 }
 
+/*! @abstract Mapping a curve point to a view point and back returns the original curve point. */
 - (void)testAViewPointRoundTripsBackToItsCurvePoint
 {
 	const CGPoint samples[3] = {CGPointMake(0.0, 0.0), CGPointMake(0.5, 0.25), CGPointMake(1.0, 1.0)};
@@ -341,6 +333,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	}
 }
 
+/*! @abstract A linear view point outside the strip clamps to the unit range in x and y. */
 - (void)testALinearViewPointOutsideTheStripClamps
 {
 	CGPoint low = [self.editor curvePointForViewPoint:NSMakePoint(-50, -50)];
@@ -352,6 +345,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(high.y, 1.0, 1e-9);
 }
 
+/*! @abstract A circular view point outside the strip folds in x while y still clamps. */
 - (void)testACircularViewPointOutsideTheStripFoldsInX
 {
 	FxGripCurveEditorView *circular = [self editorWithRole:FxGripCurveRoleShift
@@ -367,6 +361,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Data push
 
+/*! @abstract Pushing a curve value sets it as the strip's curve directly. */
 - (void)testTheStripTakesAPushedCurveDirectly
 {
 	FxGripCurveData *curve = [self threePointRemap];
@@ -376,6 +371,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.editor.curve, curve);
 }
 
+/*! @abstract Pushing a curve set makes the strip read the curve stored under its mapping key. */
 - (void)testTheStripReadsItsMappingKeyOutOfAPushedSet
 {
 	FxGripCurveData *curve = [self threePointRemap];
@@ -388,6 +384,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.editor.curve, curve);
 }
 
+/*! @abstract Pushing a set that lacks the mapping key sets the strip to the role identity curve. */
 - (void)testAnAbsentKeyPushesTheRoleIdentity
 {
 	FxGripCurveData *identity = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleRemap
@@ -400,6 +397,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.editor.curve, identity);
 }
 
+/*! @abstract Pushing nil or a value of an unrelated class leaves the strip's curve unchanged. */
 - (void)testTheStripIgnoresAValueOfAnotherClass
 {
 	FxGripCurveData *curve = [self threePointRemap];
@@ -414,6 +412,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.editor.curve, curve);
 }
 
+/*! @abstract Setting a new curve with fewer points clears a selection that falls beyond the new point count. */
 - (void)testANewCurveClearsASelectionBeyondItsPointCount
 {
 	self.editor.curve = [self threePointRemap];
@@ -426,6 +425,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.editor.selectedPointIndex, NSNotFound);
 }
 
+/*! @abstract Setting a new curve keeps a selection index that is still inside the new point count. */
 - (void)testANewCurveKeepsASelectionInsideItsPointCount
 {
 	self.editor.curve = [self threePointRemap];
@@ -441,6 +441,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Adding and selecting
 
+/*! @abstract A click away from every point adds a point at the clicked location, selects it, and reports an edit. */
 - (void)testAClickAwayFromEveryPointAddsOneAtTheClickedLocation
 {
 	[self clickAt:NSMakePoint(50, 80)];
@@ -453,6 +454,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.recorder.committed.count, (NSUInteger)0);
 }
 
+/*! @abstract Releasing the mouse after adding a point commits the current curve. */
 - (void)testReleasingTheMouseCommitsTheAddedPoint
 {
 	[self clickAt:NSMakePoint(50, 80)];
@@ -463,6 +465,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.recorder.committed.lastObject, self.editor.curve);
 }
 
+/*! @abstract A click on an existing point selects it without adding a point or reporting an edit. */
 - (void)testAClickOnAPointSelectsItWithoutEditing
 {
 	self.editor.curve = [self threePointRemap];
@@ -474,6 +477,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.recorder.edited.count, (NSUInteger)0);
 }
 
+/*! @abstract A click just outside a point's hit radius adds a new point. */
 - (void)testAClickJustOutsideTheHitRadiusAddsAPoint
 {
 	self.editor.curve = [self threePointRemap];
@@ -485,6 +489,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Dragging
 
+/*! @abstract Dragging a middle point moves it and reports an edit per drag, with the single commit on release. */
 - (void)testDraggingAMiddlePointMovesItAndCommitsOnRelease
 {
 	self.editor.curve = [self threePointRemap];
@@ -505,6 +510,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.recorder.committed.count, (NSUInteger)1, @"the release is the only commit");
 }
 
+/*! @abstract The first point of a linear curve pins its x at 0 while dragging moves only its y. */
 - (void)testALinearEndpointKeepsItsXWhileDragging
 {
 	[self clickAt:NSMakePoint(4, 4)];
@@ -518,6 +524,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy([self.editor.curve pointAtIndex:1].x, 1.0, 1e-9);
 }
 
+/*! @abstract The last point of a linear curve pins its x at 1 while dragging moves only its y. */
 - (void)testTheLinearLastPointPinsInXWhileDragging
 {
 	[self clickAt:NSMakePoint(96, 96)];
@@ -530,6 +537,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy([self.editor.curve pointAtIndex:1].y, 0.5, 1e-9);
 }
 
+/*! @abstract A circular point dragged past the right edge wraps its x to the left and keeps its selection. */
 - (void)testACircularPointDraggedPastTheRightEdgeWrapsToTheLeft
 {
 	FxGripCurveEditorView *circular = [self editorWithRole:FxGripCurveRoleShift
@@ -548,6 +556,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Removal
 
+/*! @abstract Dragging an interior point far outside the strip removes it and clears the selection. */
 - (void)testDraggingAPointFarOutsideTheStripRemovesIt
 {
 	self.editor.curve = [self threePointRemap];
@@ -560,6 +569,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.recorder.edited.count, (NSUInteger)1);
 }
 
+/*! @abstract Dragging a point just outside the strip, inside the removal margin, keeps the point. */
 - (void)testDraggingJustOutsideTheStripKeepsThePoint
 {
 	self.editor.curve = [self threePointRemap];
@@ -570,6 +580,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.editor.curve.pointCount, (NSUInteger)3, @"the removal margin is 40 points");
 }
 
+/*! @abstract A two-point linear curve keeps both points when one is dragged far outside, holding the two-point floor. */
 - (void)testATwoPointLinearCurveKeepsBothPointsWhenDraggedOutside
 {
 	[self clickAt:NSMakePoint(4, 4)];
@@ -579,6 +590,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.editor.curve.pointCount, (NSUInteger)2, @"the linear floor is two points");
 }
 
+/*! @abstract The Delete key removes the selected interior point, clears the selection, and commits. */
 - (void)testTheDeleteKeyRemovesTheSelectedPointAndCommits
 {
 	self.editor.curve = [self threePointRemap];
@@ -592,6 +604,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.recorder.committed.lastObject, self.editor.curve);
 }
 
+/*! @abstract The Delete key does not remove a point when a linear curve is already at its two-point floor, and it commits nothing. */
 - (void)testTheDeleteKeyKeepsTheLastTwoPointsOfALinearCurve
 {
 	[self clickAt:NSMakePoint(4, 4)];
@@ -602,6 +615,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.recorder.committed.count, (NSUInteger)0);
 }
 
+/*! @abstract The Delete key with no selected point leaves the curve unchanged and commits nothing. */
 - (void)testTheDeleteKeyWithoutASelectionChangesNothing
 {
 	self.editor.curve = [self threePointRemap];
@@ -614,6 +628,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Reset
 
+/*! @abstract A double-click resets the curve to the role identity, clears the selection, and commits without an edit. */
 - (void)testADoubleClickResetsToTheRoleIdentityAndCommits
 {
 	FxGripCurveData *identity = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleRemap
@@ -630,6 +645,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.recorder.edited.count, (NSUInteger)0);
 }
 
+/*! @abstract The resetCurve method replaces the curve with the role identity and commits. */
 - (void)testResetCurveReplacesTheCurveWithTheRoleIdentityAndCommits
 {
 	FxGripCurveEditorView *shift = [self editorWithRole:FxGripCurveRoleShift
@@ -659,6 +675,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	[self.recorder.committed removeAllObjects];
 }
 
+/*! @abstract A Command-click on an interior point deletes it and commits. */
 - (void)testACommandClickOnAnInteriorPointDeletesItAndCommits
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -672,6 +689,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.recorder.committed.lastObject, self.editor.curve);
 }
 
+/*! @abstract A Control-click is left to the context menu, so it adds no point and creates no selection. */
 - (void)testAControlClickIsLeftToTheContextMenuAndDoesNotSelect
 {
 	// Control-click is a contextual menu on macOS; mouseDown ignores it so only the menu responds.
@@ -687,6 +705,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.editor.selectedPointIndex, NSNotFound, @"Control-click does not select");
 }
 
+/*! @abstract A Command-click on a pinned endpoint deletes nothing. */
 - (void)testACommandClickOnAPinnedEndpointDeletesNothing
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -699,6 +718,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.editor.curve.pointCount, before);
 }
 
+/*! @abstract A Command-click away from any point adds no point and reports no edit. */
 - (void)testACommandClickAwayFromAnyPointAddsNothing
 {
 	NSUInteger before = self.editor.curve.pointCount;
@@ -713,6 +733,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Option-slowed drag
 
+/*! @abstract An Option drag moves the point at one tenth of the mouse travel. */
 - (void)testAnOptionDragMovesThePointAtOneTenthOfMouseTravel
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -729,6 +750,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy([self.editor.curve pointAtIndex:moved].y, expected.y, 1e-6);
 }
 
+/*! @abstract Releasing Option mid-drag resumes full-speed travel from the point's current position. */
 - (void)testReleasingOptionMidDragResumesFullSpeedFromThePointsPosition
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -745,6 +767,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy([self.editor.curve pointAtIndex:moved].x, expected.x, 1e-6);
 }
 
+/*! @abstract A slowed drag far outside the strip moves the point rather than removing it. */
 - (void)testASlowedDragFarOutsideTheStripMovesThePointInsteadOfRemovingIt
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -760,12 +783,14 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy([self.editor.curve pointAtIndex:moved].y, expected.y, 1e-6);
 }
 
+/*! @abstract The slow-drag scale defaults to one tenth. */
 - (void)testTheSlowDragScaleDefaultsToOneTenth
 {
 	XCTAssertEqualWithAccuracy(kFxGripCurveSlowDragScaleDefault, 0.1, 1e-12);
 	XCTAssertEqualWithAccuracy(self.editor.slowDragScale, kFxGripCurveSlowDragScaleDefault, 1e-12);
 }
 
+/*! @abstract The slow-drag scale clamps into the range 0.01 through 1.0. */
 - (void)testTheSlowDragScaleClampsIntoItsRange
 {
 	self.editor.slowDragScale = 5.0;
@@ -781,6 +806,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(self.editor.slowDragScale, 0.2, 1e-12);
 }
 
+/*! @abstract A custom slow-drag scale governs the travel of a slowed drag. */
 - (void)testACustomSlowDragScaleGovernsTheSlowedDrag
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -798,6 +824,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Shift-constrained drag
 
+/*! @abstract A Shift drag with dominant horizontal travel pins y and moves x. */
 - (void)testAShiftDragWithDominantHorizontalPinsY
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -812,6 +839,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertGreaterThan(result.x, 0.5, @"x moves");
 }
 
+/*! @abstract A Shift drag with dominant vertical travel pins x and moves y. */
 - (void)testAShiftDragWithDominantVerticalPinsX
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -826,6 +854,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertGreaterThan(result.y, 0.5, @"y moves");
 }
 
+/*! @abstract FxGripEventModifiers maps Option to fine drag, Shift to constrain, Command to delete-click, and Control to context menu. */
 - (void)testEventModifiersMapToTheHouseConvention
 {
 	NSPoint p = NSMakePoint(10.0, 10.0);
@@ -844,6 +873,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Context menu
 
+/*! @abstract The context menu over a point offers Delete Point, whose action removes the point. */
 - (void)testTheContextMenuOverAPointOffersDeletePoint
 {
 	[self stageInteriorPointAt:CGPointMake(0.5, 0.5)];
@@ -858,6 +888,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.editor.curve.pointCount, before - 1);
 }
 
+/*! @abstract The context menu away from any point offers only Reset Curve. */
 - (void)testTheContextMenuAwayFromPointsOffersOnlyReset
 {
 	NSPoint location = [self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.9)];
@@ -870,6 +901,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Drawing
 
+/*! @abstract Drawing into an offscreen context does not throw for any background style. */
 - (void)testEveryBackgroundStyleDraws
 {
 	Class repClass = NSClassFromString(@"NSBitmapImageRep");
@@ -931,6 +963,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Line color
 
+/*! @abstract The line color defaults to white, stores an assigned color, and returns to white when set to nil. */
 - (void)testTheLineColorDefaultsToWhiteAndIsSettable
 {
 	Class colorClass = NSClassFromString(@"NSColor");
@@ -944,6 +977,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.editor.lineColor, [colorClass whiteColor], @"nil restores white");
 }
 
+/*! @abstract The line width defaults to 1.0 and clamps into the range 0.1 through 8.0. */
 - (void)testTheLineWidthDefaultsToOneAndClampsIntoItsRange
 {
 	XCTAssertEqualWithAccuracy(kFxGripCurveLineWidthDefault, 1.0, 1e-12);
@@ -962,6 +996,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(self.editor.lineWidth, 8.0, 1e-12);
 }
 
+/*! @abstract The line style and the top, center, and bottom paints round-trip through their setters. */
 - (void)testTheLineStyleAndVerticalPaintsRoundTrip
 {
 	XCTAssertEqual(self.editor.lineStyle, FxGripCurveLineStyleSolid, @"defaults to solid");
@@ -989,6 +1024,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects(self.editor.bottomPaint.color, red);
 }
 
+/*! @abstract The point readout style, units, and trigger properties round-trip through their setters. */
 - (void)testTheReadoutPropertiesRoundTrip
 {
 	XCTAssertEqual(self.editor.pointReadoutStyle, FxGripCurveReadoutStyleNone, @"off by default");
@@ -1073,6 +1109,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Stacking
 
+/*! @abstract Adding editors stacks them and grows the composite frame by one step per strip. */
 - (void)testAddingEditorsStacksThemAndGrowsTheFrame
 {
 	const CGFloat step = kCurveTestLabelHeight + kCurveTestStripHeight + kCurveTestStripSpacing;
@@ -1090,11 +1127,13 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(luma.frame.size.width, 200.0, 1e-9);
 }
 
+/*! @abstract The composite is flipped, so it stacks its strips top down. */
 - (void)testTheCompositeStacksItsStripsTopDown
 {
 	XCTAssertTrue(self.composite.isFlipped);
 }
 
+/*! @abstract Setting the composite slow-drag scale reaches strips already added and strips added afterward. */
 - (void)testTheCompositeSlowDragScaleReachesExistingAndFutureStrips
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1106,6 +1145,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(hue.slowDragScale, 0.05, 1e-12);
 }
 
+/*! @abstract The composite line width reaches existing and future strips and clamps into its range. */
 - (void)testTheCompositeLineWidthReachesExistingAndFutureStrips
 {
 	XCTAssertEqualWithAccuracy(self.composite.lineWidth, kFxGripCurveLineWidthDefault, 1e-12);
@@ -1127,6 +1167,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualWithAccuracy(luma.lineWidth, 8.0, 1e-12);
 }
 
+/*! @abstract Adding an editor wires its mapping key, delegate, and background from the add call. */
 - (void)testAddingAnEditorWiresItsMappingKeyAndDelegate
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1140,6 +1181,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(hue.background, FxGripCurveBackgroundHueSpectrum);
 }
 
+/*! @abstract Adding an editor also adds a title label above the strip. */
 - (void)testAddingAnEditorAddsALabelAboveTheStrip
 {
 	Class textFieldClass = NSClassFromString(@"NSTextField");
@@ -1153,6 +1195,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects([self.composite.subviews[0] valueForKey:@"stringValue"], @"Luma");
 }
 
+/*! @abstract An editor added after a set is pushed seeds its curve from the working set. */
 - (void)testAddingAnEditorSeedsItFromTheWorkingSet
 {
 	FxGripCurveData *curve = [self remapCurveWithMidY:0.8];
@@ -1167,6 +1210,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Data push
 
+/*! @abstract A pushed set reaches every child editor, and an absent key shows the mapping's neutral curve. */
 - (void)testAPushedSetReachesEveryChildEditor
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1183,6 +1227,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 						  @"an absent key shows the mapping's neutral curve");
 }
 
+/*! @abstract The working set is a class-preserving copy of the pushed set, not the pushed instance. */
 - (void)testTheWorkingSetIsAClassPreservingCopyOfThePushedSet
 {
 	FxGripCurveData *curve = [self remapCurveWithMidY:0.8];
@@ -1196,6 +1241,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects([self.composite.curveSet curveForKey:@"luma"], curve);
 }
 
+/*! @abstract Later mutations of the pushed instance do not change the composite's working set. */
 - (void)testTheWorkingSetIsIndependentOfThePushedInstance
 {
 	FxGripCurveData *curve = [self remapCurveWithMidY:0.8];
@@ -1210,6 +1256,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertNil([self.composite.curveSet curveForKey:@"red"]);
 }
 
+/*! @abstract Pushing nil or a value of an unrelated class leaves the composite's working set unchanged. */
 - (void)testTheCompositeIgnoresAValueOfAnotherClass
 {
 	FxGripCurveData *curve = [self remapCurveWithMidY:0.8];
@@ -1226,6 +1273,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 
 #pragma mark Strip edits
 
+/*! @abstract A child edit updates the working set without writing to the host or opening an action bracket. */
 - (void)testAChildEditUpdatesTheWorkingSetWithoutWriting
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1241,6 +1289,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.apiManager.customParameterActionAPIv4.startCount, (NSUInteger)0);
 }
 
+/*! @abstract A child commit writes the set through the custom accessor once, inside a single start and end action bracket. */
 - (void)testAChildCommitWritesTheSetInsideOneActionBracket
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1262,6 +1311,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.apiManager.customParameterActionAPIv4.endCount, (NSUInteger)1);
 }
 
+/*! @abstract A commit from one strip keeps the curves the other strips own in the written set. */
 - (void)testACommitKeepsTheCurvesTheOtherStripsOwn
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1281,6 +1331,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqualObjects([(FxGripCurveSetData *)self.lastWrite[@"value"] curveKeys], (@[@"hueVsHue", @"luma"]));
 }
 
+/*! @abstract Committing an identity curve removes its key from the written set and the working set. */
 - (void)testACommittedIdentityRemovesTheKeyFromTheWrittenSet
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1298,6 +1349,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.apiManager.paramSetAPIv5.writes.count, (NSUInteger)2);
 }
 
+/*! @abstract A strip reset commits the role identity through the composite, which removes the key from the written set. */
 - (void)testAStripResetCommitsTheRoleIdentityThroughTheComposite
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1313,6 +1365,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.apiManager.paramSetAPIv5.writes.count, (NSUInteger)1);
 }
 
+/*! @abstract A commit with no attached effect updates the working set but writes nothing to the host. */
 - (void)testACommitWithoutAnEffectWritesNothing
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];
@@ -1327,6 +1380,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.apiManager.customParameterActionAPIv4.startCount, (NSUInteger)0);
 }
 
+/*! @abstract A commit from a strip with no mapping key stores no curve, and the set still writes carrying no curve. */
 - (void)testAnEditFromAStripWithoutAMappingKeyChangesNothing
 {
 	FxGripCurveEditorView *luma = [self addLumaEditor];

@@ -1,7 +1,16 @@
-//
-//  FxGripEventModifiers.h
-//  FxGrip
-//
+/*!
+	@file       FxGripEventModifiers.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripEventModifiers
+	@abstract   The house modifier-key convention for FxGrip's draggable parameter controls.
+	@discussion Introduced in FxGrip 0.1.0. FxGrip maps Option to fine adjustment, Shift to
+	            axis constraint, Command to delete, and Control to the contextual menu, matching
+	            Final Cut Pro and macOS. Each draggable control reads its modifiers through this
+	            class, so the convention is defined once. The class tests both an AppKit NSEvent
+	            and a host on-screen-control event's FxModifierKeys bitmask.
+*/
 
 #ifndef FxGripEventModifiers_h
 #define FxGripEventModifiers_h
@@ -14,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripEventModifiers
 	@abstract   The house modifier-key convention for FxGrip's draggable parameter controls.
-	@discussion Introduced in FxGrip 1.0. It follows Final Cut Pro and macOS so a control feels
+	@discussion Introduced in FxGrip 0.1.0. It follows Final Cut Pro and macOS so a control feels
 				native:
 
 				- Option drag → fine (slow) adjustment.

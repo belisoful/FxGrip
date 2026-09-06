@@ -1,15 +1,12 @@
-//
-//  FxGripCurveDataTests.m
-//  FxGripTests
-//
-//  Unit tests for the curve value layer: the monotone-cubic LUT builders, the immutable
-//  curve model, and the keyed curve set with its keyframe blending.
-//
-//  The builder tests mirror Metal Forge's testBuildCurveLUTClosedForm and
-//  testBuildCurveLUTPeriodicClosedForm case for case, with the same control points, the
-//  same expected values, and the same tolerances, so the CPU port is proven numerically
-//  identical to the builder the render uses.
-//
+/*!
+	@file       FxGripCurveDataTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveDataTests
+	@abstract   Tests the curve value layer: the LUT builders, the immutable curve model, and the keyed curve set.
+	@discussion Introduced in FxGrip 0.1.0. The tests verify the monotone-cubic clamped and periodic LUT builders against a closed-form oracle, the sanitization and identity behavior of FxGripCurveData, secure-coding round trips, and the keyframe blending of FxGripCurveSetData.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripCurveLUT.h>
@@ -132,6 +129,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	free(np);
 }
 
+/*! @abstract A control set of one point or of zero count builds the identity ramp. */
 - (void)testFewerThanTwoControlPointsBuildTheIdentityRamp
 {
 	const int n = 64;
@@ -149,6 +147,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract A zero or negative entry count leaves the output buffer unwritten for both builders. */
 - (void)testANonPositiveEntryCountLeavesTheBufferUntouched
 {
 	float lut[4] = {-7.0f, -7.0f, -7.0f, -7.0f};
@@ -164,6 +163,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract A single-entry LUT holds the value the curve maps at x = 0. */
 - (void)testASingleEntryLUTTakesTheValueAtZero
 {
 	float lut[1] = {-7.0f};
@@ -176,6 +176,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy(lut[0], 0.0f, 1e-6f, @"identity ramp of one entry is 0");
 }
 
+/*! @abstract The first and last control values hold flat outside the control point range. */
 - (void)testTheEndValuesHoldOutsideThePointRange
 {
 	const int n = kCurveN;
@@ -194,6 +195,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract A steep step stays non-decreasing and inside its neighboring control values with no overshoot. */
 - (void)testASteepStepStaysBoundedByItsNeighborValues
 {
 	const int n = kCurveN;
@@ -213,6 +215,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract The builder sorts its input, so shuffled control points build the same LUT as sorted points. */
 - (void)testUnsortedPointsBuildTheSameLUTAsSortedPoints
 {
 	const int n = kCurveN;
@@ -229,6 +232,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract When two control points share an x, the first one wins and the second is dropped. */
 - (void)testADuplicateXKeepsTheFirstPoint
 {
 	const int n = kCurveN;
@@ -246,6 +250,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 							   @"first duplicate wins at an interior node");
 }
 
+/*! @abstract The periodic builder makes the first and last LUT entries equal even when the endpoint values differ. */
 - (void)testThePeriodicLUTClosesTheLoopForUnequalEndpointValues
 {
 	const int n = kCurveN;
@@ -256,6 +261,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy(lut[0], lut[n - 1], 1e-5f, @"first and last entry are the same circle point");
 }
 
+/*! @abstract On a fine LUT the periodic seam slope matches the slope just inside the seam, giving C1 continuity. */
 - (void)testThePeriodicSeamSlopeMatchesTheSlopeJustInside
 {
 	const int n = 1024;
@@ -270,6 +276,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	free(lut);
 }
 
+/*! @abstract A periodic control point outside the unit range folds into the domain, so x = 1.25 builds the same LUT as x = 0.25. */
 - (void)testAPointOutsideTheUnitRangeFoldsIntoTheDomain
 {
 	const int n = kCurveN;
@@ -286,6 +293,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract For degenerate input (NULL, one point, one distinct x) the periodic builder agrees with the clamped builder. */
 - (void)testThePeriodicBuilderMatchesTheClampedBuilderForDegenerateInput
 {
 	const int n = 64;
@@ -313,6 +321,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract A periodic hue-shift curve has no hard step between adjacent entries and no seam between first and last. */
 - (void)testAHueShiftCurveHasNoHardStepAnywhere
 {
 	const int n = kCurveN;
@@ -349,6 +358,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 
 #pragma mark Sanitization
 
+/*! @abstract Sanitization clamps y values into the unit range. */
 - (void)testTheYValuesClampToTheUnitRange
 {
 	CGPoint points[2] = {CGPointMake(0.25, -0.3), CGPointMake(0.75, 1.7)};
@@ -359,6 +369,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([curve pointAtIndex:1].y, 1.0, 1e-9);
 }
 
+/*! @abstract A linear-domain curve clamps out-of-range x values into the unit range. */
 - (void)testLinearXValuesClampToTheUnitRange
 {
 	CGPoint points[2] = {CGPointMake(-0.5, 0.3), CGPointMake(1.5, 0.4)};
@@ -368,6 +379,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([curve pointAtIndex:1].x, 1.0, 1e-9);
 }
 
+/*! @abstract A circular-domain curve folds out-of-range x values into the unit range without altering y. */
 - (void)testCircularXValuesFoldIntoTheUnitRange
 {
 	CGPoint points[2] = {CGPointMake(1.25, 0.3), CGPointMake(-0.25, 0.4)};
@@ -383,6 +395,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([curve pointAtIndex:1].y, 0.4, 1e-9);
 }
 
+/*! @abstract Sanitization sorts the points by ascending x and keeps each point's y. */
 - (void)testThePointsSortByAscendingX
 {
 	CGPoint points[3] = {CGPointMake(0.8, 0.1), CGPointMake(0.2, 0.9), CGPointMake(0.5, 0.5)};
@@ -395,6 +408,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([curve pointAtIndex:0].y, 0.9, 1e-9);
 }
 
+/*! @abstract A duplicate x drops the later point, keeping the first point's y and reducing the count. */
 - (void)testADuplicateXDropsAndTheFirstPointWins
 {
 	CGPoint points[3] = {CGPointMake(0.0, 0.0), CGPointMake(0.5, 0.25), CGPointMake(0.5, 0.75)};
@@ -405,6 +419,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([curve pointAtIndex:1].y, 0.25, 1e-9);
 }
 
+/*! @abstract A NULL point array with a non-zero count returns nil, while a NULL array with zero count returns an empty curve. */
 - (void)testNilPointsWithANonZeroCountYieldNoCurve
 {
 	XCTAssertNil([self linearRemapWithPoints:NULL count:3]);
@@ -417,6 +432,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 
 #pragma mark Identity
 
+/*! @abstract The remap identity curve is the two-point diagonal and reports isIdentity. */
 - (void)testTheRemapIdentityIsTheDiagonal
 {
 	FxGripCurveData *identity = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleRemap
@@ -430,6 +446,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertTrue(identity.isIdentity);
 }
 
+/*! @abstract The shift identity curve is flat at 0.5, reports isIdentity, and builds a LUT of 0.5. */
 - (void)testTheShiftIdentityIsFlatAtAHalf
 {
 	FxGripCurveData *identity = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleShift
@@ -447,6 +464,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract The multiplier-half and multiplier-one identity curves are flat at 0.5 and 1.0 and report isIdentity. */
 - (void)testTheMultiplierIdentitiesAreFlatAtTheirNeutral
 {
 	FxGripCurveData *half = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleMultiplierHalf
@@ -462,6 +480,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertTrue(one.isIdentity);
 }
 
+/*! @abstract The circular remap identity builds the diagonal ramp LUT. */
 - (void)testTheCircularRemapIdentityEvaluatesAsTheDiagonal
 {
 	FxGripCurveData *identity = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleRemap
@@ -476,6 +495,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract A curve with a moved interior point does not report isIdentity. */
 - (void)testAMovedPointIsNotTheIdentity
 {
 	CGPoint points[3] = {CGPointMake(0.0, 0.0), CGPointMake(0.5, 0.8), CGPointMake(1.0, 1.0)};
@@ -484,6 +504,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertFalse(curve.isIdentity);
 }
 
+/*! @abstract A flat neutral shape is the identity of the shift role but not of the remap role. */
 - (void)testAFlatNeutralShapeIsNotTheIdentityOfTheRemapRole
 {
 	CGPoint points[2] = {CGPointMake(0.0, 0.5), CGPointMake(1.0, 0.5)};
@@ -500,6 +521,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 
 #pragma mark Accessors
 
+/*! @abstract Reading a point at an index beyond the count returns the zero point. */
 - (void)testPointAtIndexBeyondTheCountIsZero
 {
 	CGPoint points[2] = {CGPointMake(0.0, 0.2), CGPointMake(1.0, 0.8)};
@@ -511,6 +533,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([curve pointAtIndex:99].y, 0.0, 0.0);
 }
 
+/*! @abstract Copying points into a float2 buffer writes at most the given capacity, returns the count written, and returns zero for a NULL buffer. */
 - (void)testCopyCurvePointsWritesAtMostTheCapacity
 {
 	CGPoint points[3] = {CGPointMake(0.0, 0.2), CGPointMake(0.5, 0.4), CGPointMake(1.0, 0.8)};
@@ -533,6 +556,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqual([curve copyCurvePointsFloat2:noBuffer capacity:4], (NSUInteger)0);
 }
 
+/*! @abstract A linear-domain curve builds the same LUT as the clamped builder called with the raw points. */
 - (void)testBuildLUTMatchesTheClampedBuilderForALinearCurve
 {
 	const int n = kCurveN;
@@ -550,6 +574,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract A circular-domain curve builds the same LUT as the periodic builder called with the raw points. */
 - (void)testBuildLUTMatchesThePeriodicBuilderForACircularCurve
 {
 	const int n = kCurveN;
@@ -570,6 +595,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract Building into a NULL buffer or with a zero count leaves the output untouched. */
 - (void)testBuildLUTIgnoresAnEmptyRequest
 {
 	CGPoint points[2] = {CGPointMake(0.0, 0.2), CGPointMake(1.0, 0.8)};
@@ -587,6 +613,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 
 #pragma mark Coding and equality
 
+/*! @abstract A curve survives a secure keyed-archive round trip with its role, domain, and points intact. */
 - (void)testACurveSurvivesTheSecureArchiveRoundTrip
 {
 	CGPoint points[3] = {CGPointMake(0.1, 0.2), CGPointMake(0.5, 0.9), CGPointMake(0.95, 0.4)};
@@ -635,6 +662,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	return [FxGripCurveData.alloc initWithCoder:unarchiver];
 }
 
+/*! @abstract Decoding rejects an odd-length or missing points array as nil and accepts an even-length one as whole points. */
 - (void)testAMalformedPointsArrayDecodesToNoCurve
 {
 	XCTAssertNil([self decodeCurveFromArchive:[self archiveWithPointsPayload:(@[@0.0, @0.0, @1.0])]],
@@ -647,6 +675,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqual(decoded.pointCount, (NSUInteger)1);
 }
 
+/*! @abstract Equal curves compare equal with equal hashes, and curves differing in points, role, or domain do not. */
 - (void)testEqualCurvesMatchAndDifferingCurvesDoNot
 {
 	CGPoint points[2] = {CGPointMake(0.0, 0.2), CGPointMake(1.0, 0.8)};
@@ -671,6 +700,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertNotEqualObjects(curve, @"not a curve");
 }
 
+/*! @abstract Copying an immutable curve returns the same instance. */
 - (void)testCopyReturnsTheSameImmutableInstance
 {
 	CGPoint points[2] = {CGPointMake(0.0, 0.2), CGPointMake(1.0, 0.8)};
@@ -749,6 +779,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 
 #pragma mark Storage
 
+/*! @abstract A curve stored under a key is returned for that key, and an unset key returns nil. */
 - (void)testACurveRoundTripsThroughTheKeyedStore
 {
 	FxGripCurveData *curve = [self remapCurveWithMidY:0.7];
@@ -759,6 +790,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertNil([self.set curveForKey:@"red"]);
 }
 
+/*! @abstract Storing an identity curve removes the key and leaves the set empty. */
 - (void)testStoringAnIdentityCurveRemovesTheKey
 {
 	FxGripCurveData *identity = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleRemap
@@ -771,6 +803,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqual(self.set.count, (NSUInteger)0);
 }
 
+/*! @abstract Storing nil for a key and removing a key both clear the stored curve. */
 - (void)testStoringNilOrRemovingClearsTheKey
 {
 	[self.set setCurve:[self remapCurveWithMidY:0.7] forKey:@"luma"];
@@ -782,6 +815,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertNil([self.set curveForKey:@"red"]);
 }
 
+/*! @abstract The curveKeys list is sorted and excludes non-curve entries stored in the set. */
 - (void)testCurveKeysAreSortedAndExcludeNonCurveEntries
 {
 	[self.set setCurve:[self remapCurveWithMidY:0.7] forKey:@"red"];
@@ -794,12 +828,14 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertNil([self.set curveForKey:@"note"]);
 }
 
+/*! @abstract The set's parameter class list includes FxGripCurveData and NSNumber. */
 - (void)testTheParameterClassListIncludesTheCurveClass
 {
 	XCTAssertTrue([FxGripCurveSetData.classesForParameter containsObject:FxGripCurveData.class]);
 	XCTAssertTrue([FxGripCurveSetData.classesForParameter containsObject:NSNumber.class]);
 }
 
+/*! @abstract A curve set survives a secure archive round trip with its curves, keys, and non-curve values intact. */
 - (void)testACurveSetSurvivesTheSecureArchiveRoundTrip
 {
 	FxGripCurveData *luma = [self remapCurveWithMidY:0.7];
@@ -840,6 +876,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	return set;
 }
 
+/*! @abstract Interpolating between two curve sets returns a curve set. */
 - (void)testTheInterpolatedValueIsACurveSet
 {
 	FxGripCurveSetData *right = [self setWithCurve:[self remapCurveWithMidY:0.7] forKey:@"luma"];
@@ -850,6 +887,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertTrue([blended isKindOfClass:FxGripCurveSetData.class]);
 }
 
+/*! @abstract Two curves with matching point counts interpolate pairwise, returning the left at weight 0, the right at weight 1, and the midpoint at weight 0.5. */
 - (void)testMatchedCurvesInterpolatePairwise
 {
 	FxGripCurveData *left = [self remapCurveWithMidY:0.2];
@@ -872,6 +910,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([blended pointAtIndex:2].y, 1.0, 1e-9);
 }
 
+/*! @abstract Curves with mismatched point counts blend on the sample grid, so the blended LUT is the weighted mix of the two source LUTs. */
 - (void)testMismatchedPointCountsBlendOnTheSampleGrid
 {
 	CGPoint leftPoints[2] = {CGPointMake(0.0, 0.0), CGPointMake(1.0, 0.5)};
@@ -901,6 +940,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+/*! @abstract A grid blend takes the role and domain of the left curve. */
 - (void)testTheGridBlendTakesTheRoleAndDomainOfTheLeftCurve
 {
 	FxGripCurveData *leftRole = [self remapCurveWithMidY:0.2];
@@ -930,6 +970,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqual(circularFirst.role, FxGripCurveRoleShift);
 }
 
+/*! @abstract A curve present only on the left blends halfway toward its role identity. */
 - (void)testACurveOnlyOnTheLeftBlendsTowardItsRoleIdentity
 {
 	FxGripCurveData *lifted = [self liftedRemapCurve];
@@ -946,6 +987,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqual(blended.role, FxGripCurveRoleRemap);
 }
 
+/*! @abstract A curve present only on the right blends halfway from its role identity. */
 - (void)testACurveOnlyOnTheRightBlendsTowardItsRoleIdentity
 {
 	FxGripCurveSetData *rightSet = [self setWithCurve:[self liftedRemapCurve] forKey:@"luma"];
@@ -959,6 +1001,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertEqualWithAccuracy([blended pointAtIndex:1].y, 1.0, 1e-9);
 }
 
+/*! @abstract A one-sided curve reaches the neutral at the far endpoint, where the neutral is stored as an absent key. */
 - (void)testAOneSidedCurveReachesTheNeutralAtTheFarEndpoint
 {
 	FxGripCurveSetData *empty = [FxGripCurveSetData.alloc init];
@@ -972,6 +1015,7 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	XCTAssertNil([fromRight curveForKey:@"luma"]);
 }
 
+/*! @abstract A non-curve numeric value interpolates through the base, while a non-numeric value keeps the left value. */
 - (void)testANonCurveValueStillInterpolatesThroughTheBase
 {
 	FxGripCurveSetData *rightSet = [FxGripCurveSetData.alloc init];

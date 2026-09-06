@@ -1,15 +1,15 @@
-//
-//  FxGripInstanceTrackerTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripInstanceTracker: the process-wide registry of effect
-//  instances keyed by plugin UUID, the add/remove notification handlers, the
-//  neighbour-start-time searches, and the FxGripTileableEffect accessors.
-//
-//  The registry only accepts real FxGripTileableEffect instances, so the effects
-//  here are instances of a local subclass whose -notifier returns a private
-//  NSPriorityNotificationCenter. No test touches the process-wide center.
-//
+/*!
+	@file       FxGripInstanceTrackerTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInstanceTrackerTests
+	@abstract   Tests FxGripInstanceTracker registration, removal, teardown, and neighbour-start-time searches.
+	@discussion Introduced in FxGrip 0.1.0. Effects are instances of a local FxGripTileableEffect subclass whose
+	            notifier is a private center, so the process-wide registry is exercised without touching the shared
+	            center. The tests cover tracker loading, per-UUID grouping, add and remove handlers, dealloc cleanup,
+	            and the next and previous start-time queries.
+*/
 
 #import <XCTest/XCTest.h>
 #import <CoreMedia/CoreMedia.h>
@@ -159,6 +159,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Loading
 
+/*! @abstract Verifies an effect that tracks instances loads an FxGripInstanceTracker keyed to it. */
 - (void)testTheEffectLoadsATrackerWhenItTracksInstances
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -170,6 +171,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNotNil([effect newFxInstanceTracker]);
 }
 
+/*! @abstract Verifies an effect that does not opt into tracking has no tracker, zero instance count, and an empty non-nil instances array. */
 - (void)testAnEffectThatDoesNotTrackInstancesHasNoTracker
 {
 	FxGripTrackTestUntrackedEffect *plain = [FxGripTrackTestUntrackedEffect.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -185,6 +187,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Registration
 
+/*! @abstract Verifies the added-to-document handler registers the instance and exposes it through the count, array, and index accessors. */
 - (void)testAddingToTheDocumentRegistersTheInstance
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -200,6 +203,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue([effect instanceAtIndex:0] == effect);
 }
 
+/*! @abstract Verifies an effect with a nil plugin UUID skips registration without raising on a nil registry key. */
 - (void)testAddingAnEffectWithoutAUUIDRegistersNothingAndDoesNotThrow
 {
 	FxGripTrackTestNilUUIDEffect *effect = [FxGripTrackTestNilUUIDEffect.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -211,6 +215,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 					 @"a nil UUID cannot key the registry, so registration is skipped rather than raising on a nil key");
 }
 
+/*! @abstract Verifies registering one instance twice leaves a single registry entry. */
 - (void)testRegisteringTheSameInstanceTwiceKeepsOneEntry
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -221,6 +226,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(effect.instanceCount, (NSUInteger)1);
 }
 
+/*! @abstract Verifies two effects of one plugin UUID share the registry entry and see each other. */
 - (void)testInstancesOfOnePluginShareTheRegistryEntry
 {
 	FxGripTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -236,6 +242,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue([first instanceAtIndex:1] == second);
 }
 
+/*! @abstract Verifies effects with different plugin UUIDs keep separate registry entries. */
 - (void)testInstancesOfDifferentPluginsAreTrackedSeparately
 {
 	FxGripTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -249,6 +256,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertFalse([first.instances containsObject:other]);
 }
 
+/*! @abstract Verifies an added-to-document notification whose object is not an effect registers nothing. */
 - (void)testAnObjectThatIsNotAnEffectIsNeverRegistered
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -260,6 +268,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Removal
 
+/*! @abstract Verifies the removed-from-document handler drops the named instance and leaves the rest. */
 - (void)testRemovingFromTheDocumentDropsTheInstance
 {
 	FxGripTrackTestEffect *first = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -273,6 +282,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(second.instances.firstObject == second);
 }
 
+/*! @abstract Verifies removing the last instance empties the count, the array, and the index accessor. */
 - (void)testRemovingTheLastInstanceEmptiesTheRegistryEntry
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -285,6 +295,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil([effect instanceAtIndex:0]);
 }
 
+/*! @abstract Verifies removing an unregistered instance or a non-effect object leaves the registry unchanged. */
 - (void)testRemovingAnUnregisteredInstanceOrANonEffectDoesNothing
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -297,6 +308,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(effect.instanceCount, (NSUInteger)1);
 }
 
+/*! @abstract Verifies instanceAtIndex: returns nil for an out-of-range or negative index instead of throwing. */
 - (void)testInstanceAtIndexIsBoundedAndDoesNotThrow
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -311,6 +323,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 
 // An effect owns its extensions; the extension's back-reference to the effect must be
 // weak, or the effect (and every observer it registered) leaks for the process lifetime.
+/*! @abstract Verifies an effect that loaded a tracker deallocates when released, confirming the extension back-reference is weak. */
 - (void)testAnEffectWithATrackerDeallocatesWhenReleased
 {
 	__weak FxGripTrackTestEffect *weakEffect = nil;
@@ -327,6 +340,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 // The registry entry is removed by the effect's own deallocation, with no
 // RemovedFromDocument notification — the teardown post never matches a weak object
 // filter, so the tracker cannot depend on it.
+/*! @abstract Verifies a transient effect's dealloc removes its registry entry without a removal notification, so a surviving sibling counts correctly. */
 - (void)testAnEffectDeallocRemovesItsRegistryEntryWithoutANotification
 {
 	FxGripTrackTestEffect *survivor = [self makeEffectWithUUID:kTrackTestUUIDTwo startSeconds:0];
@@ -360,6 +374,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 	return @[early, middle, late];
 }
 
+/*! @abstract Verifies startTimeOfNextEffect: returns the nearest later instance's start time. */
 - (void)testTheNextEffectIsTheNearestLaterInstance
 {
 	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
@@ -371,6 +386,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 										FxGripTrackTestMakeTime(9, 1)));
 }
 
+/*! @abstract Verifies startTimeOfNextEffect: yields an invalid time for the last instance. */
 - (void)testTheNextEffectIsInvalidForTheLastInstance
 {
 	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
@@ -381,6 +397,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 				   @"an instance with no later neighbour yields an invalid time");
 }
 
+/*! @abstract Verifies startTimeOfPreviousEffect: returns the nearest earlier instance's start time. */
 - (void)testThePreviousEffectIsTheNearestEarlierInstance
 {
 	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
@@ -392,6 +409,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 										FxGripTrackTestMakeTime(1, 1)));
 }
 
+/*! @abstract Verifies startTimeOfPreviousEffect: yields an invalid time for the first instance. */
 - (void)testThePreviousEffectIsInvalidForTheFirstInstance
 {
 	NSArray<FxGripTrackTestEffect *> *effects = [self threeRegisteredEffects];
@@ -402,6 +420,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 				   @"an instance with no earlier neighbour yields an invalid time");
 }
 
+/*! @abstract Verifies startTimeOfNextEffect: yields an invalid time for an effect whose plugin UUID is not in the registry. */
 - (void)testAnUnregisteredPluginHasNoNextStartTime
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];
@@ -414,6 +433,7 @@ static BOOL FxGripTrackTestTimesEqual(CMTime lhs, CMTime rhs)
 				   @"an unknown plugin UUID yields an invalid time");
 }
 
+/*! @abstract Verifies startTimeOfPreviousEffect: yields an invalid time for an effect whose plugin UUID is not in the registry. */
 - (void)testAnUnregisteredPluginHasNoPreviousStartTime
 {
 	FxGripTrackTestEffect *effect = [self makeEffectWithUUID:kTrackTestUUIDOne startSeconds:1];

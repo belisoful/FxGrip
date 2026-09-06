@@ -1,10 +1,14 @@
-//
-//  NSArray+FxPlug.m
-//  FxGripTileableEffect
-//
-//  Created by Apple on 1/7/20.
-//  Copyright © 2020-2023 Apple, Inc. All rights reserved.
-//
+/*!
+	@file       NSArray+FxPlug.m
+	@copyright  Copyright © 2020-2023 Apple, Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     NSArray+FxPlug
+	@abstract   Implements FxImageTile lookup within a host source-tile array.
+	@discussion Introduced in FxGrip 0.1.0. Each finder enumerates the array, skips non-tile
+	            objects, and matches on parameterID. The effect source is the tile with
+	            parameterID 0.
+*/
 
 #import "NSArray+FxPlug.h"
 #import <FxPlug/FxImageTile.h>
@@ -12,6 +16,10 @@
 #pragma mark -
 #pragma mark NSArray FxImageTile Discovery
 
+/*!
+	@abstract	Locates FxImageTile inputs within a source-tile array by parameterID.
+	@discussion	Introduced in FxGrip 0.1.0. The effect source is the tile with parameterID 0.
+*/
 @implementation NSArray (FxImageTileSearch)
 
 - (NSInteger)effectSourceIndex
@@ -60,6 +68,7 @@
 	return result;
 }
 
+/*! @abstract The receiver's objects that pass the block, in order. */
 - (NSArray *) filteredArrayUsingBlock:(BOOL (^)(id obj))block {
 	NSIndexSet *const filteredIndexes = [self indexesOfObjectsPassingTest:^BOOL (id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
 									   return block(obj);

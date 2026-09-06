@@ -1,12 +1,15 @@
-//
-//  FxGripFontMenuParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripFontMenuParameter: the type identity, the payload
-//  +addParameter:toEffect: derives from a configuration, the fallback to the effect default
-//  font name, the host-refusal result, and the font name -valueAtTime: reads from the
-//  retrieval API.
-//
+/*!
+	@file       FxGripFontMenuParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripFontMenuParameterTests
+	@abstract   Tests FxGripFontMenuParameter: its FxPlug type identity and the creation payload
+	            +addParameter:toEffect: derives from a configuration.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the declared font name, the
+	            fallback to the effect default font name, the host-refusal result, and the font
+	            name -valueAtTime: reads from the retrieval API.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -58,6 +61,7 @@ static const FxParameterId kFontMenuTestParameter = 41;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug font-menu type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripFontMenuParameter.parameterType, FxParameterType_FontMenu);
@@ -66,6 +70,7 @@ static const FxParameterId kFontMenuTestParameter = 41;
 
 #pragma mark Creation payload
 
+/*! @abstract A font menu forwards the declared default font name to the creation call. */
 - (void)testFontMenuForwardsTheDeclaredFontName
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @"Futura"};
@@ -79,6 +84,7 @@ static const FxParameterId kFontMenuTestParameter = 41;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A font menu with no declared default falls back to the effect default font name. */
 - (void)testFontMenuFallsBackToTheEffectDefaultFontName
 {
 	self.effect.defaultFontName = @"Optima";
@@ -88,6 +94,7 @@ static const FxParameterId kFontMenuTestParameter = 41;
 	XCTAssertEqualObjects(self.call[@"default"], @"Optima");
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testFontMenuReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -97,6 +104,7 @@ static const FxParameterId kFontMenuTestParameter = 41;
 
 #pragma mark Value
 
+/*! @abstract -valueAtTime: reads the font name and render time from the retrieval API. */
 - (void)testFontMenuValueAtTimeReadsTheFontNameFromTheRetrievalAPI
 {
 	FxGripFontMenuParameter *parameter = [self makeParameter:FxGripFontMenuParameter.class
@@ -108,6 +116,7 @@ static const FxParameterId kFontMenuTestParameter = 41;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @4);
 }
 
+/*! @abstract -valueAtTime: is nil when the retrieval read fails. */
 - (void)testFontMenuValueAtTimeIsNilWhenTheReadFails
 {
 	FxGripFontMenuParameter *parameter = [self makeParameter:FxGripFontMenuParameter.class

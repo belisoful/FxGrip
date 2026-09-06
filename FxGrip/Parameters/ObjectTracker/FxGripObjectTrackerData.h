@@ -1,9 +1,17 @@
-//
-//  FxGripObjectTrackerData.h
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripObjectTrackerData.h
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerData
+	@abstract   The value type of an Object Tracker parameter and its configuration enums.
+	@discussion Introduced in FxGrip 0.1.0. FxGripObjectTrackerData holds the tracker
+	            configuration, the user-placed region, the linked parameter IDs, and the
+	            per-frame samples. The enums name the region shape, the driven behavior, and
+	            the analysis resolution. FxGripObjectTrackerTransform is the resolved
+	            location, rotation, and size at a frame. Coordinates are normalized to the
+	            frame with a lower-left origin, matching Vision.
+*/
 
 #ifndef FxGripObjectTrackerData_h
 #define FxGripObjectTrackerData_h
@@ -45,7 +53,7 @@ typedef struct {
 	@class      FxGripObjectTrackerData
 	@abstract   The persisted value of an Object Tracker parameter: its configuration, the
 				user-placed region, and the per-frame tracking result.
-	@discussion Introduced in FxGrip 1.0. The value carries the whole tracker state so it
+	@discussion Introduced in FxGrip 0.1.0. The value carries the whole tracker state so it
 				saves with the host document and travels in a preset. The configuration
 				(shape, behavior, resolution, smoothing, leading-filter inclusion, enabled
 				state, label) is set at design time and edited in the inspector; `initialBox`

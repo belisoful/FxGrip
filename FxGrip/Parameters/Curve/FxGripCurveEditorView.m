@@ -1,7 +1,16 @@
-//
-//  FxGripCurveEditorView.m
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveEditorView.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveEditorView
+	@abstract   Implements the reusable curve editor view and its gradient stop type.
+	@discussion Introduced in FxGrip 0.1.0. The editor hit-tests, adds, moves, and deletes control
+	            points, applies the modifier keys for fine, constrained, and delete drags, and
+	            commits edits to its delegate. Drawing renders the background, the vertical gradient,
+	            the evaluated curve, the point handles, and the value readout. FxGripCurvePaint is the
+	            immutable gradient stop the strip composes.
+*/
 
 #import "FxGripCurveEditorView.h"
 #import "FxGripCurveSetData.h"
@@ -47,6 +56,10 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 - (instancetype)initWithKind:(FxGripCurvePaintKind)kind color:(nullable NSColor *)color;
 @end
 
+/*!
+	@abstract	One immutable stop of a vertical background gradient: none, a color, or the hue spectrum.
+	@discussion	Introduced in FxGrip 0.1.0. A curve strip composes up to three stops into a vertical
+				gradient over the strip base. */
 @implementation FxGripCurvePaint
 {
 	FxGripCurvePaintKind _kind;
@@ -90,6 +103,11 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 
 @end
 
+/*!
+	@abstract	The reusable curve editor: an FCP-style strip or pane for a single curve.
+	@discussion	Introduced in FxGrip 0.1.0. The view edits its curve on the mouse and keyboard,
+				renders it at view-width resolution with the render's builders, and commits each
+				edit to its delegate. */
 @interface FxGripCurveEditorView ()
 {
 	FxGripCurveRole _role;
@@ -284,6 +302,12 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 
 #pragma mark Data push
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Sets the edited curve from a pushed value.
+	@param		value	An FxGripCurveData applied directly, or an FxGripCurveSetData read by mappingKey.
+	@discussion	Introduced in FxGrip 0.1.0. A curve set with no entry for the key falls back to the
+				role's identity. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if ([value isKindOfClass:FxGripCurveData.class]) {
@@ -427,6 +451,10 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 	[self applyPoints:points trackedPoint:CGPointMake(-1, -1) commit:YES];
 }
 
+/*!
+	@method		resetCurve
+	@abstract	Replaces the curve with the role's identity and commits.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (void)resetCurve
 {
 	FxGripCurveData *identity = [FxGripCurveData identityCurveWithRole:_role domain:_domain];
@@ -440,6 +468,12 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 
 #pragma mark Mouse
 
+/*!
+	@method		mouseDown:
+	@abstract	Selects, adds, or deletes a point at the click.
+	@discussion	Introduced in FxGrip 0.1.0. A double-click resets the curve. A Command-click deletes
+				a hit point. A click on a point begins a drag; a click away from any point adds a
+				point on the curve at that x and drags it. */
 - (void)mouseDown:(NSEvent *)event
 {
 	// Control-click is a contextual menu on macOS; AppKit routes it through menuForEvent:.
@@ -485,6 +519,12 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 	[self applyPoints:points trackedPoint:added commit:NO];
 }
 
+/*!
+	@method		mouseDragged:
+	@abstract	Moves the selected point, or removes it when dragged far outside the strip.
+	@discussion	Introduced in FxGrip 0.1.0. Option slows the drag to slowDragScale of mouse travel.
+				Shift constrains the move to the axis that has moved farther. A removable point
+				dragged past the removal margin is deleted. */
 - (void)mouseDragged:(NSEvent *)event
 {
 	if (!_dragging || _selectedPointIndex == NSNotFound) {
@@ -535,6 +575,10 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 	[self applyPoints:points trackedPoint:moved commit:NO];
 }
 
+/*!
+	@method		mouseUp:
+	@abstract	Ends the drag and commits the curve.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (void)mouseUp:(NSEvent *)event
 {
 	if (_dragging) {
@@ -590,6 +634,10 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 
 #pragma mark Keyboard
 
+/*!
+	@method		keyDown:
+	@abstract	Deletes the selected point on the Delete key.
+	@discussion	Introduced in FxGrip 0.1.0. A pinned or non-removable point passes the event to super. */
 - (void)keyDown:(NSEvent *)event
 {
 	unichar key = event.charactersIgnoringModifiers.length > 0
@@ -605,6 +653,11 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 
 #pragma mark Menu
 
+/*!
+	@method		menuForEvent:
+	@abstract	Builds the context menu for a right-click or Control-click.
+	@discussion	Introduced in FxGrip 0.1.0. A hit point adds a Delete Point item, enabled when the
+				point is removable. Reset Curve is always present. */
 - (NSMenu *)menuForEvent:(NSEvent *)event
 {
 	NSMenu *menu = [[NSMenu alloc] initWithTitle:@""];
@@ -758,6 +811,11 @@ static CGFloat fxg_gridLineAlpha(NSInteger line, NSInteger divisions)
 	}
 }
 
+/*!
+	@method		drawRect:
+	@abstract	Draws the background, the alignment grid, the evaluated curve, the point handles, and the readout.
+	@discussion	Introduced in FxGrip 0.1.0. The curve is evaluated at view-width resolution with the
+				same builders the render uses. */
 - (void)drawRect:(NSRect)dirtyRect
 {
 	NSRect bounds = self.curveBounds;

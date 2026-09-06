@@ -1,12 +1,15 @@
-//
-//  FxGripAngleParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripAngleParameter: the type identity, the payload
-//  +addParameter:toEffect: derives from a configuration, the full-turn default range, the
-//  omission of slider bounds and delta from the angle creation method, and the host-refusal
-//  result.
-//
+/*!
+	@file       FxGripAngleParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAngleParameterTests
+	@abstract   Tests FxGripAngleParameter: its FxPlug type identity and the creation payload
+	            +addParameter:toEffect: derives from a configuration.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the full-turn default range, the
+	            forwarding of declared degrees and bounds, the omission of slider bounds and
+	            delta from the angle creation method, and the host-refusal result.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -47,6 +50,7 @@ static const FxParameterId kAngleTestParameter = 21;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug angle type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripAngleParameter.parameterType, FxParameterType_Angle);
@@ -55,6 +59,7 @@ static const FxParameterId kAngleTestParameter = 21;
 
 #pragma mark Creation payload
 
+/*! @abstract An angle created with no bounds defaults to a zero start and a zero-to-360-degree range. */
 - (void)testAngleWithoutBoundsSpansAFullTurn
 {
 	XCTAssertTrue([self add:FxGripAngleParameter.class type:kFxParameterType_Angle extra:nil]);
@@ -68,6 +73,7 @@ static const FxParameterId kAngleTestParameter = 21;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract An angle forwards the declared default degrees and minimum and maximum bounds to the creation call. */
 - (void)testAngleForwardsTheDeclaredDegreesAndBounds
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @45.0,
@@ -85,6 +91,7 @@ static const FxParameterId kAngleTestParameter = 21;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract An angle omits slider bounds and delta from the creation call, since the angle creation method takes none. */
 - (void)testAngleIgnoresSliderBoundsAndDelta
 {
 	NSDictionary *extra = @{kFxParameterProperty_SliderMinimum: @10.0,
@@ -98,6 +105,7 @@ static const FxParameterId kAngleTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"max"], @360.0);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testAngleReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;

@@ -1,7 +1,14 @@
-//
-//  FxGripPointOSC.h
-//  FxGrip
-//
+/*!
+	@file       FxGripPointOSC.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPointOSC
+	@abstract   An on-screen control and its parts for FxGripPointOptions-configured point parameters.
+	@discussion Introduced in FxGrip 0.1.0. The control composes a rich point handle, an optional axis
+	            divider, an optional background image, and an optional name label for each point. An
+	            effect's OSC subclass calls addPointParameter:name:options: for each rich point.
+*/
 
 #ifndef FxGripPointOSC_h
 #define FxGripPointOSC_h
@@ -14,7 +21,7 @@
 /*!
 	@class      FxGripOSCRichPointHandlePart
 	@abstract   The draggable handle of a point parameter configured by FxGripPointOptions.
-	@discussion Introduced in FxGrip 1.0. Extends the stock point handle with the FxGripPointOptions
+	@discussion Introduced in FxGrip 0.1.0. Extends the stock point handle with the FxGripPointOptions
 				behaviors:
 				- the handle draws at the parameter's position, or offset by pinDistance canvas
 				  pixels at pinAngle degrees (0 is right, counterclockwise positive) as a pin
@@ -32,8 +39,10 @@
 */
 @interface FxGripOSCRichPointHandlePart : FxGripOSCPointHandlePart
 
+/*! The point behaviors: pin offset, mouse speed, constraint, range, and appearance. */
 @property (nonatomic, strong, nonnull) FxGripPointOptions *options;
 
+/*! Creates a handle bound to a point parameter with the given options. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 					   parameterID:(FxParameterId)parameterID
 						   options:(nonnull FxGripPointOptions *)options;
@@ -49,7 +58,7 @@
 /*!
 	@class      FxGripOSCPointDividerPart
 	@abstract   The divider line of an axis-constrained point.
-	@discussion Introduced in FxGrip 1.0. Draws a line across the canvas through the point,
+	@discussion Introduced in FxGrip 0.1.0. Draws a line across the canvas through the point,
 				perpendicular to the axis the point moves along. A thin divider is display
 				only and pairs with the handle. A thick divider is the control itself: it
 				answers hits along its length and drags the point along the free axis, so
@@ -68,7 +77,7 @@
 /*!
 	@class      FxGripOSCPointBackgroundPart
 	@abstract   A display-only image drawn beneath a point's control.
-	@discussion Introduced in FxGrip 1.0. Draws backgroundImageName (a named AppKit image or a
+	@discussion Introduced in FxGrip 0.1.0. Draws backgroundImageName (a named AppKit image or a
 				file path) centered on the backgroundImageX and backgroundImageY object point,
 				backgroundImageSize of the input width wide, keeping the image's aspect in
 				input pixels. The texture is built once per Metal device. The part answers no
@@ -76,8 +85,10 @@
 */
 @interface FxGripOSCPointBackgroundPart : FxGripOSCPart
 
+/*! The point options supplying the background image name, position, and size. */
 @property (nonatomic, strong, nonnull) FxGripPointOptions *options;
 
+/*! Creates a background-image part from the given options. */
 + (nonnull instancetype)partWithID:(NSInteger)partID options:(nonnull FxGripPointOptions *)options;
 
 @end
@@ -85,15 +96,20 @@
 /*!
 	@class      FxGripOSCPointLabelPart
 	@abstract   The parameter-name readout beside a point's handle.
-	@discussion Introduced in FxGrip 1.0. A HUD readout anchored to the point. When
+	@discussion Introduced in FxGrip 0.1.0. A HUD readout anchored to the point. When
 				nameOnlyWhenAbove is set the label draws only while hovered, which
 				FxGripPointOSC sets from mouse-moved events for the handle part named by
 				handlePartID.
 */
 @interface FxGripOSCPointLabelPart : FxGripOSCHUDPart
 
+/*! The part number of the handle this label tracks for hover; 0 means no handle. */
 @property (nonatomic, assign) NSInteger handlePartID;
+
+/*! YES draws the label only while the handle is hovered. */
 @property (nonatomic, assign) BOOL nameOnlyWhenAbove;
+
+/*! YES while the tracked handle is hovered; set by the control from mouse-moved events. */
 @property (nonatomic, assign) BOOL hovered;
 
 /*! YES when the label draws: always, or while hovered when nameOnlyWhenAbove is set. */
@@ -104,7 +120,7 @@
 /*!
 	@class      FxGripPointOSC
 	@abstract   An on-screen control composed from FxGripPointOptions-configured point parameters.
-	@discussion Introduced in FxGrip 1.0. An effect's OSC subclass calls addPointParameter:name:
+	@discussion Introduced in FxGrip 0.1.0. An effect's OSC subclass calls addPointParameter:name:
 				options: for each rich point in its initializer, which appends the parts
 				pointPartsWithOptions:firstPartID:parameterID:name: composes. The control
 				tracks the hovered handle from mouse-moved events to show and hide the

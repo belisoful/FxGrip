@@ -1,11 +1,12 @@
-//
-//  FxGripMLVideoEffectTests.m
-//  FxGripTests
-//
-//  Covers the whole-clip generation lifecycle: state moves, clip-output conversion, failure
-//  paths, cancellation tokens, and the render gate. The generation queue is a private serial
-//  queue and each terminal state fulfills an expectation, so the async runs are deterministic.
-//
+/*!
+	@file       FxGripMLVideoEffectTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLVideoEffectTests
+	@abstract   Verifies the FxGripMLVideoEffect whole-clip generation lifecycle.
+	@discussion Introduced in FxGrip 0.1.0. A stub backend stages readiness, a result, and an optional gate that blocks a run so a test can cancel it. A test effect subclass bypasses the host with a sentinel source image, a captured output, and an expectation-driven state hook. The tests cover the initial idle state, a generation reaching ready with the clip URL, clip-output shapes that resolve, failure paths, cancellation discarding a late result, a second begin being a no-op, and the render gate falling back to the source until the clip is ready.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripMLVideoEffect.h>
@@ -162,6 +163,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	[self waitForExpectations:@[ self.effect.terminalExpectation ] timeout:4.0];
 }
 
+/*! @abstract A fresh effect is idle with negative progress, no clip URL, no cache, and the default video output name. */
 - (void)testTheInitialStateIsIdleWithoutACache
 {
 	XCTAssertEqual(self.effect.generationState, FxGripMLVideoStateIdle);
@@ -171,6 +173,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertEqualObjects([self.effect videoOutputName], @"video");
 }
 
+/*! @abstract A successful generation reaches the ready state, exposes the clip URL, sets progress to one, and runs the backend once. */
 - (void)testAGenerationFinishesReadyWithTheClipURL
 {
 	NSURL *clip = [NSURL fileURLWithPath:@"/tmp/generated.mov"];
@@ -186,6 +189,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertEqual(self.backend.runCount, 1u);
 }
 
+/*! @abstract A file-path string output and an object carrying a fileURL both resolve to the generated clip URL. */
 - (void)testAPathStringAndAFileURLShapedOutputBothResolve
 {
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"video": @"/tmp/path.mov" }];
@@ -205,6 +209,7 @@ static CMTime FxGripMLVideoTestTime(void)
 						  @"an object with a fileURL admits an InferKit video asset");
 }
 
+/*! @abstract A result that carries no clip output fails with the backend-failure error. */
 - (void)testAResultWithoutAClipFails
 {
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"text": @"no clip" }];
@@ -216,6 +221,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertEqual(self.effect.generationError.code, kFxGripError_InferenceBackendFailure);
 }
 
+/*! @abstract A not-ready backend fails with the not-ready error and never runs inference. */
 - (void)testANotReadyBackendFailsWithoutRunning
 {
 	self.backend.ready = NO;
@@ -228,6 +234,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertEqual(self.backend.runCount, 0u);
 }
 
+/*! @abstract Cancelling a running generation returns the effect to idle and discards the result that arrives afterward. */
 - (void)testCancellingDiscardsTheLateResult
 {
 	self.backend.gate = dispatch_semaphore_create(0);
@@ -248,6 +255,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertNil(self.effect.generatedClipURL);
 }
 
+/*! @abstract A second begin while a generation is running does not start another run. */
 - (void)testASecondBeginWhileGeneratingIsANoOp
 {
 	self.backend.gate = dispatch_semaphore_create(0);
@@ -263,6 +271,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertEqual(self.backend.runCount, 1u, @"only one generation ran");
 }
 
+/*! @abstract Before a clip is ready, the render writes the source image and never runs the backend. */
 - (void)testRenderFallsBackToTheSourceUntilReady
 {
 	NSError *error = nil;
@@ -272,6 +281,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertEqual(self.backend.runCount, 0u, @"the render path never runs the backend");
 }
 
+/*! @abstract Once a clip is ready, the render draws from the clip and does not write the source. */
 - (void)testRenderUsesTheClipOnceReady
 {
 	NSURL *clip = [NSURL fileURLWithPath:@"/tmp/generated.mov"];
@@ -288,6 +298,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertNil(self.effect.capturedOutput, @"the clip frame, not the source, was written");
 }
 
+/*! @abstract When the clip frame render returns false, the render falls back to writing the source image. */
 - (void)testAFailedClipFrameFallsBackToTheSource
 {
 	NSURL *clip = [NSURL fileURLWithPath:@"/tmp/generated.mov"];
@@ -303,6 +314,7 @@ static CMTime FxGripMLVideoTestTime(void)
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"SOURCE");
 }
 
+/*! @abstract Resetting a ready effect returns it to idle and clears the clip URL. */
 - (void)testResetReturnsAReadyEffectToIdle
 {
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:

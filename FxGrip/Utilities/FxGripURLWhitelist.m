@@ -1,7 +1,15 @@
-//
-//  FxGripURLWhitelist.m
-//  FxGrip
-//
+/*!
+	@file       FxGripURLWhitelist.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripURLWhitelist
+	@abstract   Implements URL glob matching against an ordered allow-list.
+	@discussion Introduced in FxGrip 0.1.0. Patterns normalize by trimming whitespace and drop
+	            empties and duplicates. Each pattern compiles to an anchored case-insensitive
+	            regular expression, cached until the list changes. Matching tests the URL's full
+	            absolute string and every label-boundary suffix of its host.
+*/
 
 #import "FxGripURLWhitelist.h"
 #import "FxGrip_ARC.h"
@@ -9,6 +17,11 @@
 const unichar kFxGripURLWhitelistAnyCharacter = '?';
 const unichar kFxGripURLWhitelistAnyString = '*';
 
+/*!
+	@abstract	An ordered allow-list of URL glob patterns.
+	@discussion	Introduced in FxGrip 0.1.0. A URL is allowed when a pattern matches its absolute
+				string or a host suffix. An empty list blocks every URL.
+*/
 @implementation FxGripURLWhitelist
 {
 	NSMutableArray<NSString *> *_patterns;
@@ -32,11 +45,13 @@ const unichar kFxGripURLWhitelistAnyString = '*';
 	return self;
 }
 
+/*! @abstract A whitelist containing only *, allowing every URL. */
 + (instancetype)allowAllWhitelist
 {
 	return [[self alloc] initWithPatterns:@[@"*"]];
 }
 
+/*! @abstract A whitelist seeded with common video-hosting bare domains. */
 + (instancetype)defaultVideoWhitelist
 {
 	// @todo: add other common host websites
@@ -117,6 +132,7 @@ const unichar kFxGripURLWhitelistAnyString = '*';
 
 #pragma mark - Glob
 
+/*! @abstract Translates a glob into an anchored regex: ? to ., * to .*, other characters escaped. */
 + (NSString *)regexPatternForGlob:(NSString *)glob
 {
 	NSMutableString *regex = [NSMutableString stringWithString:@"^"];
@@ -136,6 +152,7 @@ const unichar kFxGripURLWhitelistAnyString = '*';
 	return regex;
 }
 
+/*! @abstract The compiled regex for a pattern, building and caching it on first use. */
 - (nullable NSRegularExpression *)regexForPattern:(NSString *)pattern
 {
 	NSRegularExpression *regex = _compiled[pattern];
@@ -151,6 +168,7 @@ const unichar kFxGripURLWhitelistAnyString = '*';
 	return regex;
 }
 
+/*! YES when the regex matches the entire string. */
 static BOOL FxGripRegexMatchesWholeString(NSRegularExpression *regex, NSString *string)
 {
 	if (string.length == 0) {
@@ -164,6 +182,11 @@ static BOOL FxGripRegexMatchesWholeString(NSRegularExpression *regex, NSString *
 
 #pragma mark - Matching
 
+/*!
+	@method		matchesURL:
+	@abstract	Answers whether the URL is allowed by any pattern.
+	@discussion	Introduced in FxGrip 0.1.0. A pattern matches when it covers the full absolute
+				string or a label-boundary suffix of the host. A nil URL is not allowed. */
 - (BOOL)matchesURL:(nullable NSURL *)url
 {
 	if (url == nil) {
@@ -201,6 +224,7 @@ static BOOL FxGripRegexMatchesWholeString(NSRegularExpression *regex, NSString *
 	return NO;
 }
 
+/*! @abstract Answers whether the URL string is allowed; a nil or malformed string is not allowed. */
 - (BOOL)matchesURLString:(nullable NSString *)urlString
 {
 	if (![urlString isKindOfClass:NSString.class] || urlString.length == 0) {

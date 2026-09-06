@@ -1,9 +1,16 @@
-//
-//  FxGripMTLDeviceCache.m
-//  PlugIn
-//
-//  Created by Apple on 1/24/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
+/*!
+	@file       FxGripMTLDeviceCache.m
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMTLDeviceCache
+	@abstract   Implements the process-wide Metal device, queue, pipeline, and library cache.
+	@discussion Introduced in FxGrip 0.1.0. The cache observes Metal device add and remove
+	            notifications to keep its item list current. A lookup holds the cache lock across
+	            find and insert, so concurrent misses create one item. Each cache item pools
+	            command queues and caches pipeline states. FxGripMTLLibraryCache memoizes functions
+	            and coalesces concurrent asynchronous compiles of the same name.
+*/
 
 #import <IOSurface/IOSurfaceObjC.h>
 #import <FxPlug/FxPlugSDK.h>
@@ -16,8 +23,14 @@
 
 #define kFxGripMTLDeviceDefaultPixelFormat MTLPixelFormatRGBA16Float
 
+/*!
+	@abstract	The process-wide cache of Metal devices, queues, pipeline states, and libraries.
+	@discussion	Introduced in FxGrip 0.1.0. Items are keyed by device registry ID, pixel format,
+				and plugin ID, and every method is safe to call from concurrent render threads.
+*/
 @implementation FxGripMTLDeviceCache
 
+/*! @abstract The Metal pixel format for a tile's IOSurface; RGBA16Float for an unexpected format. */
 + (MTLPixelFormat)MTLPixelFormatForImageTile:(FxImageTile*)imageTile
 {
 	MTLPixelFormat  result  = MTLPixelFormatRGBA16Float;
@@ -107,6 +120,7 @@
 	[self.deviceCache returnCommandQueueToCache:commandQueue];
 }
 
+/*! @abstract The MTLDevice among all Metal devices whose registry ID matches; nil when none does. */
 + (id<MTLDevice>)metalDeviceFromID:(uint64_t)registryID
 {
 	id<MTLDevice>   device  = nil;
@@ -126,6 +140,7 @@
 }
 
 
+/*! @abstract A private-storage Depth32Float texture sized to bounds; nil for a nil device. */
 + (id<MTLTexture>)depthTexture:(FxRect)bounds forDevice:(id<MTLDevice>)device
 {
 	if (!device) {
@@ -144,6 +159,7 @@
 }
 
 
+/*! @abstract Builds a cache item for every current Metal device and registers for device add and remove notifications. */
 - (instancetype)init
 {
 	self = [super init];
@@ -223,6 +239,7 @@
 	return cache;
 }
 
+/*! @abstract Adds a default cache item for a newly added Metal device. */
 - (void)observeDeviceAdded:(NSNotification*)notification
 {
 	FxGripMTLDeviceCacheItem*  newCacheItem    = NARC_AUTORELEASE([[FxGripMTLDeviceCacheItem alloc] initWithDevice:notification.object
@@ -236,6 +253,7 @@
 	[_deviceCachesLock unlock];
 }
 
+/*! @abstract Drops every cache item and library for a device Metal reports removed. */
 - (void)observeDeviceRemovalRequested:(NSNotification*)notification
 {
 	uint64_t registryID = ((id<MTLDevice>)notification.object).registryID;
@@ -266,6 +284,7 @@
 	return [self deviceWithRegistryID:registryID pixelFormat:pixFormat andPluginID:kDefaultPluginID];
 }
 
+/*! @abstract YES when an item matches the registry ID, pixel format (or any), and plugin ID. */
 - (BOOL)cacheItem:(FxGripMTLDeviceCacheItem*)item matchesRegistryID:(uint64_t)registryID pixelFormat:(MTLPixelFormat)pixFormat pluginID:(NSString*)pluginID
 {
 	if (item.gpuDevice.registryID != registryID) {
@@ -280,6 +299,11 @@
 	return item.pluginID != nil && [pluginID isEqualToString:item.pluginID];
 }
 
+/*!
+	@method		deviceWithRegistryID:pixelFormat:andPluginID:
+	@abstract	The matching cache item, created and inserted when absent.
+	@discussion	Introduced in FxGrip 0.1.0. The lock spans lookup and insertion so concurrent
+				misses create one item. Returns nil when no Metal device matches the registry ID. */
 - (FxGripMTLDeviceCacheItem*)deviceWithRegistryID:(uint64_t)registryID
 								  pixelFormat:(MTLPixelFormat)pixFormat
 								  andPluginID:(NSString*)pluginID
@@ -319,6 +343,7 @@
 }
 
 
+/*! @abstract Returns a pooled command queue to whichever cache item owns it. */
 - (void)returnCommandQueueToCache:(id<MTLCommandQueue>)commandQueue;
 {
 	if (!commandQueue) {
@@ -342,12 +367,18 @@
 #pragma mark -
 #pragma mark FxGripMTLCommandQueue Implementation
 
+/*!
+	@abstract	An MTLCommandQueue pass-through that returns its queue to the cache item on dealloc.
+	@discussion	Introduced in FxGrip 0.1.0. Every MTLCommandQueue method forwards to the wrapped
+				queue.
+*/
 @implementation FxGripMTLCommandQueue
 
 @synthesize queue = _queue;
 @synthesize label = _label;
 
 
+/*! @abstract Checks a command queue out of the cache item; nil when the item has no queue to give. */
 - (instancetype)initWithDeviceCacheItem:(nullable FxGripMTLDeviceCacheItem*)deviceCacheItem
 {
 	id<MTLCommandQueue> queue = [deviceCacheItem getNextFreeCommandQueue];
@@ -367,6 +398,7 @@
 
 
 
+/*! @abstract Returns the wrapped queue to its cache item. */
 - (void)dealloc {
 	[_deviceCacheItem returnCommandQueue:_queue];
 	NARC_RELEASE(_queue);
@@ -448,6 +480,12 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 }
 @end
 
+/*!
+	@abstract	An MTLLibrary pass-through that memoizes the functions it creates.
+	@discussion	Introduced in FxGrip 0.1.0. An NSNull placeholder marks a name whose asynchronous
+				compile is in flight, so concurrent asynchronous requests share one compile while a
+				synchronous request compiles on its own thread.
+*/
 @implementation FxGripMTLLibraryCache
 
 @synthesize library = _library;
@@ -463,6 +501,7 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 	return self;
 }
 
+/*! @abstract Wraps an existing library; nil for a nil library. */
 - (nullable instancetype)initWithLibrary:(nonnull id<MTLLibrary>)library
 {
 	if (!library) {
@@ -476,6 +515,7 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 	return self;
 }
 
+/*! @abstract Wraps a device's default library; nil for a nil device or a device with no default library. */
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device
 {
 	if (!device) {
@@ -503,6 +543,7 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 	SUPER_DEALLOC();
 }
 
+/*! @abstract Drops the memoized function for a name; NO when none was cached. */
 - (BOOL)clearFunctionWithName:(nonnull NSString *)name
 {
 	BOOL hasObject = NO;
@@ -551,6 +592,7 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 	}
 }
 
+/*! @abstract The memoized function for a name, or nil for a loading placeholder or a miss. */
 - (nullable id<MTLFunction>)objectForKeyedSubscript:(nullable NSString*)key
 {
 	if (![key isKindOfClass:NSString.class]) {
@@ -689,6 +731,11 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 	}
 }
 
+/*!
+	@method		beginLoadingFunctionNamed:completionHandler:
+	@abstract	Registers a completion handler for an asynchronous compile and reports who owns it.
+	@return		YES when this caller starts the compile; NO when the function is already cached
+				(the handler runs at once) or another compile is in flight (the handler waits). */
 - (BOOL)beginLoadingFunctionNamed:(NSString *)name completionHandler:(FxGripMTLFunctionHandler)completionHandler
 {
 	id<MTLFunction> cached = nil;
@@ -716,6 +763,7 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 	return ownsCompile;
 }
 
+/*! @abstract Caches a compiled function and runs every waiting completion handler. */
 - (void)finishLoadingFunctionNamed:(NSString *)name function:(nullable id<MTLFunction>)function error:(nullable NSError *)error
 {
 	NSArray<FxGripMTLFunctionHandler> *waiters = nil;
@@ -751,12 +799,18 @@ const NSUInteger    kFxGripMTLInitialCommandQueueCount   = 3;
 static NSString*    kKey_InUse          = @"InUse";
 static NSString*    kKey_CommandQueue   = @"CommandQueue";
 
+/*!
+	@abstract	One device's pooled command queues, pipeline states, library, and depth state.
+	@discussion	Introduced in FxGrip 0.1.0. The command-queue pool starts with a fixed count and
+				grows when every queue is checked out. Pipeline states cache by function names.
+*/
 @implementation FxGripMTLDeviceCacheItem
 
 @synthesize defaultLibrary = _defaultLibrary;
 @synthesize defaultLibraryCache = _defaultLibraryCache;
 @synthesize depthState = _depthState;
 
+/*! @abstract Creates the item and seeds the command-queue pool; nil for a nil device. */
 - (instancetype)initWithDevice:(id<MTLDevice>)device
                    pixelFormat:(MTLPixelFormat)pixFormat
                    andPluginID:(NSString*)newPluginID
@@ -786,6 +840,7 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
     return self;
 }
 
+/*! @abstract Adds a new, free command queue to the pool. */
 // Callers hold _commandQueueCacheLock, or are still inside init.
 - (id<MTLCommandQueue>)addNewCommandQueue
 {
@@ -875,6 +930,11 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 	}
 }
 
+/*!
+	@method		pipelineStateWithLibrary:vertexShader:fragmentShader:constantValues:specializedFormat:
+	@abstract	The render pipeline state for a function pair, built once and cached by name.
+	@discussion	Introduced in FxGrip 0.1.0. A specialized format specializes the function names for
+				the cache key. A nil library uses the item's default library cache. */
 - (id<MTLRenderPipelineState>)pipelineStateWithLibrary:(id<MTLLibrary>)library vertexShader:(NSString*)vertexShader fragmentShader:(NSString*)fragmentShader
 	constantValues:(MTLFunctionConstantValues *)constantValues specializedFormat:(nullable NSString*)specializedFormat
 {
@@ -915,6 +975,11 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 	return [self pipelineStateWithLibrary:nil vertexDescriptor:vertexDescriptor fragmentDescriptor:fragmentDescriptor];
 }
 
+/*!
+	@method		pipelineStateWithLibrary:vertexDescriptor:fragmentDescriptor:
+	@abstract	The pipeline state for a function descriptor pair, cached by name.
+	@discussion	Introduced in FxGrip 0.1.0. A nil library uses the item's default library cache.
+				Returns nil when a descriptor has no name or the vertex function fails to load. */
 - (id<MTLRenderPipelineState>)pipelineStateWithLibrary:(id<MTLLibrary>)library vertexDescriptor:(MTLFunctionDescriptor*)vertexDescriptor fragmentDescriptor:(MTLFunctionDescriptor*)fragmentDescriptor
 {
 	if (!library) {
@@ -944,6 +1009,12 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 	return [self pipelineStateWithVertexFunction:vertexFunction fragmentFunction:fragmentFunction];
 }
 
+/*!
+	@method		pipelineStateWithVertexFunction:fragmentFunction:
+	@abstract	The pipeline state for an already-built function pair, compiled once and cached.
+	@discussion	Introduced in FxGrip 0.1.0. The lock spans lookup and compilation so concurrent
+				misses compile one state. The state targets the item's pixel format and a
+				Depth32Float attachment. */
 - (id<MTLRenderPipelineState>)pipelineStateWithVertexFunction:(id<MTLFunction>)vertexFunction fragmentFunction:(id<MTLFunction>)fragmentFunction
 {
 	NSString *key = fragmentFunction ? [self pipelineKeyForVertexName:vertexFunction.name fragmentName:fragmentFunction.name] : @"";
@@ -1037,6 +1108,7 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 }
 
 
+/*! @abstract The item's depth-stencil state (less-compare, depth write on), built on first use. */
 - (id<MTLDepthStencilState>)depthState
 {
 	@synchronized (self) {
@@ -1053,6 +1125,7 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 }
 
 
+/*! @abstract A free command queue from the pool, marked in-use; a new queue when all are busy. */
 - (id<MTLCommandQueue>)getNextFreeCommandQueue
 {
     id<MTLCommandQueue> result  = nil;
@@ -1080,6 +1153,7 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
     return result;
 }
 
+/*! @abstract Marks a pooled command queue free again. */
 - (void)returnCommandQueue:(id<MTLCommandQueue>)commandQueue
 {
 	if (!commandQueue) {
@@ -1098,6 +1172,7 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
     [_commandQueueCacheLock unlock];
 }
 
+/*! @abstract YES when the command queue is in this item's pool. */
 - (BOOL)containsCommandQueue:(id<MTLCommandQueue>)commandQueue
 {
 	if (!commandQueue) {

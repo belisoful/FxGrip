@@ -1,8 +1,17 @@
-//
-//
-//  FxGripPreset.m
-//  FxGrip
-//
+/*!
+	@file       FxGripPreset.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPreset
+	@abstract   Implements the preset model, its file form, and typed value conversion.
+	@discussion Introduced in FxGrip 0.1.0. A file dictionary is untrusted input, so each field is
+	            read only when its value is the expected class. The file form writes the FxFactory
+	            keys and the flat FxGripPreset* keys together, with parameter-keyed dictionaries
+	            written under string keys. Typed conversion dispatches on the parameter's type,
+	            resolved through the setting wrapper, falling back to the encoded value's own
+	            shape when no type source is available.
+*/
 
 #import "FxGripPreset.h"
 #import "FxGripParameterSettingAPI_v5.h"
@@ -32,6 +41,13 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 }
 
 
+/*!
+	@abstract	The preset model with FxFactory-compatible file I/O and typed value conversion.
+	@discussion	Introduced in FxGrip 0.1.0. The file form round-trips through
+				initWithPresetDictionary: and presetDictionary; savePresetToURL: and
+				loadPresetFromURL: add the disk I/O; setParameterValue: and getParameterValue:
+				convert between encoded values and live parameters.
+*/
 @implementation FxGripPreset
 
 - (void)dealloc
@@ -55,6 +71,7 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 
 #pragma mark File Form
 
+/*! @abstract Builds a preset from a file-form dictionary, reading the FxFactory and FxGripPreset* keys and ignoring unknown keys. */
 - (nullable instancetype)initWithPresetDictionary:(nullable NSDictionary*)dictionary
 {
 	if (![dictionary isKindOfClass:NSDictionary.class]) {
@@ -84,6 +101,7 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 	return self;
 }
 
+/*! @abstract The file-form dictionary: the FxFactory keys plus the FxGripPreset* keys, with nil fields omitted and parameter-keyed dictionaries written under string keys. */
 - (nonnull NSDictionary*)presetDictionary
 {
 	NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithCapacity:14];
@@ -115,6 +133,7 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 	return dictionary;
 }
 
+/*! @abstract The values, tags, and meta sections in the shape applyPreset: consumes. */
 - (nonnull NSDictionary*)presetSections
 {
 	NSMutableDictionary *sections = [NSMutableDictionary dictionaryWithCapacity:3];
@@ -124,6 +143,7 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 	return sections;
 }
 
+/*! @abstract Writes the preset as an XML property list; returns NO when a carried value is not a property-list type or the write fails. */
 - (BOOL)savePresetToURL:(nonnull NSURL*)url
 {
 	if (url == nil) {
@@ -141,6 +161,7 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 	return [data writeToURL:url atomically:YES];
 }
 
+/*! @abstract Reads a preset from an XML property list written by savePresetToURL: or by FxFactory; returns nil when the file is missing or is not a property-list dictionary. */
 + (nullable FxGripPreset*)loadPresetFromURL:(nonnull NSURL*)url
 {
 	if (url == nil) {
@@ -203,6 +224,14 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 	return FxParameterType_None;
 }
 
+/*!
+	@method		getParameterValue:toParameter:atTime:withAPI:
+	@abstract	Reads a parameter into the encoded preset representation.
+	@discussion	Introduced in FxGrip 0.1.0. The inverse of setParameterValue:toParameter:atTime:withAPI:.
+				Dispatches on the parameter's type and reads through the setting wrapper's retrieval
+				API. Requires the FxGrip setting wrapper, which exposes that API.
+	@return		YES when the value is read.
+*/
 + (BOOL)getParameterValue:(id*)value toParameter:(FxParameterId)parameterID atTime:(CMTime)time withAPI:(id<FxParameterSettingAPI_v5>)setterAPI
 {
 	if (!value || !setterAPI || ![setterAPI respondsToSelector:@selector(paramGetAPIv6)]) {
@@ -289,6 +318,15 @@ static NSDictionary *FxGripStringKeyedDictionary(NSDictionary *dictionary)
 	}
 }
 
+/*!
+	@method		setParameterValue:toParameter:atTime:withAPI:
+	@abstract	Writes one encoded preset value to a parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Dispatches on the parameter's type, resolved through
+				the setting wrapper's dynamic API; when no type source is available the encoded
+				value's own shape selects the setter. A Custom value merges recursively into the
+				parameter's current value, so a preset may carry a subset.
+	@return		YES when the value is written.
+*/
 + (BOOL)setParameterValue:(id)value toParameter:(FxParameterId)parameterID atTime:(CMTime)time withAPI:(id<FxParameterSettingAPI_v5>)setterAPI
 {
 	if (!value || value == NSNull.null || !setterAPI) {

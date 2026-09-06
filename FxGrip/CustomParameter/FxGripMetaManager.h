@@ -1,9 +1,16 @@
-//
-//  FxGripMetaManager.h
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripMetaManager.h
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMetaManager
+	@abstract   Stores per-parameter tags and meta values for an effect instance.
+	@discussion Introduced in FxGrip 0.1.0. The manager is the value of the hidden InstanceMeta custom
+	            parameter. It holds a tag reverse index and a per-parameter record store, each record
+	            carrying its tags and a meta dictionary. Every public method takes the manager's
+	            recursive lock, and callers wrap multi-step edits with the lock and unlock pair.
+	            Mutations mark the manager unsaved, and saveMeta writes it back to the host.
+*/
 
 #ifndef FxGripMetaManager_h
 #define FxGripMetaManager_h
@@ -18,7 +25,7 @@
 /*!
 	@class      FxGripMetaManager
 	@abstract   Stores per-parameter tags and meta values for an effect instance.
-	@discussion Introduced in FxGrip 1.0. The manager is the value of the hidden custom
+	@discussion Introduced in FxGrip 0.1.0. The manager is the value of the hidden custom
 				parameter `kFxParameterId_InstanceMeta`. Its archive root holds two
 				entries: a tag reverse index (`kFxMetaProperty_Tags`, tag string → array
 				of parameter IDs) and a parameter record store
@@ -44,9 +51,12 @@
 */
 @interface FxGripMetaManager : NSObject <NSSecureCoding, NSCopying, FxGripCustomDataClasses>
 
+/*! The owning effect. Not archived; set after decode. */
 @property (readonly, weak, nullable) FxGripTileableEffect *effect;
+/*! YES when the manager holds edits not yet written to the host. */
 @property (readonly) BOOL unsaved;
 
+/*! Creates a manager attached to an effect. */
 - (nonnull instancetype)initWithEffect:(FxGripTileableEffect *_Nullable)effect;
 
 /*!
@@ -76,6 +86,7 @@
 */
 - (BOOL)removeParameter:(FxParameterId)parameterID;
 
+/*! YES when a record exists for the parameter ID. */
 - (BOOL)parameterExists:(FxParameterId)parameterID;
 
 /*! The IDs of every parameter with a record. */
@@ -89,10 +100,15 @@
 
 #pragma mark Tag API
 
+/*! Every tag in use across all parameters. */
 @property (readonly, nonnull) NSArray<NSString*> *tags;
+/*! The number of distinct tags in use. */
 - (SInt32)tagCount;
+/*! The number of tags on a parameter, or -1 when no record exists. */
 - (SInt32)tagCount:(FxParameterId)parameterID;
+/*! A copy of the parameter's tags, or nil when no record exists. */
 - (NSArray<NSString*> *_Nullable)parameterTags:(FxParameterId)parameterID;
+/*! YES when the parameter carries the tag; sets error when no tag container exists. */
 - (BOOL)parameter:(FxParameterId)parameterID hasTag:(NSString *_Nullable)tag
 			error:(NSError *_Nullable *_Nullable)error;
 
@@ -101,8 +117,11 @@
 	@abstract   Replaces the parameter's tags with the supplied array.
 */
 - (NSError *_Nullable)setTags:(NSArray<NSString*> *_Nonnull)tags toParameter:(FxParameterId)parameterID;
+/*! Adds a tag to a parameter and updates the reverse index. Returns an error on failure. */
 - (NSError *_Nullable)addTag:(NSString *_Nullable)tag toParameter:(FxParameterId)parameterID;
+/*! Removes a tag from a parameter and updates the reverse index. Returns an error on failure. */
 - (NSError *_Nullable)removeTag:(NSString *_Nullable)tag fromParameter:(FxParameterId)parameterID;
+/*! Removes every tag from a parameter. Returns an error on failure. */
 - (NSError *_Nullable)removeAllTags:(FxParameterId)parameterID;
 
 /*!
@@ -113,6 +132,7 @@
 
 #pragma mark Meta API
 
+/*! The number of meta entries on a parameter, or -1 when no record exists. */
 - (SInt32)metaCountFromParameter:(FxParameterId)parameterID;
 
 /*!
@@ -121,9 +141,13 @@
 	@result     nil on success; the failure error otherwise.
 */
 - (NSError *_Nullable)getMeta:(NSDictionary *_Nullable *_Nonnull)meta fromParameter:(FxParameterId)parameterID;
+/*! Replaces the parameter's meta dictionary. Returns an error when no record exists. */
 - (NSError *_Nullable)setMeta:(NSDictionary *_Nonnull)meta toParameter:(FxParameterId)parameterID;
+/*! Assigns the parameter's meta keys to the out-parameter. Returns an error on failure. */
 - (NSError *_Nullable)getMetaKeys:(NSArray *_Nullable *_Nonnull)keys fromParameter:(FxParameterId)parameterID;
+/*! Removes every meta entry from a parameter. Returns an error when no record exists. */
 - (NSError *_Nullable)removeAllMeta:(FxParameterId)parameterID;
+/*! YES when the parameter's meta holds the key; sets error when no record exists. */
 - (BOOL)parameter:(FxParameterId)parameterID hasMetaKey:(NSString *_Nonnull)key
 			error:(NSError *_Nullable *_Nullable)error;
 
@@ -134,8 +158,10 @@
 */
 - (BOOL)getMeta:(NSObject<NSSecureCoding,NSCopying> *_Nullable *_Nullable)value
 		 forKey:(NSString *_Nullable)key fromParameter:(FxParameterId)parameterID;
+/*! Writes one meta value under a key. Returns YES on success. */
 - (BOOL)setMeta:(NSObject<NSSecureCoding,NSCopying> *_Nonnull)value
 		 forKey:(NSString *_Nullable)key toParameter:(FxParameterId)parameterID;
+/*! Removes one meta key. Returns YES when the key existed. */
 - (BOOL)removeMetaKey:(NSString *_Nullable)key fromParameter:(FxParameterId)parameterID;
 
 #pragma mark Persistence
@@ -149,10 +175,12 @@
 	@result     YES when nothing needs saving or the write is issued.
 */
 - (BOOL)saveMeta;
+/*! Sets the unsaved flag. */
 - (void)setUnsaved:(BOOL)unsavedValue;
 
 #pragma mark Locking
 
+/*! Takes the manager's recursive lock. Always returns YES. */
 - (BOOL)lock;
 
 /*!
@@ -161,6 +189,7 @@
 				`tryTime` seconds.
 */
 - (BOOL)lockWithinTime:(double)tryTime;
+/*! Releases the manager's recursive lock. */
 - (void)unlock;
 
 /*!

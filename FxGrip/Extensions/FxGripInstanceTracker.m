@@ -1,9 +1,15 @@
-//
-//  FxGripInstanceTracker.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripInstanceTracker.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInstanceTracker
+	@abstract   Implements the per-UUID registry of live plugin instances.
+	@discussion Introduced in FxGrip 0.1.0. A process-wide dictionary maps a plugin UUID to an array of
+	            non-retaining pointer values. Registry mutations are synchronized. Each extension
+	            captures its effect's identity when added, so the dealloc sweep can remove the entry
+	            after the weak effect reference and the teardown notification are gone.
+*/
 
 #import "FxGripInstanceTracker.h"
 #import "FxGripTileableEffect.h"
@@ -17,6 +23,11 @@ static NSMutableDictionary<NSString*, NSMutableArray<NSValue*>*>    *gEffectInst
 
 
 
+/*!
+	@abstract	The extension that maintains the per-UUID registry of live plugin instances.
+	@discussion	Introduced in FxGrip 0.1.0. The registry holds non-retaining pointers and answers
+				sibling and timeline-neighbor queries.
+*/
 @implementation FxGripInstanceTracker
 {
 	// Identity captured when the effect is added, so the registry entry can be removed
@@ -69,6 +80,11 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 #pragma mark -
 #pragma mark Instance Tracking and Management
 
+/*!
+	@method		instances
+	@abstract	The live sibling instances of this effect's plugin UUID.
+	@discussion	Introduced in FxGrip 0.1.0. Do not retain the result. It links every plugin instance
+				and would form a retain cycle. */
 // Do NOT keep this array. It is for temporary purposes only because it links all the plugin instances
 //	and would cause circular references in garbage collection.
 - (NSArray<id<FxGripTileableEffect>> *)instances
@@ -88,6 +104,11 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 	return instances.copy;
 }
 
+/*!
+	@method		extAddedToDocument:
+	@abstract	Registers the effect under its plugin UUID and captures its identity for dealloc.
+	@discussion	Introduced in FxGrip 0.1.0. Returns when the effect is not an FxGripTileableEffect or
+				its UUID is nil, because a nil key cannot address the registry. */
 // Called in FxTileableEffect::init
 - (void)extAddedToDocument:(nonnull NSNotification*)notification;
 {
@@ -119,6 +140,10 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 	_trackedInstancePointer = (__bridge void*)effect;
 }
 
+/*!
+	@method		extRemovedFromDocument:
+	@abstract	Removes the effect from the registry and clears the captured pointer.
+	@discussion	Introduced in FxGrip 0.1.0. Returns when the effect is not an FxGripTileableEffect. */
 // Called in FxTileableEffect::dealloc - instanceRemovedFromDocument
 - (void)extRemovedFromDocument:(nonnull NSNotification*)notification;
 {
@@ -133,6 +158,11 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 }
 
 
+/*!
+	@method		startTimeOfNextEffect:
+	@abstract	The nearest later timeline start time among the effect's sibling instances.
+	@param		effect	The effect whose neighbors are examined.
+	@return		The next sibling's timeline start time, or kCMTimeInvalid when none is later. */
 - (CMTime)startTimeOfNextEffect:(id<FxGripTileableEffect>)effect;
 {
 	CMTime  timelineEffectTime  = effect.effectStartTimeInTimeline;
@@ -164,11 +194,16 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 	return startTime;
 }
 
+/*!
+	@method		startTimeOfPreviousEffect:
+	@abstract	The nearest earlier timeline start time among the effect's sibling instances.
+	@param		effect	The effect whose neighbors are examined.
+	@return		The previous sibling's timeline start time, or kCMTimeInvalid when none is earlier. */
 - (CMTime)startTimeOfPreviousEffect:(id<FxGripTileableEffect>)effect;
 {
 	CMTime  timelineEffectTime  = effect.effectStartTimeInTimeline;
 	CMTime  startTime   = kCMTimeInvalid;
-	
+
 	@synchronized (gEffectInstances) {
 		CMTime  prevTimelineTime    = kCMTimeNegativeInfinity;
 		for (NSValue* pluginValue in gEffectInstances[effect.pluginUUID])
@@ -202,6 +237,11 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 #pragma mark -
 #pragma mark FxGripTileableEffect (InstanceTracker)
 
+/*!
+	@abstract	The effect-side accessors for the instance tracker extension.
+	@discussion	Introduced in FxGrip 0.1.0. The accessors read the shared registry by the effect's
+				plugin UUID.
+*/
 @implementation FxGripTileableEffect (InstanceTracker)
 
 - (nullable FxGripInstanceTracker*)newFxInstanceTracker

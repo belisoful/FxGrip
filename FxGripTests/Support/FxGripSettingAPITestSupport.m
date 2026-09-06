@@ -1,7 +1,12 @@
-//
-//  FxGripSettingAPITestSupport.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripSettingAPITestSupport.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSettingAPITestSupport
+	@abstract   Shared stubs and an XCTestCase base for the parameter-setting API wrapper tests.
+	@discussion Introduced in FxGrip 0.1.0. The stub host API records each set call, the custom-value stub records the setter messages it receives and reports its protocol conformance, and the retrieval stub vends a custom value. The test-case base wires them together, observes the recorded set notifications, and vends the setting wrapper instances under test.
+*/
 
 #import "FxGripSettingAPITestSupport.h"
 #import <objc/runtime.h>
@@ -17,22 +22,29 @@ static NSNotificationCenter *FxGripSettingTestMakePriorityCenter(void)
 	return [[cls alloc] init];
 }
 
+/*! @abstract Returns a fixed non-zero valid CMTime used across the setting-API tests. */
 CMTime FxGripSettingTestTime(void)
 {
 	return (CMTime){.value = 7, .timescale = 24, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
+/*! @abstract Returns a valid zero CMTime. */
 CMTime FxGripSettingTestZeroTime(void)
 {
 	return (CMTime){.value = 0, .timescale = 1, .flags = kCMTimeFlags_Valid, .epoch = 0};
 }
 
+/*! @abstract Returns whether two CMTimes are equal field by field. */
 BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 {
 	return lhs.value == rhs.value && lhs.timescale == rhs.timescale
 		&& lhs.flags == rhs.flags && lhs.epoch == rhs.epoch;
 }
 
+/*!
+	@abstract A stub host setting API that records each set call and its last time.
+	@discussion Introduced in FxGrip 0.1.0. Each setter appends its arguments to the calls array, stores the render time, and returns the configured success flag.
+*/
 @implementation FxGripSettingTestStubAPI
 
 - (instancetype)init
@@ -45,6 +57,7 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 	return self;
 }
 
+/*! @abstract Records a call under its method name and returns the configured success flag. */
 - (BOOL)record:(NSString *)method arguments:(NSDictionary *)arguments
 {
 	NSMutableDictionary *call = arguments.mutableCopy;
@@ -152,6 +165,10 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*!
+	@abstract A stub dynamic API that reports a configured parameter type.
+	@discussion Introduced in FxGrip 0.1.0. It lets a test mark a parameter custom so the setting wrapper routes the value through the custom-value setter path.
+*/
 @implementation FxGripSettingTestDynamicAPI
 
 - (FxParameterType)parameterType:(FxParameterId)parameterID
@@ -161,6 +178,10 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*!
+	@abstract A custom parameter value stub that records the setter messages it receives.
+	@discussion Introduced in FxGrip 0.1.0. It reports configurable conformance to FxGripMutableParameter, records each typed setter and its value, and returns the configured setter success flag.
+*/
 @implementation FxGripSettingTestCustomValue
 
 - (instancetype)init
@@ -175,6 +196,7 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 	return self;
 }
 
+/*! @abstract Reports the configured conformance for FxGripMutableParameter and defers otherwise. */
 - (BOOL)conformsToProtocol:(Protocol *)aProtocol
 {
 	if (strcmp(protocol_getName(aProtocol), "FxGripMutableParameter") == 0) {
@@ -183,6 +205,7 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 	return [super conformsToProtocol:aProtocol];
 }
 
+/*! @abstract Records a received setter and its value, and returns the configured setter success flag. */
 - (BOOL)record:(NSString *)setter value:(id)value
 {
 	[self.receivedSetters addObject:setter];
@@ -245,6 +268,10 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*!
+	@abstract A custom value that claims FxGripMutableParameter conformance but implements no setter.
+	@discussion Introduced in FxGrip 0.1.0. It exercises the wrapper's handling of a value that conforms yet does not respond to the typed setter selectors.
+*/
 @implementation FxGripSettingTestOpaqueValue
 
 - (BOOL)conformsToProtocol:(Protocol *)aProtocol
@@ -257,6 +284,10 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*!
+	@abstract A stub retrieval API that vends a custom value and parameter flags and counts reads.
+	@discussion Introduced in FxGrip 0.1.0. The setting wrapper reads the existing custom value through this stub before writing setters into it; the stub records the read count and the last time.
+*/
 @implementation FxGripSettingTestRetrievalAPI
 
 - (instancetype)init
@@ -295,6 +326,10 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*!
+	@abstract A stub API manager that vends the retrieval stub as its v6 get API.
+	@discussion Introduced in FxGrip 0.1.0.
+*/
 @implementation FxGripSettingTestAPIManager
 
 - (id)paramGetAPIv6
@@ -304,6 +339,10 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*!
+	@abstract A stub effect that stands in for the host effect and carries a priority notification center.
+	@discussion Introduced in FxGrip 0.1.0. It answers -effectBase with itself so rich reads route back to the stub, and it creates its notifier from NSPriorityNotificationCenter resolved at runtime.
+*/
 @implementation FxGripSettingTestStubEffect
 
 - (id)effectBase
@@ -323,6 +362,10 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*!
+	@abstract An XCTestCase base that wires the setting stubs together and observes the recorded set notifications.
+	@discussion Introduced in FxGrip 0.1.0. It builds the stubs in -setUp, subscribes to the recorded set-notification names, and vends the v5 and v6 setting wrapper instances under test. Helper accessors expose the posted notifications, their payloads, and the recorded host calls.
+*/
 @implementation FxGripSettingAPITestCase
 
 - (void)setUp
@@ -364,6 +407,7 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 	[super tearDown];
 }
 
+/*! @abstract Returns the set-notification names the base subscribes to in -setUp. */
 - (NSArray<NSNotificationName> *)recordedNotificationNames
 {
 	return @[FxGripNotifyAPI_ParameterSetBoolName,
@@ -381,12 +425,14 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 			 FxGripNotifyAPI_ParameterSetXYName];
 }
 
+/*! @abstract Adds a notification observer to the effect's notifier and tracks its token for teardown. */
 - (void)observeName:(NSNotificationName)name usingBlock:(void (^)(NSNotification *notification))block
 {
 	id token = [self.effect.notifier addObserverForName:name object:nil queue:nil usingBlock:block];
 	[self.observerTokens addObject:token];
 }
 
+/*! @abstract Returns the names of the notifications posted so far, in order. */
 - (NSArray<NSNotificationName> *)postedNames
 {
 	NSMutableArray<NSNotificationName> *names = NSMutableArray.new;
@@ -396,6 +442,7 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 	return names;
 }
 
+/*! @abstract Returns the first posted notification with the given name, or nil. */
 - (NSNotification *)notificationNamed:(NSNotificationName)name
 {
 	for (NSNotification *notification in self.posted) {
@@ -406,16 +453,19 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 	return nil;
 }
 
+/*! @abstract Returns the parameter payload of the first posted notification with the given name. */
 - (NSDictionary *)payloadOf:(NSNotificationName)name
 {
 	return [self notificationNamed:name].userInfo.fxParameter;
 }
 
+/*! @abstract Returns the first recorded host call. */
 - (NSDictionary *)hostCall
 {
 	return self.hostAPI.calls.firstObject;
 }
 
+/*! @abstract Returns the recorded host-call method names, in order. */
 - (NSArray<NSString *> *)hostMethods
 {
 	NSMutableArray<NSString *> *methods = NSMutableArray.new;
@@ -443,6 +493,7 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 													effect:(id)self.effect];
 }
 
+/*! @abstract A v6 setting wrapper wired to the dynamic and retrieval stubs. */
 - (FxGripParameterSettingAPI_v6 *)settingAPIv6
 {
 	return [FxGripParameterSettingAPI_v6.alloc initWithAPI:(id)self.hostAPI
@@ -451,11 +502,13 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs)
 													effect:(id)self.effect];
 }
 
+/*! @abstract Marks the parameter custom so the wrapper routes the value through the custom-value setter path. */
 - (void)markParameterCustom
 {
 	self.dynamicAPI.type = FxParameterType_Custom;
 }
 
+/*! @abstract Returns the render time boxed in the payload of the named notification. */
 - (CMTime)payloadTimeOf:(NSNotificationName)name
 {
 	id boxed = [self payloadOf:name][kFxParameterProperty_Time];

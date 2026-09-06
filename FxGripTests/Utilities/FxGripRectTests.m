@@ -1,7 +1,12 @@
-//
-//  FxGripRectTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripRectTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripRectTests
+	@abstract   Unit tests for the integer FxRect utilities: construction, dimensions, emptiness, containment, intersection, union, offset, inset, and CGRect bridging.
+	@discussion Introduced in FxGrip 0.1.0. The tests fix the half-open edge semantics and the clamp-to-zero behavior of inverted edges. They verify the CGRect bridge rounds fractional edges outward.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripRect.h>
@@ -11,6 +16,7 @@
 
 @implementation FxGripRectTests
 
+/*! @abstract Width and height are the edge differences, and an inverted rect reports zero. */
 - (void)testWidthAndHeightClampToZero
 {
 	FxRect rect = FxGripRectMake(10, 20, 40, 80);
@@ -22,6 +28,7 @@
 	XCTAssertEqual(FxGripRectHeight(inverted), 0);
 }
 
+/*! @abstract A rect with zero width or zero height is empty, and a unit rect is not. */
 - (void)testEmptyDetection
 {
 	XCTAssertTrue(FxGripRectIsEmpty(FxGripRectZero()));
@@ -30,18 +37,21 @@
 	XCTAssertFalse(FxGripRectIsEmpty(FxGripRectMake(0, 0, 1, 1)));
 }
 
+/*! @abstract Two rects are equal when all four edges match. */
 - (void)testEquality
 {
 	XCTAssertTrue(FxGripRectEqualToRect(FxGripRectMake(1, 2, 3, 4), FxGripRectMake(1, 2, 3, 4)));
 	XCTAssertFalse(FxGripRectEqualToRect(FxGripRectMake(1, 2, 3, 4), FxGripRectMake(1, 2, 3, 5)));
 }
 
+/*! @abstract Standardizing a rect swaps inverted edges into ascending order. */
 - (void)testStandardizeSwapsInvertedEdges
 {
 	FxRect standard = FxGripRectStandardize(FxGripRectMake(40, 80, 10, 20));
 	XCTAssertTrue(FxGripRectEqualToRect(standard, FxGripRectMake(10, 20, 40, 80)));
 }
 
+/*! @abstract Point containment includes the lower-left edge and excludes the top and right edges. */
 - (void)testContainsPointIsHalfOpen
 {
 	FxRect rect = FxGripRectMake(0, 0, 10, 10);
@@ -51,6 +61,7 @@
 	XCTAssertFalse(FxGripRectContainsPoint(rect, 5, 10), @"the top edge is exclusive");
 }
 
+/*! @abstract A rect contains an inner rect and an empty rect, and an empty rect contains no unit rect. */
 - (void)testContainsRect
 {
 	FxRect outer = FxGripRectMake(0, 0, 100, 100);
@@ -60,6 +71,7 @@
 	XCTAssertFalse(FxGripRectContainsRect(FxGripRectZero(), FxGripRectMake(0, 0, 1, 1)));
 }
 
+/*! @abstract Overlapping rects intersect in their shared region, and disjoint rects give an empty intersection. */
 - (void)testIntersection
 {
 	FxRect a = FxGripRectMake(0, 0, 50, 50);
@@ -72,6 +84,7 @@
 	XCTAssertFalse(FxGripRectIntersectsRect(a, disjoint));
 }
 
+/*! @abstract A union spans both rects, and an empty operand leaves the other rect unchanged. */
 - (void)testUnionTreatsEmptyAsAbsent
 {
 	FxRect a = FxGripRectMake(0, 0, 50, 50);
@@ -82,6 +95,7 @@
 	XCTAssertTrue(FxGripRectIsEmpty(FxGripRectUnion(FxGripRectZero(), FxGripRectZero())));
 }
 
+/*! @abstract Offset translates a rect, a positive inset shrinks it, a negative inset grows it, and an over-inset is empty. */
 - (void)testOffsetAndInset
 {
 	FxRect rect = FxGripRectMake(10, 10, 30, 30);
@@ -91,6 +105,7 @@
 	XCTAssertTrue(FxGripRectIsEmpty(FxGripRectInset(rect, 100, 100)), @"an over-inset is empty");
 }
 
+/*! @abstract A whole-number FxRect converts to a CGRect and back without loss. */
 - (void)testCGRectBridgeRoundTrips
 {
 	FxRect rect = FxGripRectMake(10, 20, 40, 80);
@@ -102,6 +117,7 @@
 	XCTAssertTrue(FxGripRectEqualToRect(FxGripRectFromCGRect(cg), rect));
 }
 
+/*! @abstract Converting a fractional CGRect floors the origin and rounds the far edges up to cover it. */
 - (void)testFromCGRectCoversFractionalEdges
 {
 	FxRect rect = FxGripRectFromCGRect(CGRectMake(10.4, 20.6, 5.2, 5.1));
@@ -111,6 +127,7 @@
 	XCTAssertEqual(rect.top, 26), @"maxY 25.7 rounds up";
 }
 
+/*! @abstract The corner array is filled counterclockwise from the lower-left. */
 - (void)testCGRectCorners
 {
 	CGPoint corners[4];
@@ -121,6 +138,7 @@
 	XCTAssertTrue(CGPointEqualToPoint(corners[3], CGPointMake(10, 60)), @"upper-left");
 }
 
+/*! @abstract The bounding rect spans all given points, and an empty point set gives a zero-size rect. */
 - (void)testBoundingPoints
 {
 	CGPoint points[4] = { CGPointMake(5, 5), CGPointMake(-3, 10), CGPointMake(2, -1), CGPointMake(8, 4) };

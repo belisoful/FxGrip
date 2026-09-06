@@ -1,10 +1,15 @@
-//
-//  FxGripTileableEffectNotifications.m
-//  FxGripTileableEffectNotifications
-//
-//  Created by Apple on 1/7/20.
-//  Copyright © 2020-2023 Apple, Inc. All rights reserved.
-//
+/*!
+	@file       FxGripTileableEffect+Parameters.m
+	@copyright  Copyright © 2020-2023 Apple, Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+Parameters
+	@abstract   Implements the parameter factory and the parameter type-to-class map.
+	@discussion Introduced in FxGrip 0.1.0. The category registers the built-in parameter classes,
+	            resolves a type string or numeric type to a class, and builds a parameter object
+	            from a configuration dictionary. Extensions extend the resolution with custom type
+	            strings and classes.
+*/
 
 #import "FxGripTileableEffect+Extensions.h"
 #import "FxGripTileableEffect+Parameters.h"
@@ -15,12 +20,25 @@
 #pragma mark -
 #pragma mark FxGripTileableEffect FxPlug Parameters
 
+/*!
+	@abstract	The category that constructs parameter objects and resolves parameter types.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation FxGripTileableEffect (FxParameters)
 
 @protocol FxGripParameterExtension;
 
 static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ", @"离开", @"uit", @"désactivé", @"aus", @"hemo", @"बंद", @"オフ", @"ਬੰਦ", @"выключенный", @"apagado"];
 
+/*!
+	@method		parameterForDictionary:
+	@abstract	Builds a parameter object from its configuration dictionary.
+	@param		data	The parameter configuration record.
+	@return		The parameter object, or NULL when the record disables the parameter or names no valid class.
+	@discussion	Introduced in FxGrip 0.1.0. An "off" key in any supported language disables the
+				parameter. A record naming an extension key is built by that extension. A record
+				naming a class name instantiates it when it conforms to FxGripParameter, otherwise
+				the class registered for the type string is used. */
 - (nullable id)parameterForDictionary:(nullable NSDictionary *)data
 {
 	NSPredicate *predicate = [NSPredicate predicateWithFormat:@"self IN %@", offLangs];
@@ -82,6 +100,7 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 	[__typeToClassMap setObject:paramClass forKey:[paramClass parameterTypeString]];
 }
 
+/*! Registers every built-in parameter class in the type-to-class map. */
 - (void)loadTypeToClassMap
 {
 	[self registerParameterType:FxGripAngleParameter.class];
@@ -124,6 +143,8 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 }
 
 
+/*! The numeric parameter type for a type string, falling back to a loaded extension's declared
+	type when the built-in map has none. */
 - (FxParameterType)parameterTypeWithString:(nullable NSString *)typeString
 {
 	if (!typeString) {
@@ -164,6 +185,8 @@ static NSArray<NSString*> *offLangs = @[@"off", @"af", @"عن", @"বন্ধ",
 }
 
 
+/*! The parameter class for a type string, falling back to a loaded extension's class for the type
+	the extension declares for the string. */
 - (nullable Class)parameterClassWithTypeString:(nullable NSString *)typeString
 {
 	if (!typeString) {

@@ -1,7 +1,15 @@
-//
-//  FxGripOSCPathPart.h
-//  FxGrip
-//
+/*!
+	@file       FxGripOSCPathPart.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOSCPathPart
+	@abstract   An editable on-screen path part built from FxPlug FxVertex vertices.
+	@discussion Introduced in FxGrip 0.1.0. One part draws and edits a whole path: moving vertices and
+	            tangents, inserting and deleting vertices, and dragging the whole path. It reads and
+	            writes through a custom-data FxGripPathData backing or a per-parameter backing.
+	            Drawing and hit-testing run through FxGripPathGeometry.
+*/
 
 #ifndef FxGripOSCPathPart_h
 #define FxGripOSCPathPart_h
@@ -41,7 +49,7 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCPathOptions) {
 /*!
 	@class      FxGripOSCPathPart
 	@abstract   One on-screen path built from FxPlug `FxVertex` vertices, editable in place.
-	@discussion Introduced in FxGrip 1.0. A single part draws a path and, per its options, edits
+	@discussion Introduced in FxGrip 0.1.0. A single part draws a path and, per its options, edits
 				it: moving vertices and tangents, inserting and deleting vertices, and dragging
 				the whole path. It reads and writes its vertices through one of two backings:
 

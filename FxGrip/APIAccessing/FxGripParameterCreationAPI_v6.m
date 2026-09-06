@@ -1,7 +1,15 @@
-//
-//  FxGripParameterCreationAPI_v6.m
-//  FxGrip
-//
+/*!
+	@file       FxGripParameterCreationAPI_v6.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterCreationAPI_v6
+	@abstract   Implements the FxGrip wrapper for the host's FxParameterCreationAPI_v6.
+	@discussion Introduced in FxGrip 0.1.0. addTaggedPopupMenuWithName:… builds the menu payload
+	            with the current subgroup as its parent, runs the v5 preprocess step, forwards the
+	            amended values to the host v6 API, and posts the parameter-add notification on
+	            success.
+*/
 
 #import "FxGripParameterCreationAPI_v6.h"
 #import "FxGripParameterFlags.h"
@@ -13,8 +21,20 @@
 - (BOOL)preprocess:(NSMutableDictionary *)userInfo;
 @end
 
+/*!
+	@abstract	Wraps the host v6 creation API and adds the tagged popup menu.
+	@discussion	Introduced in FxGrip 0.1.0. Inherits the v5 add methods and routes the tagged popup
+				through the same preprocess and notification path.
+*/
 @implementation FxGripParameterCreationAPI_v6
 
+/*!
+	@method		addTaggedPopupMenuWithName:parameterID:defaultValue:menuEntries:parameterFlags:
+	@abstract	Adds a popup menu whose entries carry stable tags.
+	@return		YES when the host accepts the parameter; NO when preprocess or the host call fails.
+	@discussion	Introduced in FxGrip 0.1.0. Assembles the menu payload, runs the v5 preprocess step,
+				forwards to the host v6 API, and posts the parameter-add notification on success.
+*/
 - (BOOL)addTaggedPopupMenuWithName:(NSString *)name
 					   parameterID:(UInt32)parameterID
 					  defaultValue:(UInt32)defaultValue

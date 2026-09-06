@@ -1,7 +1,16 @@
-//
-//  FxGripParticleSystem.m
-//  FxGrip
-//
+/*!
+	@file       FxGripParticleSystem.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParticleSystem
+	@abstract   Implements the deterministic SCNParticleSystem subclass.
+	@discussion Introduced in FxGrip 0.1.0. The variation setters capture each magnitude and hold the
+	            live property's own generator at zero. A birth-event block then applies the captured
+	            magnitudes through a hashed function keyed by a per-particle birth index, so the same
+	            seed produces the same particles every render. The unreimplemented SceneKit variations
+	            are set to zero so no other stochastic generator runs.
+*/
 
 #import "FxGripParticleSystem.h"
 #import <simd/simd.h>
@@ -32,6 +41,12 @@ static float FxGripClamp01(float value)
 	return value < 0.0f ? 0.0f : (value > 1.0f ? 1.0f : value);
 }
 
+/*!
+	@abstract	A deterministic drop-in replacement for SCNParticleSystem.
+	@discussion	Introduced in FxGrip 0.1.0. The initializer installs the seeded birth-event block and
+				zeroes SceneKit's own variations. The captured magnitudes drive the block so the same
+				seed reproduces the same particles.
+*/
 @implementation FxGripParticleSystem
 {
 	uint32_t _birthCounter;
@@ -54,6 +69,11 @@ static float FxGripClamp01(float value)
 	return self;
 }
 
+/*!
+	@method		initWithParticleSystem:
+	@abstract	Creates a deterministic system that copies an existing system's properties.
+	@param		system	The particle system whose writable properties are copied.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (instancetype)initWithParticleSystem:(SCNParticleSystem *)system
 {
 	self = [super init];
@@ -67,6 +87,7 @@ static float FxGripClamp01(float value)
 
 #pragma mark Drop-in mimicry
 
+/*! @abstract Copies every writable, key-value coding compliant property from `system`. */
 - (void)copyPropertiesFromParticleSystem:(SCNParticleSystem *)system
 {
 	unsigned int count = 0;
@@ -128,6 +149,7 @@ static float FxGripClamp01(float value)
 
 #pragma mark Determinism
 
+/*! @abstract Zeroes the SceneKit variations that have no seeded reimplementation. */
 - (void)neutralizeSceneKitVariation
 {
 	// Variations without a seeded reimplementation are dropped so no generator runs.
@@ -144,6 +166,12 @@ static float FxGripClamp01(float value)
 	self.particleChargeVariation = 0.0;
 }
 
+/*!
+	@method		installSeededVariation
+	@abstract	Installs the birth-event block that applies seeded jitter to new particles.
+	@discussion	Introduced in FxGrip 0.1.0. The block reads the captured variation magnitudes and, for
+				each born particle, adds hashed offsets keyed by an incrementing birth index. Velocity,
+				size, life, color, and angle receive independent hash channels. */
 - (void)installSeededVariation
 {
 	__weak typeof(self) weakSelf = self;
@@ -195,6 +223,7 @@ static float FxGripClamp01(float value)
 	}];
 }
 
+/*! @abstract Resets the birth-index counter so re-emission reproduces the same particle stream. */
 - (void)reset
 {
 	_birthCounter = 0;

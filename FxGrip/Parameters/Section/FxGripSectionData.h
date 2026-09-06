@@ -1,10 +1,15 @@
-//
-//  FxHueSaturation.h
-//  PlugIn
-//
-//  Created by Apple on 10/22/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
-//
+/*!
+	@file       FxGripSectionData.h
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSectionData
+	@abstract   The dictionary-backed custom value of a section parameter.
+	@discussion Introduced in FxGrip 0.1.0. The value stores the section's configuration in a
+	            mutable dictionary and exposes it through the FxParameterRetrievalAPI-v6 typed
+	            accessors. A locked value accepts a standard-key write only for a key that is
+	            already set. An exempt-keys list names the keys held out of interpolation.
+*/
 
 #ifndef FxGripSectionData_h
 #define FxGripSectionData_h
@@ -16,13 +21,14 @@
 
 
 /*!
-	@class      FxGripInterpolatingDictionary
-	@discussion This class is a NSMutableDictionary for Custom Values of a Custom Parameter.
-				This can hold multiple different values and data.  It will interpolate between values that it knows how to interpolate
- 				and copy everything else.  There is an array for keys that are exempt from interpolation.
- 				The various Types of FxPlug data can be set without needing to regard translation through NSNumber.
-				This also feeds various custom values to the Standard FxParameterRetrievalAPI-v6.
- */
+	@class		FxGripSectionData
+	@abstract	The mutable-dictionary custom value of a section parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The value holds many typed FxPlug values in one
+				dictionary and serves them through the standard custom-value accessors. Values
+				that support interpolation interpolate; the rest are copied. Keys named in the
+				exempt-keys list are held out of interpolation. A locked value accepts a
+				standard-key write only when that key is already set.
+*/
 @interface FxGripSectionData : NSObject <NSSecureCoding, NSCopying, FxGripMutableParameter, FxGripCustomDataClasses>
 
 	// transform (none upper lower cap), alignment, font, weight, width, size, margin over, margin below, rgba

@@ -1,10 +1,16 @@
-//
-//  FxGripParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripParameterBaseLibrary.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterBaseLibrary
+	@abstract   The FxGripParameterBase method bodies shared by the base and by parameter extensions.
+	@discussion Introduced in FxGrip 0.1.0. FxGripParameter.m includes this fragment into
+	            FxGripParameterBase, and FxGripParameterExtension includes it as well. It holds
+	            the notification wiring, the boolean flag accessors, the state test, and the
+	            name, type, flags, and plugin-state coding methods. ncPriority: is defined by
+	            each including class, not here.
+*/
 
 @synthesize error = _error;
 
@@ -39,6 +45,11 @@
 	return [@(_parameterID) isEqual:notification.userInfo.fxParameter[kFxParameterProperty_Id]];
 }
 
+/*!
+	@method		notifyGetFlagsPre:
+	@abstract	Serves a flag read from the cache before the host reads them.
+	@discussion	Introduced in FxGrip 0.1.0. Answers with the cached flags, and marks the result
+				handled, while the parameter caches or is not yet added to the effect. */
 // get on cache returns cache
 - (void)notifyGetFlagsPre:(nonnull NSNotification *)notification
 {
@@ -51,6 +62,12 @@
 	}
 }
 
+/*!
+	@method		notifySetFlagsPre:
+	@abstract	Absorbs a flag write into the cache before the host applies it.
+	@discussion	Introduced in FxGrip 0.1.0. A write with the cache bit set stores the flags with
+				the cache-dirty bit and marks the result handled; a plain write clears the
+				cache-dirty bit and continues to the host. */
 // set on cache, sets the cache
 - (void)notifySetFlagsPre:(nonnull NSNotification *)notification
 {
@@ -66,6 +83,12 @@
 	}
 }
 
+/*!
+	@method		notifySetFlags:
+	@abstract	Commits a saving flag write into the parameter's stored flags.
+	@discussion	Introduced in FxGrip 0.1.0. A write with the saving bit set becomes the
+				parameter's current and stored flags, with the saving and cache-dirty bits
+				cleared. */
 - (void)notifySetFlags:(nonnull NSNotification *)notification
 {
 	if (![self notificationTargetsReceiver:notification]) {
@@ -192,6 +215,13 @@
 
 flagMethodBody(flagIsDefault)
 
+/*!
+	@method		hasState
+	@abstract	Answers whether the parameter contributes to the plugin state.
+	@return		YES when the parameter is a state parameter and neither it nor any ancestor sets
+				the no-state flag.
+	@discussion	Introduced in FxGrip 0.1.0. The walk climbs the parent chain through the effect's
+				indexed access. */
 - (BOOL)hasState
 {
 	if (![self conformsToProtocol:@protocol(FxGripStateParameter)]) {
@@ -215,6 +245,7 @@ flagMethodBody(flagIsDefault)
 }
 
 
+/*! @abstract Reads the parameter's name from the host through the dynamic parameter API. */
 - (NSString*_Nonnull)parameterName
 {
 	NSString *pName = nil;
@@ -258,6 +289,7 @@ flagMethodBody(flagIsDefault)
 	return self.class.parameterType;
 }
 
+/*! @abstract Reads the parameter's live flags from the host, or the invalid flag on failure. */
 - (FxParameterFlags)parameterFlags
 {
 	FxParameterFlags flags = 0;
@@ -280,6 +312,10 @@ flagMethodBody(flagIsDefault)
 								 userInfo:nil];
 }
 
+/*!
+	@method		parameterFlush
+	@abstract	Writes the cached flags to the host and clears the cache bit.
+	@discussion	Introduced in FxGrip 0.1.0. Runs only while the parameter caches. */
 - (void)parameterFlush
 {
 	if (self.flagCaching) {
@@ -310,6 +346,10 @@ flagMethodBody(flagIsDefault)
 }
 
 
+/*!
+	@method		createdWithFlags:parentID:
+	@abstract	Records that the host created the parameter, storing its flags and parent.
+	@discussion	Introduced in FxGrip 0.1.0. Runs once; a second call is ignored. */
 - (void)createdWithFlags:(FxParameterFlags)flags parentID:(FxParameterId)parentID
 {
 	if (!_addedToEffect) {
@@ -340,9 +380,11 @@ flagMethodBody(flagIsDefault)
 
 
 
-/**
- * This encodes the parameter type into the dictionary pluginState
- */
+/*!
+	@method		encodeWithCoder:
+	@abstract	Encodes the parameter type into the plugin state.
+	@discussion	Introduced in FxGrip 0.1.0. The type is written under the parameter's type key
+				only for a plugin-state encoder, and only in a debug build. */
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder
 {
 	if (coder.isFxPluginStateEncoder) {

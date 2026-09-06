@@ -1,13 +1,27 @@
-//
-//  FxGripSceneKitPhysicsBackend.m
-//  FxGrip
-//
+/*!
+	@file       FxGripSceneKitPhysicsBackend.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSceneKitPhysicsBackend
+	@abstract   Implements the fixed-step catch-up physics backend.
+	@discussion Introduced in FxGrip 0.1.0. The simulation hook grid-aligns the render time to a step
+	            index and simulates from the start to that index in fixed increments on the per-render
+	            scene's physics world. In session-cache mode it replays a memoized step when present and
+	            captures each computed step's body transforms otherwise. Changing the time step or start
+	            time clears the cache.
+*/
 
 #import "FxGripSceneKitPhysicsBackend.h"
 #import "FxGrip_ARC.h"
 
 static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 
+/*!
+	@abstract	An FxGripSceneKitMetalBackend that advances SceneKit physics deterministically.
+	@discussion	Introduced in FxGrip 0.1.0. A step counter, guarded by a lock, records the physics steps
+				taken for tests and diagnostics.
+*/
 @implementation FxGripSceneKitPhysicsBackend
 {
 	NSLock *_counterLock;
@@ -41,6 +55,7 @@ static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 
 #pragma mark Cache invalidation
 
+/*! @abstract Sets the fixed physics step and clears the cache when the value changes. */
 - (void)setTimeStep:(CFTimeInterval)timeStep
 {
 	if (_timeStep != timeStep) {
@@ -49,6 +64,7 @@ static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 	}
 }
 
+/*! @abstract Sets the simulation start time and clears the cache when the value changes. */
 - (void)setSimulationStartTime:(CFTimeInterval)simulationStartTime
 {
 	if (_simulationStartTime != simulationStartTime) {
@@ -57,6 +73,7 @@ static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 	}
 }
 
+/*! @abstract Sets the simulation store, substituting a new memory store when passed nil. */
 - (void)setSimulationStore:(id<FxGripPhysicsSimulationStore>)simulationStore
 {
 	if (_simulationStore != simulationStore) {
@@ -65,6 +82,7 @@ static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 	}
 }
 
+/*! @abstract Clears the memoized trajectory by invalidating the simulation store. */
 - (void)resetSimulationCache
 {
 	[_simulationStore invalidate];
@@ -87,6 +105,7 @@ static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 
 #pragma mark Capture and replay
 
+/*! @abstract Reads each named physics body's presentation transform into a name-to-NSData map. */
 - (NSDictionary<NSString *, NSData *> *)captureTransformsFromScene:(SCNScene *)scene
 {
 	NSMutableDictionary<NSString *, NSData *> *transforms = [NSMutableDictionary dictionary];
@@ -99,6 +118,7 @@ static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 	return transforms;
 }
 
+/*! @abstract Writes stored transforms back onto the matching named physics bodies in the scene. */
 - (void)applyTransforms:(NSDictionary<NSString *, NSData *> *)transforms toScene:(SCNScene *)scene
 {
 	[scene.rootNode enumerateChildNodesUsingBlock:^(SCNNode *node, BOOL *stop) {
@@ -116,6 +136,13 @@ static const CFTimeInterval FxGripDefaultPhysicsTimeStep = 1.0 / 60.0;
 
 #pragma mark Simulation
 
+/*!
+	@method		advanceSimulationForScene:renderer:toTime:
+	@abstract	Advances the scene's physics to the step nearest `seconds` by fixed-step catch-up.
+	@discussion	Introduced in FxGrip 0.1.0. The target time grid-aligns to a step index. In session-cache
+				mode a cached step replays without simulating. Otherwise the world simulates from the
+				start, one updateAtTime: per step, particle systems reset first, and each step's
+				transforms are captured when caching. */
 - (void)advanceSimulationForScene:(SCNScene *)scene
 						renderer:(SCNRenderer *)renderer
 						  toTime:(CFTimeInterval)seconds

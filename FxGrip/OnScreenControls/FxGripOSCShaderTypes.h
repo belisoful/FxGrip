@@ -1,7 +1,15 @@
-//
-//  FxGripOSCShaderTypes.h
-//  FxGrip
-//
+/*!
+	@file       FxGripOSCShaderTypes.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOSCShaderTypes
+	@abstract   Shared vertex, buffer-index, and texture-index types for the FxGrip OSC Metal pipeline.
+	@discussion Introduced in FxGrip 0.1.0. The types are compiled by both the Objective-C draw kit and
+	            the Metal shaders, so the two agree on buffer layout. The vertex structs carry
+	            viewport-centered pixel positions; the index enums name the argument-table slots the
+	            vertex and fragment shaders read.
+*/
 
 #ifndef FxGripOSCShaderTypes_h
 #define FxGripOSCShaderTypes_h

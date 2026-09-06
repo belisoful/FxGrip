@@ -1,10 +1,23 @@
-//
-//  FxGripParameterBoundsAPI_v1.m
-//  FxGrip
-//
+/*!
+	@file       FxGripParameterBoundsAPI_v1.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterBoundsAPI_v1
+	@abstract   Implements the single-edge bounds setters over Apple's dynamic-parameter API.
+	@discussion Introduced in FxGrip 0.1.0. Each setter reads the parameter's current minimum,
+	            maximum, and slider range through the host FxDynamicParameterAPI_v3, changes the one
+	            edge the caller named, and writes the full range back. A read error is returned and
+	            the write is skipped.
+*/
 
 #import "FxGripParameterBoundsAPI_v1.h"
 
+/*!
+	@abstract	FxGrip's single-edge parameter-bounds setters.
+	@discussion	Introduced in FxGrip 0.1.0. Reads the current range through the host API and writes
+				it back with one edge changed.
+*/
 @implementation FxGripParameterBoundsAPI_v1
 
 - (nullable instancetype)initWithAPI:(id<FxDynamicParameterAPI_v3> _Nullable)api

@@ -1,7 +1,15 @@
-//
-//  FxGripSpaceEffect.h
-//  FxGrip
-//
+/*!
+	@file       FxGripSpaceEffect.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSpaceEffect
+	@abstract   A tileable-effect template that renders a SceneKit scene through the host 3D camera and lights.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the 3D Space effect template. It captures the
+	            host camera and lights in the state pass, serializes them with velocity samples into
+	            plugin state, and builds a fresh SceneKit scene per render that the space backend draws
+	            into the destination tile. Subclass hooks add per-frame parameters and scene content.
+*/
 
 #ifndef FxGripSpaceEffect_h
 #define FxGripSpaceEffect_h
@@ -20,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 	@class      FxGripSpaceEffect
 	@abstract   A tileable-effect template that renders a SceneKit scene through the host 3D camera
 				and lights.
-	@discussion Introduced in FxGrip 1.0. Captures the host camera and lights in the state pass
+	@discussion Introduced in FxGrip 0.1.0. Captures the host camera and lights in the state pass
 				(where the `Fx3DAPI_v5` and `FxLightingAPI_v3` APIs are valid), serializes them into
 				plugin state along with view-matrix samples one frame on each side for velocity, and
 				at render time builds a SceneKit scene from that state and draws it into the

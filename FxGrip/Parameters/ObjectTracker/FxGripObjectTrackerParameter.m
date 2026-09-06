@@ -1,9 +1,15 @@
-//
-//  FxGripObjectTrackerParameter.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripObjectTrackerParameter.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerParameter
+	@abstract   Implements the custom parameter that tracks an object across the clip.
+	@discussion Introduced in FxGrip 0.1.0. The analysis pass arms a Vision tracker, seeds it
+	            from the placed region on the first frame, and stores a sample per frame. When
+	            the pass ends, the samples save into the parameter value and the linked center,
+	            angle, and anchor points are baked as keyframes across the analyzed frames.
+*/
 
 #import "FxGripObjectTrackerParameter.h"
 #import "FxGripObjectTrackerView.h"
@@ -11,6 +17,11 @@
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripObjectTracker.h"
 
+/*!
+	@abstract	The custom parameter that tracks an object across the clip.
+	@discussion	Introduced in FxGrip 0.1.0. The value is an FxGripObjectTrackerData. The class
+				drives the analysis pass and reads a resolved transform back by frame.
+*/
 @implementation FxGripObjectTrackerParameter
 {
 	FxGripObjectTracker *_analysisTracker;
@@ -35,6 +46,12 @@
 	return [NSSet setWithObjects:FxGripObjectTrackerData.class, FxGripObjectTrackerSample.class, nil];
 }
 
+/*!
+	@method		trackerDataFromDeclared:
+	@abstract	Builds a tracker value from the parameter's declared configuration dictionary.
+	@return		A tracker value seeded from the declared keys, or a default value when the input is not a dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. Each kFxGripObjectTrackerKey_* entry is applied only
+				when it is present and of the expected class. */
 + (FxGripObjectTrackerData *)trackerDataFromDeclared:(nullable NSDictionary *)declared
 {
 	FxGripObjectTrackerData *data = [[FxGripObjectTrackerData alloc] init];
@@ -98,6 +115,12 @@
 	return data;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Adds the object tracker as a custom parameter to the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The default value is built from the declared
+				configuration, and the custom-UI flag is set so the inspector shows the options view. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	FxGripObjectTrackerData *defaultValue =
@@ -139,6 +162,12 @@
 	[self beginObjectTrackingAnalysisWithFrameDuration:kCMTimeInvalid];
 }
 
+/*!
+	@method		beginObjectTrackingAnalysisWithFrameDuration:
+	@abstract	Arms a fresh tracker for a pass and records the frame duration for keyframing.
+	@discussion	Introduced in FxGrip 0.1.0. The working data copies the current value with its
+				samples cleared, the seed box is read from the linked corners, and the tracker
+				tracks rotation when the shape is a quadrilateral. */
 - (void)beginObjectTrackingAnalysisWithFrameDuration:(CMTime)frameDuration
 {
 	_analysisFrameDuration = frameDuration;
@@ -183,6 +212,12 @@
 	}
 }
 
+/*!
+	@method		analyzeObjectTrackingImage:atFrame:
+	@abstract	Seeds on the first frame of the pass, then tracks each later frame.
+	@discussion	Introduced in FxGrip 0.1.0. The first frame starts the tracker from the seed box
+				and stores it as the seed sample. Each later frame stores the tracked sample. A
+				disabled tracker or a nil image is ignored. */
 - (void)analyzeObjectTrackingImage:(CIImage *)image atFrame:(NSInteger)frameIndex
 {
 	if (_analysisWorkingData == nil || !_analysisWorkingData.enabled || image == nil) {
@@ -214,6 +249,11 @@
 	return image;
 }
 
+/*!
+	@method		endObjectTrackingAnalysis
+	@abstract	Writes the accumulated samples back into the value and releases the tracker.
+	@discussion	Introduced in FxGrip 0.1.0. The working data becomes the parameter value, and the
+				linked points are baked as keyframes before the tracker state is cleared. */
 - (void)endObjectTrackingAnalysis
 {
 	if (_analysisWorkingData != nil) {
@@ -276,6 +316,11 @@
 	}
 }
 
+/*!
+	@method		transform:atFrame:
+	@abstract	Resolves the tracked transform at a frame from the stored value.
+	@return		YES when the value is tracker data with a sample at or before the frame; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The resolution holds the last result forward across gaps. */
 - (BOOL)transform:(FxGripObjectTrackerTransform *)outTransform atFrame:(NSInteger)frameIndex
 {
 	id value = [self valueAtTime:kCMTimeZero];

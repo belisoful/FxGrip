@@ -1,9 +1,15 @@
-//
-//  FxGripAboutMenu.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripAboutMenu.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAboutMenu
+	@abstract   Implements the About popup menu extension.
+	@discussion Introduced in FxGrip 0.1.0. The extension resolves a layout from the configuration in
+	            one pass, pairing each displayed row with its action and, for a link, the ordered
+	            URLs to try. Parameter registration builds the baseline menu, parameter changes to a
+	            gating parameter rebuild it, and a selection resolves against the same layout.
+*/
 
 #import <AppKit/AppKit.h>
 #import "FxGripAboutMenu.h"
@@ -55,6 +61,11 @@ static NSString *const FxGripAboutLayoutURLsKey = @"urls";
 static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 
 
+/*!
+	@abstract	The extension that presents a plugin's About popup menu.
+	@discussion	Introduced in FxGrip 0.1.0. The extension resolves the configured rows into a layout,
+				registers the popup, and dispatches the selected row to its action.
+*/
 @implementation FxGripAboutMenu
 
 - (NSString*)extKey
@@ -138,6 +149,14 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 
 #pragma mark Layout
 
+/*!
+	@method		aboutMenuLayoutReadingValues:atTime:
+	@abstract	Resolves the configured entries into an ordered layout of rows and actions.
+	@param		readValues	YES consults the display gates and the agreement parameter for the live
+							menu; NO builds the baseline for parameter-add time.
+	@param		time		The time at which parameter values are read.
+	@return		An array of layout dictionaries, each a label paired with its action and, for a link,
+				the ordered URLs to try. */
 // readValues NO builds the baseline shown at parameter-add time, before parameter values
 // exist: every gated entry is included and the agreement is treated as accepted. readValues
 // YES consults the display gates and the agreement parameter for the live menu.
@@ -216,6 +235,12 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 
 #pragma mark Parameter registration
 
+/*!
+	@method		extAddParameters:
+	@abstract	Registers the About popup parameter with its baseline menu items.
+	@discussion	Introduced in FxGrip 0.1.0. Runs only when the effect resolves an About menu
+				configuration. The parameter is a non-animatable, no-state Menu whose selector is
+				manageAboutMenu. */
 - (void)extAddParameters:(nonnull NSNotification*)notification
 {
 	if (!self.hasAboutMenu) {
@@ -239,6 +264,11 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 	[parameters addObject:[aboutMenuParameter mutableCopy]];
 }
 
+/*!
+	@method		extParameterChanged:
+	@abstract	Rebuilds the popup when a gating parameter changes.
+	@discussion	Introduced in FxGrip 0.1.0. Returns unless the changed parameter is the agreement
+				parameter or an entry display gate. */
 // The display gates and the agreement parameter change what the menu shows, so a change to any
 // of them rebuilds the popup. Independent of FxGripMeta.
 - (void)extParameterChanged:(nonnull NSNotification*)notification
@@ -281,6 +311,15 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 
 #pragma mark Selection
 
+/*!
+	@method		manageAboutMenu:atTime:error:
+	@abstract	Dispatches the selected popup row to its action.
+	@param		paramID	The About popup parameter.
+	@param		time	The time at which the selection value is read.
+	@param		error	Out error for a failed value read.
+	@return		YES when the selection is handled or out of range; NO when the value read fails.
+	@discussion	Introduced in FxGrip 0.1.0. A link row opens its URL chain, a dialog row shows the
+				warning dialog, and a none row does nothing. */
 - (BOOL)manageAboutMenu:(FxParameterId)paramID
 				 atTime:(CMTime)time
 				  error:(NSError * _Nullable * _Nullable)error
@@ -312,6 +351,12 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 
 #pragma mark Link and dialog primitives
 
+/*!
+	@method		openAboutURLStrings:
+	@abstract	Opens the first URL that succeeds, falling through the ordered list.
+	@discussion	Introduced in FxGrip 0.1.0. Overridable. Invalid or empty strings are skipped. The host
+				completion handler runs off the main thread, so the recursion and the broadcast hop
+				back. */
 // Overridable. Opens the first URL that succeeds, falling through the ordered list. The host
 // completion handler runs off the main thread, so the recursion and the broadcast hop back.
 - (void)openAboutURLStrings:(NSArray<NSString*>*)urlStrings
@@ -373,6 +418,11 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 
 
 
+/*!
+	@abstract	The effect-side accessors that resolve and install the About menu extension.
+	@discussion	Introduced in FxGrip 0.1.0. aboutMenuConfiguration reads the plugin's "aboutMenu"
+				property, and hasAboutMenu gates the loader.
+*/
 @implementation FxGripTileableEffect (AboutMenu)
 
 - (FxGripAboutMenu *)aboutMenu

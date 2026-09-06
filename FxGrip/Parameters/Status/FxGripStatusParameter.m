@@ -1,7 +1,15 @@
-//
-//  FxGripStatusParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripStatusParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripStatusParameter
+	@abstract   Implements the read-only status indicator view and its custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. The view lays out a BEDotView and a label, and
+	            updateFromCustomData: drives the dot state and label text from the parameter's
+	            FxGripDictionary value. The parameter creates the custom control and seeds its
+	            default state and label from the declaration.
+*/
 
 #import "FxGripStatusParameter.h"
 #import "FxGripTileableEffect.h"
@@ -14,6 +22,10 @@
 static const CGFloat kFxGripStatusDotSize = 12.0;
 static const CGFloat kFxGripStatusGap = 6.0;
 
+/*!
+	@abstract	The status indicator view: a colored dot and a trailing label.
+	@discussion	Introduced in FxGrip 0.1.0. The view is flipped and lays the dot at the left edge
+				with the label running to the trailing edge. */
 @implementation FxGripStatusView
 {
 	BEDotView *_dot;
@@ -61,6 +73,12 @@ static const CGFloat kFxGripStatusGap = 6.0;
 	[self layoutContents];
 }
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Redraws the dot and label from the parameter's FxGripDictionary value.
+	@param		value	The parameter value; ignored when it is not an FxGripDictionary.
+	@discussion	Introduced in FxGrip 0.1.0. The integer value sets the dot's BEDotState and the
+				string value sets the label text. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripDictionary.class]) {
@@ -81,8 +99,13 @@ static const CGFloat kFxGripStatusGap = 6.0;
 @end
 
 
+/*!
+	@abstract	The read-only status indicator custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter creates the custom control, seeds its
+				default state and label from the declaration, and builds the status view. */
 @implementation FxGripStatusParameter
 
+/*! @abstract The registry type string for the status parameter. */
 + (nullable NSString*)parameterTypeString
 {
 	return kFxParameterType_Status;
@@ -93,6 +116,7 @@ static const CGFloat kFxGripStatusGap = 6.0;
 	return FxParameterType_Status;
 }
 
+/*! @abstract The value classes the custom parameter decodes: FxGripDictionary and its element classes. */
 + (NSSet<Class> *_Nullable)customValueClasses
 {
 	NSMutableSet *classes = [NSMutableSet setWithObject:FxGripDictionary.class];
@@ -100,6 +124,12 @@ static const CGFloat kFxGripStatusGap = 6.0;
 	return classes;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Creates the status custom parameter on the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The declared default may set the initial dot state and
+				label. Creation adds the custom-UI and no-state flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The declared default may set the initial dot state (an integer) and label (a string).
@@ -127,6 +157,12 @@ static const CGFloat kFxGripStatusGap = 6.0;
 					parameterFlags: parameter.parameterFlags | kFxParameterFlag_CUSTOM_UI | kFxParameterFlag_NOSTATE];
 }
 
+/*!
+	@method		newParameterView
+	@abstract	Creates the status view and seeds it from the declared default value.
+	@return		A new FxGripStatusView.
+	@discussion	Introduced in FxGrip 0.1.0. The host pushes the live value after attaching, so the
+				view seeds from the declared default. */
 - (NSView *_Nullable)newParameterView
 {
 	FxGripStatusView *view = [FxGripStatusView.alloc initWithFrame:NSMakeRect(0, 0, 200, 20)];

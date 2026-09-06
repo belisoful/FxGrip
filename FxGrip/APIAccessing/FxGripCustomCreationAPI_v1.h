@@ -1,7 +1,17 @@
-//
-//  FxGripCustomCreationAPI_v1.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCustomCreationAPI_v1.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCustomCreationAPI_v1
+	@abstract   The creation API for FxGrip's custom inspector controls.
+	@discussion Introduced in FxGrip 0.1.0. The API is FxGrip's own; no host vends it. Each method
+	            mirrors the shape of Apple's addFloatSliderWithName:… and registers one FxGrip
+	            control during the plug-in's -addParameters. Controls include sections, dividers,
+	            banners, capsules, status lights, progress bars, switches, random fields, web views,
+	            video views, and live-image strips. Every method returns YES when the host accepts
+	            the parameter.
+*/
 
 #ifndef FxGripCustomCreationAPI_v1_h
 #define FxGripCustomCreationAPI_v1_h
@@ -15,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@protocol   FxGripCustomCreationAPI_v1
 	@abstract   Creates FxGrip's custom parameters, in the style of Apple's FxPlug creation APIs.
-	@discussion Introduced in FxGrip 1.0. FxGrip's own API. Each method mirrors the shape of
+	@discussion Introduced in FxGrip 0.1.0. FxGrip's own API. Each method mirrors the shape of
 				Apple's addFloatSliderWithName:… and registers one FxGrip control during the
 				plug-in's -addParameters. FxGripCustomCreationAPI_v1 is the implementation.
 */
@@ -93,7 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@interface  FxGripCustomCreationAPI_v1
 	@abstract   Creates FxGrip's custom parameters in the style of Apple's creation APIs.
-	@discussion Introduced in FxGrip 1.0. The counterpart of FxParameterCreationAPI for the
+	@discussion Introduced in FxGrip 0.1.0. The counterpart of FxParameterCreationAPI for the
 				controls FxGrip adds to the inspector: each method mirrors Apple's
 				addFloatSliderWithName:… shape, builds the parameter's configuration dictionary,
 				and registers it through the effect host. The API is vended by

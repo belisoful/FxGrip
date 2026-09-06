@@ -1,7 +1,15 @@
-//
-//  FxGripPathData.h
-//  FxGrip
-//
+/*!
+	@file       FxGripPathData.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPathData
+	@abstract   An immutable ordered list of FxPlug FxVertex path vertices with a closed flag.
+	@discussion Introduced in FxGrip 0.1.0. The type backs an editable on-screen path whose vertex count
+	            changes at runtime. It mirrors the FxPlug FxVertex layout, holding each vertex's location,
+	            in and out tangent vectors, spline weight, and interpolation style in one custom-data
+	            parameter. Edits return a new instance; there is no mutable variant.
+*/
 
 #ifndef FxGripPathData_h
 #define FxGripPathData_h
@@ -14,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripPathData
 	@abstract   An immutable ordered list of FxPlug `FxVertex` path vertices with a closed flag.
-	@discussion Introduced in FxGrip 1.0. Backs an editable on-screen path whose vertex count
+	@discussion Introduced in FxGrip 0.1.0. Backs an editable on-screen path whose vertex count
 				changes at runtime, which a fixed set of point parameters cannot express. The
 				whole list is stored in one custom-data parameter, mirroring the FxPlug
 				`FxVertex` layout: each vertex carries a `location`, an `inTangent` and
@@ -39,8 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
 /*! The location of the vertex at an index, or CGPointZero when out of range. */
 - (CGPoint)locationAtIndex:(NSUInteger)index;
 
+/*! An empty path with the given closed flag. */
 + (instancetype)emptyPathClosed:(BOOL)closed;
 
+/*! A path from a vertex buffer. Returns nil when vertices is NULL and count is nonzero. */
 + (instancetype)pathWithVertices:(nullable const FxVertex *)vertices
 						   count:(NSUInteger)count
 						  closed:(BOOL)closed;

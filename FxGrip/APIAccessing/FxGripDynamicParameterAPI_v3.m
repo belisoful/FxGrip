@@ -1,16 +1,26 @@
-//
-//  MasterFXAPIManager.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
-
+/*!
+	@file       FxGripDynamicParameterAPI_v3.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDynamicParameterAPI_v3
+	@abstract   Implements the FxGrip wrapper for the host's FxDynamicParameterAPI_v3.
+	@discussion Introduced in FxGrip 0.1.0. Read-only queries forward straight to the host API. A
+	            mutating call posts a *Pre notification that lets observers amend the payload,
+	            forwards to the host, and posts the completion notification when the host call
+	            succeeds.
+*/
 
 #import "FxGripDynamicParameterAPI_v3.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTileableEffect.h"
 #import "FxGripAPINotifications.h"
 
+/*!
+	@abstract	Wraps the host dynamic-parameter API and notifies FxGrip of parameter changes.
+	@discussion	Introduced in FxGrip 0.1.0. Forwards each call to the retained host API and posts an
+				FxGrip notification around each mutating operation.
+*/
 @implementation FxGripDynamicParameterAPI_v3
 
 //---------------------------------------------------------

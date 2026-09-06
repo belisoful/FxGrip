@@ -1,7 +1,14 @@
-//
-//  FxGripSceneKitMetalBackend.h
-//  FxGrip
-//
+/*!
+	@file       FxGripSceneKitMetalBackend.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSceneKitMetalBackend
+	@abstract   The shipped 3D Space backend that draws a SceneKit scene into a Metal tile texture.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the FxGripSpaceBackend implementation built
+	            on a pooled Metal SCNRenderer, and the subclass hook a stateful backend overrides to
+	            advance a simulation before the draw.
+*/
 
 #ifndef FxGripSceneKitMetalBackend_h
 #define FxGripSceneKitMetalBackend_h
@@ -16,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 	@class      FxGripSceneKitMetalBackend
 	@abstract   The shipped `FxGripSpaceBackend`: a Metal `SCNRenderer` driving a scene into a tile
 				texture.
-	@discussion Introduced in FxGrip 1.0. Holds one `SCNRenderer` per Metal device, builds a render
+	@discussion Introduced in FxGrip 0.1.0. Holds one `SCNRenderer` per Metal device, builds a render
 				pass whose color attachment is the destination texture and whose depth attachment
 				comes from the FxGrip device cache, draws the scene synchronously through a cached
 				command queue, and waits for completion. The command queue and depth texture are

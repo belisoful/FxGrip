@@ -1,7 +1,16 @@
-//
-//  FxGripWatermark.h
-//  FxGrip
-//
+/*!
+	@file       FxGripWatermark.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripWatermark
+	@abstract   Renders a text watermark onto a render tile.
+	@discussion Introduced in FxGrip 0.1.0. FxGripWatermarkConfiguration describes the text,
+	            typography, and layout. FxGripWatermark renders that configuration in one of four
+	            styles: single, diagonal tiled, banner, or corner. The class depends only on the
+	            base FxGrip tile and the Metal layer, so a plug-in can drive its own licensing or
+	            activation logic and reuse the watermarking here.
+*/
 
 #ifndef FxGripWatermark_h
 #define FxGripWatermark_h
@@ -46,7 +55,7 @@ typedef NS_ENUM(NSInteger, FxGripWatermarkCorner) {
 /*!
 	@class      FxGripWatermarkConfiguration
 	@abstract   A declarative description of a watermark.
-	@discussion Introduced in FxGrip 1.0. Carries the text, typography, and layout that
+	@discussion Introduced in FxGrip 0.1.0. Carries the text, typography, and layout that
 				`FxGripWatermark` renders. A default instance draws a diagonally tiled,
 				semi-transparent watermark.
 */
@@ -103,7 +112,7 @@ typedef NS_ENUM(NSInteger, FxGripWatermarkCorner) {
 /*!
 	@class      FxGripWatermark
 	@abstract   Renders a watermark onto a render tile.
-	@discussion Introduced in FxGrip 1.0. A subclass of `FxGripTileableEffect`, a licensing
+	@discussion Introduced in FxGrip 0.1.0. A subclass of `FxGripTileableEffect`, a licensing
 				system, or any other caller composites a watermark by building a
 				configuration and calling `renderOntoImageTile:error:`. The class depends only
 				on the base FxGrip tile and Metal layer. It has no dependency on FxGrip's

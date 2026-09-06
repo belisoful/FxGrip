@@ -1,11 +1,15 @@
-//
-//  FxGripHistogramParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripHistogramParameter: the type identity, the name-ID-flags payload it
-//  hands the creation API, the host-refusal result, the per-channel value read, and a
-//  channel the host refuses keeping its zero histogram values.
-//
+/*!
+	@file       FxGripHistogramParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripHistogramParameterTests
+	@abstract   Tests FxGripHistogramParameter: its FxPlug type identity and the name-ID-flags
+	            payload it hands the creation API.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the host-refusal result, the
+	            per-channel value read, and a channel the host refuses keeping its zero
+	            histogram values.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -52,6 +56,7 @@ static const FxParameterId kHistogramTestParameter = 51;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug histogram type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripHistogramParameter.parameterType, FxParameterType_Histogram);
@@ -60,6 +65,7 @@ static const FxParameterId kHistogramTestParameter = 51;
 
 #pragma mark Creation payload
 
+/*! @abstract A histogram hands the creation call only the name, ID, and flags. */
 - (void)testHistogramForwardsOnlyTheNameIDAndFlags
 {
 	XCTAssertTrue([self add:FxGripHistogramParameter.class type:kFxParameterType_Histogram extra:nil]);
@@ -70,6 +76,7 @@ static const FxParameterId kHistogramTestParameter = 51;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -79,6 +86,7 @@ static const FxParameterId kHistogramTestParameter = 51;
 
 #pragma mark Values
 
+/*! @abstract -valueAtTime: reads all five channels and populates each component with its values. */
 - (void)testHistogramValueAtTimeReadsEveryChannel
 {
 	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
@@ -102,6 +110,7 @@ static const FxParameterId kHistogramTestParameter = 51;
 	}
 }
 
+/*! @abstract A channel the host refuses keeps its zero histogram values, with gamma left at one. */
 - (void)testAChannelTheHostRefusesKeepsItsZeroHistogramValues
 {
 	FxGripHistogramParameter *parameter = [self makeHistogramParameter];

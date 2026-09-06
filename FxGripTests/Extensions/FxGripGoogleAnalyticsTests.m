@@ -1,7 +1,15 @@
-//
-//  FxGripGoogleAnalyticsTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripGoogleAnalyticsTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripGoogleAnalyticsTests
+	@abstract   Tests the deny-by-default capture rules and idle event latch of FxGripGoogleAnalytics.
+	@discussion Introduced in FxGrip 0.1.0. A recording subclass captures the events the decision would
+	            log, and a stub effect supplies the plugin identity the capture path reads. The tests
+	            cover rule installation on init, accept and reject precedence, priority ordering, latch
+	            behavior across the idle window, and rule removal.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
@@ -110,6 +118,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 
 #pragma mark #39 — the dispatched init selector
 
+/*! @abstract Confirms the extension implements the one-argument extInit: the dispatch table invokes. */
 - (void)testTheExtensionRespondsToTheDispatchedInitSelector
 {
 	// The dispatch table wires extInit: (with the notification argument); a zero-argument
@@ -117,6 +126,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 	XCTAssertTrue([self.analytics respondsToSelector:@selector(extInit:)]);
 }
 
+/*! @abstract Verifies posting the init notification runs extInit: and installs the default capture rules. */
 - (void)testPostingTheInitNotificationInstallsCaptureRules
 {
 	XCTAssertEqual(self.analytics.captureRules.count, (NSUInteger)0, @"no rules before init");
@@ -129,12 +139,14 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 
 #pragma mark Deny-by-default decision
 
+/*! @abstract Verifies an event with no matching rule is not logged. */
 - (void)testAnEventWithoutAnyRuleIsDenied
 {
 	[self captureEventNamed:@"SomeEvent"];
 	XCTAssertEqualObjects(self.analytics.loggedEvents, @[], @"no rule means no logging");
 }
 
+/*! @abstract Verifies an accept rule logs the event whose name it matches. */
 - (void)testAnAcceptRuleLogsTheMatchingEvent
 {
 	[self.analytics addCaptureEvent:@"MyEvent"];
@@ -142,6 +154,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.analytics.loggedEvents, @[@"MyEvent"]);
 }
 
+/*! @abstract Verifies a reject rule, written with the leading-minus syntax, blocks the event it matches. */
 - (void)testARejectRuleDeniesTheMatchingEvent
 {
 	[self.analytics addCaptureEvent:@"-MyEvent"];
@@ -149,6 +162,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.analytics.loggedEvents, @[]);
 }
 
+/*! @abstract Verifies an event that matches no installed rule stays unlogged. */
 - (void)testAnEventMatchingNoRuleIsDeniedRatherThanFailingOpen
 {
 	// A rule that does not match the event must not fall through into logging.
@@ -157,6 +171,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.analytics.loggedEvents, @[], @"the privacy default is structural");
 }
 
+/*! @abstract Verifies an empty-named notification reaches the accept path only through a wildcard rule. */
 - (void)testAnUnnamedNotificationIsDenied
 {
 	[self.analytics addCaptureEvent:@"*"];
@@ -167,6 +182,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 
 #pragma mark Rule management
 
+/*! @abstract Verifies removeCaptureRule: drops the rule, returns NO for an absent rule, and stops the event logging. */
 - (void)testRemovingARuleTakesItOutOfTheList
 {
 	NSPredicate *rule = [self.analytics addCaptureEvent:@"MyEvent"];
@@ -182,6 +198,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 
 #pragma mark Priority ordering survives the lazy sort
 
+/*! @abstract Verifies a lower-priority-number reject wins over an earlier-inserted accept, which requires the capture path to sort by priority before evaluating. */
 - (void)testAHigherPriorityRejectOverridesALaterAcceptRegardlessOfInsertionOrder
 {
 	// The accept is inserted first; the lower-priority-number reject must still win, which
@@ -197,6 +214,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 
 #pragma mark Event latch — one event per interaction
 
+/*! @abstract Verifies fifty identical events within the latch window produce a single logged event. */
 - (void)testABurstOfIdenticalEventsLogsOnce
 {
 	[self.analytics addCaptureEvent:@"Drag"];
@@ -207,6 +225,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 						  @"a continuous interaction latches to a single logged event");
 }
 
+/*! @abstract Verifies an event repeated after the idle interval elapses logs a second time. */
 - (void)testTheLatchReopensAfterTheIdleInterval
 {
 	self.analytics.eventLatchInterval = 0.05;
@@ -220,6 +239,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 						  @"a fresh interaction after the idle window logs again");
 }
 
+/*! @abstract Verifies the latch keys on the parameter ID, so a second control logs within the window and its ID rides along in the logged parameters. */
 - (void)testDistinctParameterIDsEachLogWithinTheWindow
 {
 	[self.analytics addCaptureEvent:FxGripTileableEffectParameterChangedName];
@@ -235,6 +255,7 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.analytics.loggedParameters.lastObject[@"Parameter ID"], @22);
 }
 
+/*! @abstract Verifies a non-positive latch interval disables the latch and logs every event. */
 - (void)testDisablingTheLatchLogsEveryEvent
 {
 	self.analytics.eventLatchInterval = 0.0;

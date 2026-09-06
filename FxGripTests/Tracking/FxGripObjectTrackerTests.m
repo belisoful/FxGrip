@@ -1,13 +1,12 @@
-//
-//  FxGripObjectTrackerTests.m
-//  FxGripTests
-//
-//  Spike coverage for the Vision-backed tracking engine: a textured patch is moved
-//  horizontally across a synthetic frame sequence and the tracker must follow it. This
-//  proves the analysis-pass → CIImage → Vision plumbing before the Object Tracker parameter
-//  and its on-screen control are built. The engine header is framework-internal, so the
-//  surface under test is re-declared here (the FxGripFrameDataTests convention).
-//
+/*!
+	@file       FxGripObjectTrackerTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerTests
+	@abstract   Verifies the Vision-backed FxGripObjectTracker follows a moving patch across a synthetic frame sequence.
+	@discussion Introduced in FxGrip 0.1.0. A high-contrast textured patch is drawn on a dark ground and stepped horizontally across frames, and the tracker is seeded on the first frame and tracked on the rest. The tests confirm the track follows the patch rightward within tolerance, rotation mode seeds and reports a finite rotation, and reset clears the last sample.
+*/
 
 #import <XCTest/XCTest.h>
 #import <CoreImage/CoreImage.h>
@@ -84,6 +83,7 @@ static const NSInteger kFrameCount = 9;
 	return (kStartX + frame * kStepX + kPatchSize / 2.0) / (CGFloat)kFrameWidth;
 }
 
+/*! @abstract The tracker follows the patch across frames, staying within tolerance of the ground-truth center and ending further right than it started. */
 - (void)testTrackerFollowsHorizontallyMovingPatch
 {
 	FxGripObjectTracker *tracker = [[FxGripObjectTracker alloc] initWithLevel:FxGripObjectTrackerLevelAccurate];
@@ -123,6 +123,7 @@ static const NSInteger kFrameCount = 9;
 		@"the track did not follow the patch rightward (first %.3f, last %.3f)", firstTrackedX, lastTrackedX);
 }
 
+/*! @abstract With rotation tracking enabled, the pass produces at least one sample and each reports a finite rotation. */
 - (void)testRotationModeSeedsTracksAndReportsFiniteRotation
 {
 	FxGripObjectTracker *tracker = [[FxGripObjectTracker alloc] initWithLevel:FxGripObjectTrackerLevelAccurate];
@@ -148,6 +149,7 @@ static const NSInteger kFrameCount = 9;
 	XCTAssertGreaterThan(tracked, 0, @"the rotation-mode pass produced no samples");
 }
 
+/*! @abstract Reset clears the last sample after a successful seed. */
 - (void)testResetClearsLastSample
 {
 	FxGripObjectTracker *tracker = [[FxGripObjectTracker alloc] initWithLevel:FxGripObjectTrackerLevelFast];

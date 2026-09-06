@@ -1,15 +1,24 @@
-//
-//  FxGripOOBParameterAccess.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripTileableEffect+ColorGamut.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+ColorGamut
+	@abstract   Implements the working-gamut queries and gamut conversion matrices.
+	@discussion Introduced in FxGrip 0.1.0. The working primaries come from the host color-gamut
+	            API. The luminance weights and conversion matrices are computed from the primaries
+	            through the FxGripColorGamut functions.
+*/
 
 #import "FxGripTileableEffect+OOBParameterAccess.h"
 #import "FxGripOOBParameterAccess.h"
 #import "FxGripColorGamut.h"
 
 
+/*!
+	@abstract	The category exposing the effect's working gamut and color-space conversions.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation FxGripTileableEffect (ColorGamut)
 
 - (FxColorPrimaries)colorPrimaries

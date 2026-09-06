@@ -1,7 +1,15 @@
-//
-//  FxGripOSCPart.m
-//  FxGrip
-//
+/*!
+	@file       FxGripOSCPart.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOSCPart
+	@abstract   Implements the part base and the shape parts an on-screen control composes.
+	@discussion Introduced in FxGrip 0.1.0. Each part reads its parameters, hit-tests in canvas pixels,
+	            draws through the control's draw kit, and writes parameter changes on a drag. Rotation
+	            is rigid in the input-pixel frame, so a rotated shape keeps its angles on a non-square
+	            image. Composite constructors assemble a body with its handles into one part list.
+*/
 
 #import "FxGripOSCPart.h"
 #import "FxGripEventModifiers.h"
@@ -75,6 +83,12 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	return round(radians / M_PI_4) * M_PI_4;
 }
 
+/*!
+	@abstract	One interactive piece of an on-screen control.
+	@discussion	Introduced in FxGrip 0.1.0. The base owns the part number and shadow appearance, answers
+				no hit, ignores drags, and draws nothing. Subclasses override the hit-test, drag, and
+				draw hooks.
+*/
 @implementation FxGripOSCPart
 
 - (nonnull instancetype)initWithPartID:(NSInteger)partID
@@ -178,8 +192,15 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Point handle
 
+/*!
+	@abstract	A square handle bound to a point parameter.
+	@discussion	Introduced in FxGrip 0.1.0. A drag writes the pointer's object position to the parameter.
+				Hit testing measures canvas-pixel distance, so the grab target is the same size at
+				every zoom.
+*/
 @implementation FxGripOSCPointHandlePart
 
+/*! @abstract Creates a handle bound to a point parameter. */
 + (nonnull instancetype)partWithID:(NSInteger)partID parameterID:(FxParameterId)parameterID
 {
 	FxGripOSCPointHandlePart *part = [[self alloc] initWithPartID:partID];
@@ -238,8 +259,14 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Line
 
+/*!
+	@abstract	A line segment bound to start and end point parameters.
+	@discussion	Introduced in FxGrip 0.1.0. A hit is any point within hitRadius canvas pixels of the
+				segment; a drag moves both endpoints by the object-space delta.
+*/
 @implementation FxGripOSCLinePart
 
+/*! @abstract Creates a line bound to start and end point parameters. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				  startParameterID:(FxParameterId)startParameterID
 					endParameterID:(FxParameterId)endParameterID
@@ -250,6 +277,7 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	return NARC_AUTORELEASE(part);
 }
 
+/*! @abstract The line body plus a point handle on each endpoint. */
 + (nonnull NSArray<FxGripOSCPart *> *)gradientPartsWithLineID:(NSInteger)lineID
 												startHandleID:(NSInteger)startHandleID
 												  endHandleID:(NSInteger)endHandleID
@@ -263,6 +291,7 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	];
 }
 
+/*! @abstract The flag-form line composite: Body, then VertexHandles for start and end. */
 + (nonnull NSArray<FxGripOSCPart *> *)linePartsWithOptions:(FxGripOSCShapeOptions)options
 											   firstPartID:(NSInteger)firstPartID
 										  startParameterID:(FxParameterId)startParameterID
@@ -361,6 +390,12 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Angle dial
 
+/*!
+	@abstract	A rotation spoke bound to a center point parameter and an angle parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Dragging the tip writes the pointer's angle around the
+				center, measured counterclockwise from +x. Shift snaps the written angle to 45°
+				increments.
+*/
 @implementation FxGripOSCAngleDialPart
 
 // Shift snaps the written angle to 45° increments, so this part reads Shift itself instead of
@@ -472,6 +507,12 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Rectangle corner
 
+/*!
+	@abstract	A resize handle on one corner of a two-corner rectangle.
+	@discussion	Introduced in FxGrip 0.1.0. Dragging writes the pointer into the corner's components.
+				Shift locks the resize to the aspect ratio; Option anchors the center, resizing
+				symmetrically.
+*/
 @implementation FxGripOSCRectCornerPart
 
 // Shift locks the resize to the aspect ratio, so this part reads Shift itself instead of letting
@@ -597,6 +638,12 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	return dx * dx + dy * dy <= self.hitRadius * self.hitRadius;
 }
 
+/*!
+	@method		dragToObjectPoint:objectDelta:modifiers:atTime:
+	@abstract	Writes the dragged corner into the parameter components, honoring Shift and Option.
+	@discussion	Introduced in FxGrip 0.1.0. The pointer unrotates into pre-rotation space when the angle
+				overlay is active. Shift locks the aspect ratio; Option resizes symmetrically about the
+				center. */
 - (BOOL)dragToObjectPoint:(CGPoint)objectPoint
 			  objectDelta:(CGPoint)objectDelta
 				modifiers:(FxModifierKeys)modifiers
@@ -688,8 +735,15 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Rectangle
 
+/*!
+	@abstract	A rectangle bound to lower-left and upper-right point parameters.
+	@discussion	Introduced in FxGrip 0.1.0. A hit is any object point inside the rectangle; a drag moves
+				both corner parameters. An angle overlay rotates the rectangle about the corners'
+				midpoint.
+*/
 @implementation FxGripOSCRectPart
 
+/*! @abstract Creates a rectangle bound to lower-left and upper-right point parameters. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 			  lowerLeftParameterID:(FxParameterId)lowerLeftParameterID
 			 upperRightParameterID:(FxParameterId)upperRightParameterID
@@ -807,8 +861,15 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Circle
 
+/*!
+	@abstract	A circle bound to a center point parameter and a pixel-radius parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The radius is in input-image pixels; hit testing and drawing
+				normalize it against the input bounds, correcting for aspect ratio. A drag moves the
+				center.
+*/
 @implementation FxGripOSCCirclePart
 
+/*! @abstract Creates a circle bound to a center point and a pixel-radius parameter. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 centerParameterID:(FxParameterId)centerParameterID
 				 radiusParameterID:(FxParameterId)radiusParameterID
@@ -912,6 +973,7 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	free(rim);
 }
 
+/*! @abstract The circle body plus a radius handle on its rim. */
 + (nonnull NSArray<FxGripOSCPart *> *)circlePartsWithBodyID:(NSInteger)bodyID
 											 radiusHandleID:(NSInteger)radiusHandleID
 										  centerParameterID:(FxParameterId)centerParameterID
@@ -925,6 +987,7 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	];
 }
 
+/*! @abstract The circle body, radius handle, and a rotation handle riding the rim. */
 + (nonnull NSArray<FxGripOSCPart *> *)circlePartsWithBodyID:(NSInteger)bodyID
 											 radiusHandleID:(NSInteger)radiusHandleID
 										   rotationHandleID:(NSInteger)rotationHandleID
@@ -942,6 +1005,7 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 															angleParameterID:angleParameterID]];
 }
 
+/*! @abstract The flag-form circle composite: Body, RadiusHandle, RotationHandle. */
 + (nonnull NSArray<FxGripOSCPart *> *)circlePartsWithOptions:(FxGripOSCShapeOptions)options
 												 firstPartID:(NSInteger)firstPartID
 										   centerParameterID:(FxParameterId)centerParameterID
@@ -974,8 +1038,14 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Circle radius handle
 
+/*!
+	@abstract	A handle on a circle's rim that resizes the radius parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Dragging writes the aspect-corrected object distance from
+				the center, scaled to input pixels, into the radius parameter.
+*/
 @implementation FxGripOSCCircleRadiusHandlePart
 
+/*! @abstract Creates a radius handle on a circle's rim. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 centerParameterID:(FxParameterId)centerParameterID
 				 radiusParameterID:(FxParameterId)radiusParameterID
@@ -1069,6 +1139,12 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Rotation handle
 
+/*!
+	@abstract	A rotation handle on a circle's rim, bound to center, radius, and angle parameters.
+	@discussion	Introduced in FxGrip 0.1.0. The handle sits on the rim at the angle parameter's
+				direction. Dragging writes the pointer's angle around the center; Shift snaps to 45°
+				increments.
+*/
 @implementation FxGripOSCRotationHandlePart
 
 // Shift snaps the written angle to 45° increments, so this part reads Shift itself instead of
@@ -1192,8 +1268,15 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 
 #pragma mark - Polyline
 
+/*!
+	@abstract	A chain of point parameters drawn as connected segments.
+	@discussion	Introduced in FxGrip 0.1.0. A hit is any point within hitRadius canvas pixels of a
+				segment; a drag moves every point parameter by the object-space delta. A closed chain
+				connects the last point to the first.
+*/
 @implementation FxGripOSCPolylinePart
 
+/*! @abstract Creates a polyline through the given point parameters. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
 							closed:(BOOL)closed
@@ -1204,6 +1287,7 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	return NARC_AUTORELEASE(part);
 }
 
+/*! @abstract The body plus a point handle per vertex, numbered firstHandleID upward. */
 + (nonnull NSArray<FxGripOSCPart *> *)polylinePartsWithBodyID:(NSInteger)bodyID
 												firstHandleID:(NSInteger)firstHandleID
 											pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
@@ -1219,6 +1303,7 @@ static double FxGripOSCConstrainedAngle(double radians, FxModifierKeys modifiers
 	return parts;
 }
 
+/*! @abstract The flag-form polyline composite: Body, then VertexHandles in chain order. */
 + (nonnull NSArray<FxGripOSCPart *> *)polylinePartsWithOptions:(FxGripOSCShapeOptions)options
 												   firstPartID:(NSInteger)firstPartID
 											 pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
@@ -1360,6 +1445,12 @@ static CGFloat FxGripOSCDistanceSquaredToSegment(CGPoint p, CGPoint a, CGPoint b
 
 #pragma mark - Rectangle rotation handle
 
+/*!
+	@abstract	A rotation spoke for the two-corner rectangle's angle overlay.
+	@discussion	Introduced in FxGrip 0.1.0. The spoke runs from the corners' midpoint to a tip at a
+				fixed canvas radius. Dragging writes the pointer's angle around the midpoint; Shift
+				snaps to 45° increments.
+*/
 @implementation FxGripOSCRectRotationHandlePart
 
 // Shift snaps the written angle to 45° increments, so this part reads Shift itself instead of
@@ -1529,8 +1620,15 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	return CGPointMake(x, y);
 }
 
+/*!
+	@abstract	A rotatable box bound to center, pixel width, pixel height, and angle parameters.
+	@discussion	Introduced in FxGrip 0.1.0. Width and height are in input-image pixels; the box rotates
+				rigidly about its center. A hit is any pointer inside the rotated box; a drag moves the
+				center.
+*/
 @implementation FxGripOSCBoxPart
 
+/*! @abstract Creates a box bound to center, width, height, and angle parameters. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 centerParameterID:(FxParameterId)centerParameterID
 				  widthParameterID:(FxParameterId)widthParameterID
@@ -1545,6 +1643,7 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	return NARC_AUTORELEASE(part);
 }
 
+/*! @abstract The box body, four corner resize handles, and a rotation dial on the center. */
 + (nonnull NSArray<FxGripOSCPart *> *)boxPartsWithBodyID:(NSInteger)bodyID
 										   firstCornerID:(NSInteger)firstCornerID
 										rotationHandleID:(NSInteger)rotationHandleID
@@ -1577,6 +1676,7 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	return parts;
 }
 
+/*! @abstract The flag-form box composite: Body, CornerHandles, RotationHandle. */
 + (nonnull NSArray<FxGripOSCPart *> *)boxPartsWithOptions:(FxGripOSCShapeOptions)options
 											  firstPartID:(NSInteger)firstPartID
 										centerParameterID:(FxParameterId)centerParameterID
@@ -1684,6 +1784,12 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 
 #pragma mark - Box corner
 
+/*!
+	@abstract	A resize handle on one corner of a box.
+	@discussion	Introduced in FxGrip 0.1.0. Dragging resizes the box in its local frame, writing the
+				width and height parameters. The default anchors the opposite corner; Option anchors
+				the center; Shift locks the aspect ratio. The angle never changes.
+*/
 @implementation FxGripOSCBoxCornerPart
 
 // Shift locks the resize to the box's aspect ratio, so this part reads Shift itself instead of
@@ -1700,6 +1806,7 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	return YES;
 }
 
+/*! @abstract Creates a resize handle on one corner of a box. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 							corner:(FxGripOSCRectCorner)corner
 				 centerParameterID:(FxParameterId)centerParameterID
@@ -1747,6 +1854,11 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	return dx * dx + dy * dy <= self.hitRadius * self.hitRadius;
 }
 
+/*!
+	@method		dragToObjectPoint:objectDelta:modifiers:atTime:
+	@abstract	Resizes the box in its local frame, writing width and height and, by default, the center.
+	@discussion	Introduced in FxGrip 0.1.0. Option resizes symmetrically about the fixed center; the
+				default anchors the opposite corner and shifts the center. Shift locks the aspect ratio. */
 - (BOOL)dragToObjectPoint:(CGPoint)objectPoint
 			  objectDelta:(CGPoint)objectDelta
 				modifiers:(FxModifierKeys)modifiers
@@ -1830,8 +1942,15 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 
 #pragma mark - Composites
 
+/*!
+	@abstract	The rectangle body with corner resize handles and an optional rotation handle.
+	@discussion	Introduced in FxGrip 0.1.0. The composite constructors number the body and handles from
+				a first ID and, when an angle parameter is supplied, wire the angle overlay onto every
+				part.
+*/
 @implementation FxGripOSCRectPart (Composites)
 
+/*! @abstract The rectangle body plus four corner resize handles. */
 + (nonnull NSArray<FxGripOSCPart *> *)rectPartsWithBodyID:(NSInteger)bodyID
 											firstCornerID:(NSInteger)firstCornerID
 									 lowerLeftParameterID:(FxParameterId)lowerLeftParameterID
@@ -1850,6 +1969,7 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	return parts;
 }
 
+/*! @abstract The rotated rectangle family: the body and corners carry the angle overlay, plus a rotation handle. */
 + (nonnull NSArray<FxGripOSCPart *> *)rectPartsWithBodyID:(NSInteger)bodyID
 											firstCornerID:(NSInteger)firstCornerID
 										 rotationHandleID:(NSInteger)rotationHandleID
@@ -1876,6 +1996,7 @@ static CGPoint FxGripOSCBoxLocalCorner(FxGripOSCRectCorner corner, const FxGripO
 	return NARC_AUTORELEASE(parts);
 }
 
+/*! @abstract The flag-form rectangle composite: Body, CornerHandles, RotationHandle. */
 + (nonnull NSArray<FxGripOSCPart *> *)rectPartsWithOptions:(FxGripOSCShapeOptions)options
 											   firstPartID:(NSInteger)firstPartID
 									  lowerLeftParameterID:(FxParameterId)lowerLeftParameterID
@@ -1931,8 +2052,14 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 	return CGPointMake(x, y);
 }
 
+/*!
+	@abstract	A display-only smooth curve through point parameters.
+	@discussion	Introduced in FxGrip 0.1.0. Strokes a Catmull-Rom spline through every control point. The
+				part answers no hit and ignores drags.
+*/
 @implementation FxGripOSCCurvePart
 
+/*! @abstract Creates a display-only curve through the given point parameters. */
 + (nonnull instancetype)partWithID:(NSInteger)partID
 				 pointParameterIDs:(nonnull NSArray<NSNumber *> *)pointParameterIDs
 							closed:(BOOL)closed
@@ -2026,8 +2153,15 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 @property (nonatomic, copy, nullable) NSString *cachedKey;
 @end
 
+/*!
+	@abstract	A display-only text readout drawn at a fixed pixel size.
+	@discussion	Introduced in FxGrip 0.1.0. Rasterizes text to a texture, cached per content and device,
+				and draws it over an optional background panel. The part answers no hit and ignores
+				drags.
+*/
 @implementation FxGripOSCHUDPart
 
+/*! @abstract Creates a HUD readout with static text. */
 + (nonnull instancetype)partWithID:(NSInteger)partID text:(nonnull NSString *)text
 {
 	FxGripOSCHUDPart *part = [[self alloc] initWithPartID:partID];
@@ -2035,6 +2169,7 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 	return NARC_AUTORELEASE(part);
 }
 
+/*! @abstract Creates a HUD readout whose text is evaluated at draw time. */
 + (nonnull instancetype)partWithID:(NSInteger)partID textBlock:(nonnull NSString * _Nullable (^)(CMTime time))textBlock
 {
 	FxGripOSCHUDPart *part = [[self alloc] initWithPartID:partID];
@@ -2094,6 +2229,7 @@ static CGPoint FxGripOSCCatmullRomPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGPo
 	return texture;
 }
 
+/*! @abstract Draws the readout: the optional background panel, then the text texture, at the anchor. */
 - (void)drawSelected:(BOOL)selected
 		  canvasSize:(CGSize)canvasSize
 	  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder

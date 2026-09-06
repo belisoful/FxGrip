@@ -1,9 +1,14 @@
-//
-//  FxGripAnalysis.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripAnalysis.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAnalysis
+	@abstract   Implements the per-frame analysis storage extension.
+	@discussion Introduced in FxGrip 0.1.0. The extension registers the hidden AnalysisData custom
+	            parameter, resolves its FxGripFrameData from the document, and attaches the project
+	            media cache after each load so large per-frame records spill to disk.
+*/
 
 #import "FxGripAnalysis.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -16,6 +21,11 @@
 #import <BEFoundation/NSNotification+MutableUserInfo.h>
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The extension that owns the effect's per-frame analysis storage.
+	@discussion	Introduced in FxGrip 0.1.0. The frame data is created on demand and reloaded from the
+				document when the effect is added.
+*/
 @implementation FxGripAnalysis
 {
 	FxGripFrameData *_frameData;
@@ -39,6 +49,7 @@
 	return classes;
 }
 
+/*! @abstract The per-frame analysis store, created on demand with the project media cache attached. */
 - (FxGripFrameData *)frameData
 {
 	if (_frameData == nil) {
@@ -48,8 +59,11 @@
 	return _frameData;
 }
 
-// The hidden AnalysisData parameter carries no state, is never presented or animated, and
-// stays out of presets; its FrameData is machine-local cache-backed.
+/*!
+	@method		extAddParameters:
+	@abstract	Registers the hidden AnalysisData custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter carries no state, is never presented or
+				animated, and stays out of presets; its frame data is machine-local cache-backed. */
 - (void)extAddParameters:(nonnull NSNotification*)notification
 {
 	NSDictionary *analysisParameter = @{
@@ -64,6 +78,12 @@
 	[notification.userInfo.fxEffectParameters addObject:[analysisParameter mutableCopy]];
 }
 
+/*!
+	@method		extAddedToDocument:
+	@abstract	Loads the stored frame data from the document and reattaches the media cache.
+	@discussion	Introduced in FxGrip 0.1.0. The custom parameter value replaces the in-memory store
+				when it decodes to an FxGripFrameData. The cache is transient, so it is re-resolved
+				after every document load. */
 - (void)extAddedToDocument:(nonnull NSNotification*)notification
 {
 	NSObject<NSCopying, NSSecureCoding> *object = nil;
@@ -82,6 +102,10 @@
 @end
 
 
+/*!
+	@abstract	The effect-side accessors for the analysis extension and its frame data.
+	@discussion	Introduced in FxGrip 0.1.0. analysisData resolves the loaded extension's store.
+*/
 @implementation FxGripTileableEffect (Analysis)
 
 - (nullable FxGripFrameData *)analysisData

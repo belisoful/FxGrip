@@ -1,14 +1,12 @@
-//
-//  FxGripParameterTagsAPI_v1Tests.m
-//  FxGripTests
-//
-//  Unit tests for the preset section of FxGripParameterTagsAPI_v1: tag-to-definition
-//  resolution from the plugin's plist table, target-preset resolution with the
-//  instance meta record overriding the parameter configuration, the preset
-//  application core (section order, option gating, the tag boundary, and the five
-//  section semantics), and the wiring that keeps the FxGrip-implemented tags API
-//  reachable through FxGripAPIAccessing.
-//
+/*!
+	@file       FxGripParameterTagsAPI_v1Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterTagsAPI_v1Tests
+	@abstract   Verifies the preset section of FxGripParameterTagsAPI_v1: tag-to-definition resolution, target-preset resolution, the preset application core, and the wiring that keeps the tags API reachable through FxGripAPIAccessing.
+	@discussion Introduced in FxGrip 0.1.0. Preset definitions resolve from the plugin plist table, and the instance meta record overrides the parameter configuration. The apply core runs the five sections in a fixed order under option gating and the tag boundary. The tags API is vended through FxGripAPIAccessing even though no host supplies the protocol.
+*/
 
 #import <XCTest/XCTest.h>
 #import <objc/runtime.h>
@@ -390,6 +388,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark presetDefinitionForTag:
 
+/*! @abstract presetDefinitionForTag: returns the definition stored under the tag in the plugin presets table. */
 - (void)testPresetDefinitionForTagReturnsTheDefinitionFromThePluginPresetsTable
 {
 	NSDictionary *definition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @2}};
@@ -398,6 +397,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects([self.tagsAPI presetDefinitionForTag:@"warm"], definition);
 }
 
+/*! @abstract presetDefinitionForTag: is nil for a tag the presets table does not carry. */
 - (void)testPresetDefinitionForUnknownTagIsNil
 {
 	[self installPresetDefinition:@{} forTag:@"warm"];
@@ -405,6 +405,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertNil([self.tagsAPI presetDefinitionForTag:@"cool"]);
 }
 
+/*! @abstract presetDefinitionForTag: is nil for a nil tag. */
 - (void)testPresetDefinitionForNilTagIsNil
 {
 	[self installPresetDefinition:@{} forTag:@"warm"];
@@ -413,11 +414,13 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertNil([self.tagsAPI presetDefinitionForTag:absentTag]);
 }
 
+/*! @abstract presetDefinitionForTag: is nil when the plugin carries no presets table. */
 - (void)testPresetDefinitionIsNilWhenThePluginCarriesNoPresetsTable
 {
 	XCTAssertNil([self.tagsAPI presetDefinitionForTag:@"warm"]);
 }
 
+/*! @abstract presetDefinitionForTag: is nil when the properties lack the plugin identity keys the presets accessor requires. */
 - (void)testPresetDefinitionIsNilWhenThePropertiesLackThePluginIdentityKeys
 {
 	self.effect.pluginProperties = @{kProPlugPlugInX_PresetsProperty: @{@"warm": @{}}};
@@ -428,6 +431,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark targetPresetForParameter:record:
 
+/*! @abstract targetPresetForParameter:record: returns an inline definition from the instance record and reports that record as the source. */
 - (void)testTargetPresetReturnsAnInlineDefinitionFromTheInstanceRecord
 {
 	NSDictionary *definition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @2}};
@@ -441,6 +445,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue(record == instanceRecord, @"the record out-param names the source of the definition");
 }
 
+/*! @abstract targetPresetForParameter:record: resolves a string target preset through the plugin presets table. */
 - (void)testTargetPresetResolvesAStringDefinitionThroughThePluginPresetsTable
 {
 	NSDictionary *definition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @2}};
@@ -455,6 +460,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue(record == instanceRecord);
 }
 
+/*! @abstract targetPresetForParameter:record: prefers the instance record over the parameter configuration. */
 - (void)testTargetPresetPrefersTheInstanceRecordOverTheConfiguration
 {
 	NSDictionary *instanceDefinition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @"instance"}};
@@ -476,6 +482,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue(record == instanceRecord);
 }
 
+/*! @abstract targetPresetForParameter:record: falls back to the configuration when no instance record exists. */
 - (void)testTargetPresetFallsBackToTheConfigurationWhenNoInstanceRecordExists
 {
 	NSDictionary *definition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @2}};
@@ -494,6 +501,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue(record == configuration);
 }
 
+/*! @abstract targetPresetForParameter:record: falls back to the configuration for a parameter the meta manager does not hold. */
 - (void)testTargetPresetFallsBackToTheConfigurationForAParameterTheManagerDoesNotHold
 {
 	NSDictionary *definition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @2}};
@@ -506,6 +514,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(resolved, definition);
 }
 
+/*! @abstract targetPresetForParameter:record: is nil and reports no record when neither source holds one. */
 - (void)testTargetPresetIsNilWhenNeitherSourceHoldsARecord
 {
 	NSDictionary *record = nil;
@@ -515,6 +524,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertNil(record, @"no source means no record to report");
 }
 
+/*! @abstract targetPresetForParameter:record: is nil when the string tag matches no plugin preset, and still reports the record. */
 - (void)testTargetPresetIsNilWhenTheStringTagMatchesNoPluginPreset
 {
 	[self installPresetDefinition:@{} forTag:@"warm"];
@@ -528,6 +538,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue(record == instanceRecord, @"the record is reported even when the tag resolves to nothing");
 }
 
+/*! @abstract targetPresetForParameter:record: is nil when the record names no target preset. */
 - (void)testTargetPresetIsNilWhenTheRecordNamesNoTargetPreset
 {
 	[self installInstanceRecordForParameter:kTagsTestParam];
@@ -536,6 +547,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertNil([self.tagsAPI targetPresetForParameter:kTagsTestParam record:&record]);
 }
 
+/*! @abstract targetPresetForParameter:record: accepts a NULL record out-parameter and still returns the definition. */
 - (void)testTargetPresetAcceptsANullRecordOutParameter
 {
 	NSDictionary *definition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @2}};
@@ -652,6 +664,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: section order
 
+/*! @abstract applyPreset: runs the sections in values, flags, tags, meta, names order. */
 - (void)testApplyPresetRunsTheSectionsInValuesFlagsTagsMetaNamesOrder
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -666,6 +679,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: option gating
 
+/*! @abstract The values option runs only the values section. */
 - (void)testApplyPresetValuesOptionRunsOnlyTheValuesSection
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -675,6 +689,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.recordedSections, @[kFxParameterProperty_TargetPresetValues]);
 }
 
+/*! @abstract The flags option runs only the flags section. */
 - (void)testApplyPresetFlagsOptionRunsOnlyTheFlagsSection
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -684,6 +699,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.recordedSections, @[kFxParameterProperty_TargetPresetFlags]);
 }
 
+/*! @abstract The tags option runs only the tags section. */
 - (void)testApplyPresetTagsOptionRunsOnlyTheTagsSection
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -693,6 +709,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.recordedSections, @[kFxParameterProperty_TargetPresetTags]);
 }
 
+/*! @abstract The meta option runs only the meta section. */
 - (void)testApplyPresetMetaOptionRunsOnlyTheMetaSection
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -702,6 +719,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.recordedSections, @[kFxParameterProperty_TargetPresetMeta]);
 }
 
+/*! @abstract The names option runs only the names section. */
 - (void)testApplyPresetNamesOptionRunsOnlyTheNamesSection
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -711,6 +729,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.recordedSections, @[kFxParameterProperty_TargetPresetNames]);
 }
 
+/*! @abstract The all option runs every section in order. */
 - (void)testApplyPresetAllOptionRunsEverySection
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -722,6 +741,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: section key normalization
 
+/*! @abstract applyPreset: resolves per-parameter section keys written as strings. */
 - (void)testApplyPresetResolvesSectionKeysWrittenAsStrings
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -734,6 +754,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"Renamed");
 }
 
+/*! @abstract applyPreset: resolves per-parameter section keys written as numbers. */
 - (void)testApplyPresetResolvesSectionKeysWrittenAsNumbers
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -747,6 +768,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: tag boundary
 
+/*! @abstract A plugin-sourced apply touches every named parameter without narrowing by the tag. */
 - (void)testApplyPresetFromThePluginTouchesEveryNamedParameterWithoutTheTag
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -762,6 +784,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 						  @"a plugin definition names IDs that are current by construction");
 }
 
+/*! @abstract A file-sourced apply applies every section only to parameters carrying the tag. */
 - (void)testApplyPresetFromAFileAppliesEverySectionOnlyToParametersCarryingTheTag
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam), @(kTagsTestOtherParam)]];
@@ -782,6 +805,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.events, expected, @"the boundary filters all five sections");
 }
 
+/*! @abstract A file-sourced apply ignores the tag boundary when the preset flags request it. */
 - (void)testApplyPresetFromAFileIgnoresTheBoundaryWhenThePresetFlagsRequestIt
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -796,6 +820,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.recordedSections, self.allSectionsInOrder);
 }
 
+/*! @abstract A file-sourced apply without a tag applies to every named parameter. */
 - (void)testApplyPresetFromAFileWithoutATagAppliesToEveryNamedParameter
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam), @(kTagsTestOtherParam)]];
@@ -816,6 +841,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: values section
 
+/*! @abstract The values section writes the encoded value at the supplied time. */
 - (void)testApplyPresetValuesSectionWritesTheEncodedValueAtTheSuppliedTime
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -830,6 +856,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: flags section
 
+/*! @abstract The flags section adds and removes bits against the stored flags. */
 - (void)testApplyPresetFlagsSectionAddsAndRemovesAgainstTheStoredFlags
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -846,6 +873,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 						  @(kFxParameterFlag_DISABLED | kFxParameterFlag_COLLAPSED));
 }
 
+/*! @abstract The flags section accepts a flag spec written as an array. */
 - (void)testApplyPresetFlagsSectionAcceptsAFlagSpecArray
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -862,6 +890,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 						  @(kFxParameterFlag_DISABLED | kFxParameterFlag_COLLAPSED));
 }
 
+/*! @abstract The flags section treats a bare flag name as an addition. */
 - (void)testApplyPresetFlagsSectionTreatsABareNameAsAnAddition
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -873,6 +902,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.settingAPI.flags[@(kTagsTestParam)], @(kFxParameterFlag_HIDDEN));
 }
 
+/*! @abstract The flags section skips the write when the result matches the stored flags. */
 - (void)testApplyPresetFlagsSectionSkipsTheWriteWhenTheResultMatchesTheStoredFlags
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -885,6 +915,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.events, @[], @"an unchanged result writes nothing");
 }
 
+/*! @abstract The flags section ignores unknown flag names and applies only the recognized bits. */
 - (void)testApplyPresetFlagsSectionIgnoresUnknownFlagNames
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -908,6 +939,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: tags section
 
+/*! @abstract The tags section adds and removes tags through the meta manager. */
 - (void)testApplyPresetTagsSectionAddsAndRemovesTagsThroughTheMetaManager
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -923,6 +955,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(tags, (@[@"alpha", @"gamma"]));
 }
 
+/*! @abstract The tags section accepts a tag spec written as an array. */
 - (void)testApplyPresetTagsSectionAcceptsATagSpecArray
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -935,6 +968,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects([self.metaManager parameterTags:kTagsTestParam], @[@"alpha"]);
 }
 
+/*! @abstract The tags section skips parameters flagged preset-no-tags. */
 - (void)testApplyPresetTagsSectionSkipsParametersFlaggedPresetNoTags
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -950,6 +984,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: meta section
 
+/*! @abstract The meta section sets each entry on the meta manager. */
 - (void)testApplyPresetMetaSectionSetsEachEntryOnTheMetaManager
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -964,6 +999,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(meta, (@{@"role": @"primary", @"order": @3}));
 }
 
+/*! @abstract The meta section skips parameters flagged preset-no-meta. */
 - (void)testApplyPresetMetaSectionSkipsParametersFlaggedPresetNoMeta
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -981,6 +1017,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: names section
 
+/*! @abstract The names section renames through the dynamic API. */
 - (void)testApplyPresetNamesSectionRenamesThroughTheDynamicAPI
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -995,6 +1032,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyPreset: error contract
 
+/*! @abstract applyPreset: continues past a failed entry, runs the later sections, and returns the earliest error. */
 - (void)testApplyPresetContinuesPastAFailedEntryAndReturnsTheFirstError
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam), @(kTagsTestOtherParam)]];
@@ -1017,6 +1055,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 				  @"the later sections still run");
 }
 
+/*! @abstract applyPreset: returns nil when every entry succeeds. */
 - (void)testApplyPresetReturnsNilWhenEveryEntrySucceeds
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1025,6 +1064,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 							   options:FxGripPresetAll]);
 }
 
+/*! @abstract applyPreset: ignores a preset that is not a dictionary and returns nil. */
 - (void)testApplyPresetIgnoresAPresetThatIsNotADictionary
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1037,6 +1077,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark getMetaKeys:forPreset:fromParameter:
 
+/*! @abstract getMetaKeys:forPreset:fromParameter: returns the definition's meta keys for the parameter. */
 - (void)testGetMetaKeysReturnsTheDefinitionsMetaKeysForTheParameter
 {
 	[self installPresetDefinition:@{kFxParameterProperty_TargetPresetMeta:
@@ -1051,6 +1092,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects([keys sortedArrayUsingSelector:@selector(compare:)], (@[@"order", @"role"]));
 }
 
+/*! @abstract getMetaKeys:forPreset:fromParameter: is empty when the definition carries no meta section. */
 - (void)testGetMetaKeysIsEmptyWhenTheDefinitionCarriesNoMetaSection
 {
 	[self installPresetDefinition:@{kFxParameterProperty_TargetPresetValues:
@@ -1064,6 +1106,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(keys, @[]);
 }
 
+/*! @abstract getMetaKeys:forPreset:fromParameter: is empty when the meta section has no entry for the parameter. */
 - (void)testGetMetaKeysIsEmptyWhenTheMetaSectionHasNoEntryForTheParameter
 {
 	[self installPresetDefinition:@{kFxParameterProperty_TargetPresetMeta:
@@ -1077,6 +1120,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(keys, @[]);
 }
 
+/*! @abstract getMetaKeys:forPreset:fromParameter: errors when no keys out-parameter is supplied. */
 - (void)testGetMetaKeysErrorsWhenNoKeysOutParameterIsSupplied
 {
 	[self installPresetDefinition:@{kFxParameterProperty_TargetPresetMeta:
@@ -1086,6 +1130,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertNotNil([self.tagsAPI getMetaKeys:(NSArray<NSString*>* _Nullable __autoreleasing * _Nonnull)NULL forPreset:@"warm" fromParameter:kTagsTestParam]);
 }
 
+/*! @abstract getMetaKeys:forPreset:fromParameter: errors when the tag resolves to no definition. */
 - (void)testGetMetaKeysErrorsWhenTheTagResolvesToNoDefinition
 {
 	[self installPresetDefinition:@{} forTag:@"warm"];
@@ -1131,6 +1176,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyTargetPresetForParameter: gating
 
+/*! @abstract applyTargetPresetForParameter: returns NO when neither source holds a record. */
 - (void)testApplyTargetPresetReturnsNOWhenNeitherSourceHoldsARecord
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1139,6 +1185,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.events, @[]);
 }
 
+/*! @abstract applyTargetPresetForParameter: leaves a parameter that is neither Menu nor Toggle untouched and reads no value. */
 - (void)testApplyTargetPresetLeavesAParameterThatIsNeitherMenuNorToggleUntouched
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1151,6 +1198,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 						  @"the type check precedes the value read");
 }
 
+/*! @abstract applyTargetPresetForParameter: returns NO when the Menu value cannot be read. */
 - (void)testApplyTargetPresetReturnsNOWhenTheMenuValueCannotBeRead
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1161,6 +1209,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.events, @[]);
 }
 
+/*! @abstract applyTargetPresetForParameter: returns NO when the Toggle value cannot be read. */
 - (void)testApplyTargetPresetReturnsNOWhenTheToggleValueCannotBeRead
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1171,6 +1220,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.events, @[]);
 }
 
+/*! @abstract applyTargetPresetForParameter: returns YES and applies nothing when the record names no definition, reading the value first. */
 - (void)testApplyTargetPresetReturnsYESWhenTheRecordNamesNoDefinition
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1182,6 +1232,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 						  @"the value read precedes the definition check");
 }
 
+/*! @abstract applyTargetPresetForParameter: returns YES and applies nothing when the selected entry is not a dictionary. */
 - (void)testApplyTargetPresetReturnsYESWhenTheSelectedEntryIsNotADictionary
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1194,6 +1245,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyTargetPresetForParameter: index resolution
 
+/*! @abstract applyTargetPresetForParameter: applies the array entry the Menu value indexes. */
 - (void)testApplyTargetPresetAppliesTheArrayEntryTheMenuValueIndexes
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1208,6 +1260,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 // A name-keyed definition survives entries moving, because the reference does not depend
 // on position.
+/*! @abstract applyTargetPresetForParameter: resolves a name-keyed definition by the selected menu entry name. */
 - (void)testApplyTargetPresetResolvesADefinitionByMenuEntryName
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1220,6 +1273,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"ByName");
 }
 
+/*! @abstract A name-keyed definition follows its entry to a new index when entries are inserted before it. */
 - (void)testANameKeyedDefinitionFollowsTheEntryWhenEntriesAreAppendedBefore
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1233,6 +1287,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"ByName");
 }
 
+/*! @abstract A name-keyed definition takes precedence over the index-keyed entry for the same value. */
 - (void)testANameKeyedDefinitionTakesPrecedenceOverTheIndexEntry
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1247,6 +1302,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 }
 
 // The existing index-keyed shape keeps working when no entry name matches.
+/*! @abstract An index-keyed definition still resolves when no entry name matches. */
 - (void)testAnIndexKeyedDefinitionStillResolvesWhenTheNameDoesNotMatch
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1258,6 +1314,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"One");
 }
 
+/*! @abstract applyTargetPresetForParameter: applies nothing when the Menu value indexes past the array or is negative. */
 - (void)testApplyTargetPresetAppliesNothingWhenTheMenuValueFallsOutsideTheArray
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1273,6 +1330,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.events, @[]);
 }
 
+/*! @abstract applyTargetPresetForParameter: resolves a dictionary definition by a number index key. */
 - (void)testApplyTargetPresetResolvesADictionaryDefinitionByNumberKey
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1284,6 +1342,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"One");
 }
 
+/*! @abstract applyTargetPresetForParameter: resolves a dictionary definition by a string index key. */
 - (void)testApplyTargetPresetResolvesADictionaryDefinitionByStringKey
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1295,6 +1354,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"One");
 }
 
+/*! @abstract applyTargetPresetForParameter: falls back to the default entry when the indexed key is absent. */
 - (void)testApplyTargetPresetFallsBackToTheDefaultEntryWhenTheIndexIsAbsent
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1308,6 +1368,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"Fallback");
 }
 
+/*! @abstract applyTargetPresetForParameter: indexes the definition with zero for a Toggle that is off. */
 - (void)testApplyTargetPresetIndexesTheDefinitionWithZeroForAToggleThatIsOff
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1318,6 +1379,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"Zero");
 }
 
+/*! @abstract applyTargetPresetForParameter: indexes the definition with one for a Toggle that is on. */
 - (void)testApplyTargetPresetIndexesTheDefinitionWithOneForAToggleThatIsOn
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1330,6 +1392,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark applyTargetPresetForParameter: application
 
+/*! @abstract applyTargetPresetForParameter: applies an inline definition from the instance record with no tag boundary. */
 - (void)testApplyTargetPresetAppliesAnInlineDefinitionFromTheInstanceRecord
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1341,6 +1404,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 						  @"an inline definition carries no tag and still applies");
 }
 
+/*! @abstract applyTargetPresetForParameter: applies a definition resolved through the plugin presets table. */
 - (void)testApplyTargetPresetAppliesADefinitionResolvedThroughThePluginPresetsTable
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1354,6 +1418,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 						  @"the tag the record declared bounds the application, which the plugin source waives");
 }
 
+/*! @abstract applyTargetPresetForParameter: forwards the options to the application. */
 - (void)testApplyTargetPresetForwardsTheOptionsToTheApplication
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1366,6 +1431,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"Renamed");
 }
 
+/*! @abstract applyTargetPresetForParameter: forwards the supplied time to both the value read and the value write. */
 - (void)testApplyTargetPresetForwardsTheSuppliedTimeToTheValueReadAndTheValueWrite
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1378,6 +1444,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue(FxGripTagsTestTimesEqual(self.settingAPI.lastValueTime, FxGripTagsTestTime()));
 }
 
+/*! @abstract applyTargetPresetForParameter: returns NO when the application fails. */
 - (void)testApplyTargetPresetReturnsNOWhenTheApplicationFails
 {
 	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
@@ -1404,6 +1471,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue([self.tagsAPI conformsToProtocol:@protocol(FxGripParameterTagsAPI_v1)]);
 }
 
+/*! @abstract The preset resolution methods are required members of the tags protocol. */
 - (void)testThePresetResolutionMethodsAreRequiredProtocolMembers
 {
 	Protocol *tagsProtocol = @protocol(FxGripParameterTagsAPI_v1);
@@ -1441,6 +1509,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	}
 }
 
+/*! @abstract The tags protocol declares no optional members, because every method is implemented. */
 - (void)testThePresetProtocolDeclaresNoOptionalMembers
 {
 	Protocol *tagsProtocol = @protocol(FxGripParameterTagsAPI_v1);
@@ -1454,6 +1523,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 #pragma mark Reachability Through FxGripAPIAccessing
 
+/*! @abstract FxGripAPIAccessing is constructible without a host API manager. */
 - (void)testTheAPIManagerIsConstructibleWithoutAHostAPIManager
 {
 	FxGripAPIAccessing *manager = [FxGripAPIAccessing.alloc initWithAPIManager:nil effect:(id)self.effect];
@@ -1476,6 +1546,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue([tagsAPI isKindOfClass:FxGripParameterTagsAPI_v1.class]);
 }
 
+/*! @abstract apiForProtocol: vends the tags wrapper directly for the tags protocol. */
 - (void)testApiForProtocolVendsTheTagsWrapperDirectly
 {
 	FxGripAPIAccessing *manager = [FxGripAPIAccessing.alloc initWithAPIManager:nil effect:(id)self.effect];
@@ -1485,6 +1556,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	XCTAssertTrue([tagsAPI isKindOfClass:FxGripParameterTagsAPI_v1.class]);
 }
 
+/*! @abstract The vended tags API resolves presets against the effect. */
 - (void)testTheVendedTagsAPIResolvesPresetsAgainstTheEffect
 {
 	NSDictionary *definition = @{kFxParameterProperty_TargetPresetValues: @{@"1": @2}};

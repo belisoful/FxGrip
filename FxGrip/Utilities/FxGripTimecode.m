@@ -1,13 +1,22 @@
-//
-//  FxGripTimecode.m
-//  FxGrip
-//
+/*!
+	@file       FxGripTimecode.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTimecode
+	@abstract   Implements SMPTE timecode formatting with drop-frame counting.
+	@discussion Introduced in FxGrip 0.1.0. Frame indices come from exact 128-bit rational
+	            arithmetic on the CMTime fields, with a half-tick bias so a time just below a
+	            frame boundary counts as that frame. Drop-frame mode adds back the skipped frame
+	            numbers before splitting the index into fields.
+*/
 
 #import "FxGripTimecode.h"
 
 static const int64_t kFxGripTimecodeSecondsPerMinute = 60;
 static const int64_t kFxGripTimecodeSecondsPerTenMinutes = 600;
 
+/*! YES when the frame duration is numeric with a positive value and timescale. */
 static BOOL FxGripTimecodeDurationIsUsable(CMTime frameDuration)
 {
 	return CMTIME_IS_NUMERIC(frameDuration) && frameDuration.value > 0 && frameDuration.timescale > 0;
@@ -26,8 +35,14 @@ static int64_t FxGripTimecodeNominalRate(CMTime frameDuration)
 	return (int64_t)llround((double)frameDuration.timescale / (double)frameDuration.value);
 }
 
+/*!
+	@abstract	Formats times as SMPTE timecode, with drop-frame support.
+	@discussion	Introduced in FxGrip 0.1.0. Every method is a pure class method with no host
+				dependency.
+*/
 @implementation FxGripTimecode
 
+/*! @abstract The exact frame duration of a standard rate; an unknown rate returns 30 fps. */
 + (CMTime)frameDurationForRate:(FxGripFrameRate)rate
 {
 	switch (rate) {
@@ -47,12 +62,14 @@ static int64_t FxGripTimecodeNominalRate(CMTime frameDuration)
 	return CMTimeMake(1000, 30000);
 }
 
+/*! @abstract The display names of every FxGripFrameRate, in enum order. */
 + (NSArray<NSString *> *)frameRateMenuEntries
 {
 	return @[ @"23.98", @"24", @"25", @"29.97", @"30", @"50",
 			  @"59.94", @"60", @"90", @"100", @"119.88", @"120" ];
 }
 
+/*! @abstract YES for 29.97, 59.94, and 119.88. */
 + (BOOL)rateSupportsDropFrame:(FxGripFrameRate)rate
 {
 	return rate == FxGripFrameRate_29_97
@@ -60,6 +77,7 @@ static int64_t FxGripTimecodeNominalRate(CMTime frameDuration)
 		|| rate == FxGripFrameRate_119_88;
 }
 
+/*! @abstract YES when the frame duration is a fractional rate whose nominal rate is 30, 60, or 120. */
 + (BOOL)frameDurationSupportsDropFrame:(CMTime)frameDuration
 {
 	if (!FxGripTimecodeDurationIsUsable(frameDuration)) {
@@ -74,6 +92,11 @@ static int64_t FxGripTimecodeNominalRate(CMTime frameDuration)
 		!= nominal * kFxGripTimecodeSecondsPerMinute;
 }
 
+/*!
+	@method		frameIndexForTime:frameDuration:
+	@abstract	The zero-based frame that contains time, at the given frame duration.
+	@return		The frame index; 0 when either time is invalid or the frame duration is not
+				positive; a negative index for a negative time. */
 + (int64_t)frameIndexForTime:(CMTime)time frameDuration:(CMTime)frameDuration
 {
 	if (!CMTIME_IS_NUMERIC(time) || !FxGripTimecodeDurationIsUsable(frameDuration)) {
@@ -89,6 +112,13 @@ static int64_t FxGripTimecodeNominalRate(CMTime frameDuration)
 	return (int64_t)quotient;
 }
 
+/*!
+	@method		componentsForTime:frameDuration:dropFrame:
+	@abstract	Splits time into hours, minutes, seconds, and frames.
+	@param		dropFrame	YES to count in drop-frame mode; ignored for rates that do not
+				support it.
+	@discussion	Introduced in FxGrip 0.1.0. Hours wrap at 24 and negative times are clamped to
+				zero. Drop-frame mode adds the skipped frame numbers before the split. */
 + (FxGripTimecodeComponents)componentsForTime:(CMTime)time
 								frameDuration:(CMTime)frameDuration
 									dropFrame:(BOOL)dropFrame
@@ -126,6 +156,12 @@ static int64_t FxGripTimecodeNominalRate(CMTime frameDuration)
 	return result;
 }
 
+/*!
+	@method		stringForComponents:
+	@abstract	Formats components as hh:mm:ss:ff.
+	@discussion	Introduced in FxGrip 0.1.0. Drop-frame mode separates the frames field with a
+				semicolon. Rates of 100 fps and above use three frame digits. Invalid components
+				format as --:--:--:--. */
 + (NSString *)stringForComponents:(FxGripTimecodeComponents)components
 {
 	if (!components.valid) {
@@ -138,6 +174,7 @@ static int64_t FxGripTimecodeNominalRate(CMTime frameDuration)
 			components.hours, components.minutes, components.seconds, components.frames];
 }
 
+/*! @abstract componentsForTime:frameDuration:dropFrame: followed by stringForComponents:. */
 + (NSString *)stringForTime:(CMTime)time
 			  frameDuration:(CMTime)frameDuration
 				  dropFrame:(BOOL)dropFrame

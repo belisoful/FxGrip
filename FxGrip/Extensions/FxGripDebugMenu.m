@@ -1,9 +1,15 @@
-//
-//  FxGripDebugMenu.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripDebugMenu.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDebugMenu
+	@abstract   Implements the debug menu extension and its debug-mode flag transforms.
+	@discussion Introduced in FxGrip 0.1.0. A single layout pass pairs each displayed row with its
+	            command, and dispatch resolves the host's selection index against that layout. The
+	            flags handlers move a parameter's HIDDEN bit to and from a hidden-proxy bit while
+	            in debug mode, so hidden parameters stay visible without losing their saved state.
+*/
 
 #import "FxGripDebugMenu.h"
 #import "FxGripTileableEffect.h"
@@ -35,6 +41,11 @@ static NSString *const FxGripDebugLayoutCommandKey = @"command";
 NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 
 
+/*!
+	@abstract	The extension that presents the effect's debug menu and activator.
+	@discussion	Introduced in FxGrip 0.1.0. The extension registers the debug parameters, transforms
+				the debug-mode flags, and dispatches the menu commands.
+*/
 @implementation FxGripDebugMenu
 
 -(NSString*) extKey
@@ -70,12 +81,12 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 	return self.effect.effectBase.pluginDebugActivatorEnabled;
 }
 
-/*
- *
- *
- *
- *
- */
+/*!
+	@method		extAddParameters:
+	@abstract	Registers the debug menu parameter and, when enabled, the debug activator toggle.
+	@discussion	Introduced in FxGrip 0.1.0. Runs only when a debug channel is permitted. The activator
+				toggle carries target presets that flip the menu's hidden flag, and the menu is
+				hidden while the activator is present. */
 - (void)extAddParameters:(nonnull NSNotification*)notification
 {
 	if (!self.hasDebugMenu) {
@@ -115,6 +126,11 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 
 
 
+/*!
+	@method		extAPIParameterGetFlags:
+	@abstract	Restores a parameter's true HIDDEN state on a flags read while in debug mode.
+	@discussion	Introduced in FxGrip 0.1.0. Clears HIDDEN, then transfers a set HIDDEN_PROXY bit back
+				to HIDDEN, so a read reports the parameter's saved visibility. */
 // In debug mode, hidden parameters remain shown but the hidden bit is transferred from hidden proxy
 // In debug mode, transfer hidden proxy to hidden.
 - (void)extAPIParameterGetFlags:(nonnull NSNotification*)notification
@@ -134,6 +150,11 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 	parameter[kFxParameterProperty_Flags] = @(f);
 }
 
+/*!
+	@method		extAPIParameterSetFlagsPre:
+	@abstract	Parks a parameter's HIDDEN state in a proxy bit on a flags write while in debug mode.
+	@discussion	Introduced in FxGrip 0.1.0. Clears HIDDEN_PROXY, then transfers a set HIDDEN bit into
+				HIDDEN_PROXY, so a save records the true visibility while the parameter stays shown. */
 // In debug mode, hidden parameters remain shown but the bit is retained as hidden proxy
 // In debug mode, transfer hidden to hidden proxy.
 - (void)extAPIParameterSetFlagsPre:(nonnull NSNotification*)notification
@@ -161,6 +182,12 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 
 
 
+/*!
+	@method		debugUnhide:
+	@abstract	Sets or clears the debug-mode bit on every eligible parameter and rebuilds the menu.
+	@param		active	YES enters debug mode; NO leaves it.
+	@return		YES on success; NO when a flags read or write fails.
+	@discussion	Introduced in FxGrip 0.1.0. Parameters carrying NO_DEBUG are skipped. */
 - (BOOL)debugUnhide:(BOOL)active
 {
 	id<FxDynamicParameterAPI_v3> dynamicAPIv3 = self.effect.apiManager.dynamicParamAPIv3;
@@ -208,6 +235,10 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 }
 
 
+/*!
+	@method		extParameterChanged:
+	@abstract	Reveals or hides the debug menu when the activator toggle changes.
+	@discussion	Introduced in FxGrip 0.1.0. Returns unless the changed parameter is the activator. */
 // The activator reveals the menu here, not through the activator's target preset. The target
 // preset is applied by FxGripMeta, which a plugin may not load, so a rigged activator would
 // otherwise do nothing. This handler runs for every value change independent of manageMeta.
@@ -248,6 +279,15 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 }
 
 
+/*!
+	@method		manageDebuggerController:atTime:error:
+	@abstract	Dispatches the selected debug menu command.
+	@param		paramID	The debug menu parameter.
+	@param		time	The time at which the selection value is read.
+	@param		error	Out error for a failed value read or parameter removal.
+	@return		YES when the command is handled; NO when an underlying API call fails.
+	@discussion	Introduced in FxGrip 0.1.0. Commands toggle unhide mode, the activator's visibility
+				and value, all debug controls, and the removal of the debug parameters. */
 - (BOOL)manageDebuggerController:(FxParameterId)paramID
 						  atTime:(CMTime)time
 						   error:(NSError * _Nullable * _Nullable)error
@@ -330,6 +370,11 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 }
 
 
+/*!
+	@method		debugMenuLayout:
+	@abstract	Builds the ordered rows of the debug menu, each a label paired with its command.
+	@param		unhide	YES selects the "unhide on" label for the unhide row; NO selects "unhide off".
+	@return		The layout rows. Separators carry FxGripDebugCommand_None. */
 // The single source for the menu: each row's label paired with the command it invokes.
 // debugMenuItems: renders the labels the host displays; commandForSelection: maps the host's
 // selection index back through the same rows. Separators carry FxGripDebugCommand_None.
@@ -380,6 +425,11 @@ NSString*	const _Nonnull FxGripDebugMenuExtensionKey = @"FxGripDebugMenu";
 
 
 
+/*!
+	@abstract	The effect-side gate and accessors for the debug menu extension.
+	@discussion	Introduced in FxGrip 0.1.0. allowsDebugFeatures is the master gate; the plugin
+				properties enable the menu and activator channels within it.
+*/
 @implementation FxGripTileableEffect (DebugMenu)
 
 - (FxGripDebugMenu *)debugMenu

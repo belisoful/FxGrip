@@ -1,7 +1,14 @@
-//
-//  FxGripSpaceBackend.h
-//  FxGrip
-//
+/*!
+	@file       FxGripSpaceBackend.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSpaceBackend
+	@abstract   The render-engine seam for the 3D Space subsystem.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the protocol a render engine adopts to draw
+	            a SceneKit scene into an FxPlug tile's Metal texture. The seam keeps the engine swappable
+	            and mockable in tests.
+*/
 
 #ifndef FxGripSpaceBackend_h
 #define FxGripSpaceBackend_h
@@ -15,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@protocol   FxGripSpaceBackend
 	@abstract   Renders a SceneKit scene into a Metal texture for the 3D Space subsystem.
-	@discussion Introduced in FxGrip 1.0. The subsystem builds the scene with SceneKit and hands it,
+	@discussion Introduced in FxGrip 0.1.0. The subsystem builds the scene with SceneKit and hands it,
 				with a point-of-view node, to a backend that draws it into the destination tile's
 				`MTLTexture`. The seam exists to keep the render engine swappable and mockable in
 				tests; the shipped implementation is `FxGripSceneKitMetalBackend`. Drawing the scene

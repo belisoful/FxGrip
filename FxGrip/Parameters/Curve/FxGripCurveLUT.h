@@ -1,7 +1,16 @@
-//
-//  FxGripCurveLUT.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveLUT.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveLUT
+	@abstract   The C functions that fill a 1-D lookup table from curve control points.
+	@discussion Introduced in FxGrip 0.1.0. The builders are a CPU port of Metal Forge's curve LUT
+	            math, kept numerically identical so an editor preview and a keyframe blend match the
+	            render. FxGripBuildCurveLUT evaluates a monotone cubic spline over a clamped domain.
+	            FxGripBuildCurveLUTPeriodic evaluates the same spline over a circular domain whose
+	            endpoints wrap. Each point is an {x, y} float pair whose layout matches simd_float2.
+*/
 
 #ifndef FxGripCurveLUT_h
 #define FxGripCurveLUT_h
@@ -16,7 +25,7 @@ extern "C" {
 	@function   FxGripBuildCurveLUT
 	@abstract   Fills a 1-D LUT from curve control points using monotone cubic
 				interpolation.
-	@discussion Introduced in FxGrip 1.0. A CPU port of Metal Forge's MTFBuildCurveLUT,
+	@discussion Introduced in FxGrip 0.1.0. A CPU port of Metal Forge's MTFBuildCurveLUT,
 				kept numerically identical so editor previews and keyframe blending
 				match the render. Control points are copied, sorted by x, and
 				deduplicated (first wins). Fritsch-Carlson PCHIP slopes give a monotone
@@ -37,7 +46,7 @@ void FxGripBuildCurveLUT(const float (*_Nullable points)[2], unsigned long count
 	@function   FxGripBuildCurveLUTPeriodic
 	@abstract   Fills a 1-D LUT using periodic monotone cubic interpolation, for a
 				selector whose domain wraps (hue: x = 0 and x = 1 are the same point).
-	@discussion Introduced in FxGrip 1.0. A CPU port of Metal Forge's
+	@discussion Introduced in FxGrip 0.1.0. A CPU port of Metal Forge's
 				MTFBuildCurveLUTPeriodic. The x domain is a circle of period 1: input x
 				folds into [0, 1), the control points form a closed loop, the interval
 				from the last point wraps across the seam back to the first, and every

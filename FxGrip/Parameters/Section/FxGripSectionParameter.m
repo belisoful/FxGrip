@@ -1,7 +1,15 @@
-//
-//  FxGripSectionParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripSectionParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSectionParameter
+	@abstract   Implements the section header view and its custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. The view builds the header font from the declared
+	            name, weight, and width, applies the letter-case transform to the title, and
+	            lays out a full-width label between the top and bottom margins. The parameter
+	            creates the value and falls back to the parameter name when no title is declared.
+*/
 
 #import "FxGripSectionParameter.h"
 #import "FxGripSection.h"
@@ -10,6 +18,11 @@
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The styled title header backing a section parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The read-only header spans the inspector width and
+				sizes its height to the label plus the two margins.
+*/
 @implementation FxGripSectionView
 {
 	NSTextField *_label;
@@ -103,6 +116,13 @@
 	}
 }
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Applies the section configuration to the header label.
+	@discussion	Introduced in FxGrip 0.1.0. The value is an FxGripSectionData or a plain
+				dictionary of the same shape. Weight and width arrive as trait values scaled by
+				1000. Opacity multiplies the resolved color's alpha, and dims the inherited label
+				color when no color is declared. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	FxGripSectionData *data = nil;
@@ -177,6 +197,11 @@
 @end
 
 
+/*!
+	@abstract	The custom parameter that hosts a styled section title header.
+	@discussion	Introduced in FxGrip 0.1.0. The value is an FxGripSectionData. Creation sets the
+				custom-UI, not-animatable, full-view-width, and no-state flags.
+*/
 @implementation FxGripSectionParameter
 
 + (nullable NSString*)parameterTypeString
@@ -194,6 +219,13 @@
 	return [NSSet setWithObject:FxGripSectionData.class];
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Adds the section header as a custom parameter to the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. A declared value without a title falls back to the
+				parameter name. Creation sets the custom-UI, not-animatable, full-view-width, and
+				no-state flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id declared = parameter.parameterDefaultValue;

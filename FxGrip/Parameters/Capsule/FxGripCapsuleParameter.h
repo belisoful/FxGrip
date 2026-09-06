@@ -1,7 +1,15 @@
-//
-//  FxGripCapsuleParameter.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCapsuleParameter.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCapsuleParameter
+	@abstract   The custom parameter that shows a read-only pill badge.
+	@discussion Introduced in FxGrip 0.1.0. FxGripCapsuleView is the pill-shaped badge, and
+	            FxGripCapsuleParameter is the parameter that hosts it. The value is an
+	            FxGripDictionary carrying the text, point size, fill color, text color, and
+	            corner radius. The badge sizes itself to the text plus padding.
+*/
 
 #ifndef FxGripCapsuleParameter_h
 #define FxGripCapsuleParameter_h
@@ -13,7 +21,7 @@
 /*!
 	@class      FxGripCapsuleView
 	@abstract   The pill-shaped badge backing a capsule parameter.
-	@discussion Introduced in FxGrip 1.0. A read-only badge: rounded-rectangle fill with a
+	@discussion Introduced in FxGrip 0.1.0. A read-only badge: rounded-rectangle fill with a
 				centered label. updateFromCustomData: reads an FxGripDictionary and applies
 				the text (string key), point size (float key), fill color (RGBA key), text
 				color, and corner radius. The badge sizes itself to the text plus padding.
@@ -25,7 +33,7 @@
 /*!
 	@class      FxGripCapsuleParameter
 	@abstract   A read-only pill badge shown as a parameter's control.
-	@discussion Introduced in FxGrip 1.0. The value is an FxGripDictionary carrying the text,
+	@discussion Introduced in FxGrip 0.1.0. The value is an FxGripDictionary carrying the text,
 				point size, fill color, text color, and corner radius keys from
 				FxGripCapsule.h. Creation adds the custom-UI, not-animatable, and no-state
 				flags; the row keeps the parameter name as its label.

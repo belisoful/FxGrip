@@ -1,7 +1,15 @@
-//
-//  FxGripWindow.m
-//  FxGrip
-//
+/*!
+	@file       FxGripWindow.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripWindow
+	@abstract   Implements the single host-window management extension.
+	@discussion Introduced in FxGrip 0.1.0. The extension requests the host window through the highest
+	            FxRemoteWindowAPI version available, falling back to an earlier version's behavior
+	            when a later one is not vended. The host reply arrives asynchronously; state changes
+	            and the completion run on the reply's thread.
+*/
 
 #import "FxGripWindow.h"
 #import "FxGripTileableEffect.h"
@@ -12,6 +20,11 @@
 
 NSString * const FxGripWindowExtensionKey = @"FxGripWindow";
 
+/*!
+	@abstract	The extension that manages the plug-in's one host window.
+	@discussion	Introduced in FxGrip 0.1.0. The extension owns the parent view, the content view, and
+				the presented state.
+*/
 @implementation FxGripWindow
 {
 	NSView *_windowParentView;
@@ -101,6 +114,7 @@ NSString * const FxGripWindowExtensionKey = @"FxGripWindow";
 										   @"the host does not vend FxRemoteWindowAPI" }];
 }
 
+/*! @abstract Requests a fixed-size host window through FxRemoteWindowAPI and installs the content on arrival. */
 - (void)presentWindowOfSize:(CGSize)contentSize
 				 completion:(void (^ _Nullable)(NSView * _Nullable, NSError * _Nullable))completion
 {
@@ -115,6 +129,7 @@ NSString * const FxGripWindowExtensionKey = @"FxGripWindow";
 	}];
 }
 
+/*! @abstract Requests a resizable host window through FxRemoteWindowAPI_v2, or falls back to a fixed size. */
 - (void)presentWindowWithMinimumSize:(CGSize)minContentSize
 						 maximumSize:(CGSize)maxContentSize
 						  completion:(void (^ _Nullable)(NSView * _Nullable, NSError * _Nullable))completion
@@ -131,6 +146,7 @@ NSString * const FxGripWindowExtensionKey = @"FxGripWindow";
 	}];
 }
 
+/*! @abstract Clears state and asks the host to close the window through FxRemoteWindowAPI_v3; returns whether the request was made. */
 - (BOOL)closeWindow
 {
 	id<FxRemoteWindowAPI_v3> api = self.effect.apiManager.remoteWindowAPIv3;
@@ -142,6 +158,7 @@ NSString * const FxGripWindowExtensionKey = @"FxGripWindow";
 	return YES;
 }
 
+/*! @abstract Removes the content view and clears the presented state after the user closes the window. */
 - (void)noteWindowClosed
 {
 	[_contentView removeFromSuperview];
@@ -153,6 +170,10 @@ NSString * const FxGripWindowExtensionKey = @"FxGripWindow";
 @end
 
 
+/*!
+	@abstract	The effect-side accessors for the window extension.
+	@discussion	Introduced in FxGrip 0.1.0. windowExtension resolves the loaded extension.
+*/
 @implementation FxGripTileableEffect (Window)
 
 - (nullable FxGripWindow *)windowExtension

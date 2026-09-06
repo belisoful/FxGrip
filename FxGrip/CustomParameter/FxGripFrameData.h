@@ -1,7 +1,15 @@
-//
-//  FxGripFrameData.h
-//  FxGrip
-//
+/*!
+	@file       FxGripFrameData.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripFrameData
+	@abstract   Per-frame custom parameter store with size-gated spill to the project media folder.
+	@discussion Introduced in FxGrip 0.1.0. The store keys records by frame index for feedback-style
+	            simulations where a frame derives from the previous one. A record whose archive exceeds
+	            a size threshold spills to a machine-local cache folder, leaving a small marker in the
+	            host document. The store does not interpolate.
+*/
 
 #ifndef FxGripFrameData_h
 #define FxGripFrameData_h
@@ -27,7 +35,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 /*!
 	@class      FxGripFrameData
 	@abstract   Per-frame custom data keyed by frame index.
-	@discussion Introduced in FxGrip 1.0. Records store under NSNumber frame-index keys;
+	@discussion Introduced in FxGrip 0.1.0. Records store under NSNumber frame-index keys;
 				the store is sparse, and `latestRecordAtOrBefore:` serves the
 				feedback-simulation seek: a frame whose maximum extent of influence is
 				the previous frame re-simulates forward from the nearest stored index.
@@ -65,7 +73,7 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 /*!
 	@method     attachProjectMediaCacheForEffect:
 	@abstract   Points the spill gate at the effect's project media folder.
-	@discussion Introduced in FxGrip 1.0. The media folder exists only for a saved
+	@discussion Introduced in FxGrip 0.1.0. The media folder exists only for a saved
 				Motion project with Collect Media; without one the cache URL clears and
 				every record stays inline. Call again to re-resolve after the project
 				is saved. A sandboxed plug-in needs the security-scoped-bookmark

@@ -1,9 +1,15 @@
-//
-//  FxGripGoogleAnalytics.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripGoogleAnalytics.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripGoogleAnalytics
+	@abstract   Implements the telemetry extension that logs effect notifications to Google Analytics.
+	@discussion Introduced in FxGrip 0.1.0. The capture path sorts the rules by priority on first use
+	            after a change, evaluates each notification against them, and applies the idle latch
+	            before logging. Firebase is invoked by name so the framework carries no link-time
+	            dependency on it.
+*/
 
 #import "FxGripGoogleAnalytics.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
@@ -16,15 +22,6 @@
 //@import FirebaseFirestore;
 //@import FirebaseAuth;
 
-/*!
-	@header		FxGripGoogleAnalytics
-	@abstract	Implements the telemetry extension that logs effect notifications to Google Analytics.
-	@discussion	Introduced in FxGrip 1.0. The capture path sorts the rules by priority on first use
-				after a change, evaluates each notification against them, and applies the idle latch
-				before logging. Firebase is invoked by name so the framework carries no link-time
-				dependency on it.
-*/
-
 @interface FxGripGoogleAnalytics ()
 {
 	// Cleared when a rule is added; the capture path re-sorts by priority only while set.
@@ -33,9 +30,8 @@
 @end
 
 /*!
-	@class		FxGripGoogleAnalytics
 	@abstract	The extension that captures effect notifications and logs them as Google Analytics events.
-	@discussion	Introduced in FxGrip 1.0. Rules are sorted by priority on demand, evaluated deny-by-default,
+	@discussion	Introduced in FxGrip 0.1.0. Rules are sorted by priority on demand, evaluated deny-by-default,
 				and the accepted events pass through the idle latch before Firebase logs them.
 */
 @implementation FxGripGoogleAnalytics
@@ -71,7 +67,7 @@
 /*!
 	@method		addCaptureEvent:priority:
 	@abstract	Adds a name-matching capture rule, reading the accept or deny outcome from the name.
-	@discussion	Introduced in FxGrip 1.0. A leading "-" denies and a leading "+" accepts; the prefix
+	@discussion	Introduced in FxGrip 0.1.0. A leading "-" denies and a leading "+" accepts; the prefix
 				is stripped before the name becomes the match pattern. A bare name accepts. */
 - (NSPredicate*)addCaptureEvent:(nonnull NSNotificationName)name priority:(NSInteger)priority
 {
@@ -154,7 +150,7 @@
 /*!
 	@method		extInit:
 	@abstract	Installs the default capture rules and attaches the extension to the effect's notifier.
-	@discussion	Introduced in FxGrip 1.0. Firebase is configured by name when the FIRApp class is present. */
+	@discussion	Introduced in FxGrip 0.1.0. Firebase is configured by name when the FIRApp class is present. */
 // The dispatch table wires the init notification to extInit: (with the NSNotification
 // argument); a zero-argument extInit is never invoked.
 - (void)extInit:(nonnull NSNotification *)notification
@@ -181,7 +177,7 @@
 /*!
 	@method		captureEvent:
 	@abstract	Evaluates a posted notification against the capture rules and logs it when accepted.
-	@discussion	Introduced in FxGrip 1.0. The rules sort by priority on first use after a change.
+	@discussion	Introduced in FxGrip 0.1.0. The rules sort by priority on first use after a change.
 				The first matching rule decides the outcome, and the idle latch suppresses repeats
 				before the event reaches the logger. Runs on the thread the host posts on. */
 - (void)captureEvent:(NSNotification * _Nonnull)notification
@@ -239,6 +235,10 @@
 	return name;
 }
 
+/*!
+	@method		shouldLogEventForKey:
+	@abstract	Answers whether a key's event may log now, applying the idle latch.
+	@return		YES when the latch is disabled or the key has been idle for eventLatchInterval. */
 // Leading-edge idle latch: the first event for a key logs; further events with the same key are
 // suppressed until the key has been idle for eventLatchInterval. Each event refreshes the key's
 // timestamp, so a continuous interaction stays latched for its whole duration and reopens only
@@ -258,6 +258,11 @@
 }
  
 
+/*!
+	@method		logWithName:parameters:
+	@abstract	Logs one event to Firebase Analytics when a measurementID is set.
+	@discussion	Introduced in FxGrip 0.1.0. The FIRAnalytics class is resolved by name, so the call is
+				inert when Firebase is absent. */
 - (void)logWithName:(NSString*_Nonnull)eventName parameters:(NSDictionary*)parameters
 {
 	if (_measurementID) {
@@ -276,8 +281,14 @@
 
 
 
+/*!
+	@abstract	The effect-side accessors that resolve and install the Google Analytics extension.
+	@discussion	Introduced in FxGrip 0.1.0. gaIdentifier reads the plugin property, and the loader
+				installs the extension when isGoogleAnalyticsInstalled is YES.
+*/
 @implementation FxGripTileableEffect (GoogleAnalytics)
 
+/*! @abstract YES when gaIdentifier names a usable, non-disabled identifier. */
 - (BOOL)isGoogleAnalyticsInstalled
 {
 	NSString *identifier = self.gaIdentifier;
@@ -287,17 +298,20 @@
 	return YES;
 }
 
+/*! @abstract The Google Analytics identifier declared under the plugin's "googleanalytics" property. */
 - (nullable NSString*)gaIdentifier
 {
 	return self.pluginProperties[kProPlugPlugInX_GoogleAnalyticsProperty];;
 }
 
+/*! @abstract The installed Google Analytics extension, or nil when none is installed. */
 - (FxGripGoogleAnalytics*)googleAnalytics
 {
 	return [self extensionForClass:FxGripGoogleAnalytics.class];
 }
 
 
+/*! @abstract Creates the Google Analytics extension instance for the loader to install. */
 - (nonnull FxGripGoogleAnalytics*)newGoogleAnalyticsExtension
 {
 	return [FxGripGoogleAnalytics.alloc init];

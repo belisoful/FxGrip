@@ -1,9 +1,16 @@
-//
-//  MasterFXAPIManager.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripDynamicParameterAPI_v4.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDynamicParameterAPI_v4
+	@abstract   Implements the FxGrip dynamic-parameter additions over the v3 wrapper.
+	@discussion Introduced in FxGrip 0.1.0. The single-edge bounds setters read the current range
+	            and write it back with one edge changed. parameterType and parameter:entries:
+	            resolve their answer from the notification observers. parameterExists and
+	            allParameterIDs walk the parameter roster by index. The metadata methods forward to
+	            the host's meta manager and answer a not-found result when the host has none.
+*/
 
 #import "FxGripDynamicParameterAPI_v4.h"
 #import "FxGripPreset.h"
@@ -14,6 +21,11 @@
 #import "FxGripErrors.h"
 
 
+/*!
+	@abstract	FxGrip's dynamic-parameter additions over the v3 wrapper.
+	@discussion	Introduced in FxGrip 0.1.0. Adds single-edge bounds setters, parameter existence
+				and type queries, menu-entry retrieval, and metadata forwarding.
+*/
 @implementation FxGripDynamicParameterAPI_v4
 
 
@@ -244,6 +256,7 @@
 #pragma mark -
 #pragma mark Parameter Type
 
+/*! @abstract Returns YES when a parameter with the given ID is in the roster. */
 - (BOOL)parameterExists:(FxParameterId)parameterID
 {
 	UInt32 count = [self parameterCount];
@@ -258,6 +271,7 @@
 	return NO;
 }
 
+/*! @abstract Returns a parameter's type, resolved from the notification observers. */
 - (FxParameterType)parameterType:(FxParameterId)parameterID
 {
 	NSMutableDictionary *userInfo = @{
@@ -272,6 +286,7 @@
 }
 
 
+/*! @abstract Fills entries with a menu parameter's items, gathered from the notification observers. */
 // Gets the menu entries
 - (NSError*)parameter:(FxParameterId)parameterID entries:(NSArray<NSString*>**_Nonnull)entries
 {
@@ -289,6 +304,7 @@
 }
 
 
+/*! @abstract Returns every parameter ID in the roster, in index order. */
 - (NSArray<NSNumber*>*)allParameterIDs
 {
 	UInt32			count = [self parameterCount];

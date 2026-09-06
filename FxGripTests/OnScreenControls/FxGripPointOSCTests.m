@@ -1,16 +1,12 @@
-//
-//  FxGripPointOSCTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPointOSC and its parts: the composite's part inclusion, the handle's
-//  plain and pinned hit geometry, the drag pipeline (mouse-speed, axis and distance
-//  constraints, range clamp), the thick divider as a control, the hover-gated name label,
-//  and the point parameter's option parse.
-//
-//  Follows the FxGripOnScreenControlTests convention: a local control subclass returns a stub
-//  API manager whose OSC API maps canvas to object space by a uniform scale of 100 with 200 x
-//  100 input bounds. GPU drawing is not exercised.
-//
+/*!
+	@file       FxGripPointOSCTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPointOSCTests
+	@abstract   Verifies the FxGripPointOSC composite control, its parts, and the point parameter option parse.
+	@discussion Introduced in FxGrip 0.1.0. A stub OSC API maps canvas to object space by a uniform scale of 100 over 200 x 100 input bounds, and a stub setting API records every parameter write. The tests cover part composition from options, plain and pinned handle hit geometry, the drag pipeline with mouse-speed, axis, distance, and range constraints, the thick divider acting as a control, the hover-gated name label, and the point parameter parsing its options.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
@@ -222,6 +218,7 @@ static CMTime FxGripPointOSCTestTime(void)
 
 #pragma mark Composition
 
+/*! @abstract A plain point composes a single rich handle part with part ID one. */
 - (void)testAPlainPointComposesOnlyTheHandle
 {
 	NSArray *parts = [self addPointWith:nil name:@"Center"];
@@ -232,6 +229,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertEqual([parts[0] partID], (NSInteger)1);
 }
 
+/*! @abstract The display-name option appends a label part carrying the name and bound to the handle and anchor. */
 - (void)testDisplayNameAppendsALabelBoundToTheHandle
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_DisplayName: @YES} name:@"Center"];
@@ -244,6 +242,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertEqual(label.anchorParameterID, kPointOSCParameter);
 }
 
+/*! @abstract The display-name option adds no label when the point has no name. */
 - (void)testDisplayNameWithoutANameAddsNoLabel
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_DisplayName: @YES} name:nil];
@@ -251,6 +250,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertEqual(parts.count, (NSUInteger)1);
 }
 
+/*! @abstract An axis constraint with a thin divider inserts a non-draggable divider before the handle. */
 - (void)testAnAxisConstraintWithAThinDividerAddsTheDividerBeforeTheHandle
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_Constraint: @(FxGripPointConstraintHorizontal),
@@ -265,6 +265,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertFalse([parts[1] isKindOfClass:FxGripOSCPointDividerPart.class]);
 }
 
+/*! @abstract A thick divider replaces the handle with a single draggable divider part. */
 - (void)testAThickDividerReplacesTheHandle
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_Constraint: @(FxGripPointConstraintVertical),
@@ -277,6 +278,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertTrue(divider.draggable);
 }
 
+/*! @abstract A divider option without an axis constraint adds no divider. */
 - (void)testADividerNeedsAnAxisConstraint
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_Divider: @(FxGripPointDividerThickWithoutControl)} name:nil];
@@ -285,6 +287,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertFalse([parts[0] isKindOfClass:FxGripOSCPointDividerPart.class]);
 }
 
+/*! @abstract A background-image option adds a background part ordered before the handle. */
 - (void)testABackgroundImageComesFirst
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_BackgroundImage: @"NSApplicationIcon"} name:nil];
@@ -294,6 +297,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertTrue([parts[1] isKindOfClass:FxGripOSCRichPointHandlePart.class]);
 }
 
+/*! @abstract Adding further point parameters numbers their parts after the existing ones. */
 - (void)testAddPointParameterNumbersPartsAfterTheExistingOnes
 {
 	[self addPointWith:nil name:nil];
@@ -306,6 +310,7 @@ static CMTime FxGripPointOSCTestTime(void)
 
 #pragma mark Hit geometry
 
+/*! @abstract The handle hits within its canvas radius of the parameter position and misses beyond it. */
 - (void)testTheHandleHitsAtTheParameterPosition
 {
 	[self addPointWith:nil name:nil];
@@ -315,6 +320,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:60 y:40], (NSInteger)0);
 }
 
+/*! @abstract A pinned handle hits at the pin offset from the anchor, not at the anchor itself. */
 - (void)testAPinnedHandleHitsAtThePinOffset
 {
 	[self addPointWith:@{kFxGripPointKey_PinDistance: @20.0, kFxGripPointKey_PinAngle: @0.0} name:nil];
@@ -323,6 +329,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:40 y:40], (NSInteger)0, @"the anchor itself is not the handle");
 }
 
+/*! @abstract A ninety-degree pin angle places the handle above the anchor in canvas space. */
 - (void)testAPositivePinAngleLiftsThePinOnScreen
 {
 	[self addPointWith:@{kFxGripPointKey_PinDistance: @20.0, kFxGripPointKey_PinAngle: @90.0} name:nil];
@@ -331,6 +338,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:40 y:20], (NSInteger)0);
 }
 
+/*! @abstract The effective handle radius is half the configured control size, and defaults to the handle radius. */
 - (void)testTheEffectiveHandleRadiusFollowsControlSize
 {
 	FxGripOSCRichPointHandlePart *sized = (FxGripOSCRichPointHandlePart *)[self addPointWith:@{kFxGripPointKey_ControlSize: @14.0} name:nil][0];
@@ -342,6 +350,7 @@ static CMTime FxGripPointOSCTestTime(void)
 
 #pragma mark Drag pipeline
 
+/*! @abstract A drag moves the point by the pointer travel and clamps it to the configured range maximum. */
 - (void)testADragMovesByThePointerTravelWithinTheRange
 {
 	[self addPointWith:@{kFxGripPointKey_RangeMaxX: @0.5} name:nil];
@@ -354,6 +363,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.5 y:0.4];
 }
 
+/*! @abstract A drag begun off the handle center moves the point by the travel and does not jump it to the pointer. */
 - (void)testADragStartedOffTheHandleCenterDoesNotJumpThePoint
 {
 	[self addPointWith:nil name:nil];
@@ -364,6 +374,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.5 y:0.4];
 }
 
+/*! @abstract A horizontal constraint moves the point in x and locks y. */
 - (void)testAHorizontalConstraintLocksY
 {
 	[self addPointWith:@{kFxGripPointKey_Constraint: @(FxGripPointConstraintHorizontal),
@@ -374,6 +385,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.6 y:0.4];
 }
 
+/*! @abstract A vertical constraint moves the point in y and locks x. */
 - (void)testAVerticalConstraintLocksX
 {
 	[self addPointWith:@{kFxGripPointKey_Constraint: @(FxGripPointConstraintVertical)} name:nil];
@@ -384,6 +396,7 @@ static CMTime FxGripPointOSCTestTime(void)
 }
 
 /*! The clamp is circular in input pixels: the 200 x 100 input makes 20 px 0.1 in x and 0.2 in y. */
+/*! @abstract A distance constraint clamps the point to the maximum radius measured in input pixels. */
 - (void)testADistanceConstraintClampsInInputPixels
 {
 	NSDictionary *config = @{kFxGripPointKey_Constraint: @(FxGripPointConstraintDistance),
@@ -400,6 +413,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.5 y:0.7];
 }
 
+/*! @abstract When configured, Shift locks a distance-constrained drag to the dominant axis, and the part reports it handles the constraint. */
 - (void)testShiftLocksADistanceDragToOneAxisWhenConfigured
 {
 	NSDictionary *config = @{kFxGripPointKey_Constraint: @(FxGripPointConstraintDistance),
@@ -415,6 +429,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.56 y:0.5];
 }
 
+/*! @abstract The mouse-speed option scales the pointer travel applied to the point. */
 - (void)testMouseSpeedScalesTheTravel
 {
 	[self addPointWith:@{kFxGripPointKey_MouseSpeed: @0.5} name:nil];
@@ -424,6 +439,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.5 y:0.4];
 }
 
+/*! @abstract A Shift-gated mouse speed applies the scale only while Shift is held. */
 - (void)testShiftGatedMouseSpeedAppliesOnlyWhileShiftIsHeld
 {
 	[self addPointWith:@{kFxGripPointKey_MouseSpeed: @0.5, kFxGripPointKey_MouseSpeedShiftOnly: @YES} name:nil];
@@ -438,6 +454,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.7 y:0.4];
 }
 
+/*! @abstract A plain handle does not claim the Shift constraint, leaving it to the control. */
 - (void)testAPlainHandleLeavesShiftToTheControl
 {
 	[self addPointWith:nil name:nil];
@@ -447,6 +464,7 @@ static CMTime FxGripPointOSCTestTime(void)
 
 #pragma mark Divider as a control
 
+/*! @abstract A thick divider hits anywhere along its line and drags the free axis of the constraint. */
 - (void)testAThickDividerHitsAlongItsLineAndDragsTheFreeAxis
 {
 	[self addPointWith:@{kFxGripPointKey_Constraint: @(FxGripPointConstraintHorizontal),
@@ -460,6 +478,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	[self assertLastWriteX:0.55 y:0.4];
 }
 
+/*! @abstract A thin divider answers no hit along its line, and the handle stays the control. */
 - (void)testAThinDividerAnswersNoHit
 {
 	[self addPointWith:@{kFxGripPointKey_Constraint: @(FxGripPointConstraintHorizontal),
@@ -479,6 +498,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertEqual(forceUpdate, expected);
 }
 
+/*! @abstract Hovering the handle shows the name label and moving away hides it, forcing a redraw only on a change. */
 - (void)testHoverShowsAndHidesTheNameLabel
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_DisplayName: @YES} name:@"Center"];
@@ -498,6 +518,7 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertFalse(forceUpdate, @"leaving while already hidden changes nothing");
 }
 
+/*! @abstract A label with hover gating disabled stays visible and forces no redraw on hover. */
 - (void)testALabelWithoutHoverGatingIsAlwaysVisible
 {
 	NSArray *parts = [self addPointWith:@{kFxGripPointKey_DisplayName: @YES, kFxGripPointKey_NameOnlyWhenAbove: @NO}
@@ -511,6 +532,7 @@ static CMTime FxGripPointOSCTestTime(void)
 
 #pragma mark Point parameter
 
+/*! @abstract The point parameter parses its configuration into options, including the constraint and pin display. */
 - (void)testThePointParameterParsesItsOptions
 {
 	FxGripParamClassTestEffect *effect = [FxGripParamClassTestEffect.alloc init];

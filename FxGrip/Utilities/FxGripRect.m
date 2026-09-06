@@ -1,7 +1,15 @@
-//
-//  FxGripRect.m
-//  FxGrip
-//
+/*!
+	@file       FxGripRect.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripRect
+	@abstract   Implements the FxRect rectangle algebra in the pixel-bounds convention.
+	@discussion Introduced in FxGrip 0.1.0. The functions treat FxRect as `{ left, bottom, right, top }`
+	            in a y-up pixel space and a rectangle as empty when its width or height is not positive.
+	            Intersection and the empty result use the canonical empty rectangle `{ 0, 0, 0, 0 }`, and
+	            union treats an empty operand as absent.
+*/
 
 #import "FxGripRect.h"
 

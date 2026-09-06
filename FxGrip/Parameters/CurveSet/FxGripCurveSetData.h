@@ -1,7 +1,14 @@
-//
-//  FxGripCurveSetData.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveSetData.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveSetData
+	@abstract   The custom value that holds a filter's full set of curves.
+	@discussion Introduced in FxGrip 0.1.0. The value maps each channel name to an
+	            FxGripCurveData. An absent key stands for the mapping's neutral curve, so only
+	            edited curves are stored. Keyframing blends two sets curve-aware.
+*/
 
 #ifndef FxGripCurveSetData_h
 #define FxGripCurveSetData_h
@@ -12,7 +19,7 @@
 /*!
 	@class      FxGripCurveSetData
 	@abstract   A filter's full curve set, keyed by mapping name.
-	@discussion Introduced in FxGrip 1.0. Keys are the filter family's channel names
+	@discussion Introduced in FxGrip 0.1.0. Keys are the filter family's channel names
 				(`luma`, `red`, `hueVsHue`, `satVsLuma`, `alphaVsAlpha`, ...); values
 				are FxGripCurveData. An absent key means the mapping's neutral curve,
 				so only edited curves are stored and documents stay small.

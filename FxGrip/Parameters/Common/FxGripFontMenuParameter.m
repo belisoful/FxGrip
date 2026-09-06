@@ -1,10 +1,12 @@
-//
-//  FxGripFontMenuParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripFontMenuParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripFontMenuParameter
+	@abstract   Implements the parameter model for a host font menu.
+	@discussion Introduced in FxGrip 0.1.0. The class registers a font menu through the parameter-creation API and reads the selected font name at a render time. The host's parameter-policy observers resolve the declared font before registration.
+*/
 
 #import "FxGripFontMenuParameter.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -29,6 +31,10 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	return config;
 }
 
+/*!
+	@abstract	The parameter model for a host font menu.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers a font menu and reads the selected font name at a render time.
+*/
 @implementation FxGripFontMenuParameter
 
 + (nullable NSString*)parameterTypeString
@@ -41,6 +47,13 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	return FxParameterType_FontMenu;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Registers the font menu with the effect's host.
+	@param		parameter	The parameter configuration dictionary.
+	@param		effect		The host that receives the parameter.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The default font name falls back to kFxParameterType_FontNameDefault when the declaration sets none. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The host's policy observers resolve the font (the effect base fills its default font).
@@ -55,6 +68,12 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 													parameterFlags: parameter.parameterFlags];
 }
 
+/*!
+	@method		valueAtTime:
+	@abstract	Reads the selected font name at a render time.
+	@param		renderTime	The time to sample the parameter at.
+	@return		The font name, or nil when FxParameterRetrievalAPI_v6 is unavailable.
+	@discussion	Introduced in FxGrip 0.1.0. A retrieval failure sets the parameter's error. */
 -(NSString*_Nullable) valueAtTime:(CMTime)renderTime
 {
 	NSString* fontNameValue = nil;

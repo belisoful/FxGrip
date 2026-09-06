@@ -1,10 +1,16 @@
-//
-//  FxGripFxFactory.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
-
+/*!
+	@file       FxGripFxFactory.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripFxFactory
+	@abstract   Implements the FxFactory licensing, watermarking, and update integration.
+	@discussion Introduced in FxGrip 0.1.0. Every FxFactory SDK entry point is reached through an
+	            overridable seam, so the licensing decision is testable with a mock. The license
+	            status is cached and updated from the FxFactory callback on its own thread, so the
+	            cache access is synchronized. The unlicensed watermark is rendered onto the
+	            destination image tile when the product is unlicensed and watermarking is enabled.
+*/
 
 /*
  @todo
@@ -43,15 +49,21 @@
 #import "FxGrip_ARC.h"
 
 /*!
- 
+
  This automatically clears the plugin cache by changing the parameter to indicate licensing within Motion.
- 
+
  @todo combine buy product and version (version has icon for up-to-date, )
- 
+
  */
 #pragma mark -
 #pragma mark FxFactory Extension methods
 
+/*!
+	@abstract	The extension that drives a plugin's FxFactory licensing, watermarking, and updates.
+	@discussion	Introduced in FxGrip 0.1.0. The extension resolves each setting from the settings
+				object, the parameter, or the plugin property, registers a licensing status handler,
+				and watermarks unlicensed frames.
+*/
 @implementation FxGripFxFactory
 {
 	// stored to remove it on unload.
@@ -183,6 +195,12 @@
 }
 
 
+/*!
+	@method		registerLicenseHandler:
+	@abstract	Registers the FxFactory licensing status change handler for a product UUID.
+	@discussion	Introduced in FxGrip 0.1.0. Any prior handler is unregistered first. The handler
+				reaches the extension through the registered context, never a captured self, so the
+				extension can deallocate and unregister. */
 - (void)registerLicenseHandler:(NSString *)productUUID
 {
 	[self unregisterLicenseHandler];
@@ -234,6 +252,13 @@
 }
 
 
+/*!
+	@method		showProductUpdates:handler:
+	@abstract	Checks for product updates and reports the response.
+	@param		forceCheck	YES forces the check regardless of the postpone interval.
+	@param		handler		An optional block that receives the product info response.
+	@discussion	Introduced in FxGrip 0.1.0. On a response the effect's onFxFactoryShowProductUpdates:
+				hook runs, the handler runs, and the product update notification is posted. */
 - (void)showProductUpdates:(BOOL)forceCheck handler:(void (^)(NSDictionary * _Nonnull response))handler
 {
 	void (^ _Nullable _handler) (NSDictionary * _Nonnull response) =
@@ -256,6 +281,14 @@
 #pragma mark -
 #pragma mark FxFactory Extension methods
 
+/*!
+	@method		extAddParameters:
+	@abstract	Configures the licensing toggle and adds the FxFactory parameters the plugin omits.
+	@discussion	Introduced in FxGrip 0.1.0. The method finds or creates the fxfactory parameter, sets
+				it to a hidden non-animatable toggle, resolves each setting from the settings object,
+				parameter, or plugin property, and appends the product UUID, version, watermark, buy,
+				product, and update-checking parameters that are not hard-coded. It returns early
+				when the integration is deactivated. */
 - (void)extAddParameters:(nonnull NSNotification*)notification
 {
 	NSMutableArray<NSMutableDictionary *> *parameters = notification.userInfo.fxEffectParameters;
@@ -515,6 +548,12 @@
 }
 
 
+/*!
+	@method		extLoadWithEffect:
+	@abstract	Binds the extension and runs the regression check when FxFactory is installed.
+	@return		YES.
+	@discussion	Introduced in FxGrip 0.1.0. When FxFactory is absent the extension loads but stays
+				disconnected. The regression check runs only when the regression extension is loaded. */
 - (BOOL)extLoadWithEffect:(id<FxGripTileableEffect> _Nonnull)effect
 {
 	[super extLoadWithEffect:effect];
@@ -534,6 +573,12 @@
 }
 
 
+/*!
+	@method		extAddedToDocument:
+	@abstract	Runs the update check, installs the licensing handler, and syncs the license state.
+	@discussion	Introduced in FxGrip 0.1.0. Returns early when the integration is inactive. In a DEBUG
+				build an explicit debug-licensed property forces the state and seeds the cached
+				status; otherwise the licensing toggle and UI sync to the real FxFactory status. */
 - (void)extAddedToDocument:(nonnull NSNotification*)notification
 {
 	// The extension base does not implement extAddedToDocument:; the notification handlers
@@ -576,6 +621,13 @@
 #endif
 }
 
+/*!
+	@method		extParameterChanged:
+	@abstract	Reacts to changes on the FxFactory parameters.
+	@discussion	Introduced in FxGrip 0.1.0. A change to the licensing toggle is reverted to the true
+				license status. Toggling the active parameter registers or unregisters the licensing
+				handler. Changing the product UUID clears the cached status and re-registers. A
+				button label change renames its button. Toggling update checking applies the state. */
 - (void)extParameterChanged:(nonnull NSNotification*)notification
 {
 	if (!self.fxFactoryActive) {
@@ -615,6 +667,11 @@
 	}
 }
 
+/*!
+	@method		extRenderDestinationImage:
+	@abstract	Renders the unlicensed watermark onto the destination image.
+	@discussion	Introduced in FxGrip 0.1.0. Returns unless watermarking is enabled and the product is
+				unlicensed. A failed render logs and leaves the frame unmarked. */
 - (void)extRenderDestinationImage:(nonnull NSNotification*)notification
 {
 	if (!self.fxFactoryWaterMarkUnlicensed || self.pluginIsLicensed) {
@@ -719,6 +776,11 @@
 	return self.pluginLicenseStatus == kFxFactoryLicensingStatusProductLicensed;
 }
 
+/*!
+	@method		pluginLicenseStatus
+	@abstract	The FxFactory licensing status of the plugin's product, cached after first read.
+	@discussion	Introduced in FxGrip 0.1.0. The read is synchronized against the licensing callback,
+				which writes the cache from its own thread. */
 - (FxFactoryLicensingStatus)pluginLicenseStatus
 {
 	// The FxFactory licensing callback writes the cached status from its own thread; guard the
@@ -928,6 +990,13 @@
 #pragma mark FxFactory Regression methods
 
 
+/*!
+	@method		fxFactoryRegression
+	@abstract	Validates the Info.plist entitlements FxFactory requires.
+	@return		YES when every required property is present and correct; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The check reports each problem and continues. It verifies
+				the app-sandbox and library-validation keys and the NSUpdateSecurityPolicy allowed
+				packages and processes. */
 - (BOOL)fxFactoryRegression
 {
 	BOOL success = YES;
@@ -1023,6 +1092,10 @@
 
 #pragma mark -
 
+/*!
+	@abstract	Typed accessors for an FxFactory product update response dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. Each accessor coerces one response key to its type.
+*/
 @implementation NSDictionary (FxFactoryProductUpdateResponse)
 
 - (BOOL) fxFactoryUpdateCheckingEnabled
@@ -1072,6 +1145,10 @@
 
 //  These can be used to access fxFactoryUpdateCheckingProductInfo as well
 
+/*!
+	@abstract	Typed accessors for an FxFactory product info dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. The accessors read the product info in an update response.
+*/
 @implementation NSDictionary (FxFactoryProductInfoResponse)
 
 - (nullable NSString *) fxFactoryProductName
@@ -1133,6 +1210,11 @@
 
 #pragma mark -
 
+/*!
+	@abstract	The effect-side hooks and accessors for the FxFactory extension.
+	@discussion	Introduced in FxGrip 0.1.0. The license and update hooks are empty defaults a subclass
+				overrides.
+*/
 @implementation FxGripTileableEffect (FxFactory)
 
 // Subclass this method to be informed when the user buys or refunds.

@@ -1,7 +1,12 @@
-//
-//  FxGripURLWhitelistTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripURLWhitelistTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripURLWhitelistTests
+	@abstract   Unit tests for FxGripURLWhitelist glob translation, allow-list policy, host matching, CRUD, and coding.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover glob-to-regex translation, the empty and allow-all policies, bare-domain suffix matching, full-URL globbing, pattern add/remove/set operations, the default video whitelist, and the secure-coding and copy semantics.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripURLWhitelist.h>
@@ -13,6 +18,7 @@
 
 #pragma mark Glob → regex
 
+/*! @abstract regexPatternForGlob: maps * to .*, ? to a single-character wildcard, escapes literal dots, and anchors the pattern. */
 - (void)testGlobTranslatesWildcardsAndEscapesLiterals
 {
 	XCTAssertEqualObjects([FxGripURLWhitelist regexPatternForGlob:@"*"], @"^.*$");
@@ -24,6 +30,7 @@
 
 #pragma mark Allow-list policy
 
+/*! @abstract An empty whitelist matches no URL and does not report allowing all URLs. */
 - (void)testAnEmptyWhitelistBlocksEveryURL
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc init];
@@ -31,6 +38,7 @@
 	XCTAssertFalse([whitelist allowsAllURLs]);
 }
 
+/*! @abstract The allow-all whitelist reports allowing all URLs and matches any URL. */
 - (void)testTheStarPatternAllowsEveryURL
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist allowAllWhitelist];
@@ -39,6 +47,7 @@
 	XCTAssertTrue([whitelist matchesURLString:@"http://10.0.0.1:8080/x"]);
 }
 
+/*! @abstract A nil URL or URL string is rejected even by the allow-all whitelist. */
 - (void)testANilURLIsNeverAllowedEvenUnderStar
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist allowAllWhitelist];
@@ -48,6 +57,7 @@
 
 #pragma mark Host-suffix matching
 
+/*! @abstract A bare domain pattern matches the domain and its subdomains. */
 - (void)testABareDomainCoversItsSubdomains
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"youtube.com"]];
@@ -56,6 +66,7 @@
 	XCTAssertTrue([whitelist matchesURLString:@"https://music.youtube.com/"]);
 }
 
+/*! @abstract A bare domain pattern rejects hosts that only contain the domain as a substring or a label. */
 - (void)testABareDomainDoesNotMatchALookAlikeHost
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"youtube.com"]];
@@ -64,6 +75,7 @@
 	XCTAssertFalse([whitelist matchesURLString:@"https://youtube.com.evil.example/"]);
 }
 
+/*! @abstract Host matching ignores case. */
 - (void)testCaseInsensitiveHostMatching
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"youtube.com"]];
@@ -72,6 +84,7 @@
 
 #pragma mark Full-URL glob matching
 
+/*! @abstract A full-URL glob constrains the scheme and path, rejecting a mismatched scheme or path. */
 - (void)testAFullURLGlobMatchesSchemeAndPath
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"https://*.vimeo.com/video/*"]];
@@ -80,6 +93,7 @@
 	XCTAssertFalse([whitelist matchesURLString:@"https://player.vimeo.com/user/12345"], @"the path is off the pattern");
 }
 
+/*! @abstract The ? wildcard matches exactly one character. */
 - (void)testTheSingleCharacterWildcardMatchesExactlyOneCharacter
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"site?.example"]];
@@ -89,6 +103,7 @@
 
 #pragma mark CRUD
 
+/*! @abstract addPattern: rejects duplicate, whitespace-only, and nil patterns. */
 - (void)testAddRejectsEmptyAndDuplicatePatterns
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc init];
@@ -99,6 +114,7 @@
 	XCTAssertEqualObjects(whitelist.patterns, (@[@"youtube.com"]));
 }
 
+/*! @abstract addPattern: trims surrounding whitespace before storing and comparing. */
 - (void)testAddTrimsSurroundingWhitespace
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc init];
@@ -107,6 +123,7 @@
 	XCTAssertFalse([whitelist addPattern:@"rumble.com"], @"the trimmed form already exists");
 }
 
+/*! @abstract removePattern: removes a present pattern and returns NO for an absent one, and containsPattern: reflects the change. */
 - (void)testRemoveAndContains
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"a.com", @"b.com"]];
@@ -117,6 +134,7 @@
 	XCTAssertEqualObjects(whitelist.patterns, (@[@"b.com"]));
 }
 
+/*! @abstract setPatterns: replaces the list in order, dropping empty and duplicate entries. */
 - (void)testBulkSetReplacesInOrderDroppingEmptiesAndDuplicates
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"old.com"]];
@@ -125,6 +143,7 @@
 	XCTAssertFalse([whitelist containsPattern:@"old.com"]);
 }
 
+/*! @abstract removeAllPatterns empties the list, so no URL matches afterward. */
 - (void)testRemoveAllEmptiesTheList
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist.alloc initWithPatterns:@[@"a.com", @"b.com"]];
@@ -135,6 +154,7 @@
 
 #pragma mark Default video whitelist
 
+/*! @abstract The default video whitelist matches its seeded domains and their subdomains and rejects other hosts. */
 - (void)testDefaultVideoWhitelistAllowsTheSeededDomainsAndSubdomains
 {
 	FxGripURLWhitelist *whitelist = [FxGripURLWhitelist defaultVideoWhitelist];
@@ -151,6 +171,7 @@
 
 #pragma mark Coding & copying
 
+/*! @abstract A secure-coding archive and unarchive preserves the patterns. */
 - (void)testSecureCodingRoundTripsThePatterns
 {
 	FxGripURLWhitelist *original = [FxGripURLWhitelist defaultVideoWhitelist];
@@ -162,6 +183,7 @@
 	XCTAssertEqualObjects(original, decoded);
 }
 
+/*! @abstract A copy equals the original and holds its own patterns, so mutating the copy leaves the original unchanged. */
 - (void)testCopyIsIndependent
 {
 	FxGripURLWhitelist *original = [FxGripURLWhitelist.alloc initWithPatterns:@[@"a.com"]];

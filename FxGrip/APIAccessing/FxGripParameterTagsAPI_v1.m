@@ -1,9 +1,16 @@
-//
-//  MasterFXAPIManager.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterTagsAPI_v1.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterTagsAPI_v1
+	@abstract   Implements the parameter tag storage and preset application.
+	@discussion Introduced in FxGrip 0.1.0. Tag storage forwards to the effect's meta manager,
+	            returning a no-meta error when the host carries none. Preset resolution reads the
+	            plugin plist presets table and the instance meta record. Preset application walks
+	            the value, flag, tag, meta, and name sections in a fixed order, filtered by the
+	            tag boundary that source and presetFlags select.
+*/
 
 #import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripTileableEffect.h"
@@ -16,6 +23,12 @@
 #import "FxGripParameterData.h"
 #import "FxGripParameterFlags.h"
 
+/*!
+	@abstract	FxGrip's implementation of the tag storage and preset resolution API.
+	@discussion	Introduced in FxGrip 0.1.0. Tag storage forwards to the meta manager; preset
+				resolution reads the plugin plist and instance record; preset application funnels
+				through applyPreset:atTime:options:presetFlags:source:tag:.
+*/
 @implementation FxGripParameterTagsAPI_v1
 
 #define hasMeta(returnValue) { if (!self.hostHasMeta) return (returnValue); }
@@ -44,30 +57,35 @@
 	return self;
 }
 
+/*! @abstract Every tag in use, or nil when no meta manager is present. */
 - (NSArray* _Nullable)tags
 {
 	hasMeta(nil);
 	return self.hostMeta.tags;
 }
 
+/*! @abstract The count of distinct tags in use, or 0 when no meta manager is present. */
 - (SInt32)tagCount
 {
 	hasMeta(0);
 	return [self.hostMeta tagCount];
 }
 
+/*! @abstract The count of tags on one parameter, or -1 when no meta manager is present. */
 - (SInt32)tagCount:(FxParameterId)parameterID
 {
 	hasMeta(-1);
 	return [self.hostMeta tagCount:parameterID];
 }
 
+/*! @abstract The tags on one parameter, or nil when no meta manager is present. */
 - (NSArray<NSString*>* _Nullable)parameterTags:(FxParameterId)parameterID
 {
 	hasMeta(nil);
 	return [self.hostMeta parameterTags:parameterID];
 }
 
+/*! @abstract Answers whether a parameter carries a tag; returns a no-meta error when the host carries no meta manager. */
 - (BOOL)parameter:(FxParameterId)parameterID hasTag:(NSString* _Nullable)tag error:(NSError* _Nullable * _Nullable)error
 {
 	if (!self.hostHasMeta) {
@@ -79,30 +97,35 @@
 	return [self.hostMeta parameter:parameterID hasTag:tag error:error];
 }
 
+/*! @abstract Replaces a parameter's tags; returns a no-meta error when the host carries no meta manager. */
 - (NSError* _Nullable)setTags:(NSArray<NSString*>*_Nonnull)tags toParameter:(FxParameterId)parameterID
 {
 	hasMeta(noMetaError(parameterID));
 	return [self.hostMeta setTags:tags toParameter:parameterID];
 }
 
+/*! @abstract Adds one tag to a parameter; returns a no-meta error when the host carries no meta manager. */
 - (NSError* _Nullable)addTag:(NSString*_Nullable)tag toParameter:(FxParameterId)parameterID
 {
 	hasMeta(noMetaError(parameterID));
 	return [self.hostMeta addTag:tag toParameter:parameterID];
 }
 
+/*! @abstract Removes one tag from a parameter; returns a no-meta error when the host carries no meta manager. */
 - (NSError* _Nullable)removeTag:(NSString*_Nullable)tag fromParameter:(FxParameterId)parameterID
 {
 	hasMeta(noMetaError(parameterID));
 	return [self.hostMeta removeTag:tag fromParameter:parameterID];
 }
 
+/*! @abstract Removes every tag from a parameter; returns a no-meta error when the host carries no meta manager. */
 - (NSError* _Nullable)removeAllTags:(FxParameterId)parameterID
 {
 	hasMeta(noMetaError(parameterID));
 	return [self.hostMeta removeAllTags:parameterID];
 }
 
+/*! @abstract The parameters that carry a tag, or nil when no meta manager is present. */
 - (NSArray* _Nullable)parametersWithTag:(NSString*_Nullable)tag
 {
 	hasMeta(nil);
@@ -112,6 +135,7 @@
 
 #pragma mark Presets
 
+/*! @abstract Resolves a tag to its preset definition in the plugin plist presets table. */
 - (id _Nullable)presetDefinitionForTag:(NSString *_Nonnull)tag
 {
 	if (!tag) {
@@ -120,6 +144,13 @@
 	return FxGripHostPluginProperties(self.effect).pluginPresets[tag];
 }
 
+/*!
+	@method		targetPresetForParameter:record:
+	@abstract	Resolves the target-preset definition driving one parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The instance meta record wins over the parameter's
+				configuration. A string definition resolves through presetDefinitionForTag:.
+	@return		The definition, or nil when no source carries one.
+*/
 - (id _Nullable)targetPresetForParameter:(FxParameterId)parameterID
 								  record:(NSDictionary *_Nullable *_Nullable)record
 {
@@ -152,6 +183,7 @@
 
 #pragma mark Preset Application
 
+/*! @abstract Builds a preset error in the FxGrip plugin domain, encoding the parameter ID in the code. */
 + (NSError *)errorForParameter:(FxParameterId)parameterID description:(NSString *)description
 {
 	return [NSError errorWithDomain:FxGripPlugErrorDomain
@@ -212,6 +244,19 @@ static void FxGripParseFlagSpec(id spec, FxParameterFlags *add, FxParameterFlags
 	*remove = names.negativeFxParameterFlags;
 }
 
+/*!
+	@method		applyPreset:atTime:options:presetFlags:source:tag:
+	@abstract	Applies a preset definition to the effect's parameters.
+	@discussion	Introduced in FxGrip 0.1.0. Sections apply in a fixed order: values, flags, tags,
+				meta, names. Names run last because the host misreports string parameters when a
+				name changes earlier in the same pass. Each section runs only when its option bit
+				is set and the section is present. Under FxGripPresetSourceFile with a tag, each
+				section applies to an ID only when parametersWithTag: contains it, unless
+				presetFlags carries kFxParameterPreset_IgnoreTagBoundary. Parameters flagged
+				PRESETNOTAGS or PRESETNOMETA opt out of those sections. A per-entry failure logs
+				and continues.
+	@return		The first error encountered, or nil when every entry succeeds.
+*/
 - (NSError *_Nullable)applyPreset:(NSDictionary *_Nonnull)preset
 						   atTime:(CMTime)time
 						  options:(FxGripPresetOptions)options
@@ -377,6 +422,16 @@ static void FxGripParseFlagSpec(id spec, FxParameterFlags *add, FxParameterFlags
 	return [name isKindOfClass:NSString.class] ? name : nil;
 }
 
+/*!
+	@method		applyTargetPresetForParameter:atTime:options:
+	@abstract	Applies the preset a Menu or Toggle parameter selects.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter's current value indexes its target-preset
+				definition. A menu entry name resolves the entry first, so the reference survives
+				entries being appended, removed, or reordered. Non-Menu and non-Toggle parameters
+				return YES without acting.
+	@return		YES when the selected preset applies without error, or when the parameter is not a
+				Menu or Toggle.
+*/
 - (BOOL)applyTargetPresetForParameter:(FxParameterId)parameterID
 							   atTime:(CMTime)time
 							  options:(FxGripPresetOptions)options
@@ -459,6 +514,14 @@ static void FxGripParseFlagSpec(id spec, FxParameterFlags *add, FxParameterFlags
 						 tag:resolvedTag] == nil;
 }
 
+/*!
+	@method		getMetaKeys:forPreset:fromParameter:
+	@abstract	Returns the meta keys a tag-addressed definition carries for one parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Sets `keys` to an empty array when the definition
+				carries no meta section for the parameter.
+	@return		An error when the keys out-parameter is missing or the tag has no definition;
+				otherwise nil.
+*/
 - (NSError *_Nullable)getMetaKeys:(NSArray<NSString*> *_Nullable *_Nonnull)keys
 						forPreset:(NSString *_Nonnull)tag
 					fromParameter:(FxParameterId)parameterID

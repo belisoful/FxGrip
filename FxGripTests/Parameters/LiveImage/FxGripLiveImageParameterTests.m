@@ -1,17 +1,12 @@
-//
-//  FxGripLiveImageParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for the live image parameter: type identity, the creation call and the
-//  flags it forces on, the slot count derived from the configuration, the view it vends,
-//  the in-process publish paths (frame, CGImage, image buffer, Metal texture) and their
-//  coalesced push to every attached view, the suppression of a publish while no view is on
-//  screen, the seeding of a view registered while another is on screen, and the GPU
-//  downscale through the snapshot size.
-//
-//  The test bundle links only FxGrip and XCTest. The Metal device is reached through the
-//  loaded images rather than a link-time reference.
-//
+/*!
+	@file       FxGripLiveImageParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripLiveImageParameterTests
+	@abstract   Tests the FxGripLiveImageParameter type, creation, view, and publish paths.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the type identity, the creation call and the flags it forces on, the slot count derived from the configuration, the view it vends, the in-process publish paths for a frame, CGImage, image buffer, and Metal texture, the coalesced push to every attached view, the suppression of a publish with no on-screen view, the seeding of a newly registered view, and the GPU downscale through the snapshot size.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -154,12 +149,14 @@ static const FxParameterId kLiveImageTestID = 93;
 
 #pragma mark Identity and creation
 
+/*! @abstract The parameter reports the live-image FxPlug type and the matching type string. */
 - (void)testTheParameterReportsItsTypeAndTypeString
 {
 	XCTAssertEqual([FxGripLiveImageParameter parameterType], FxParameterType_LiveImage);
 	XCTAssertEqualObjects([FxGripLiveImageParameter parameterTypeString], kFxParameterType_LiveImage);
 }
 
+/*! @abstract The custom value classes cover the backing dictionary and its array and string contents. */
 - (void)testTheCustomValueClassesCoverTheDictionaryAndItsContents
 {
 	NSSet<Class> *classes = [FxGripLiveImageParameter customValueClasses];
@@ -168,6 +165,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertTrue([classes containsObject:NSString.class]);
 }
 
+/*! @abstract Creation registers an unnamed custom parameter and forces on the custom-UI, non-animatable, full-view-width, and no-state flags. */
 - (void)testCreationIsUnnamedFullWidthStaticAndStateless
 {
 	XCTAssertTrue([FxGripLiveImageParameter addParameter:[self configWithDefault:nil] toEffect:(id)self.effect]);
@@ -184,6 +182,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertTrue((flags & kFxParameterFlag_NOSTATE) != 0);
 }
 
+/*! @abstract Creation records the labels, the derived slot count, and the configured height in the default value. */
 - (void)testCreationRecordsTheLabelsAndTheSlotCount
 {
 	NSArray *labels = @[@"Channel A", @"Channel B", @"Channel C", @"Channel D"];
@@ -196,6 +195,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqualObjects([value objectForKey:kFxGripLiveImageKey_Height], @96.0);
 }
 
+/*! @abstract Creation with no labels records an empty label list and one slot. */
 - (void)testCreationWithoutLabelsRecordsOneSlot
 {
 	XCTAssertTrue([FxGripLiveImageParameter addParameter:[self configWithDefault:nil] toEffect:(id)self.effect]);
@@ -205,6 +205,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqualObjects([value objectForKey:kFxGripLiveImageKey_Slots], @1);
 }
 
+/*! @abstract The custom creation API builds the labels, derived slot count, and height in the default value. */
 - (void)testTheCreationAPIBuildsTheLabelsAndHeight
 {
 	FxGripCustomCreationAPI_v1 *api = [FxGripCustomCreationAPI_v1.alloc initWithEffect:(id)self.effect];
@@ -220,12 +221,14 @@ static const FxParameterId kLiveImageTestID = 93;
 
 #pragma mark Slots
 
+/*! @abstract The slot count comes from the number of labels. */
 - (void)testTheSlotCountComesFromTheLabels
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Labels: @[@"A", @"B", @"C"]}];
 	XCTAssertEqual(parameter.slotCount, 3u);
 }
 
+/*! @abstract With no labels the slot count falls back to the slots key, then to one. */
 - (void)testTheSlotCountFallsBackToTheSlotsKeyThenOne
 {
 	XCTAssertEqual([self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @2}].slotCount, 2u);
@@ -233,6 +236,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqual([self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @0}].slotCount, 1u);
 }
 
+/*! @abstract The snapshot size defaults when unset and otherwise reads the configured value. */
 - (void)testTheSnapshotSizeDefaultsAndReadsTheConfiguration
 {
 	XCTAssertEqual([self makeParameterWithDefault:nil].snapshotSize, (NSUInteger)kFxGripLiveImageDefaultSnapshotSize);
@@ -242,6 +246,7 @@ static const FxParameterId kLiveImageTestID = 93;
 
 #pragma mark View
 
+/*! @abstract The parameter vends a live-image view configured with the declared slots, labels, and height, treating an empty label as none. */
 - (void)testTheParameterVendsAViewConfiguredFromTheDeclaredDefault
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{
@@ -260,6 +265,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqual(liveView.intrinsicContentSize.height, 72.0);
 }
 
+/*! @abstract A freshly initialized view has one empty slot and the default height. */
 - (void)testAViewDefaultsToOneSlotAndTheDefaultHeight
 {
 	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 200, 100)];
@@ -268,6 +274,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertNil([view frameInSlot:0]);
 }
 
+/*! @abstract A configuration push resizes the view's slots and sets its labels. */
 - (void)testTheViewGrowsItsSlotsFromAConfigurationPush
 {
 	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 200, 100)];
@@ -279,6 +286,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqualObjects([view labelInSlot:0], @"One");
 }
 
+/*! @abstract Showing a frame in a slot beyond the count is ignored, while a valid slot stores and clears the frame. */
 - (void)testShowingAFrameOutsideTheSlotsIsIgnored
 {
 	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 200, 100)];
@@ -292,6 +300,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertNil([view frameInSlot:0]);
 }
 
+/*! @abstract The view draws without throwing whether or not its slots hold frames. */
 - (void)testTheViewDrawsWithAndWithoutFrames
 {
 	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 240, 80)];
@@ -304,6 +313,7 @@ static const FxParameterId kLiveImageTestID = 93;
 
 #pragma mark Publishing
 
+/*! @abstract A published frame updates the store immediately and reaches the vended on-screen view after the flush. */
 - (void)testAPublishedFrameReachesTheVendedView
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @2}];
@@ -316,6 +326,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertNil([view frameInSlot:0]);
 }
 
+/*! @abstract Publishing is refused and stores nothing until a vended view is hosted on screen. */
 - (void)testPublishingIsSuppressedWithNoViewOnScreen
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @2}];
@@ -335,6 +346,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertTrue([parameter frameInSlot:0] == frame);
 }
 
+/*! @abstract Publishing to a slot beyond the count or with a nil frame is refused and stores nothing. */
 - (void)testPublishingOutsideTheSlotsOrANilFrameIsRefused
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
@@ -345,6 +357,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertNil([parameter frameInSlot:7]);
 }
 
+/*! @abstract A view vended while another is on screen is seeded with the frames already stored. */
 - (void)testAViewRegisteredWhileAnotherIsOnScreenIsSeededWithTheStoredFrames
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @2}];
@@ -361,6 +374,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertTrue([seeded frameInSlot:1] == second);
 }
 
+/*! @abstract A view attached through attachCustomView joins the push list and receives published frames. */
 - (void)testAnAttachedViewJoinsThePushList
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
@@ -374,6 +388,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertTrue([self pumpUntilView:view showsFrame:frame inSlot:0]);
 }
 
+/*! @abstract Rapid publishes coalesce, so the view settles on the latest frame. */
 - (void)testRapidPublishesCoalesceToTheLatestFrame
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
@@ -387,6 +402,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertTrue([self pumpUntilView:view showsFrame:last inSlot:0]);
 }
 
+/*! @abstract A publish from a background thread reaches the view. */
 - (void)testPublishingFromABackgroundThreadReachesTheView
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
@@ -400,6 +416,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertTrue([self pumpUntilView:view showsFrame:frame inSlot:0]);
 }
 
+/*! @abstract Clearing one slot empties that slot in the view while leaving the others, and clearAllSlots empties them all. */
 - (void)testClearingASlotEmptiesTheView
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @2}];
@@ -418,6 +435,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertNil([parameter frameInSlot:1]);
 }
 
+/*! @abstract An image buffer publishes as a frame of the buffer's size, and a nil buffer is refused. */
 - (void)testAnImageBufferPublishesAsAFrame
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
@@ -434,6 +452,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertFalse([parameter publishImageBuffer:(FxGripImageBuffer * _Nonnull)nil inSlot:0]);
 }
 
+/*! @abstract A CGImage publishes as an RGBA8 frame of the image's size, and a NULL image is refused. */
 - (void)testACGImagePublishesAsAnRGBA8Frame
 {
 	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
@@ -451,6 +470,7 @@ static const FxParameterId kLiveImageTestID = 93;
 
 #pragma mark Metal
 
+/*! @abstract A texture is downscaled to the snapshot size and read back, and a constant source averages to itself. */
 - (void)testATextureIsDownscaledToTheSnapshotSizeAndReadBack
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -473,6 +493,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqual(bytes[frame.pixels.length - 1], 0x80);
 }
 
+/*! @abstract A snapshot size of zero reads the texture back at its full size and format. */
 - (void)testASnapshotSizeOfZeroReadsTheTextureAtFullSize
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -493,6 +514,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqual(((const uint8_t *)frame.pixels.bytes)[0], 0x40);
 }
 
+/*! @abstract A source smaller than the snapshot size is read back at its own size without scaling up. */
 - (void)testASourceSmallerThanTheSnapshotSizeIsNotScaled
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -508,6 +530,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqual([parameter frameInSlot:0].height, 10u);
 }
 
+/*! @abstract A batch texture publish fills every named slot from one command buffer and leaves a null entry's slot empty. */
 - (void)testABatchPublishFillsEverySlotFromOneCommandBuffer
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -531,6 +554,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqual(((const uint8_t *)[view frameInSlot:2].pixels.bytes)[0], 0x30);
 }
 
+/*! @abstract An unsupported texture format, a nil texture, and an empty or all-null batch are refused. */
 - (void)testAnUnsupportedTextureFormatIsRefused
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -546,6 +570,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertFalse([parameter publishTextures:@[]]);
 }
 
+/*! @abstract A texture publish to a slot beyond the count is refused. */
 - (void)testATexturePublishOutsideTheSlotsIsRefused
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -558,6 +583,7 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertFalse([parameter publishTexture:texture inSlot:1]);
 }
 
+/*! @abstract A staging texture is reused across publishes, and a second publish replaces the first frame with the new content. */
 - (void)testAStagingTextureIsReusedAcrossPublishes
 {
 	id<MTLDevice> device = [self metalDevice];

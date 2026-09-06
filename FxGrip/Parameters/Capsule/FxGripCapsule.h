@@ -1,7 +1,16 @@
-//
-//  FxGripCapsule.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCapsule.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCapsule
+	@abstract   The configuration keys and defaults of a capsule badge parameter.
+	@discussion Introduced in FxGrip 0.1.0. The kFxGripCapsuleKey_* constants name the entries a
+	            capsule badge reads from its value: the text, point size, and fill color reuse
+	            the standard custom-value keys, and the text color and corner radius carry
+	            dedicated keys. kFxGripCapsulePillRadius is the default corner radius that draws a
+	            full pill.
+*/
 
 #ifndef FxGripCapsule_h
 #define FxGripCapsule_h

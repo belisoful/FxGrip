@@ -1,22 +1,33 @@
-//
-//  FxGripParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripPushButtonParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPushButtonParameter
+	@abstract   Implements the parameter model for a host push button.
+	@discussion Introduced in FxGrip 0.1.0. The class registers a push button through the parameter-creation API. Clicks dispatch through the synthesized click selector for the parameter ID.
+*/
 
 #import "FxGripPushButtonParameter.h"
 #import "FxGripTileableEffect.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripParameterUtility.h"
 
+/*!
+	@abstract	The parameter model for a host push button.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers a push button and dispatches its click through the effect.
+*/
 @implementation FxGripPushButtonParameter
 
 @synthesize selector = _selector;
 @synthesize selectorString = _selectorString;
 
 
+/*!
+	@method		initWithDictionary:effect:
+	@abstract	Initializes the parameter and parses the configuration's action selector.
+	@param		dictionary	The parameter configuration dictionary.
+	@param		effect		The host that owns the parameter. */
 -(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect
 {
 	self = [super initWithDictionary:dictionary effect:effect];
@@ -37,6 +48,13 @@
 	return FxParameterType_PushButton;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Registers the push button with the effect's host.
+	@param		parameter	The parameter configuration dictionary.
+	@param		effect		The host that receives the parameter.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The button registers the synthesized click selector for the parameter ID. A configuration selector that does not use the click prefix fails registration. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The host registers the synthesized selector encoding the parameter ID; clicks

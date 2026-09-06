@@ -1,7 +1,15 @@
-//
-//  FxGripCurveData.m
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveData.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveData
+	@abstract   Implements the immutable cubic curve model and its LUT evaluation.
+	@discussion Introduced in FxGrip 0.1.0. The initializer sanitizes, sorts, and deduplicates the
+	            points into interleaved storage. The identity constructor returns the role's neutral
+	            shape. Evaluation chooses the periodic builder for a circular domain and the clamped
+	            builder otherwise. The class encodes its domain, role, and points for secure coding.
+*/
 
 #import "FxGripCurveData.h"
 #import "FxGrip_ARC.h"
@@ -34,6 +42,10 @@ static double FxGripCurveClamp01(double value)
 }
 
 
+/*!
+	@abstract	The immutable cubic curve: sorted control points with a domain and role.
+	@discussion	Introduced in FxGrip 0.1.0. The points live in interleaved x, y storage sorted by
+				ascending x with duplicate x dropped. The value never mutates after creation. */
 @implementation FxGripCurveData
 {
 	NSArray<NSNumber*> *_interleaved;	// x0, y0, x1, y1, ... sorted by x
@@ -114,6 +126,12 @@ static double FxGripCurveClamp01(double value)
 	return NARC_AUTORELEASE([[self alloc] initWithPoints:points count:count role:role domain:domain]);
 }
 
+/*!
+	@method		identityCurveWithRole:domain:
+	@abstract	Builds the role's neutral curve for a domain.
+	@discussion	Introduced in FxGrip 0.1.0. The remap role is the diagonal in a linear domain and the
+				no-points identity ramp in a circular domain. Every other role is a flat curve at its
+				neutral output. */
 + (nonnull instancetype)identityCurveWithRole:(FxGripCurveRole)role
 									   domain:(FxGripCurveDomain)domain
 {
@@ -162,6 +180,10 @@ static double FxGripCurveClamp01(double value)
 	return YES;
 }
 
+/*!
+	@method		copyCurvePointsFloat2:capacity:
+	@abstract	Writes the points as (x, y) float pairs into the buffer.
+	@return		The number of pairs written, at most capacity. */
 - (NSUInteger)copyCurvePointsFloat2:(float (*)[2])buffer capacity:(NSUInteger)capacity
 {
 	if (buffer == NULL) {
@@ -175,6 +197,11 @@ static double FxGripCurveClamp01(double value)
 	return written;
 }
 
+/*!
+	@method		buildLUT:count:
+	@abstract	Evaluates the curve into a LUT with the domain's builder.
+	@discussion	Introduced in FxGrip 0.1.0. A circular domain uses the periodic builder; a linear
+				domain uses the clamped builder. */
 - (void)buildLUT:(float *)outLUT count:(NSUInteger)n
 {
 	if (outLUT == NULL || n == 0) {

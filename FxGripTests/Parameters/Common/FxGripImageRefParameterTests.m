@@ -1,11 +1,15 @@
-//
-//  FxGripImageRefParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripImageRefParameter: the type identity, the name-ID-flags payload it
-//  hands the creation API, the host-refusal result, the always-included filters, and the
-//  start time and duration it reads from the timing API.
-//
+/*!
+	@file       FxGripImageRefParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripImageRefParameterTests
+	@abstract   Tests FxGripImageRefParameter: its FxPlug type identity and the name-ID-flags
+	            payload it hands the creation API.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the host-refusal result, the
+	            always-included filters, and the start time and duration it reads from the
+	            timing API.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -52,6 +56,7 @@ static const FxParameterId kImageRefTestParameter = 51;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug image-reference type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripImageRefParameter.parameterType, FxParameterType_ImageRef);
@@ -60,6 +65,7 @@ static const FxParameterId kImageRefTestParameter = 51;
 
 #pragma mark Creation payload
 
+/*! @abstract An image reference hands the creation call only the name, ID, and flags. */
 - (void)testImageReferenceForwardsOnlyTheNameIDAndFlags
 {
 	XCTAssertTrue([self add:FxGripImageRefParameter.class type:kFxParameterType_ImageRef extra:nil]);
@@ -70,6 +76,7 @@ static const FxParameterId kImageRefTestParameter = 51;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -79,11 +86,13 @@ static const FxParameterId kImageRefTestParameter = 51;
 
 #pragma mark Values
 
+/*! @abstract An image reference always reports includeFilters as true. */
 - (void)testAnImageReferenceAlwaysIncludesFilters
 {
 	XCTAssertTrue([self makeImageRefParameter].includeFilters);
 }
 
+/*! @abstract The startTime accessor reads the parameter start time from the timing API. */
 - (void)testImageReferenceStartTimeComesFromTheTimingAPI
 {
 	FxGripImageRefParameter *parameter = [self makeImageRefParameter];
@@ -97,6 +106,7 @@ static const FxParameterId kImageRefTestParameter = 51;
 						  (@{@"accessor": @"start", @"id": @(kImageRefTestParameter)}));
 }
 
+/*! @abstract The durationTime accessor reads the parameter duration from the timing API. */
 - (void)testImageReferenceDurationComesFromTheTimingAPI
 {
 	FxGripImageRefParameter *parameter = [self makeImageRefParameter];

@@ -1,8 +1,16 @@
-//
-//
-//  FxGripPresetsAPI_v1.m
-//  FxGrip
-//
+/*!
+	@file       FxGripPresetsAPI_v1.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPresetsAPI_v1
+	@abstract   Implements preset capture, application, file I/O, discovery, and folder watching.
+	@discussion Introduced in FxGrip 0.1.0. Capture reads every runtime parameter's value, tags,
+	            and meta, honoring the per-parameter opt-out flags. Application checks compatibility
+	            and hands the preset's sections to the tag API core. Discovery merges the plugin's
+	            plist presets table and bundled files with the managed user folder. Folder and file
+	            names derive from version-agnostic display names, so presets survive plugin updates.
+*/
 
 #import <AppKit/AppKit.h>
 #import "FxGripPresetsAPI_v1.h"
@@ -50,6 +58,12 @@ static NSString *FxGripFolderNameString(NSString *name)
 }
 
 
+/*!
+	@abstract	FxGrip's implementation of the preset file and discovery API.
+	@discussion	Introduced in FxGrip 0.1.0. No host vends this API, so the wrapper carries no host
+				API. Application delegates to the tag API core; discovery merges plugin and user
+				sources; the save and open panels start in the managed user folder.
+*/
 @implementation FxGripPresetsAPI_v1
 
 - (nullable instancetype)initWithAPI:(id<FxGripPresetsAPI_v1>_Nullable)api
@@ -64,6 +78,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return self;
 }
 
+/*! @abstract Builds a preset error in the FxGrip plugin domain from a failure description. */
 - (NSError*)errorWithDescription:(NSString*)description
 {
 	return [NSError errorWithDomain:FxGripPlugErrorDomain
@@ -74,6 +89,14 @@ static NSString *FxGripFolderNameString(NSString *name)
 
 #pragma mark Compatibility
 
+/*!
+	@method		compatiblePreset:
+	@abstract	Answers whether a preset's plugin identity matches this effect.
+	@discussion	Introduced in FxGrip 0.1.0. The preset's plugin UUID must equal the effect's, or
+				appear in the plugin's supportedPlugins alternatives. The comparison is
+				case-insensitive.
+	@return		YES when the preset belongs to this plugin.
+*/
 - (BOOL)compatiblePreset:(FxGripPreset * _Nullable)preset
 {
 	NSString *presetUuid = preset.pluginUuid;
@@ -100,11 +123,23 @@ static NSString *FxGripFolderNameString(NSString *name)
 
 #pragma mark Apply
 
+/*! @abstract Applies a preset at time zero. */
 - (NSError * _Nullable)setPreset:(FxGripPreset * _Nonnull)preset options:(FxGripParameterPresetFlags)flags
 {
 	return [self setPreset:preset options:flags atTime:kCMTimeZero];
 }
 
+/*!
+	@method		setPreset:options:atTime:
+	@abstract	Applies a preset through the tag API core.
+	@discussion	Introduced in FxGrip 0.1.0. Verifies compatibility unless
+				kFxParameterPreset_IgnoreCompatibility. Applies the values, tags, and meta
+				sections, withholding meta under kFxParameterPreset_IgnoreMetaData, with
+				FxGripPresetSourceFile and the preset's tag so the tag boundary governs which
+				parameters change.
+	@return		An error when the preset is nil, incompatible, or the tag API is unavailable;
+				otherwise the first application error, or nil.
+*/
 - (NSError * _Nullable)setPreset:(FxGripPreset * _Nonnull)preset options:(FxGripParameterPresetFlags)flags atTime:(CMTime)time
 {
 	if (preset == nil) {
@@ -136,6 +171,15 @@ static NSString *FxGripFolderNameString(NSString *name)
 
 #pragma mark Capture
 
+/*!
+	@method		generatePreset:fromLabel:
+	@abstract	Captures the effect's current parameter state as a preset.
+	@discussion	Introduced in FxGrip 0.1.0. Captures every runtime parameter's value at time zero,
+				plus its tags and meta. A parameter flagged NoValue, PRESETNOTAGS, or PRESETNOMETA
+				opts out of the matching capture. The plugin identity fields are filled from the
+				effect.
+	@return		An error when the out-parameter or the parameter APIs are unavailable; otherwise nil.
+*/
 - (NSError * _Nullable)generatePreset:(FxGripPreset * _Nullable * _Nonnull)preset fromLabel:(NSString * _Nonnull)label
 {
 	if (preset == NULL) {
@@ -227,6 +271,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return nil;
 }
 
+/*! @abstract The plugin's display name for use as a folder name, falling back to its class name. */
 - (nullable NSString*)pluginFolderName
 {
 	id<FxGripEffectHost> effect = self.effect;
@@ -237,6 +282,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return [name isKindOfClass:NSString.class] ? name : nil;
 }
 
+/*! @abstract The managed user preset folder under Application Support, keyed by company and plugin display names. The folder is not created here. */
 - (NSURL * _Nullable)userPresetURL
 {
 	NSString *company = [self pluginCompanyName] ?: @"FxGrip";
@@ -256,6 +302,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 			URLByAppendingPathComponent:FxGripFolderNameString(pluginName) isDirectory:YES];
 }
 
+/*! @abstract The per-tag subfolder of the managed user preset folder. */
 - (NSURL * _Nullable)userPresetURL:(NSString * _Nonnull)tag
 {
 	if (tag.length == 0) {
@@ -264,6 +311,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return [[self userPresetURL] URLByAppendingPathComponent:FxGripFolderNameString(tag) isDirectory:YES];
 }
 
+/*! @abstract The plugin bundle's Presets resource folder, or nil when the bundle has none. */
 - (NSURL * _Nullable)pluginPresetURL
 {
 	NSBundle *bundle = [NSBundle bundleForClass:self.effect.class];
@@ -274,6 +322,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return presets;
 }
 
+/*! @abstract The per-tag subfolder of the bundled preset folder. */
 - (NSURL * _Nullable)pluginPresetURL:(NSString * _Nonnull)tag
 {
 	if (tag.length == 0) {
@@ -349,6 +398,13 @@ static NSString *FxGripFolderNameString(NSString *name)
 		|| dictionary[kFxParameterProperty_TargetPresetNames] != nil;
 }
 
+/*!
+	@method		pluginPresetsForTag:
+	@abstract	The premade presets for a tag: the plist presets table entries, then bundled files.
+	@discussion	Introduced in FxGrip 0.1.0. A plist table entry is a single definition or a
+				name-keyed table of definitions; string entries alias other tags and do not list.
+				Bundled .fxpreset files from the per-tag subfolder follow.
+*/
 - (NSArray<FxGripPreset*> * _Nonnull)pluginPresetsForTag:(NSString * _Nonnull)tag
 {
 	if (tag.length == 0) {
@@ -381,6 +437,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return presets;
 }
 
+/*! @abstract The user presets for a tag: .fxpreset files in the managed per-tag folder. */
 - (NSArray<FxGripPreset*> * _Nonnull)userPresetsForTag:(NSString * _Nonnull)tag
 {
 	if (tag.length == 0) {
@@ -389,6 +446,7 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return [self presetFilesAtURL:[self userPresetURL:tag] tag:tag];
 }
 
+/*! @abstract The merged listing for a tag: the plugin presets followed by the user presets. */
 - (NSArray<FxGripPreset*> * _Nonnull)presetsForTag:(NSString * _Nonnull)tag
 {
 	NSMutableArray *presets = [NSMutableArray arrayWithArray:[self pluginPresetsForTag:tag]];
@@ -396,6 +454,13 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return presets;
 }
 
+/*!
+	@method		observeTag:observer:
+	@abstract	Watches the managed per-tag user preset folder.
+	@discussion	Introduced in FxGrip 0.1.0. The handler runs on each change to the folder. The
+				caller keeps the returned watcher alive; deallocating it ends the watch.
+	@return		The watcher, or nil when the folder does not exist or no handler is supplied.
+*/
 - (BEPathWatcher * _Nullable)observeTag:(NSString * _Nonnull)tag observer:(void (^ _Nonnull)(void))handler
 {
 	NSURL *folderURL = [self userPresetURL:tag];
@@ -415,6 +480,14 @@ static NSString *FxGripFolderNameString(NSString *name)
 
 #pragma mark Panels
 
+/*!
+	@method		savePreset:remap:
+	@abstract	Saves a preset to a user-chosen file through the save panel.
+	@discussion	Introduced in FxGrip 0.1.0. The panel starts in the managed user preset folder,
+				created on demand. presetDictionary already writes the FxFactory file keys, so
+				keyMap is unused by the write.
+	@return		YES when the user confirms and the file is written.
+*/
 - (BOOL)savePreset:(FxGripPreset * _Nonnull)preset remap:(NSDictionary * _Nullable)keyMap
 {
 	if (preset == nil) {
@@ -448,6 +521,13 @@ static NSString *FxGripFolderNameString(NSString *name)
 	return [preset savePresetToURL:panel.URL];
 }
 
+/*!
+	@method		loadPreset:remap:
+	@abstract	Loads a preset from a user-chosen file through the open panel.
+	@discussion	Introduced in FxGrip 0.1.0. The panel starts in the managed user preset folder when
+				it exists.
+	@return		YES when the user confirms and the file parses.
+*/
 - (BOOL)loadPreset:(FxGripPreset * _Nullable * _Nonnull)preset remap:(NSDictionary * _Nullable)keyMap
 {
 	if (preset == NULL) {

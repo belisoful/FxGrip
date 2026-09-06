@@ -1,11 +1,12 @@
-//
-//  FxGripPassthroughBackendTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPassthroughBackend: it is always ready, echoes inputs by default,
-//  routes through its output map, fails on a mapped input that is missing, and conforms to
-//  the FxGripInferenceBackend protocol.
-//
+/*!
+	@file       FxGripPassthroughBackendTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPassthroughBackendTests
+	@abstract   Verifies the FxGripPassthroughBackend inference backend.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm that the backend reports itself ready, echoes inputs to outputs by default, renames outputs through its output map, fails when a mapped input is absent, and conforms to the FxGripInferenceBackend protocol.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripInferenceRequest.h>
@@ -19,6 +20,7 @@
 
 @implementation FxGripPassthroughBackendTests
 
+/*! @abstract The backend reports ready and identifies itself as "passthrough". */
 - (void)testThePassthroughBackendIsAlwaysReady
 {
 	FxGripPassthroughBackend *backend = [FxGripPassthroughBackend backend];
@@ -26,6 +28,7 @@
 	XCTAssertEqualObjects(backend.backendIdentifier, @"passthrough");
 }
 
+/*! @abstract Without an output map, each input appears under the same key in the result. */
 - (void)testThePassthroughBackendEchoesInputsByDefault
 {
 	FxGripPassthroughBackend *backend = [FxGripPassthroughBackend backend];
@@ -36,6 +39,7 @@
 	XCTAssertEqualObjects([result outputForKey:@"image"], @"plate");
 }
 
+/*! @abstract The output map copies each named input to its output key, and only mapped outputs appear. */
 - (void)testThePassthroughBackendRoutesThroughItsOutputMap
 {
 	FxGripPassthroughBackend *backend = [FxGripPassthroughBackend backend];
@@ -49,6 +53,7 @@
 	XCTAssertNil([result outputForKey:@"rgb"], @"only mapped outputs are produced");
 }
 
+/*! @abstract A mapped input absent from the request yields a nil result and the missing-input error. */
 - (void)testThePassthroughBackendFailsOnAMappedInputThatIsMissing
 {
 	FxGripPassthroughBackend *backend = [FxGripPassthroughBackend backend];
@@ -61,6 +66,7 @@
 	XCTAssertEqual(error.code, (NSInteger)kFxGripError_InferenceMissingInput);
 }
 
+/*! @abstract The backend conforms to FxGripInferenceBackend and responds to the run selector. */
 - (void)testThePassthroughBackendConformsToTheBackendProtocol
 {
 	id<FxGripInferenceBackend> backend = [FxGripPassthroughBackend backend];

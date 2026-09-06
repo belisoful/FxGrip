@@ -1,10 +1,17 @@
-//
-//  FxGripParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameter
+	@abstract   Implements the parameter model root classes FxGripParameterBase and FxGripParameter.
+	@discussion Introduced in FxGrip 0.1.0. FxGripParameterBase stores the parameter dictionary,
+	            observes the effect's flag notifications to serve and cache flag reads and
+	            writes, and encodes the parameter type into the plugin state. FxGripParameter
+	            adds the custom-view surface and the secure-coding allow-list. The flag accessor
+	            and value-access method bodies are split into FxGripParameterBaseLibrary.m and
+	            FxGripParameterLibrary.m, which this file includes.
+*/
 
 #import "FxGripParameter.h"
 #import "FxGripParameterFlags.h"
@@ -29,8 +36,15 @@
 @end
 
 
+/*!
+	@abstract	The concrete root of the parameter model.
+	@discussion	Introduced in FxGrip 0.1.0. The initializer keeps the parameter dictionary and
+				installs the flag observers. The class serves flag reads from a cache while the
+				parameter caches, and writes flags back through the effect's parameter APIs.
+*/
 @implementation FxGripParameterBase
 
+/*! The priority the flag observers register at on the effect's notifier. */
 - (NSInteger)ncPriority:(nullable NSNotificationName)aName
 {
 	if ([FxGripNotifyAPI_ParameterGetFlagsPreName isEqualToString:aName]) {
@@ -43,6 +57,12 @@
 
 @synthesize effect = _effect;
 
+/*!
+	@method		initWithDictionary:effect:
+	@abstract	Initializes the parameter from its dictionary and owning effect.
+	@discussion	Introduced in FxGrip 0.1.0. Returns nil when the dictionary's parameter type does
+				not match the receiver's class. The dictionary is kept directly when it is
+				mutable, and copied otherwise. The initializer installs the flag observers. */
 -(instancetype _Nullable) initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect
 {
 	self = [super init];
@@ -165,6 +185,12 @@
 
 
 
+/*!
+	@abstract	The concrete root of a leaf parameter that carries a value and an optional view.
+	@discussion	Introduced in FxGrip 0.1.0. The base returns no view and no custom value classes;
+				a parameter class with custom UI overrides. The value-access method bodies come
+				from the included FxGripParameterLibrary.m.
+*/
 @implementation FxGripParameter
 
 @synthesize customView;

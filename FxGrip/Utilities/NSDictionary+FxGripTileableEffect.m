@@ -1,9 +1,15 @@
-//
-//  NSMutableDictionary-Extension.swift
-//  XPC Service
-//
-//  Created by ~ ~ on 3/19/24.
-//
+/*!
+	@file       NSDictionary+FxGripTileableEffect.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     NSDictionary+FxGripTileableEffect
+	@abstract   Implements the typed plug-in and parameter accessors over Foundation collections.
+	@discussion Introduced in FxGrip 0.1.0. Each plug-in accessor guards on the required plug-in
+	            keys and each parameter accessor guards on the required parameter keys, so a
+	            dictionary of the wrong shape returns a neutral value. Flag and tag accessors
+	            accept a string, array, dictionary, or number and normalize to one form.
+*/
 
 #import <BEFoundation/NSArray+BExtension.h>
 #import <BEFoundation/NSDictionary+BExtension.h>
@@ -17,6 +23,7 @@
 //#import "FxGrip.h"
 
 
+/*! @abstract Reads a numeric parameter type. @discussion Introduced in FxGrip 0.1.0. */
 @implementation NSNumber (FxGripTileableEffect)
 
 - (FxParameterType)parameterType
@@ -28,6 +35,7 @@
 
 
 
+/*! @abstract Resolves a type name and splits divided lists. @discussion Introduced in FxGrip 0.1.0. */
 @implementation NSString (FxGripTileableEffect)
 
 - (FxParameterType)parameterType
@@ -44,6 +52,10 @@
 
 
 
+/*!
+	@abstract	Localizes entries and folds flag-name arrays into a mask.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation NSArray (FxGripTileableEffect)
 
 - (NSArray*_Nonnull)localize
@@ -63,6 +75,11 @@
 }
 
 
+/*!
+	@method		fxParameterFlags
+	@abstract	The flag mask named by the array's entries.
+	@discussion	Introduced in FxGrip 0.1.0. A bare or "+"-prefixed entry sets its flag; a
+				"-"-prefixed entry clears it. Non-string entries are skipped. */
 - (FxParameterFlags)fxParameterFlags
 {
 	FxParameterFlags result = kFxParameterFlag_DEFAULT;
@@ -92,6 +109,7 @@
 	return result;
 }
 
+/*! @abstract The mask of flags named by the array's "-"-prefixed entries. */
 - (FxParameterFlags)negativeFxParameterFlags
 {
 	FxParameterFlags result = kFxParameterFlag_DEFAULT;
@@ -112,6 +130,11 @@
 
 
 
+/*!
+	@abstract	Typed reads of plug-in registration and parameter configuration.
+	@discussion	Introduced in FxGrip 0.1.0. The guard macros return a neutral value unless the
+				dictionary carries the required plug-in or parameter keys.
+*/
 @implementation NSDictionary (FxGripTileableEffect)
 
 #define isPluginDictionary(returnValue) if (!self[kProPlugPlugIn_UuidProperty] || !self[kProPlugPlugIn_ClassNameProperty] || !self[kProPlugPlugIn_GroupUUIDProperty]) {return returnValue;}
@@ -119,6 +142,7 @@
 #define isParameterDictionary(returnValue) if (!self[kFxParameterProperty_Id] || !self[kFxParameterProperty_Type] || !self[kFxParameterProperty_Name]) {return returnValue;}
 
 
+/*! @abstract The object under an integer index, matched as a number key then a decimal-string key. */
 - (id)objectForIndex:(NSUInteger)index
 {
 	id obj = self[@(index)];
@@ -381,6 +405,12 @@
 	return self[kFxParameterProperty_Description];
 }
 
+/*!
+	@method		parameterFlags
+	@abstract	The parameter flag mask.
+	@discussion	Introduced in FxGrip 0.1.0. A string splits on human dividers, a dictionary
+				contributes its values, and a number returns directly. The default flag applies
+				when no flags key is present. */
 - (FxParameterFlags)parameterFlags
 {
 	isParameterDictionary(kFxParameterFlag_INVALID);
@@ -566,6 +596,12 @@
 	return self[kFxParameterProperty_SelectorObject];
 }
 
+/*!
+	@method		parameterDefaultX
+	@abstract	The point default's X coordinate.
+	@discussion	Introduced in FxGrip 0.1.0. The value comes from an X key, or the default's X
+				entry, first array element, or first whitespace-split token. A string coerces to
+				a double, and a missing value returns zero. */
 - (NSNumber*_Nullable)parameterDefaultX
 {
 	id value = self[kFxParameterProperty_X];
@@ -591,6 +627,7 @@
 	return value;
 }
 
+/*! @abstract The point default's Y coordinate, from a Y key or the default's second component; zero when absent. */
 - (NSNumber*_Nullable)parameterDefaultY
 {
 	id value = self[kFxParameterProperty_Y];
@@ -633,9 +670,13 @@
 	return self[kFxParameterProperty_GradientSamples];
 }
 
-/**
- *
- * @default kFxDepth_FLOAT16
+/*!
+	@method		parameterGradientDepth
+	@abstract	The gradient sample depth as an FxDepth.
+	@discussion	Introduced in FxGrip 0.1.0. A number is read as an FxDepth or a byte count per the
+				depth type. A string maps "uchar", "float", and otherwise "half". The default is
+				kFxDepth_FLOAT16 when no depth is present.
+	@default	kFxDepth_FLOAT16
  */
 -(FxDepth)parameterGradientDepth
 {
@@ -690,6 +731,7 @@
 	return depthValue;
 }
 
+/*! @abstract The gradient depth interpretation: FxDepth or a byte count; None when absent. */
 - (FxGripDepthType)parameterGradientDepthType
 {
 	id depthType = self[kFxParameterProperty_GradientDepthType];
@@ -728,6 +770,10 @@
 
 
 
+/*!
+	@abstract	Writes the common parameter keys back into a configuration.
+	@discussion	Introduced in FxGrip 0.1.0. Each setter stores its value as a number.
+*/
 @implementation NSMutableDictionary (FxGripTileableEffect)
 
 

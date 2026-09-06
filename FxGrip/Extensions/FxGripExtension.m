@@ -1,9 +1,15 @@
-//
-//  FxGripExtension.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripExtension.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripExtension
+	@abstract   Implements the extension base class and its notification registration.
+	@discussion Introduced in FxGrip 0.1.0. On load the base maps every lifecycle and API notification
+	            name to its handler selector and registers as an observer for the handlers the
+	            instance implements. The key index individuates instances of one class so they never
+	            share an extKey.
+*/
 
 #import "FxGripExtension.h"
 #import "FxGripTileableEffect.h"
@@ -13,13 +19,17 @@
 #import "FxGripParameterExtension.h"
 #import "FxGripParameterUtility.h"
 
-
 #pragma mark -
 #pragma mark FxGripExtension Implementation
 
 const NSInteger FxGripExtensionDefaultPriority = 10;
 
 
+/*!
+	@abstract	The base implementation an extension subclasses.
+	@discussion	Introduced in FxGrip 0.1.0. Holds the identity, priority, and load machinery, and
+				registers the notification observers for the handlers a subclass implements.
+*/
 @implementation FxGripExtensionBase
 
 @synthesize extActive = _extActive;
@@ -45,6 +55,11 @@ const NSInteger FxGripExtensionDefaultPriority = 10;
 	return self;
 }
 
+/*!
+	@method		setExtActive:
+	@abstract	Enables or disables the extension's observers before it is added to a document.
+	@discussion	Introduced in FxGrip 0.1.0. A change after the effect is added to the document is
+				logged and rejected. */
 - (void)setExtActive:(BOOL)active
 {
 	if (self.effect.addedToDocument) {
@@ -96,14 +111,22 @@ const NSInteger FxGripExtensionDefaultPriority = 10;
 	return [self extLoadWithEffect:effect];
 }
 
+/*!
+	@method		extLoadWithEffect:
+	@abstract	Binds the extension to the effect and registers its notification observers.
+	@param		effect	The effect the extension observes.
+	@return		YES when the extension loads; extIncludeWhenDisabled when it is inactive.
+	@discussion	Introduced in FxGrip 0.1.0. The method maps each lifecycle and API notification name
+				to its handler selector and adds the extension as an observer for every selector it
+				responds to, scoped to the effect as the notification object. */
 - (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect
 {
 	_effect = effect;
-	
+
 	if (!self.extActive) {
 		return self.extIncludeWhenDisabled;
 	}
-	
+
 	NSDictionary *methods = @{
 		
 	//Effect Notifications
@@ -183,6 +206,10 @@ const NSInteger FxGripExtensionDefaultPriority = 10;
 @end
 
 
+/*!
+	@abstract	The concrete extension base that adopts the FxGripExtension protocol.
+	@discussion	Introduced in FxGrip 0.1.0. Adds no behavior to FxGripExtensionBase.
+*/
 @implementation FxGripExtension
 @end
 

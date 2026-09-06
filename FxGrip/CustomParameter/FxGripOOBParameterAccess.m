@@ -1,9 +1,14 @@
-//
-//  FxGripOOBParameterAccess.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripOOBParameterAccess.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOOBParameterAccess
+	@abstract   Implements the scoped host-action wrapper for out-of-band parameter edits.
+	@discussion Introduced in FxGrip 0.1.0. The active property drives startAction and endAction. The
+	            instance closes an open action on dealloc, so a stack variable brackets an edit for its
+	            own lifetime.
+*/
 
 #import "FxGripAPIAccessing.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -22,6 +27,11 @@
  
  */
 
+/*!
+	@abstract	Brackets a host parameter edit made from outside the managed call stack.
+	@discussion	Introduced in FxGrip 0.1.0. The active flag opens and closes the host action, and dealloc
+				closes an action still open.
+*/
 @implementation FxGripOOBParameterAccess
 {
 	@protected
@@ -166,6 +176,7 @@
 	return [_customParameterActionAPIv4 currentTime];
 }
 
+/*! @abstract Opens the host action window and returns the host's current time. */
 // return the [self currentTime]
 - (CMTime)startAction
 {
@@ -174,6 +185,7 @@
 	return [_customParameterActionAPIv4 currentTime];
 }
 
+/*! @abstract Posts the flush notification when flush is set, then closes the host action window. */
 - (void)endAction
 {
 	if (_flush && _effect) {
@@ -187,6 +199,7 @@
 }
 
 
+/*! @abstract Starts the action when set to YES and ends it when set to NO, ignoring a no-op change. */
 - (void) setActive:(BOOL)value
 {
 	if(value != _active) {

@@ -1,12 +1,12 @@
-//
-//  FxGripParameterRetrievalAPI_v6Tests.m
-//  FxGripTests
-//
-//  Unit tests for the parameter retrieval wrapper: the custom-parameter interception
-//  each typed getter performs, the effect back-reference installed on a custom view
-//  data value, the flag readback notification flow with its observer short circuit,
-//  and the string readback.
-//
+/*!
+	@file       FxGripParameterRetrievalAPI_v6Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterRetrievalAPI_v6Tests
+	@abstract   Verifies the retrieval wrapper's host readbacks, custom-parameter interception, effect back-reference install, flag readback notifications, and string readback.
+	@discussion Introduced in FxGrip 0.1.0. Each typed getter intercepts a custom parameter and reads through the custom value before falling back to the host. The flag readback runs a pre and post notification flow with an observer short circuit. A successful custom read installs the effect on a custom view data value.
+*/
 
 #import <XCTest/XCTest.h>
 #import <objc/runtime.h>
@@ -488,6 +488,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Pass-through readbacks
 
+/*! @abstract getBoolValue: reads the host's bool value and forwards the given time to the host. */
 - (void)testGetBoolValueReadsTheHostValueAtTheGivenTime
 {
 	self.hostAPI.boolValue = YES;
@@ -502,6 +503,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(FxGripRetrievalTestTimesEqual(self.hostAPI.lastTime, FxGripRetrievalTestTime()));
 }
 
+/*! @abstract getFloatValue: reads the host's float value. */
 - (void)testGetFloatValueReadsTheHostValue
 {
 	self.hostAPI.floatValue = 0.75;
@@ -515,6 +517,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"float"]);
 }
 
+/*! @abstract getIntValue: reads the host's int value. */
 - (void)testGetIntValueReadsTheHostValue
 {
 	self.hostAPI.intValue = 12;
@@ -527,6 +530,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(value, 12);
 }
 
+/*! @abstract getFontName: reads the host's font name. */
 - (void)testGetFontNameReadsTheHostValue
 {
 	self.hostAPI.fontName = @"Helvetica";
@@ -539,6 +543,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(fontName, @"Helvetica");
 }
 
+/*! @abstract getGradientSamples: fills the caller's buffer from the host. */
 - (void)testGetGradientSamplesReadsTheHostBuffer
 {
 	int samples[4] = {0, 0, 0, 0};
@@ -553,6 +558,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"gradient"]);
 }
 
+/*! @abstract getHistogram: fills every histogram component from the host. */
 - (void)testGetHistogramReadsEveryHostComponent
 {
 	double blackIn = 0, blackOut = 0, whiteIn = 0, whiteOut = 0, gamma = 0;
@@ -570,6 +576,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(gamma, 5);
 }
 
+/*! @abstract getPathID: reads the host's path ID. */
 - (void)testGetPathIDReadsTheHostValue
 {
 	int storage = 0;
@@ -583,6 +590,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(pathID, (FxPathID)&storage);
 }
 
+/*! @abstract getRedValue:greenValue:blueValue:alphaValue: reads every RGBA component from the host. */
 - (void)testGetRedGreenBlueAlphaReadsEveryHostComponent
 {
 	double red = 0, green = 0, blue = 0, alpha = 0;
@@ -598,6 +606,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(alpha, 0.4);
 }
 
+/*! @abstract getRedValue:greenValue:blueValue: reads three RGB components from the host. */
 - (void)testGetRedGreenBlueReadsThreeHostComponents
 {
 	double red = 0, green = 0, blue = 0;
@@ -612,6 +621,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"rgb"]);
 }
 
+/*! @abstract getXValue:YValue: reads both point coordinates from the host. */
 - (void)testGetXYReadsBothHostCoordinates
 {
 	double x = 0, y = 0;
@@ -625,6 +635,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(y, 0.75);
 }
 
+/*! @abstract A host refusal is reported as NO from the bool, float, and int getters. */
 - (void)testAHostRefusalIsReported
 {
 	self.hostAPI.succeeds = NO;
@@ -639,6 +650,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Custom parameter interception
 
+/*! @abstract Every typed getter on a custom parameter reads through the custom value in order and returns its values. */
 - (void)testEveryTypedGetterInterceptsACustomParameter
 {
 	[self markParameterCustom];
@@ -680,6 +692,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(x, 5);
 }
 
+/*! @abstract A custom parameter whose custom value cannot be read falls back to the plain host getter. */
 - (void)testACustomParameterWhoseValueCannotBeReadFallsBackToTheHostGetter
 {
 	[self markParameterCustom];
@@ -696,6 +709,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.customValue.receivedGetters, @[]);
 }
 
+/*! @abstract A custom value that does not adopt the mutable protocol falls back to the host getter. */
 - (void)testACustomValueThatDoesNotAdoptTheMutableProtocolFallsBackToTheHostGetter
 {
 	[self markParameterCustom];
@@ -711,6 +725,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, (@[@"custom", @"float"]));
 }
 
+/*! @abstract A custom value that does not implement the getter falls back to the host getter. */
 - (void)testACustomValueThatDoesNotImplementTheGetterFallsBackToTheHostGetter
 {
 	[self markParameterCustom];
@@ -725,6 +740,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(value, 0.5);
 }
 
+/*! @abstract A custom getter that fails is reported as NO without falling back to the host getter. */
 - (void)testACustomGetterThatFailsIsReportedWithoutFallingBack
 {
 	[self markParameterCustom];
@@ -738,6 +754,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"custom"]);
 }
 
+/*! @abstract Without a dynamic API no getter intercepts, and the host getter runs directly. */
 - (void)testWithoutADynamicAPINoGetterIntercepts
 {
 	[self markParameterCustom];
@@ -754,6 +771,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark getCustomParameterValue:
 
+/*! @abstract getCustomParameterValue: hands back the host's value. */
 - (void)testGetCustomParameterValueHandsBackTheHostValue
 {
 	NSObject<NSSecureCoding, NSCopying> *value = nil;
@@ -766,6 +784,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"custom"]);
 }
 
+/*! @abstract getCustomParameterValue: installs the effect back-reference on a custom view data value. */
 - (void)testGetCustomParameterValueInstallsTheEffectOnACustomViewDataValue
 {
 	FxGripRetrievalTestViewDataValue *viewData = [FxGripRetrievalTestViewDataValue.alloc init];
@@ -779,6 +798,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(viewData.parameterEffect == (id)self.effect);
 }
 
+/*! @abstract getCustomParameterValue: hands back a nil host value untouched. */
 - (void)testGetCustomParameterValueHandsBackANilValueUntouched
 {
 	self.hostAPI.customValue = nil;
@@ -791,6 +811,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil(value);
 }
 
+/*! @abstract getCustomParameterValue: leaves the effect uninstalled when the host reports failure. */
 - (void)testGetCustomParameterValueLeavesTheEffectUninstalledWhenTheHostReportsFailure
 {
 	FxGripRetrievalTestViewDataValue *viewData = [FxGripRetrievalTestViewDataValue.alloc init];
@@ -808,6 +829,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark getParameterFlags:
 
+/*! @abstract getParameterFlags: asks the host and posts the pre and post flag notifications. */
 - (void)testGetParameterFlagsAsksTheHostAndPostsBothNotifications
 {
 	self.hostAPI.flags = kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED;
@@ -853,6 +875,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(flags, (FxParameterFlags)kFxParameterFlag_HIDDEN);
 }
 
+/*! @abstract The flags pre-notification runs before the host is asked. */
 - (void)testTheFlagsPreNotificationRunsBeforeTheHostIsAsked
 {
 	__block NSUInteger callsAtPre = NSUIntegerMax;
@@ -866,6 +889,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(callsAtPre, (NSUInteger)0);
 }
 
+/*! @abstract An observer that answers the flags pre-notification supplies the flags and result, and the host is not asked. */
 - (void)testAnObserverAnsweringThePreNotificationSuppliesTheFlagsWithoutTheHost
 {
 	[self observeName:FxGripNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
@@ -882,6 +906,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterGetFlagsPreName]);
 }
 
+/*! @abstract An observer that answers the flags pre-notification with NO reports failure and does not ask the host. */
 - (void)testAnObserverAnsweringThePreNotificationWithNOReportsFailure
 {
 	[self observeName:FxGripNotifyAPI_ParameterGetFlagsPreName usingBlock:^(NSNotification *notification) {
@@ -895,6 +920,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }
 
+/*! @abstract An observer that rewrites the flags in the read notification changes the value the caller sees. */
 - (void)testAnObserverRewritingTheReadFlagsChangesWhatTheCallerSees
 {
 	self.hostAPI.flags = kFxParameterFlag_HIDDEN;
@@ -909,6 +935,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual(flags, (FxParameterFlags)kFxParameterFlag_DISABLED);
 }
 
+/*! @abstract An observer that sets an error on the read flags notification reports failure. */
 - (void)testAnObserverSettingAnErrorOnTheReadFlagsReportsFailure
 {
 	[self observeName:FxGripNotifyAPI_ParameterGetFlagsName usingBlock:^(NSNotification *notification) {
@@ -920,6 +947,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertFalse([self.retrievalAPI getParameterFlags:&flags fromParameter:kRetrievalTestParameter]);
 }
 
+/*! @abstract Flags the host refuses post only the pre-notification. */
 - (void)testFlagsTheHostRefusesPostOnlyThePreNotification
 {
 	self.hostAPI.succeeds = NO;
@@ -932,6 +960,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark getStringParameterValue:
 
+/*! @abstract getStringParameterValue: reads the host value and posts the read notification carrying it. */
 - (void)testGetStringValuePostsTheReadNotificationCarryingTheHostValue
 {
 	self.hostAPI.stringValue = @"HostValue";
@@ -948,6 +977,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(value, @"HostValue");
 }
 
+/*! @abstract A string value the host refuses posts nothing. */
 - (void)testAStringValueTheHostRefusesPostsNothing
 {
 	self.hostAPI.succeeds = NO;
@@ -960,6 +990,7 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.posted, @[]);
 }
 
+/*! @abstract A string value on a custom parameter comes from the custom value and posts no notification. */
 - (void)testAStringValueOnACustomParameterComesFromTheCustomValueWithoutANotification
 {
 	[self markParameterCustom];

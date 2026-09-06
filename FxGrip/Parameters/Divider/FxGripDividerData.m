@@ -1,10 +1,16 @@
-//
-//  FxGripInterpolatingDictionary.m
-//  PlugIn
-//
-//  Created by Apple on 10/22/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
-//
+/*!
+	@file       FxGripDividerData.m
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDividerData
+	@abstract   Implements the divider parameter value model and its API bridging.
+	@discussion Introduced in FxGrip 0.1.0. The class seeds its width fraction and margins from a
+	            configuration dictionary, and derives the parameter height from the margins. The
+	            geometry setters push the change to the attached view. The float accessor maps to the
+	            width fraction and the int accessor maps to the total parameter height for the
+	            standard retrieval API.
+*/
 
 #import "FxGripDividerData.h"
 #import "FxGripTypes.h"
@@ -14,6 +20,10 @@
 // Locked makes the default keys for types (bool, int, float, etc) only settable if they are already set.
 //  So the keys for the automatic var->custum->var must be set in the configuration to be usable,
 //		or it must be unlocked.
+/*!
+	@abstract	The value model for a divider parameter: line width fraction and margins.
+	@discussion	Introduced in FxGrip 0.1.0. The class holds the width fraction and margins, derives
+				the parameter height, and bridges to the standard retrieval API. */
 @implementation FxGripDividerData
 
 @synthesize parameterEffect;
@@ -35,6 +45,11 @@
     return self;
 }
 
+/*!
+	@method		initWithDictionary:
+	@abstract	Seeds the width fraction and margins from a configuration dictionary.
+	@param		values	A dictionary that may carry width, margintop, and marginbottom entries.
+	@discussion	Introduced in FxGrip 0.1.0. An absent entry keeps the default. */
 - (instancetype)initWithDictionary:(NSDictionary*)values
 {
 	self = [self init];
@@ -174,6 +189,7 @@
 #pragma mark API Parameter Access
 
 
+/*! Reads the line width fraction for the standard retrieval API. */
 - (BOOL)getFloatValue:(double*)floatValue
 {
 	*floatValue = _percentWidth;
@@ -188,6 +204,7 @@
 	return YES;
 }
 
+/*! Reads the total parameter height for the standard retrieval API. */
 - (BOOL)getIntValue:(int*)intValue
 {
 	*intValue = _parameterHeight;

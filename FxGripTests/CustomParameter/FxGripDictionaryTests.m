@@ -1,7 +1,12 @@
-//
-//  FxGripDictionaryTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripDictionaryTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDictionaryTests
+	@abstract   Tests for FxGripDictionary, the mutable-dictionary class cluster backing custom parameter data.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover construction, the collection primitives, the typed keyed and default accessors, the reserved keys and the lock that gates them, the exempt-key seeding, the histogram accessors, copying, equality, and secure coding. The surface under test is re-declared locally because FxGripDictionary.h is not a public framework header.
+*/
 
 #import <XCTest/XCTest.h>
 #import <objc/message.h>
@@ -139,6 +144,7 @@
 
 #pragma mark - Construction
 
+/*! @abstract A fresh dictionary has an empty backing dictionary and a count of zero. */
 - (void)testInitCreatesAnEmptyBackingDictionary
 {
 	XCTAssertNotNil(self.dict.data);
@@ -146,6 +152,7 @@
 	XCTAssertEqual(self.dict.data.count, 0u);
 }
 
+/*! @abstract -initWithDictionary: takes a snapshot, so a later change to the source does not reach the dictionary. */
 - (void)testInitWithDictionaryTakesAMutableSnapshotOfTheSource
 {
 	NSMutableDictionary *source = [@{@"a": @(1), @"b": @"two"} mutableCopy];
@@ -157,6 +164,7 @@
 	XCTAssertEqual(d.count, 2u);
 }
 
+/*! @abstract -initWithObjects:forKeys:count: populates the backing dictionary with the paired keys and values. */
 - (void)testInitWithObjectsForKeysCountPopulatesTheBackingDictionary
 {
 	id objects[2] = {@"alpha", @"beta"};
@@ -171,6 +179,7 @@
 
 #pragma mark - Collection Primitives
 
+/*! @abstract -setObject:forKey: writes through to the backing dictionary and updates the count. */
 - (void)testSetObjectForKeyWritesThroughToTheBackingDictionary
 {
 	[self.dict setObject:@"value" forKey:@"key"];
@@ -180,6 +189,7 @@
 	XCTAssertEqual(self.dict.count, 1u);
 }
 
+/*! @abstract Keyed subscripting routes through the primitives to the backing dictionary. */
 - (void)testKeyedSubscriptingRoutesThroughThePrimitives
 {
 	self.dict[@"key"] = @"value";
@@ -188,6 +198,7 @@
 	XCTAssertEqualObjects(self.dict.data[@"key"], @"value");
 }
 
+/*! @abstract -removeObjectForKey: deletes the entry and empties the dictionary. */
 - (void)testRemoveObjectForKeyDeletesTheEntry
 {
 	[self.dict setObject:@"value" forKey:@"key"];
@@ -198,11 +209,13 @@
 	XCTAssertEqual(self.dict.count, 0u);
 }
 
+/*! @abstract -objectForKey: returns nil for an absent key. */
 - (void)testObjectForMissingKeyIsNil
 {
 	XCTAssertNil([self.dict objectForKey:@"absent"]);
 }
 
+/*! @abstract -keyEnumerator visits every stored key. */
 - (void)testKeyEnumeratorWalksTheBackingDictionary
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -218,6 +231,7 @@
 
 #pragma mark - Keyed Typed Accessors
 
+/*! @abstract A bool value round-trips under an arbitrary key and stores as a boxed number. */
 - (void)testBoolValueRoundTripsForAnArbitraryKey
 {
 	XCTAssertTrue([self.dict setBoolValue:YES forKey:@"flag"]);
@@ -228,6 +242,7 @@
 	XCTAssertEqualObjects(self.dict.data[@"flag"], @(YES));
 }
 
+/*! @abstract The bool getter returns NO for a missing or non-number value and leaves the out parameter untouched. */
 - (void)testBoolGetterRejectsMissingAndNonNumberValues
 {
 	[self.dict setObject:@"not a number" forKey:@"text"];
@@ -238,6 +253,7 @@
 	XCTAssertTrue(value, @"the out parameter stays untouched when the getter fails");
 }
 
+/*! @abstract A float value round-trips under an arbitrary key. */
 - (void)testFloatValueRoundTripsForAnArbitraryKey
 {
 	XCTAssertTrue([self.dict setFloatValue:2.5 forKey:@"f"]);
@@ -247,6 +263,7 @@
 	XCTAssertEqual(value, 2.5);
 }
 
+/*! @abstract The float getter reads any stored number as a double. */
 - (void)testFloatGetterAcceptsAnyStoredNumber
 {
 	[self.dict setObject:@(7) forKey:@"i"];
@@ -256,6 +273,7 @@
 	XCTAssertEqual(value, 7.0);
 }
 
+/*! @abstract An int value round-trips under an arbitrary key. */
 - (void)testIntValueRoundTripsForAnArbitraryKey
 {
 	XCTAssertTrue([self.dict setIntValue:-42 forKey:@"i"]);
@@ -265,6 +283,7 @@
 	XCTAssertEqual(value, -42);
 }
 
+/*! @abstract The int getter truncates a stored double toward zero. */
 - (void)testIntGetterTruncatesAStoredDouble
 {
 	[self.dict setObject:@(3.9) forKey:@"i"];
@@ -274,6 +293,7 @@
 	XCTAssertEqual(value, 3);
 }
 
+/*! @abstract A path id round-trips, stored as an unsigned number. */
 - (void)testPathIDRoundTripsAsAnUnsignedNumber
 {
 	FxPathID path = (FxPathID)(uintptr_t)0xABCDEF;
@@ -285,6 +305,7 @@
 	XCTAssertEqual(readBack, path);
 }
 
+/*! @abstract The path-id getter returns NO for a non-number value. */
 - (void)testPathIDGetterRejectsANonNumberValue
 {
 	[self.dict setObject:@"nope" forKey:@"p"];
@@ -293,6 +314,7 @@
 	XCTAssertFalse([self.dict getPathID:&readBack forKey:@"p"]);
 }
 
+/*! @abstract A string value round-trips under an arbitrary key. */
 - (void)testStringParameterValueRoundTripsForAnArbitraryKey
 {
 	XCTAssertTrue([self.dict setStringParameterValue:@"hello" forKey:@"s"]);
@@ -302,6 +324,7 @@
 	XCTAssertEqualObjects(value, @"hello");
 }
 
+/*! @abstract The string getter formats a stored number as its string. */
 - (void)testStringGetterFormatsAStoredNumber
 {
 	[self.dict setObject:@(12) forKey:@"s"];
@@ -311,6 +334,7 @@
 	XCTAssertEqualObjects(value, @"12");
 }
 
+/*! @abstract The string getter returns NO for a stored array and leaves the out value nil. */
 - (void)testStringGetterRejectsAStoredArray
 {
 	[self.dict setObject:@[@"a"] forKey:@"s"];
@@ -320,6 +344,7 @@
 	XCTAssertNil(value);
 }
 
+/*! @abstract An RGBA value round-trips, stored as a four-element array. */
 - (void)testRGBAValueRoundTripsAsAFourElementArray
 {
 	XCTAssertTrue([self.dict setRedValue:0.1 greenValue:0.2 blueValue:0.3 alphaValue:0.4 forKey:@"c"]);
@@ -333,6 +358,7 @@
 	XCTAssertEqual(a, 0.4);
 }
 
+/*! @abstract The RGBA getter expands a one-element array to opaque gray. */
 - (void)testRGBAGetterExpandsAOneElementArrayToOpaqueGray
 {
 	[self.dict setObject:@[@(0.5)] forKey:@"c"];
@@ -345,6 +371,7 @@
 	XCTAssertEqual(a, 1.0);
 }
 
+/*! @abstract The RGBA getter reads a two-element array as gray plus alpha. */
 - (void)testRGBAGetterReadsATwoElementArrayAsGrayPlusAlpha
 {
 	[self.dict setObject:@[@(0.5), @(0.25)] forKey:@"c"];
@@ -356,6 +383,7 @@
 	XCTAssertEqual(a, 0.25);
 }
 
+/*! @abstract The RGBA getter defaults alpha to one for a three-element array. */
 - (void)testRGBAGetterDefaultsAlphaForAThreeElementArray
 {
 	[self.dict setObject:@[@(0.1), @(0.2), @(0.3)] forKey:@"c"];
@@ -366,6 +394,7 @@
 	XCTAssertEqual(a, 1.0);
 }
 
+/*! @abstract The RGBA getter returns NO for an empty array, a non-array, and an absent key. */
 - (void)testRGBAGetterRejectsAnEmptyArrayAndANonArray
 {
 	[self.dict setObject:@[] forKey:@"empty"];
@@ -377,6 +406,7 @@
 	XCTAssertFalse([self.dict getRedValue:&r greenValue:&g blueValue:&b alphaValue:&a forKey:@"absent"]);
 }
 
+/*! @abstract An RGB value round-trips, stored as a three-element array. */
 - (void)testRGBValueRoundTripsAsAThreeElementArray
 {
 	XCTAssertTrue([self.dict setRedValue:0.1 greenValue:0.2 blueValue:0.3 forKey:@"c"]);
@@ -389,6 +419,7 @@
 	XCTAssertEqual(b, 0.3);
 }
 
+/*! @abstract The RGB getter returns NO for an empty array, a non-array, and an absent key. */
 - (void)testRGBGetterRejectsAnEmptyArrayAndANonArray
 {
 	[self.dict setObject:@[] forKey:@"empty"];
@@ -400,6 +431,7 @@
 	XCTAssertFalse([self.dict getRedValue:&r greenValue:&g blueValue:&b forKey:@"absent"]);
 }
 
+/*! @abstract The RGB getter expands a short array to gray from its first element. */
 - (void)testRGBGetterExpandsAShortArrayToGray
 {
 	[self.dict setObject:@[@(0.75), @(0.0)] forKey:@"c"];
@@ -411,6 +443,7 @@
 	XCTAssertEqual(b, 0.75);
 }
 
+/*! @abstract The RGB setter preserves the alpha slot of an existing RGBA array. */
 - (void)testRGBSetterPreservesTheAlphaSlotOfAnExistingRGBAArray
 {
 	[self.dict setRedValue:0.1 greenValue:0.2 blueValue:0.3 alphaValue:0.4 forKey:@"c"];
@@ -420,6 +453,7 @@
 	XCTAssertEqualObjects(self.dict.data[@"c"], (@[@(0.9), @(0.8), @(0.7), @(0.4)]));
 }
 
+/*! @abstract An x-y value round-trips, stored as a two-element array. */
 - (void)testXYValueRoundTripsAsATwoElementArray
 {
 	XCTAssertTrue([self.dict setXValue:-1.5 YValue:2.5 forKey:@"pt"]);
@@ -431,6 +465,7 @@
 	XCTAssertEqual(y, 2.5);
 }
 
+/*! @abstract The x-y getter returns NO for an array that is not exactly two elements. */
 - (void)testXYGetterRequiresExactlyTwoElements
 {
 	[self.dict setObject:@[@(1.0)] forKey:@"short"];
@@ -443,12 +478,14 @@
 
 #pragma mark - Reserved Keys And Locking
 
+/*! @abstract A fresh dictionary is locked and stores no lock flag. */
 - (void)testAFreshDictionaryIsLocked
 {
 	XCTAssertTrue(self.dict.isLocked);
 	XCTAssertNil([self.dict objectForKey:kCustomAPI_IsLocked]);
 }
 
+/*! @abstract A locked dictionary refuses every reserved-key setter and stores nothing. */
 - (void)testALockedDictionaryRefusesToCreateReservedKeys
 {
 	XCTAssertFalse([self.dict setBoolValue:YES]);
@@ -461,6 +498,7 @@
 	XCTAssertEqual(self.dict.count, 0u);
 }
 
+/*! @abstract Unlocking stores the lock flag and admits the reserved-key setters. */
 - (void)testUnlockingStoresTheLockFlagAndAdmitsReservedKeys
 {
 	self.dict.locked = NO;
@@ -471,6 +509,7 @@
 	XCTAssertEqualObjects(self.dict.data[kCustomAPI_IntKey], @(11));
 }
 
+/*! @abstract Relocking removes the lock flag and leaves the other stored keys in place. */
 - (void)testRelockingRemovesTheLockFlagAndLeavesOtherKeys
 {
 	self.dict.locked = NO;
@@ -483,6 +522,7 @@
 	XCTAssertEqualObjects(self.dict.data[kCustomAPI_IntKey], @(11));
 }
 
+/*! @abstract Relocking an already locked dictionary changes nothing. */
 - (void)testRelockingAnAlreadyLockedDictionaryIsANoOp
 {
 	self.dict.locked = YES;
@@ -491,6 +531,7 @@
 	XCTAssertEqual(self.dict.count, 0u);
 }
 
+/*! @abstract A locked dictionary still updates reserved keys that already exist. */
 - (void)testALockedDictionaryStillUpdatesReservedKeysThatAlreadyExist
 {
 	[self.dict setObject:@(1) forKey:kCustomAPI_IntKey];
@@ -503,6 +544,7 @@
 	XCTAssertEqualObjects(self.dict.data[kCustomAPI_BoolKey], @(YES));
 }
 
+/*! @abstract An unlocked dictionary accepts every reserved setter and stores each under its reserved key. */
 - (void)testAnUnlockedDictionaryAcceptsEveryReservedSetter
 {
 	self.dict.locked = NO;
@@ -524,6 +566,7 @@
 	XCTAssertEqualObjects(self.dict.data[kCustomAPI_RGBAKey], (@[@(0.4), @(0.5), @(0.6), @(0.7)]));
 }
 
+/*! @abstract The default getters read the values stored under the reserved keys. */
 - (void)testTheDefaultAccessorsReadTheReservedKeys
 {
 	[self.dict setObject:@(YES) forKey:kCustomAPI_BoolKey];
@@ -563,6 +606,7 @@
 	XCTAssertEqual(b, 0.7);
 }
 
+/*! @abstract The default getters return NO on an empty dictionary. */
 - (void)testTheDefaultGettersFailOnAnEmptyDictionary
 {
 	BOOL flag = NO;
@@ -578,6 +622,7 @@
 
 #pragma mark - Copying And Equality
 
+/*! @abstract -copy produces an equal but independent FxGripDictionary that later writes do not share. */
 - (void)testCopyProducesAnIndependentDictionaryWithEqualContents
 {
 	[self.dict setObject:@"value" forKey:@"key"];
@@ -591,6 +636,7 @@
 	XCTAssertEqualObjects([self.dict objectForKey:@"key"], @"value");
 }
 
+/*! @abstract -isEqual: compares the backing dictionaries. */
 - (void)testIsEqualComparesTheBackingDictionaries
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -601,6 +647,7 @@
 	XCTAssertFalse([self.dict isEqual:different]);
 }
 
+/*! @abstract -isEqual: with nil is false. */
 - (void)testIsEqualWithNilIsFalse
 {
 	XCTAssertFalse([self.dict isEqual:nil]);
@@ -608,11 +655,13 @@
 
 #pragma mark - Secure Coding
 
+/*! @abstract The class advertises secure coding support. */
 - (void)testTheClassAdvertisesSecureCoding
 {
 	XCTAssertTrue([FxGripDictionary supportsSecureCoding]);
 }
 
+/*! @abstract The class-level parameter class list covers the supported payload classes and has the expected count. */
 - (void)testTheClassLevelParameterClassListCoversTheSupportedPayloads
 {
 	NSOrderedSet<Class> *classes = [FxGripDictionary classesForParameter];
@@ -626,6 +675,7 @@
 
 #pragma mark - Class Cluster Contract
 
+/*! @abstract Fast enumeration visits every stored key. */
 - (void)testFastEnumerationVisitsEveryKey
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -639,6 +689,7 @@
 	XCTAssertEqualObjects(seen, ([NSSet setWithArray:@[@"a", @"b"]]));
 }
 
+/*! @abstract -allKeys returns the stored keys. */
 - (void)testAllKeysReturnsTheStoredKeys
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -646,6 +697,7 @@
 	XCTAssertEqualObjects([self.dict allKeys], @[@"a"]);
 }
 
+/*! @abstract -allKeys and -allValues cover every entry and agree per key. */
 - (void)testAllKeysAndAllValuesAgreeOnEveryEntry
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -665,6 +717,7 @@
 	}
 }
 
+/*! @abstract -description lists the stored keys and values. */
 - (void)testDescriptionListsTheStoredEntries
 {
 	[self.dict setObject:@"value" forKey:@"key"];
@@ -676,6 +729,7 @@
 	XCTAssertTrue([description containsString:@"value"]);
 }
 
+/*! @abstract -mutableCopy produces a usable dictionary carrying the entries. */
 - (void)testMutableCopyProducesAUsableDictionary
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -687,6 +741,7 @@
 	XCTAssertEqualObjects([copy objectForKey:@"a"], @(1));
 }
 
+/*! @abstract A mutable copy is independent, so writes to it do not reach the receiver. */
 - (void)testMutableCopyIsIndependentOfTheReceiver
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -700,6 +755,7 @@
 	XCTAssertEqual(self.dict.count, 1u);
 }
 
+/*! @abstract The instance parameter class list matches the class-level list. */
 - (void)testTheInstanceParameterClassListMatchesTheClassLevelList
 {
 	XCTAssertEqualObjects([self.dict classesForParameter], [FxGripDictionary classesForParameter]);
@@ -707,11 +763,13 @@
 
 #pragma mark - Exempt Keys
 
+/*! @abstract exemptKeys is non-nil. */
 - (void)testExemptKeysIsNonNilAsTheHeaderDeclares
 {
 	XCTAssertNotNil(self.dict.exemptKeys);
 }
 
+/*! @abstract Reading exemptKeys seeds the two reserved keys and writes the array back under its reserved key. */
 - (void)testExemptKeysSeedsTheReservedKeysAndWritesItselfBack
 {
 	NSMutableArray *exempt = self.dict.exemptKeys;
@@ -720,6 +778,7 @@
 	XCTAssertEqualObjects([self.dict objectForKey:kCustomAPI_ExemptKeysKey], exempt);
 }
 
+/*! @abstract A caller-supplied exempt array keeps its entries and gains the two reserved keys. */
 - (void)testExemptKeysPreservesCallerSuppliedEntries
 {
 	[self.dict setObject:@[@"mine"] forKey:kCustomAPI_ExemptKeysKey];
@@ -729,6 +788,7 @@
 
 #pragma mark - Histogram
 
+/*! @abstract The histogram getter reads the five values of a well-formed channel array. */
 - (void)testHistogramGetterReadsAWellFormedChannelArray
 {
 	NSArray *channel = @[@(0.1), @(0.2), @(0.8), @(0.9), @(1.5)];
@@ -748,6 +808,7 @@
 	XCTAssertEqual(gamma, 1.5);
 }
 
+/*! @abstract The histogram getter returns NO for a missing key or a non-array value. */
 - (void)testHistogramGetterRejectsAMissingOrNonArrayValue
 {
 	[self.dict setObject:@(1) forKey:@"number"];
@@ -762,6 +823,7 @@
 									   forChannel:kFxHistogramChannel_Red forKey:@"number"]);
 }
 
+/*! @abstract Setting one histogram channel from nothing builds the four-channel structure with identity defaults for the others. */
 - (void)testHistogramSetterBuildsTheFourChannelStructureFromNothing
 {
 	XCTAssertTrue([self.dict setHistogramBlackIn:0.1 blackOut:0.2 whiteIn:0.3 whiteOut:0.4 gamma:0.5
@@ -776,6 +838,7 @@
 	XCTAssertEqualObjects(histogram[3], (@[@(0.0), @(0.0), @(1.0), @(1.0), @(1.0)]));
 }
 
+/*! @abstract Each histogram channel round-trips its five values independently. */
 - (void)testEveryHistogramChannelRoundTripsIndependently
 {
 	FxHistogramChannel channels[4] = {kFxHistogramChannel_Red, kFxHistogramChannel_Green,
@@ -803,6 +866,7 @@
 	}
 }
 
+/*! @abstract The RGB histogram channel writes the three color channels and leaves the alpha channel unchanged. */
 - (void)testTheRGBChannelWritesTheThreeColorChannelsAndLeavesAlphaAlone
 {
 	[self.dict setHistogramBlackIn:9.0 blackOut:9.1 whiteIn:9.2 whiteOut:9.3 gamma:9.4
@@ -820,6 +884,7 @@
 	XCTAssertEqualObjects(histogram[3], (@[@(9.0), @(9.1), @(9.2), @(9.3), @(9.4)]));
 }
 
+/*! @abstract The RGB histogram getter averages the red, green, and blue channels. */
 - (void)testTheRGBChannelGetterAveragesTheThreeColorChannels
 {
 	[self.dict setHistogramBlackIn:0 blackOut:1 whiteIn:2 whiteOut:3 gamma:4
@@ -841,6 +906,7 @@
 	XCTAssertEqualWithAccuracy(gamma, 7.0, 1e-12);
 }
 
+/*! @abstract The reserved histogram key obeys the lock, refusing the setter while locked and round-tripping once unlocked. */
 - (void)testTheReservedHistogramKeyObeysTheLock
 {
 	XCTAssertFalse([self.dict setHistogramBlackIn:1 blackOut:2 whiteIn:3 whiteOut:4 gamma:5
@@ -861,16 +927,19 @@
 
 #pragma mark - Path ID
 
+/*! @abstract The protocol-level -setPathID: selector exists. */
 - (void)testTheProtocolLevelPathIDSetterExists
 {
 	XCTAssertTrue([self.dict respondsToSelector:NSSelectorFromString(@"setPathID:")]);
 }
 
+/*! @abstract The misspelled -etPathID: selector does not exist. */
 - (void)testTheMisspelledPathIDSetterNoLongerExists
 {
 	XCTAssertFalse([self.dict respondsToSelector:NSSelectorFromString(@"etPathID:")]);
 }
 
+/*! @abstract The default -setPathID: refuses the reserved key while locked and writes it once unlocked. */
 - (void)testTheProtocolLevelPathIDSetterWritesTheReservedKeyWhenUnlocked
 {
 	FxPathID path = (FxPathID)(uintptr_t)0x40;
@@ -888,6 +957,7 @@
 
 #pragma mark - Equality
 
+/*! @abstract -isEqual: to a foreign object answers false without throwing. */
 - (void)testIsEqualToAForeignObjectAnswersFalse
 {
 	BOOL equal = YES;
@@ -895,6 +965,7 @@
 	XCTAssertFalse(equal);
 }
 
+/*! @abstract Equal dictionaries share a hash. */
 - (void)testEqualDictionariesShareAHash
 {
 	[self.dict setObject:@(1) forKey:@"a"];
@@ -906,6 +977,7 @@
 
 #pragma mark - Archiving
 
+/*! @abstract A secure archive round trip preserves the class and the contents. */
 - (void)testSecureCodingRoundTripPreservesClassAndContents
 {
 	FxGripDictionary *original = [FxGripDictionary.alloc initWithDictionary:@{@"s": @"str", @"n": @(3.5)}];
@@ -926,6 +998,7 @@
 	XCTAssertTrue([decoded isEqual:original]);
 }
 
+/*! @abstract A secure archive round trip carries nested containers and FxTime values. */
 - (void)testSecureCodingRoundTripCarriesNestedContainersAndFxTimeValues
 {
 	FxTime *time = (FxTime *)[[NSClassFromString(@"FxTime") alloc] initWithTime:300 timescale:600];
@@ -956,6 +1029,7 @@
 	XCTAssertEqualWithAccuracy(decodedTime.seconds, 0.5, 1e-12);
 }
 
+/*! @abstract A decoded dictionary is deeply mutable, so its nested containers accept additions. */
 - (void)testADecodedDictionaryIsDeeplyMutable
 {
 	FxGripDictionary *original = [FxGripDictionary.alloc initWithDictionary:@{@"nested": @{@"inner": @[@(1)]}}];

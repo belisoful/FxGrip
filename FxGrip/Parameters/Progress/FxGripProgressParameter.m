@@ -1,7 +1,15 @@
-//
-//  FxGripProgressParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripProgressParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripProgressParameter
+	@abstract   Implements the progress display view and its custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. The view drives an NSProgressIndicator, a
+	            BEFoundation dot, and a label from the value dictionary. A negative fraction
+	            spins an indeterminate bar. The parameter seeds the display from the declared
+	            default and is updated by setting the value.
+*/
 
 #import "FxGripProgressParameter.h"
 #import "FxGripTileableEffect.h"
@@ -15,6 +23,11 @@ static const CGFloat kFxGripProgressDotSize = 12.0;
 static const CGFloat kFxGripProgressGap = 6.0;
 static const CGFloat kFxGripProgressBarHeight = 8.0;
 
+/*!
+	@abstract	The progress display backing a progress parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The bar, dot, and label are read-only and driven from
+				the pushed value.
+*/
 @implementation FxGripProgressView
 {
 	BEDotView *_dot;
@@ -74,6 +87,12 @@ static const CGFloat kFxGripProgressBarHeight = 8.0;
 	[self layoutContents];
 }
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Drives the bar, dot, and label from the pushed value.
+	@discussion	Introduced in FxGrip 0.1.0. A value that is not an FxGripDictionary is ignored. A
+				fraction below zero spins an indeterminate bar; a fraction from zero to one sets
+				the determinate bar. The integer sets the dot state and the string sets the label. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripDictionary.class]) {
@@ -110,6 +129,11 @@ static const CGFloat kFxGripProgressBarHeight = 8.0;
 @end
 
 
+/*!
+	@abstract	The custom parameter that hosts the read-only progress display.
+	@discussion	Introduced in FxGrip 0.1.0. The value is an FxGripDictionary. Creation sets the
+				custom-UI and no-state flags.
+*/
 @implementation FxGripProgressParameter
 
 + (nullable NSString*)parameterTypeString
@@ -129,6 +153,12 @@ static const CGFloat kFxGripProgressBarHeight = 8.0;
 	return classes;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Adds the progress display as a custom parameter to the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The declared default seeds the initial fraction, dot
+				state, and label. Creation sets the custom-UI and no-state flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The declared default may set the initial fraction (float), dot state (int), and label (string).

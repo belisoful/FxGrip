@@ -1,7 +1,12 @@
-//
-//  FxGripFxFactoryTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripFxFactoryTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripFxFactoryTests
+	@abstract   Unit tests for the FxGripFxFactory extension's licensing, contact form, watermark, and settings behavior.
+	@discussion Introduced in FxGrip 0.1.0. Mock subclasses override the FxFactory SDK seams so the licensing, contact-form, watermark-render, and handler-registration logic runs end to end without a live FxFactory installation. The tests cover the ported notification dispatch selectors, the inactive-configuration and missing-payload guards, the contact-form recipient guard, the debug license override, the watermark render decision, handler re-registration teardown, a settings-object watermark opt-out, and cache invalidation on a product UUID change.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
@@ -189,6 +194,7 @@
 
 #pragma mark The notification-dispatch port
 
+/*! @abstract The extension responds to the single-notification dispatch selectors for parameters, changes, document add, and render. */
 - (void)testTheExtensionRespondsToThePortedNotificationSelectors
 {
 	// The live dispatch table delivers each hook a single NSNotification; the legacy
@@ -199,6 +205,7 @@
 	XCTAssertTrue([self.factory respondsToSelector:@selector(extRenderDestinationImage:)]);
 }
 
+/*! @abstract The extension no longer responds to the legacy multi-argument hook selectors. */
 - (void)testTheExtensionNoLongerRespondsToTheLegacySelectors
 {
 	XCTAssertFalse([self.factory respondsToSelector:NSSelectorFromString(@"extProcessParameters:")]);
@@ -209,6 +216,7 @@
 
 #pragma mark Handler behavior
 
+/*! @abstract An inactive configuration adds no parameters to the list. */
 - (void)testAnInactiveConfigurationAddsNoParameters
 {
 	// Without an FxFactory settings object or an FxFactoryActive property the extension is
@@ -222,6 +230,7 @@
 	XCTAssertEqual(parameters.count, (NSUInteger)0);
 }
 
+/*! @abstract The parameter-changed handler ignores a notification carrying no parameter id without throwing. */
 - (void)testParameterChangedIgnoresANotificationWithoutAParameterID
 {
 	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
@@ -230,6 +239,7 @@
 	XCTAssertNoThrow([self.factory extParameterChanged:note]);
 }
 
+/*! @abstract The render handler ignores a notification carrying no destination image without throwing. */
 - (void)testRenderIgnoresANotificationWithoutADestinationImage
 {
 	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectRenderDestinationImageName
@@ -240,6 +250,7 @@
 
 #pragma mark #35 — contact-form recipient guard
 
+/*! @abstract The contact form refuses an external recipient address. */
 - (void)testTheContactFormRejectsExternalRecipients
 {
 	// An external recipient is refused. On a machine without FxFactory the SDK guard also
@@ -250,6 +261,7 @@
 
 #pragma mark End-to-end via the mock seams
 
+/*! @abstract pluginIsLicensed follows the licensing seam status, true for licensed and false for unlicensed. */
 - (void)testLicenseDecisionFollowsTheLicensingSeam
 {
 	FxGripFxFactoryMock *licensed = [FxGripFxFactoryMock.alloc init];
@@ -263,6 +275,7 @@
 	XCTAssertFalse([unlicensed pluginIsLicensed]);
 }
 
+/*! @abstract The contact form sends to an fxfactory.com recipient and refuses an external recipient before the send. */
 - (void)testTheContactFormGuardRunsEndToEndThroughTheSeam
 {
 	FxGripFxFactoryMock *mock = [FxGripFxFactoryMock.alloc init];
@@ -297,6 +310,7 @@
 	return mock;
 }
 
+/*! @abstract The debug override forces licensed over an unlicensed real status and applies the licensed UI state. */
 - (void)testTheDebugOverrideForcesLicensedOverTheRealStatus
 {
 	FxGripFxFactoryStubEffect *effect = nil;
@@ -309,6 +323,7 @@
 	XCTAssertTrue(effect.appliedLicenseState, @"the license UI state is applied");
 }
 
+/*! @abstract The debug override forces unlicensed over a licensed real status and applies the unlicensed UI state. */
 - (void)testTheDebugOverrideForcesUnlicensedOverTheRealStatus
 {
 	FxGripFxFactoryStubEffect *effect = nil;
@@ -321,6 +336,7 @@
 	XCTAssertFalse(effect.appliedLicenseState);
 }
 
+/*! @abstract An absent debug override falls through to the real licensing status and syncs the toggle to it. */
 - (void)testAnAbsentDebugPropertyFallsThroughToTheRealLicensingSync
 {
 	FxGripFxFactoryStubEffect *effect = nil;
@@ -350,18 +366,21 @@
 	return mock.renderCount;
 }
 
+/*! @abstract An unlicensed plugin with watermarking enabled runs the watermark render once. */
 - (void)testUnlicensedWithWatermarkingRunsTheWatermarkRender
 {
 	// 2 == ProductUnlicensed
 	XCTAssertEqual([self renderCountForWatermark:YES licensedStatus:2], (NSUInteger)1);
 }
 
+/*! @abstract A licensed plugin skips the watermark render. */
 - (void)testLicensedSkipsTheWatermarkRender
 {
 	// 3 == ProductLicensed
 	XCTAssertEqual([self renderCountForWatermark:YES licensedStatus:3], (NSUInteger)0);
 }
 
+/*! @abstract Disabled watermarking skips the render even when unlicensed. */
 - (void)testWatermarkingDisabledSkipsTheRender
 {
 	XCTAssertEqual([self renderCountForWatermark:NO licensedStatus:2], (NSUInteger)0);
@@ -369,6 +388,7 @@
 
 #pragma mark License handler unregisters the UUID it registered
 
+/*! @abstract Re-registering a license handler first unregisters the previous product's UUID. */
 - (void)testReRegisteringTearsDownThePreviousProductsHandler
 {
 	FxGripFxFactoryHandlerMock *mock = [FxGripFxFactoryHandlerMock.alloc init];
@@ -382,6 +402,7 @@
 
 #pragma mark A settings-object watermark preference is honored
 
+/*! @abstract A settings-object watermark opt-out registers as present and is honored rather than overridden to YES. */
 - (void)testASettingsObjectWatermarkOptOutIsHonored
 {
 	FxGripFxFactory *factory = [NSClassFromString(@"FxGripFxFactory") alloc];
@@ -409,6 +430,7 @@
 
 #pragma mark Changing the product UUID invalidates the cached license verdict
 
+/*! @abstract Changing the product UUID clears the cached license verdict so it recomputes for the new product. */
 - (void)testChangingTheProductUUIDInvalidatesTheCachedLicenseVerdict
 {
 	FxGripFxFactoryDocumentMock *mock = [FxGripFxFactoryDocumentMock.alloc init];

@@ -1,7 +1,17 @@
-//
-//  FxGripCurveEditorView.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveEditorView.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveEditorView
+	@abstract   The reusable curve editor view and the value types that style it.
+	@discussion Introduced in FxGrip 0.1.0. The editor draws and edits a single FxGripCurveData as
+	            an FCP-style strip or pane. The domain, role, and background style one instance, and
+	            the same class serves every mapping. This header declares the editor, its delegate
+	            protocol, the background, grid, line, readout, and paint enumerations, and the
+	            FxGripCurvePaint gradient stop. Rendering evaluates the curve with the same builders
+	            the render uses, so the drawn curve equals the applied curve.
+*/
 
 #ifndef FxGripCurveEditorView_h
 #define FxGripCurveEditorView_h
@@ -38,7 +48,7 @@ typedef NS_ENUM(NSInteger, FxGripCurveBackground) {
 /*!
 	@enum       FxGripCurveGridDivisions
 	@abstract   How many equal divisions the alignment grid draws behind the curve.
-	@discussion Introduced in FxGrip 1.0. The interior lines split each axis into the given
+	@discussion Introduced in FxGrip 0.1.0. The interior lines split each axis into the given
 				number of equal parts, leaving `divisions - 1` lines per axis. Finer lines
 				dim by tier so the primary quarter lines stay dominant, matching Final Cut Pro:
 
@@ -78,7 +88,7 @@ typedef NS_ENUM(NSInteger, FxGripCurvePaintKind) {
 /*!
 	@class      FxGripCurvePaint
 	@abstract   One stop of a vertical background gradient: none, a color, or the hue spectrum.
-	@discussion Introduced in FxGrip 1.0. Immutable. A curve strip composes up to three of these
+	@discussion Introduced in FxGrip 0.1.0. Immutable. A curve strip composes up to three of these
 				(top, center, bottom) into a vertical gradient over the strip base.
 */
 @interface FxGripCurvePaint : NSObject <NSCopying>
@@ -147,7 +157,7 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 /*!
 	@class      FxGripCurveEditorView
 	@abstract   One reusable curve editor: an FCP-style strip or pane for a single curve.
-	@discussion Introduced in FxGrip 1.0. The domain, role, and background style the
+	@discussion Introduced in FxGrip 0.1.0. The domain, role, and background style the
 				editor; the same class serves every mapping. Interactions: click on the
 				curve adds a point; dragging moves it (a linear domain pins the first
 				and last point in x; a circular domain wraps x); holding Control during
@@ -166,11 +176,14 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 
 /*! The curve set key this editor edits; consulted by updateFromCustomData:. */
 @property (nonatomic, copy, nullable) NSString *mappingKey;
+
+/*! The strip background drawn behind the curve. Setting redraws. */
 @property (nonatomic, assign) FxGripCurveBackground background;
 
 /*! The alignment grid density. Defaults to eighths (7 lines). Setting redraws. */
 @property (nonatomic, assign) FxGripCurveGridDivisions gridDivisions;
 
+/*! The delegate that receives the editor's continuous edits and its commits. */
 @property (nonatomic, assign, nullable) id<FxGripCurveEditorDelegate> delegate;
 
 /*! The curve being edited; never nil after initialization. Setting redraws. */

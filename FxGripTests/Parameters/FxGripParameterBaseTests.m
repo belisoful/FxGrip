@@ -1,17 +1,17 @@
-//
-//  FxGripParameterBaseTests.m
-//  FxGripTests
-//
-//  Unit tests for the shared parameter base: the designated initializer's type gate and
-//  the state it captures, the abstract class entry points, the name and flag accessors that
-//  talk to the host, the state-participation walk, the managed selector, the timing
-//  conversions, the coder branch, and the flag-caching notification handlers the
-//  initializer installs on the effect's notifier.
-//
-//  FxGripParameterBase and FxGripParameter are abstract, so the concrete subclasses stand in:
-//  FxGripFloatParameter for a state parameter and FxGripPushButtonParameter for one that
-//  carries no state.
-//
+/*!
+	@file       FxGripParameterBaseTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterBaseTests
+	@abstract   Tests the shared parameter base: the designated initializer, the abstract entry
+	            points, the name and flag accessors, state participation, timing conversions,
+	            coding, and the flag-caching notification handlers.
+	@discussion Introduced in FxGrip 0.1.0. FxGripParameterBase and FxGripParameter are abstract,
+	            so the concrete subclasses stand in. FxGripFloatParameter exercises a state
+	            parameter and FxGripPushButtonParameter exercises a stateless one. The tests drive
+	            a stub effect and inspect the recorded host API calls.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -87,6 +87,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Designated initializer
 
+/*! @abstract The initializer records the parameter id, parent id, effect, and added state from the configuration, leaving no error. */
 - (void)testTheInitializerCapturesTheIdentityDeclaredByTheConfiguration
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:@{kFxParameterProperty_ParentId: @(kBaseTestParentParameter)}];
@@ -99,12 +100,14 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertNil(parameter.error);
 }
 
+/*! @abstract A parameter declared with no parent reports the top-level group as its parent id. */
 - (void)testAParameterOutsideAnyGroupNamesTheTopLevelGroupAsItsParent
 {
 	XCTAssertEqual([self makeParameterWithExtra:nil].parameterParentID,
 				   (FxParameterId)kFxParameterId_TopLevelGroup);
 }
 
+/*! @abstract The declared flag word becomes the parameter's current staged flags. */
 - (void)testTheInitializerCapturesTheDeclaredFlags
 {
 	FxGripFloatParameter *parameter =
@@ -113,6 +116,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqual(parameter.parameterCurrentFlags, (FxParameterFlags)kFxParameterFlag_HIDDEN);
 }
 
+/*! @abstract Initializing a float parameter from a toggle configuration returns nil. */
 - (void)testTheInitializerRefusesAConfigurationOfAnotherType
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kBaseTestParameter, kFxParameterType_Toggle, @"Amount", nil);
@@ -120,6 +124,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertNil([FxGripFloatParameter.alloc initWithDictionary:config effect:(id)self.effect]);
 }
 
+/*! @abstract A mutable configuration is retained by reference, so a later mutation of the dictionary is visible through the parameter. */
 - (void)testAMutableConfigurationIsAdoptedRatherThanCopied
 {
 	NSMutableDictionary *config = [self floatConfigWithExtra:@{kFxParameterProperty_Selector: @"manageAmount"}];
@@ -132,6 +137,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 						  @"the parameter reads through to the same record");
 }
 
+/*! @abstract An immutable configuration is copied, so the parameter keeps the selector it was built with. */
 - (void)testAnImmutableConfigurationIsCopiedIntoTheParameter
 {
 	NSDictionary *config = [self floatConfigWithExtra:@{kFxParameterProperty_Selector: @"manageAmount"}].copy;
@@ -143,12 +149,14 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Abstract entry points
 
+/*! @abstract The abstract type accessors on FxGripParameter raise an internal inconsistency exception. */
 - (void)testTheAbstractTypeAccessorsRefuseToAnswer
 {
 	XCTAssertThrowsSpecificNamed([FxGripParameter parameterType], NSException, NSInternalInconsistencyException);
 	XCTAssertThrowsSpecificNamed([FxGripParameter parameterTypeString], NSException, NSInternalInconsistencyException);
 }
 
+/*! @abstract The abstract +addParameter:toEffect: on FxGripParameter raises an internal inconsistency exception. */
 - (void)testTheAbstractCreationEntryPointRefusesToAnswer
 {
 	id parameterClass = FxGripParameter.class;
@@ -164,11 +172,13 @@ static const FxParameterId kBaseTestParentParameter = 92;
 #pragma clang diagnostic pop
 }
 
+/*! @abstract The base parameter's extension key is the empty string. */
 - (void)testAParameterCarriesNoExtensionKeyOfItsOwn
 {
 	XCTAssertEqualObjects([self makeParameterWithExtra:nil].extKey, @"");
 }
 
+/*! @abstract The start and end change-bracket calls succeed and set no error. */
 - (void)testTheChangeBracketAcceptsEveryTime
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -179,6 +189,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertNil(error);
 }
 
+/*! @abstract Installing tags succeeds when the host exposes no tags API. */
 - (void)testTagInstallationSucceedsWithoutATagsAPI
 {
 	XCTAssertTrue([[self makeParameterWithExtra:nil] addTags]);
@@ -186,6 +197,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Name
 
+/*! @abstract Reading the parameter name returns the value the dynamic parameter API reports. */
 - (void)testTheNameIsReadFromTheDynamicParameterAPI
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -194,6 +206,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(parameter.parameterName, @"Renamed");
 }
 
+/*! @abstract Setting the parameter name calls the dynamic parameter API with the id and new name and sets no error. */
 - (void)testSettingTheNameWritesThroughTheDynamicParameterAPI
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -205,6 +218,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertNil(parameter.error);
 }
 
+/*! @abstract A name write that the host rejects records the host error on the parameter. */
 - (void)testAFailedNameWriteIsRecordedOnTheParameter
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -218,6 +232,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Flags
 
+/*! @abstract Reading parameterFlags queries the retrieval API for this parameter id and returns its flags. */
 - (void)testTheParameterFlagsAreReadFromTheRetrievalAPI
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -227,6 +242,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.getFlagsParameterIDs, @[@(kBaseTestParameter)]);
 }
 
+/*! @abstract A flags read that the host refuses returns the invalid flag marker. */
 - (void)testAFlagsReadTheHostRefusesReportsTheInvalidMarker
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -235,6 +251,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqual(parameter.parameterFlags, (FxParameterFlags)kFxParameterFlag_INVALID);
 }
 
+/*! @abstract Setting parameterFlags forwards the combined flag word to the setting API. */
 - (void)testSettingTheParameterFlagsWritesThroughTheSettingAPI
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -262,6 +279,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertFalse(parameter.flagCaching);
 }
 
+/*! @abstract Each staged flag bit is reported true by its dedicated boolean accessor. */
 - (void)testEveryStagedFlagBitIsReportedByItsOwnAccessor
 {
 	FxParameterFlags staged = kFxParameterFlag_DONT_DISPLAY_IN_DASHBOARD | kFxParameterFlag_INVALID
@@ -279,6 +297,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertTrue(parameter.flagCacheDirty);
 }
 
+/*! @abstract Turning a flag on writes the whole staged word, including the previously staged bits. */
 - (void)testTogglingAStagedFlagWritesTheWholeStagedWordBack
 {
 	FxGripFloatParameter *parameter =
@@ -290,6 +309,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 						  @(kFxParameterFlag_HIDDEN | kFxParameterFlag_NO_DEBUG));
 }
 
+/*! @abstract Setting a flag that is already set writes nothing to the host. */
 - (void)testSettingAStagedFlagToItsCurrentStateWritesNothing
 {
 	FxGripFloatParameter *parameter =
@@ -300,6 +320,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls, @[]);
 }
 
+/*! @abstract Clearing a staged flag writes the remaining flag word without that bit. */
 - (void)testClearingAStagedFlagWritesTheWordWithoutThatBit
 {
 	FxGripFloatParameter *parameter =
@@ -311,6 +332,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 						  @(kFxParameterFlag_NOSTATE));
 }
 
+/*! @abstract A parameter with no declared flags stages the default flag word, and flagIsDefault reports false since default names the absence of every flag. */
 - (void)testAParameterWithoutDeclaredFlagsStagesTheDefaultFlags
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -321,6 +343,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Flush
 
+/*! @abstract Flushing a non-caching parameter writes no flags. */
 - (void)testFlushingAParameterThatIsNotCachingWritesNothing
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -330,6 +353,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls, @[]);
 }
 
+/*! @abstract Flushing a caching parameter issues one write that drops the cache bit and keeps every other staged flag. */
 - (void)testFlushingACachingParameterClearsTheCacheBitInASingleWrite
 {
 	FxGripFloatParameter *parameter =
@@ -347,6 +371,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Parent and creation callback
 
+/*! @abstract Setting the parent id updates the reported parent. */
 - (void)testTheParentCanBeReassigned
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -370,11 +395,13 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark State participation
 
+/*! @abstract A state parameter with no group participates in the plugin state. */
 - (void)testAStateParameterOutsideAnyGroupHasState
 {
 	XCTAssertTrue([self makeParameterWithExtra:nil].hasState);
 }
 
+/*! @abstract A push-button parameter, which carries no value, never participates in the state. */
 - (void)testAParameterThatIsNotAStateParameterNeverHasState
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kBaseTestParameter, kFxParameterType_PushButton, @"Reset", nil);
@@ -385,6 +412,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertFalse(button.hasState);
 }
 
+/*! @abstract The no-state flag removes an otherwise stateful parameter from the state. */
 - (void)testTheStatelessFlagRemovesTheParameterFromTheState
 {
 	FxGripFloatParameter *parameter =
@@ -393,6 +421,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertFalse(parameter.hasState);
 }
 
+/*! @abstract A parameter inside a no-state ancestor group is removed from the state. */
 - (void)testAStatelessAncestorRemovesTheParameterFromTheState
 {
 	NSDictionary *parentConfig = FxGripParamClassTestConfig(kBaseTestParentParameter, kFxParameterType_Float, @"Group",
@@ -407,6 +436,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertFalse(parameter.hasState);
 }
 
+/*! @abstract A parameter inside a stateful group keeps its state participation. */
 - (void)testAParameterInsideAStatefulGroupKeepsItsState
 {
 	NSDictionary *parentConfig = FxGripParamClassTestConfig(kBaseTestParentParameter, kFxParameterType_Float, @"Group", nil);
@@ -422,6 +452,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Managed selector
 
+/*! @abstract A declared manage selector name resolves to the full change-signature selector. */
 - (void)testTheManagedSelectorIsTheDeclaredNameWithTheChangeSignature
 {
 	FxGripFloatParameter *parameter =
@@ -430,6 +461,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(NSStringFromSelector(parameter.parameterSelector), @"manageAmount:atTime:error:");
 }
 
+/*! @abstract A declared selector name that lacks the manage prefix yields a NULL managed selector. */
 - (void)testASelectorWithoutTheManagePrefixIsRefused
 {
 	FxGripFloatParameter *parameter =
@@ -438,6 +470,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertTrue(parameter.parameterSelector == NULL);
 }
 
+/*! @abstract A parameter with no declared selector has a NULL managed selector. */
 - (void)testAParameterWithoutADeclaredSelectorHasNoManagedSelector
 {
 	XCTAssertTrue([self makeParameterWithExtra:nil].parameterSelector == NULL);
@@ -445,6 +478,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Timing conversions
 
+/*! @abstract Converting an image time to a timeline time queries the timing API for this parameter and returns the converted value. */
 - (void)testTheTimelineConversionAsksTheTimingAPIForThisParameter
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -457,6 +491,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(self.effect.apiManager.timingAPIv4.queries.lastObject[@"id"], @(kBaseTestParameter));
 }
 
+/*! @abstract Converting a timeline time to an image time queries the timing API and returns the converted value. */
 - (void)testTheImageConversionAsksTheTimingAPIForThisParameter
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -470,11 +505,13 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Coding
 
+/*! @abstract FxGripParameter reports support for secure coding. */
 - (void)testAParameterSupportsSecureCoding
 {
 	XCTAssertTrue(FxGripParameter.supportsSecureCoding);
 }
 
+/*! @abstract initWithCoder returns the same parameter instance. */
 - (void)testDecodingReturnsTheParameterItself
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -483,6 +520,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects([parameter initWithCoder:archiver], parameter);
 }
 
+/*! @abstract Encoding with a plain coder, which is not a plugin state encoder, reads no value from the host. */
 - (void)testAPlainCoderIsNotAPluginStateEncoderAndReadsNoValue
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -495,6 +533,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
 }
 
+/*! @abstract Encoding with a plugin state coder reads the parameter value at the coder's render time. */
 - (void)testAPluginStateCoderReadsTheValueAtTheCodersRenderTime
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -539,6 +578,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 												   effect:(id)self.effect];
 }
 
+/*! @abstract A caching parameter answers a pre-get-flags notification from its staged flags and marks the query handled. */
 - (void)testACachingParameterAnswersTheFlagsQueryFromItsStagedFlags
 {
 	FxParameterFlags staged = kFxParameterFlag_CACHE | kFxParameterFlag_HIDDEN;
@@ -552,6 +592,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(staged));
 }
 
+/*! @abstract A non-caching parameter leaves a pre-get-flags notification unanswered so the host handles it. */
 - (void)testAParameterThatIsNotCachingLeavesTheFlagsQueryToTheHost
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -563,6 +604,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertNil(userInfo.fxResult);
 }
 
+/*! @abstract A set-flags notification that turns caching on is absorbed into the staged flags with the dirty bit added, and the host is not asked to store it. */
 - (void)testAFlagsWriteThatTurnsCachingOnIsAbsorbedIntoTheStagedFlags
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -581,6 +623,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 						  @(kFxParameterFlag_CACHE | kFxParameterFlag_DISABLED | kFxParameterFlag_CACHEDIRTY));
 }
 
+/*! @abstract A set-flags notification without the cache bit drops only the dirty marker and passes to the host. */
 - (void)testAFlagsWriteWithoutCachingLosesOnlyTheDirtyMarkerAndReachesTheHost
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -593,6 +636,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DISABLED));
 }
 
+/*! @abstract A completed set-flags notification carrying the saving flag stores the saved flags, minus the saving and dirty bits, as the current flags. */
 - (void)testACompletedSavingWriteBecomesTheParametersCurrentFlags
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -604,6 +648,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqual(parameter.parameterCurrentFlags, (FxParameterFlags)kFxParameterFlag_HIDDEN);
 }
 
+/*! @abstract A completed set-flags notification without the saving flag leaves the current flags unchanged. */
 - (void)testACompletedWriteThatIsNotSavingLeavesTheCurrentFlagsAlone
 {
 	FxGripFloatParameter *parameter =
@@ -616,6 +661,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqual(parameter.parameterCurrentFlags, (FxParameterFlags)kFxParameterFlag_HIDDEN);
 }
 
+/*! @abstract A caching parameter leaves a flags query about a different parameter unanswered. */
 - (void)testACachingParameterDoesNotAnswerAnotherParametersFlagsQuery
 {
 	[self makeParameterWithID:kBaseTestParentParameter
@@ -630,6 +676,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqualObjects(userInfo.fxParameter[kFxParameterProperty_Flags], @(kFxParameterFlag_DEFAULT));
 }
 
+/*! @abstract A completed set-flags notification updates only the named parameter and leaves an untargeted parameter's staged word untouched. */
 - (void)testACompletedWriteReachesOnlyTheParameterItNames
 {
 	FxGripFloatParameter *written = [self makeParameterWithID:kBaseTestParameter extra:nil];
@@ -646,6 +693,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertTrue(bystander.flagCaching, @"the staged word of the untargeted parameter is untouched");
 }
 
+/*! @abstract After removeObservers, the parameter no longer answers flags notifications. */
 - (void)testRemovingTheObserversEndsTheFlagsTraffic
 {
 	FxGripFloatParameter *parameter =
@@ -662,6 +710,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 
 #pragma mark Flag writes through the setting wrapper
 
+/*! @abstract A flags write through the setting wrapper reaches the host and becomes the parameter's current flags. */
 - (void)testAHostWriteThroughTheWrapperBecomesTheParametersCurrentFlags
 {
 	FxGripFloatParameter *parameter = [self makeParameterWithExtra:nil];
@@ -673,6 +722,7 @@ static const FxParameterId kBaseTestParentParameter = 92;
 	XCTAssertEqual(parameter.parameterCurrentFlags, (FxParameterFlags)kFxParameterFlag_HIDDEN);
 }
 
+/*! @abstract A caching parameter's write through the setting wrapper stages the flags without a host call and without moving the current flags. */
 - (void)testACachingParametersWriteThroughTheWrapperStagesWithoutMovingTheCurrentFlags
 {
 	FxParameterFlags staged = kFxParameterFlag_CACHE | kFxParameterFlag_HIDDEN;

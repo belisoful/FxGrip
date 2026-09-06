@@ -1,7 +1,22 @@
-//
-//  FxGripColorGamut.h
-//  FxGrip
-//
+/*!
+	@file       FxGripColorGamut.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-08-10
+	@header     FxGripColorGamut
+	@abstract   Color matrices for the working gamuts FxPlug reports, plus the sRGB transfer and
+	            a matrix coder.
+	@discussion Introduced in FxGrip 0.1.0. FxPlug tells an effect its project's working gamut
+	            (kFxColorPrimaries_Rec709 or kFxColorPrimaries_Rec2020) but ships no math for it,
+	            so an effect that needs a luminance, a gamut conversion, or an XYZ transform
+	            derives the matrix itself. These functions supply the standard matrices, computed
+	            from each gamut's primary chromaticities against a D65 white, so the luminance
+	            row agrees with the published weights.
+
+	            Matrices are simd_float3x3 in simd's column-major layout: `simd_mul(matrix, rgb)`
+	            transforms a column vector. FxGripColorMatrixMakeRowMajor builds one from the
+	            row-major form a reference matrix is usually written in.
+*/
 
 #ifndef FxGripColorGamut_h
 #define FxGripColorGamut_h
@@ -11,22 +26,6 @@
 #import <FxPlug/FxPlugSDK.h>
 
 NS_ASSUME_NONNULL_BEGIN
-
-/*!
-	@header     FxGripColorGamut
-	@abstract   Color matrices for the working gamuts FxPlug reports, plus the sRGB transfer and
-				a matrix coder.
-	@discussion Introduced in FxGrip 1.0. FxPlug tells an effect its project's working gamut
-				(kFxColorPrimaries_Rec709 or kFxColorPrimaries_Rec2020) but ships no math for it,
-				so an effect that needs a luminance, a gamut conversion, or an XYZ transform
-				derives the matrix itself. These functions supply the standard matrices, computed
-				from each gamut's primary chromaticities against a D65 white, so the luminance
-				row agrees with the published weights.
-
-				Matrices are simd_float3x3 in simd's column-major layout: `simd_mul(matrix, rgb)`
-				transforms a column vector. FxGripColorMatrixMakeRowMajor builds one from the
-				row-major form a reference matrix is usually written in.
-*/
 
 /*! The Rec.709 or Rec.2020 luminance weights (the CIE Y row) for the primaries. */
 simd_float3 FxGripLuminanceWeights(FxColorPrimaries primaries);

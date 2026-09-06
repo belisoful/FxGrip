@@ -1,7 +1,18 @@
-//
-//  FxGripLiveImageParameter.h
-//  FxGrip
-//
+/*!
+	@file       FxGripLiveImageParameter.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripLiveImageParameter
+	@abstract   A read-only strip of live images fed from the render pass to the inspector.
+	@discussion Introduced in FxGrip 0.1.0. The render pass and the custom parameter views run in the
+	            same plugin process, so an image the effect holds at render reaches the inspector
+	            without a round trip through the host's parameter store. The parameter publishes a
+	            Metal texture, CGImage, or image buffer into a numbered slot; a texture is downscaled
+	            and read back asynchronously. Publishing is gated on an on-screen inspector view, so a
+	            batch export or background render stores nothing. This header declares the slot-strip
+	            view and the parameter.
+*/
 
 #ifndef FxGripLiveImageParameter_h
 #define FxGripLiveImageParameter_h
@@ -20,7 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripLiveImageView
 	@abstract   The slot strip backing a live image parameter.
-	@discussion Introduced in FxGrip 1.0. The view draws one slot per configured label
+	@discussion Introduced in FxGrip 0.1.0. The view draws one slot per configured label
 				across the inspector width. Each slot shows its latest FxGripLiveFrame
 				aspect-fit over a checkerboard, with a caption carrying the slot label and,
 				when enabled, the frame's dimensions and pixel format. An empty slot draws
@@ -41,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripLiveImageParameter
 	@abstract   A read-only strip of live images fed from the render pass.
-	@discussion Introduced in FxGrip 1.0. The FxPlug host runs the render pass and the
+	@discussion Introduced in FxGrip 0.1.0. The FxPlug host runs the render pass and the
 				custom parameter views in the same plugin process, so an image the effect
 				holds at render can reach the inspector without a round trip through the
 				host's parameter store. The parameter's value is an FxGripDictionary

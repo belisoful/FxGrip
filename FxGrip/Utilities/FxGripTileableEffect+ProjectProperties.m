@@ -1,14 +1,23 @@
-//
-//  FxGripOOBParameterAccess.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripTileableEffect+ProjectProperties.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+ProjectProperties
+	@abstract   Implements the host project attribute queries.
+	@discussion Introduced in FxGrip 0.1.0. Each attribute reads the host project API. The
+	            convenience forms log any error and return the attribute or a default; the
+	            error-returning forms pass the host error back to the caller.
+*/
 
 #import "FxGripTileableEffect+OOBParameterAccess.h"
 #import "FxGripOOBParameterAccess.h"
 
 
+/*!
+	@abstract	The category exposing the host project's attributes to the effect.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation FxGripTileableEffect (ProjectProperties)
 
 /*!
@@ -38,6 +47,7 @@
 	return self.projectDocumentID != 0;
 }
 
+/*! Reads the project's document ID from the host project API, returning any host error. */
 - (NSUInteger)projectDocumentIDWithError:(NSError**)error
 {
 	NSUInteger documentId = 0;
@@ -66,6 +76,7 @@
 }
 
 
+/*! Reads the project's media folder URL from the host project API, returning any host error. */
 -(NSURL* _Nullable)projectMediaFolderWithError:(NSError * _Nullable *)error
 {
 	NSURL *mediaFolder = nil;
@@ -84,6 +95,7 @@
 	return [self projectAspectRatioWithError:&error];
 }
 
+/*! Reads the project's aspect ratio from the host project API, returning 16x9 on failure. */
 - (float)projectAspectRatioWithError:(NSError * _Nullable *)error
 {
 	float aspectFloat = 0.0;

@@ -1,7 +1,17 @@
-//
-//  FxGripCurveData.h
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveData.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveData
+	@abstract   The immutable model of one cubic curve: sorted control points with a domain and role.
+	@discussion Introduced in FxGrip 0.1.0. A curve carries a list of control points, an x-axis
+	            domain, and a role that fixes its neutral shape. Points are sanitized, sorted, and
+	            deduplicated at creation, and the value never mutates afterward. The class evaluates
+	            a curve into a LUT with the same monotone cubic builders the render uses, so an
+	            editor preview matches the applied curve. It exports its points as float pairs for a
+	            Metal Forge input buffer.
+*/
 
 #ifndef FxGripCurveData_h
 #define FxGripCurveData_h
@@ -39,7 +49,7 @@ typedef NS_ENUM(NSInteger, FxGripCurveRole) {
 /*!
 	@class      FxGripCurveData
 	@abstract   One immutable cubic curve: sorted control points with a domain and role.
-	@discussion Introduced in FxGrip 1.0. Points are sanitized at creation: y clamps to
+	@discussion Introduced in FxGrip 0.1.0. Points are sanitized at creation: y clamps to
 				[0, 1]; x clamps to [0, 1] in the linear domain and folds into [0, 1)
 				in the circular domain; points sort by ascending x and duplicate x
 				drops (first wins). Edits replace the value; there is no mutable
@@ -75,7 +85,7 @@ typedef NS_ENUM(NSInteger, FxGripCurveRole) {
 /*!
 	@method     copyCurvePointsFloat2:capacity:
 	@abstract   Writes the points as (x, y) float pairs.
-	@discussion Introduced in FxGrip 1.0. The pair layout matches simd_float2, so the
+	@discussion Introduced in FxGrip 0.1.0. The pair layout matches simd_float2, so the
 				buffer passes straight to a Metal Forge setCurvePoints:count:forChannel:.
 	@result     The number of pairs written, at most `capacity`.
 */

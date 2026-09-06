@@ -1,7 +1,12 @@
-//
-//  FxGripMLImageEffectTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripMLImageEffectTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLImageEffectTests
+	@abstract   Verifies the FxGripMLImageEffect per-frame inference render and its output cache.
+	@discussion Introduced in FxGrip 0.1.0. A stub backend stages readiness and a result, and a test effect subclass bypasses Metal with a sentinel source image and a captured output. The tests confirm the default backend is passthrough, the default-backend seam is overridable, the InferKit hook is a no-op without the framework, and the render routes source and parameters to the backend and the named output back to the destination. A cache test class confirms one inference per frame, a rerun for a new frame, invalidation on a changed parameter signature, and a run every frame when the cache is disabled.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripMLImageEffect.h>
@@ -126,6 +131,7 @@ static CMTime FxGripMLTestTime(void)
 	self.effect.cacheEnabled = NO;
 }
 
+/*! @abstract A new effect uses the passthrough backend and the default input and output image name of "image". */
 - (void)testTheDefaultBackendIsPassthrough
 {
 	XCTAssertEqualObjects(self.effect.inferenceBackend.backendIdentifier, @"passthrough");
@@ -133,17 +139,20 @@ static CMTime FxGripMLTestTime(void)
 	XCTAssertEqualObjects([self.effect outputImageName], @"image");
 }
 
+/*! @abstract The default-backend seam returns a passthrough backend. */
 - (void)testDefaultInferenceBackendSeamReturnsPassthrough
 {
 	XCTAssertEqualObjects([self.effect defaultInferenceBackend].backendIdentifier, @"passthrough");
 }
 
+/*! @abstract A subclass that overrides the default-backend seam supplies that backend as the lazy default. */
 - (void)testOverridingTheDefaultBackendSeamChangesTheLazyDefault
 {
 	FxGripMLDefaultOverrideEffect *effect = [FxGripMLDefaultOverrideEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertEqualObjects(effect.inferenceBackend.backendIdentifier, @"stub");
 }
 
+/*! @abstract Using an InferKit backend fails and leaves the current backend in place while InferKit is not linked. */
 - (void)testUseInferKitBackendIsANoOpWithoutInferKit
 {
 	id<FxGripInferenceBackend> before = self.effect.inferenceBackend;
@@ -152,6 +161,7 @@ static CMTime FxGripMLTestTime(void)
 	XCTAssertEqual(self.effect.inferenceBackend, before, @"a failed bridge leaves the backend unchanged");
 }
 
+/*! @abstract With the passthrough backend, the render writes the source image unchanged to the destination. */
 - (void)testTheDefaultBackendEchoesTheSourceToTheDestination
 {
 	NSError *error = nil;
@@ -161,6 +171,7 @@ static CMTime FxGripMLTestTime(void)
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"SOURCE", @"passthrough routes the source straight through");
 }
 
+/*! @abstract A not-ready backend renders the source unchanged and is never run. */
 - (void)testANotReadyBackendRendersTheSourceUnchanged
 {
 	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
@@ -174,6 +185,7 @@ static CMTime FxGripMLTestTime(void)
 	XCTAssertNil(backend.lastRequest, @"a not-ready backend is not run");
 }
 
+/*! @abstract The backend output stored under the output image name is written to the destination. */
 - (void)testTheBackendOutputIsRoutedByOutputName
 {
 	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
@@ -186,6 +198,7 @@ static CMTime FxGripMLTestTime(void)
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"GENERATED");
 }
 
+/*! @abstract A result that lacks the output image name fails the render with the backend-failure error and writes nothing. */
 - (void)testAMissingOutputFailsTheRender
 {
 	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
@@ -200,6 +213,7 @@ static CMTime FxGripMLTestTime(void)
 	XCTAssertNil(self.effect.capturedOutput);
 }
 
+/*! @abstract The source image reaches the backend request as the named input and the inference parameters pass through unchanged. */
 - (void)testTheImageInputAndParametersFlowToTheBackend
 {
 	FxGripMLStubBackend *backend = FxGripMLStubBackend.new;
@@ -214,6 +228,7 @@ static CMTime FxGripMLTestTime(void)
 	XCTAssertEqualObjects([backend.lastRequest parameterForKey:@"seed"], @7);
 }
 
+/*! @abstract Setting the backend to nil restores the passthrough backend. */
 - (void)testSettingTheBackendToNilRestoresThePassthrough
 {
 	self.effect.inferenceBackend = FxGripMLStubBackend.new;
@@ -330,6 +345,7 @@ static CMTime FxGripMLCacheFrame(int64_t value)
 	[self.effect renderMLFromSourceTile:nil toDestinationTile:nil atTime:FxGripMLCacheFrame(value) error:NULL];
 }
 
+/*! @abstract Rendering the same frame twice runs inference once and serves the second render from the cache. */
 - (void)testTheSameFrameRunsInferenceOnce
 {
 	[self renderFrame:5];
@@ -338,6 +354,7 @@ static CMTime FxGripMLCacheFrame(int64_t value)
 	XCTAssertEqualObjects(self.effect.capturedOutput, @"GEN");
 }
 
+/*! @abstract A different frame index misses the cache and runs inference again. */
 - (void)testADifferentFrameRunsInferenceAgain
 {
 	[self renderFrame:5];
@@ -345,6 +362,7 @@ static CMTime FxGripMLCacheFrame(int64_t value)
 	XCTAssertEqual(self.backend.runCount, (NSUInteger)2);
 }
 
+/*! @abstract Changing the inference parameters clears the cache, so the same frame runs inference again. */
 - (void)testChangingParametersInvalidatesTheCache
 {
 	[self renderFrame:5];
@@ -354,6 +372,7 @@ static CMTime FxGripMLCacheFrame(int64_t value)
 	XCTAssertEqual(self.backend.runCount, (NSUInteger)2, @"a new signature clears the cache");
 }
 
+/*! @abstract With the cache disabled, every render of the same frame runs inference. */
 - (void)testDisablingTheCacheRunsEveryFrame
 {
 	self.effect.cacheEnabled = NO;

@@ -1,7 +1,16 @@
-//
-//  FxGripTimecode.h
-//  FxGrip
-//
+/*!
+	@file       FxGripTimecode.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTimecode
+	@abstract   SMPTE timecode formatting with drop-frame support, independent of any host.
+	@discussion Introduced in FxGrip 0.1.0. The class formats a CMTime as SMPTE timecode using
+	            exact integer arithmetic on the CMTime fields. Drop-frame counting skips frame
+	            numbers at 29.97, 59.94, and 119.88, except in minutes divisible by ten. The
+	            FxGripFrameRate enum and its menu entries match the twelve rates Apple's
+	            FxTimeCodeGenerator example lists. Every method is a pure class method.
+*/
 
 #ifndef FxGripTimecode_h
 #define FxGripTimecode_h
@@ -14,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@enum       FxGripFrameRate
 	@abstract   The standard frame rates a host or a footage popup offers.
-	@discussion Introduced in FxGrip 1.0. The order matches the twelve rates Apple's
+	@discussion Introduced in FxGrip 0.1.0. The order matches the twelve rates Apple's
 				FxTimeCodeGenerator example lists, so a popup built from
 				+[FxGripTimecode frameRateMenuEntries] stores this value directly.
 */
@@ -36,7 +45,7 @@ typedef NS_ENUM(NSInteger, FxGripFrameRate) {
 /*!
 	@struct     FxGripTimecodeComponents
 	@abstract   A time split into timecode fields.
-	@discussion Introduced in FxGrip 1.0. `frames` counts from zero within the second.
+	@discussion Introduced in FxGrip 0.1.0. `frames` counts from zero within the second.
 				`nominalFramesPerSecond` is the integer rate the fields count against (30 for
 				29.97). `dropFrame` is the effective mode: YES only when the caller asked for
 				drop-frame and the rate supports it. `valid` is NO when either time is invalid or
@@ -55,7 +64,7 @@ typedef struct FxGripTimecodeComponents {
 /*!
 	@class      FxGripTimecode
 	@abstract   Formats times as SMPTE timecode, with drop-frame support.
-	@discussion Introduced in FxGrip 1.0. Every method is a pure class method with no host
+	@discussion Introduced in FxGrip 0.1.0. Every method is a pure class method with no host
 				dependency. The drop-frame counting skips two frame numbers per minute at 29.97,
 				four at 59.94, and eight at 119.88, except in minutes divisible by ten. Other
 				rates ignore the drop-frame flag. Frame indices come from exact integer arithmetic
@@ -95,6 +104,8 @@ typedef struct FxGripTimecodeComponents {
 /*!
 	@method     frameIndexForTime:frameDuration:
 	@abstract   The zero-based frame that contains time, at the given frame duration.
+	@param      time          The time to locate.
+	@param      frameDuration The duration of one frame.
 	@discussion Returns 0 when either time is invalid or the frame duration is not positive.
 				Negative times return negative indices.
 */
@@ -103,7 +114,9 @@ typedef struct FxGripTimecodeComponents {
 /*!
 	@method     componentsForTime:frameDuration:dropFrame:
 	@abstract   Splits time into hours, minutes, seconds, and frames.
-	@param      dropFrame YES to count in drop-frame mode. Ignored for rates that do not
+	@param      time          The time to split.
+	@param      frameDuration The duration of one frame.
+	@param      dropFrame     YES to count in drop-frame mode. Ignored for rates that do not
 				support it.
 	@discussion Hours wrap at 24. Negative times are clamped to zero.
 */

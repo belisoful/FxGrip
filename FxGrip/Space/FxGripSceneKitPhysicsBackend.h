@@ -1,7 +1,14 @@
-//
-//  FxGripSceneKitPhysicsBackend.h
-//  FxGrip
-//
+/*!
+	@file       FxGripSceneKitPhysicsBackend.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSceneKitPhysicsBackend
+	@abstract   A space backend that advances SceneKit physics deterministically by fixed-step catch-up.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the physics backend, its fixed-step
+	            parameters, and the simulation-mode enum that selects catch-up recompute or a memoized
+	            session cache.
+*/
 
 #ifndef FxGripSceneKitPhysicsBackend_h
 #define FxGripSceneKitPhysicsBackend_h
@@ -24,7 +31,7 @@ typedef NS_ENUM(NSInteger, FxGripPhysicsSimulationMode) {
 	@class      FxGripSceneKitPhysicsBackend
 	@abstract   An `FxGripSceneKitMetalBackend` that advances SceneKit physics deterministically by
 				fixed-step catch-up.
-	@discussion Introduced in FxGrip 1.0. The host renders frames out of order and re-renders them,
+	@discussion Introduced in FxGrip 0.1.0. The host renders frames out of order and re-renders them,
 				so a stateful simulation cannot step once per render. This backend instead simulates
 				from `simulationStartTime` to the render time in fixed `timeStep` increments on the
 				per-render scene's own physics world, so a given frame reproduces the same result in

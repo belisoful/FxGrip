@@ -1,9 +1,17 @@
-//
-//  MasterFxAPIAccess.h
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripAPIAccessing.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAPIAccessing
+	@abstract   The layer over the FxPlug host API that vends FxGrip's wrappers alongside Apple's APIs.
+	@discussion Introduced in FxGrip 0.1.0. FxGripAPIAccessing wraps the host's PROAPIAccessing
+	            manager. apiForProtocol: returns FxGrip's wrapper for a protocol that FxGrip
+	            augments, and the host object for every other protocol. Convenience accessors vend
+	            each versioned FxPlug API by name. Each has a parallel _Raw accessor that returns
+	            the unwrapped host object. FxGrip's own APIs, such as the parameter tags and presets
+	            APIs, resolve through the same path.
+*/
 
 #ifndef FxGripAPIAccessing_h
 #define FxGripAPIAccessing_h
@@ -23,8 +31,24 @@
 @class FxGripPresetsAPI_v1;
 
 
+/*!
+	@protocol	FxGripAPIAccessing
+	@abstract	The interface a wrapped API manager exposes to FxGrip effects.
+	@discussion	Introduced in FxGrip 0.1.0. The protocol extends PROAPIAccessing with an
+				apiForProtocol:bypass: entry point and typed accessors for each FxPlug and FxGrip
+				API. Each API has two accessors: the plain accessor vends FxGrip's wrapper when one
+				exists, and the _Raw accessor vends the host object with no FxGrip layer. An
+				accessor answers nil when the host does not provide the API.
+*/
 @protocol FxGripAPIAccessing <PROAPIAccessing>
 
+/*!
+	@method		apiForProtocol:bypass:
+	@abstract	Returns the API for a protocol, optionally skipping the FxGrip wrapper layer.
+	@param		apiProtocol			The FxPlug or FxGrip API protocol to resolve.
+	@param		bypassFxGripLayer	YES returns the raw host object; NO returns FxGrip's wrapper when one exists.
+	@return		The API object, or nil when the host does not provide it.
+*/
 - (id _Nullable)apiForProtocol:(Protocol * _Nonnull)apiProtocol bypass:(BOOL)bypassFxGripLayer;
 
 	@property (assign, readonly) NSString* _Nullable pluginUUID;
@@ -32,6 +56,12 @@
 	@property (assign, readonly) unsigned long long sessionID;
 
 
+/*!
+	@method		initWithAPIManager:effect:
+	@abstract	Wraps a host API manager for a given effect.
+	@param		newApiManager	The host's PROAPIAccessing manager.
+	@param		effect			The effect the wrapped APIs act on.
+*/
 - (nullable instancetype)initWithAPIManager:(id<PROAPIAccessing>_Nonnull)newApiManager
 effect:(id<FxGripEffectHost>_Nonnull)effect;
 
@@ -155,16 +185,14 @@ effect:(id<FxGripEffectHost>_Nonnull)effect;
 
 
 /*!
-	@interface  FxGripAPIAccessing:
-	@abstract   This class serves as a layer on top of the FxPlug API for additional funcitonality.
-	@discussion This class adds furher functionality to the FxPlug API.
- 				It allows for metadata about the effect and each parameter to be kept and accessed.
- 				The type of parameter can be queried, along with whether or not a parameter is in use.
- 				When a parameter is Custom, the  FxGripInterpolatingDictionary can feed specified
- 				data to the normal API calls.
- 					eg the key "intValue" will feed the getIntValue:: api call on a custom parameter
-
- */
+	@class		FxGripAPIAccessing
+	@abstract	The layer over the FxPlug API that adds FxGrip functionality.
+	@discussion	Introduced in FxGrip 0.1.0. The class keeps and vends metadata about the effect and
+				each parameter. A parameter's type can be queried, along with whether the parameter
+				is in use. When a parameter is custom, the FxGripInterpolatingDictionary feeds
+				specified data to the standard API calls; for example the key "intValue" feeds the
+				getIntValue:: call on a custom parameter.
+*/
 @interface FxGripAPIAccessing : NSObject <PROAPIAccessing, FxGripAPIAccessing>
 //PROAPIAccessing Implementation
 - (nullable id)apiForProtocol:(nonnull Protocol *)apiProtocol;

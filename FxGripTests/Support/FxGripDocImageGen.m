@@ -1,19 +1,12 @@
-//
-//  FxGripDocImageGen.m
-//  FxGripTests
-//
-//  Renders each FxGrip custom-parameter view to a PNG for the DocC catalog. It is a generator, not
-//  an assertion suite: it is gated by a marker file so an ordinary test run skips it, and it writes
-//  into the source tree. To regenerate the images:
-//
-//      touch /tmp/fxgrip-gen-doc
-//      xcodebuild test -project FxGrip.xcodeproj -scheme FxGrip -destination 'platform=macOS' \
-//          -only-testing:FxGripTests/FxGripDocImageGen
-//
-//  It must run in a logged-in session: NSView bitmap caching needs a window server. The test bundle
-//  does not link AppKit; every AppKit class is reached by name, and the render path is instance
-//  messages the linked FxGrip views already answer, so nothing AppKit is referenced at link time.
-//
+/*!
+	@file       FxGripDocImageGen.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDocImageGen
+	@abstract   Marker-gated generator that renders each FxGrip custom-parameter view to an @2x PNG for the DocC catalog.
+	@discussion Introduced in FxGrip 0.1.0. Each test method configures one control, renders it, and writes its image into the DocC resources folder. An ordinary test run skips every method because the marker file is absent. The web and video controls capture through an on-screen WKWebView, and the live-image control fills its slots with generated frames.
+*/
 
 #import <XCTest/XCTest.h>
 #import <AppKit/AppKit.h>
@@ -144,6 +137,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 
 #pragma mark Controls
 
+/*! @abstract Renders the status control in its ready state to "status@2x.png". */
 - (void)testStatus
 {
 	FxGripStatusView *view = [FxGripStatusView.alloc initWithFrame:NSZeroRect];
@@ -155,6 +149,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(220, 22) named:@"status"];
 }
 
+/*! @abstract Renders the progress control mid-export to "progress@2x.png". */
 - (void)testProgress
 {
 	FxGripProgressView *view = [FxGripProgressView.alloc initWithFrame:NSZeroRect];
@@ -167,6 +162,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(240, 40) named:@"progress"];
 }
 
+/*! @abstract Renders the banner control with a title and subtitle to "banner@2x.png". */
 - (void)testBanner
 {
 	FxGripBannerView *view = [FxGripBannerView.alloc initWithFrame:NSZeroRect];
@@ -178,6 +174,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(300, 48) named:@"banner"];
 }
 
+/*! @abstract Renders the capsule control, sized from its measured label, to "capsule@2x.png". */
 - (void)testCapsule
 {
 	FxGripCapsuleView *view = [FxGripCapsuleView.alloc initWithFrame:NSZeroRect];
@@ -195,6 +192,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:fitting named:@"capsule"];
 }
 
+/*! @abstract Renders the section control from a plain section-key dictionary to "section@2x.png". */
 - (void)testSection
 {
 	FxGripSectionView *view = [FxGripSectionView.alloc initWithFrame:NSZeroRect];
@@ -208,6 +206,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(300, 24) named:@"section"];
 }
 
+/*! @abstract Renders the internal FxGripDividerBox, reached by name, to "divider@2x.png". */
 - (void)testDivider
 {
 	// FxGripDividerBox is an internal class; the divider control vends it. Reach it by name.
@@ -216,6 +215,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:box size:NSMakeSize(300, 11) named:@"divider"];
 }
 
+/*! @abstract Renders the random control with a value and range to "random@2x.png". */
 - (void)testRandom
 {
 	FxGripRandomView *view = [FxGripRandomView.alloc initWithFrame:NSZeroRect];
@@ -229,6 +229,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(200, 24) named:@"random"];
 }
 
+/*! @abstract Renders the switch control in its on state to "switch@2x.png". */
 - (void)testSwitch
 {
 	FxGripSwitchView *view = [FxGripSwitchView.alloc initWithFrame:NSZeroRect];
@@ -243,6 +244,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:fitting named:@"switch"];
 }
 
+/*! @abstract Renders the curve editor with a remap curve over a linear domain to "curve@2x.png". */
 - (void)testCurve
 {
 	CGPoint points[4] = { {0.0, 0.0}, {0.3, 0.12}, {0.7, 0.88}, {1.0, 1.0} };
@@ -255,6 +257,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(180, 110) named:@"curve"];
 }
 
+/*! @abstract Renders the curve editor with a hue-spectrum background over a circular domain to "curve-hue@2x.png". */
 - (void)testCurveHue
 {
 	// The hue-spectrum background renders the hue across the x-axis, for a curve over hue.
@@ -268,6 +271,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(180, 110) named:@"curve-hue"];
 }
 
+/*! @abstract Renders the curve editor with a red line over a red ramp to "curve-color@2x.png". */
 - (void)testCurveColoredLine
 {
 	// A channel curve colors its line; here a red line over the red ramp.
@@ -294,6 +298,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	return view;
 }
 
+/*! @abstract Renders the curve editor with the line stroked as the hue spectrum to "curve-line-hue@2x.png". */
 - (void)testCurveLineHue
 {
 	// The line itself stroked as the hue spectrum, over a grid.
@@ -302,6 +307,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(180, 110) named:@"curve-line-hue"];
 }
 
+/*! @abstract Renders the curve editor with a vertical hue-to-base fade to "curve-v-huefade@2x.png". */
 - (void)testCurveVerticalHueFade
 {
 	// Hue on the y: full spectrum at the top, fading to the base at the bottom.
@@ -311,6 +317,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(180, 110) named:@"curve-v-huefade"];
 }
 
+/*! @abstract Renders the curve editor with a two-color vertical fade to "curve-v-twocolor@2x.png". */
 - (void)testCurveVerticalTwoColor
 {
 	// Two-color vertical fade: top color to bottom color, no center stop.
@@ -321,6 +328,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(180, 110) named:@"curve-v-twocolor"];
 }
 
+/*! @abstract Renders the curve editor with a centered hue band fading to the base to "curve-v-hueband@2x.png". */
 - (void)testCurveCenterHueBand
 {
 	// A hue band through the center, fading to the base top and bottom.
@@ -331,6 +339,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(180, 110) named:@"curve-v-hueband"];
 }
 
+/*! @abstract Renders the curve editor with black-to-hue-to-white vertical paint to "curve-v-blackhuewhite@2x.png". */
 - (void)testCurveBlackHueWhite
 {
 	// Black at top, the hue spectrum through the center, white at bottom: shade above, tint below.
@@ -366,6 +375,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	return view;
 }
 
+/*! @abstract Renders the curve editor with a floating-chip point readout in eight-bit units to "curve-readout-chip@2x.png". */
 - (void)testCurveReadoutFloatingChip
 {
 	FxGripCurveEditorView *view = [self readoutEditorWithStyle:FxGripCurveReadoutStyleFloatingChip
@@ -373,6 +383,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(200, 120) named:@"curve-readout-chip"];
 }
 
+/*! @abstract Renders the curve editor with an axis point readout in percent units to "curve-readout-axis@2x.png". */
 - (void)testCurveReadoutAxis
 {
 	FxGripCurveEditorView *view = [self readoutEditorWithStyle:FxGripCurveReadoutStyleAxis
@@ -380,6 +391,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self renderView:view size:NSMakeSize(200, 120) named:@"curve-readout-axis"];
 }
 
+/*! @abstract Renders the curve editor with a corner point readout in normalized units to "curve-readout-corner@2x.png". */
 - (void)testCurveReadoutCorner
 {
 	FxGripCurveEditorView *view = [self readoutEditorWithStyle:FxGripCurveReadoutStyleCorner
@@ -476,6 +488,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	(void)window;
 }
 
+/*! @abstract Loads a help page into the web control's WKWebView and captures it to "webview@2x.png". */
 - (void)testWebView
 {
 	FxGripWebPageView *view = [FxGripWebPageView.alloc initWithFrame:NSZeroRect];
@@ -496,6 +509,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 	[self captureEmbedInView:view size:NSMakeSize(320, 180) html:html named:@"webview"];
 }
 
+/*! @abstract Routes the video control into its WKWebView embed mode, loads a player page, and captures it to "video@2x.png". */
 - (void)testVideo
 {
 	// A remote, whitelisted, non-media URL routes the video control to its WKWebView embed mode,
@@ -549,6 +563,7 @@ static const CGFloat kFxGripDocImageScale = 2.0;
 							   pixelFormat:MTLPixelFormatRGBA8Unorm];
 }
 
+/*! @abstract Fills the live-image control's slots with generated frames and renders it to "liveimage@2x.png". */
 - (void)testLiveImage
 {
 	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSZeroRect];

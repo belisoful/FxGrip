@@ -1,9 +1,16 @@
-//
-//  FxGripObjectTracker.h
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripObjectTracker.h
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTracker
+	@abstract   The Vision-backed engine that tracks one object across a frame sequence.
+	@discussion Introduced in FxGrip 0.1.0. The header declares the tracker, its per-frame sample, and
+	            the tracking-level enumeration. The tracker seeds on the first frame with a normalized
+	            bounding box and advances one frame per call, feeding each result forward as the next
+	            input. An optional rotation mode tracks a rectangle and reports its angle. The Object
+	            Tracker parameter drives this engine from the FxGrip analysis pass.
+*/
 
 #ifndef FxGripObjectTracker_h
 #define FxGripObjectTracker_h
@@ -23,7 +30,7 @@ typedef NS_ENUM(NSInteger, FxGripObjectTrackerLevel) {
 /*!
 	@class      FxGripObjectTrackerSample
 	@abstract   One frame's tracking result.
-	@discussion Introduced in FxGrip 1.0. The bounding box is normalized to the image with a
+	@discussion Introduced in FxGrip 0.1.0. The bounding box is normalized to the image with a
 				lower-left origin, matching Vision's convention; `center` is the box center in
 				the same space. The initial version reports position and scale only; rotation
 				arrives with the quadrilateral tracker.
@@ -46,7 +53,7 @@ typedef NS_ENUM(NSInteger, FxGripObjectTrackerLevel) {
 /*!
 	@class      FxGripObjectTracker
 	@abstract   Tracks one object's bounding box across a frame sequence.
-	@discussion Introduced in FxGrip 1.0. Wraps a Vision sequence request handler and a
+	@discussion Introduced in FxGrip 0.1.0. Wraps a Vision sequence request handler and a
 				bounding-box tracking request. `startTrackingImage:boundingBox:error:` seeds
 				the tracker with the initial region on the first frame; each later
 				`trackImage:error:` advances the track by one frame and returns the updated

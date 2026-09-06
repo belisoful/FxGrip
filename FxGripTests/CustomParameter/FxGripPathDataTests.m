@@ -1,7 +1,12 @@
-//
-//  FxGripPathDataTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripPathDataTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPathDataTests
+	@abstract   Tests for FxGripPathData, the immutable vertex-path value type.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover construction from locations and full vertices, out-of-range access, the immutable insert, remove, replace, and translate edits, buffer copy-out, secure coding, and equality with hashing.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripPathData.h"
@@ -24,6 +29,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	return vertex;
 }
 
+/*! @abstract An empty path has no vertices and keeps its closed flag. */
 - (void)testEmptyPathHasNoVertices
 {
 	FxGripPathData *path = [FxGripPathData emptyPathClosed:YES];
@@ -31,6 +37,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertTrue(path.closed);
 }
 
+/*! @abstract A path built from locations stores linear vertices at those points with zero tangents and weight. */
 - (void)testPathFromLocationsStoresLinearVerticesWithZeroTangents
 {
 	CGPoint locations[2] = { CGPointMake(0.2, 0.3), CGPointMake(0.6, 0.7) };
@@ -47,6 +54,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual(first.interpStyle, (FxPathStyle)kFxPathStyle_Linear);
 }
 
+/*! @abstract A path built from full vertices round-trips every vertex field. */
 - (void)testPathFromVerticesRoundTripsEveryField
 {
 	FxVertex vertices[1] = { MakeVertex(0.1, 0.2, -0.05, 0.0, 0.05, 0.01, 1.5, kFxPathStyle_Bezier) };
@@ -63,6 +71,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual(out.interpStyle, (FxPathStyle)kFxPathStyle_Bezier);
 }
 
+/*! @abstract An out-of-range vertex index returns a zeroed linear vertex and a zero location. */
 - (void)testVertexAtOutOfRangeIndexIsZeroedLinear
 {
 	FxGripPathData *path = [FxGripPathData emptyPathClosed:NO];
@@ -72,6 +81,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertTrue(CGPointEqualToPoint([path locationAtIndex:5], CGPointZero));
 }
 
+/*! @abstract Inserting a vertex shifts the later vertices up and leaves the original path unchanged. */
 - (void)testInsertVertexShiftsLaterVertices
 {
 	CGPoint locations[2] = { CGPointMake(0.0, 0.0), CGPointMake(1.0, 1.0) };
@@ -85,6 +95,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual(path.vertexCount, (NSUInteger)2, @"the original is unchanged");
 }
 
+/*! @abstract Inserting at an index beyond the end clamps to append the vertex. */
 - (void)testInsertClampsBeyondEnd
 {
 	CGPoint locations[1] = { CGPointMake(0.0, 0.0) };
@@ -95,6 +106,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual([edited locationAtIndex:1].x, 0.9);
 }
 
+/*! @abstract Removing a vertex drops it and closes the gap, and an out-of-range removal returns the same path. */
 - (void)testRemoveVertex
 {
 	CGPoint locations[3] = { CGPointMake(0, 0), CGPointMake(0.5, 0.5), CGPointMake(1, 1) };
@@ -106,6 +118,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqualObjects([path byRemovingVertexAtIndex:9], path, @"out of range returns self");
 }
 
+/*! @abstract Replacing a vertex overwrites every field at that index. */
 - (void)testReplaceVertex
 {
 	CGPoint locations[2] = { CGPointMake(0, 0), CGPointMake(1, 1) };
@@ -120,6 +133,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual(out.interpStyle, (FxPathStyle)kFxPathStyle_XSpline);
 }
 
+/*! @abstract Replacing a vertex location moves the point while its tangent vectors and weight ride along unchanged. */
 - (void)testReplaceLocationKeepsTangentVectors
 {
 	FxVertex vertices[1] = { MakeVertex(0.2, 0.2, -0.05, 0.03, 0.05, -0.03, 1.0, kFxPathStyle_Bezier) };
@@ -134,6 +148,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual(out.xSplineWeight, 1.0);
 }
 
+/*! @abstract Translating a path shifts every location by the offset while leaving the tangent vectors and closed flag unchanged. */
 - (void)testTranslateMovesLocationsButNotTangentVectors
 {
 	FxVertex vertices[2] = {
@@ -149,6 +164,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertTrue(edited.closed);
 }
 
+/*! @abstract -copyVerticesToBuffer:capacity: writes at most the capacity and returns the number written. */
 - (void)testCopyVerticesToBufferRespectsCapacity
 {
 	CGPoint locations[3] = { CGPointMake(0, 0), CGPointMake(0.5, 0.5), CGPointMake(1, 1) };
@@ -159,6 +175,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual(buffer[1].location.x, 0.5);
 }
 
+/*! @abstract A secure archive round trip preserves the vertices, the closed flag, and every vertex field. */
 - (void)testSecureCodingRoundTrip
 {
 	FxVertex vertices[2] = {
@@ -182,6 +199,7 @@ static FxVertex MakeVertex(double lx, double ly, double ix, double iy, double ox
 	XCTAssertEqual([decoded vertexAtIndex:1].interpStyle, (FxPathStyle)kFxPathStyle_XSpline);
 }
 
+/*! @abstract Paths with equal vertices are equal and share a hash, and the closed flag distinguishes otherwise equal paths. */
 - (void)testEqualityAndHash
 {
 	CGPoint locations[2] = { CGPointMake(0, 0), CGPointMake(1, 1) };

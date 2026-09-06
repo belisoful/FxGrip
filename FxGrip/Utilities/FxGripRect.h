@@ -1,7 +1,20 @@
-//
-//  FxGripRect.h
-//  FxGrip
-//
+/*!
+	@file       FxGripRect.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-08-10
+	@header     FxGripRect
+	@abstract   Rectangle algebra for FxPlug's integer FxRect, in the pixel-bounds convention.
+	@discussion Introduced in FxGrip 0.1.0. FxRect is `{ left, bottom, right, top }` in a y-up pixel
+	            space: width is right minus left, height is top minus bottom, and a rectangle is
+	            empty when either is not positive. FxPlug hands effects FxRects for image and tile
+	            bounds but ships no operations for them, so every effect that clips, unions, or
+	            tests bounds reimplements this. These functions supply union, intersection,
+	            containment, and the CGRect bridge once.
+
+	            Intersection and the empty result use the canonical empty rectangle
+	            `{ 0, 0, 0, 0 }`. Union treats an empty operand as absent and returns the other.
+*/
 
 #ifndef FxGripRect_h
 #define FxGripRect_h
@@ -11,20 +24,6 @@
 #import <FxPlug/FxPlugSDK.h>
 
 NS_ASSUME_NONNULL_BEGIN
-
-/*!
-	@header     FxGripRect
-	@abstract   Rectangle algebra for FxPlug's integer FxRect, in the pixel-bounds convention.
-	@discussion Introduced in FxGrip 1.0. FxRect is `{ left, bottom, right, top }` in a y-up pixel
-				space: width is right minus left, height is top minus bottom, and a rectangle is
-				empty when either is not positive. FxPlug hands effects FxRects for image and tile
-				bounds but ships no operations for them, so every effect that clips, unions, or
-				tests bounds reimplements this. These functions supply union, intersection,
-				containment, and the CGRect bridge once.
-
-				Intersection and the empty result use the canonical empty rectangle
-				`{ 0, 0, 0, 0 }`. Union treats an empty operand as absent and returns the other.
-*/
 
 /*! A rectangle from its four edges. */
 FxRect FxGripRectMake(SInt32 left, SInt32 bottom, SInt32 right, SInt32 top);

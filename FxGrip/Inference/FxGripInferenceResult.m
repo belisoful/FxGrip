@@ -1,11 +1,23 @@
-//
-//  FxGripInferenceResult.m
-//  FxGrip
-//
+/*!
+	@file       FxGripInferenceResult.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInferenceResult
+	@abstract   Implements the immutable result value: the model's named outputs.
+	@discussion Introduced in FxGrip 0.1.0. The initializer copies the outputs, mapping nil to an
+	            empty dictionary. The value is immutable, so copyWithZone: returns self. Equality and
+	            hash compare the outputs dictionary.
+*/
 
 #import "FxGripInferenceResult.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The immutable output of one inference run: the model's named outputs.
+	@discussion	Introduced in FxGrip 0.1.0. The value copies its dictionary at initialization and is
+				equal to another result with equal outputs.
+*/
 @implementation FxGripInferenceResult
 
 + (instancetype)resultWithOutputs:(NSDictionary<NSString *, id> *)outputs

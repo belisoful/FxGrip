@@ -1,11 +1,12 @@
-//
-//  FxGripObjectTrackerParameterTests.m
-//  FxGripTests
-//
-//  The Object Tracker parameter's type identity, the hidden custom parameter it creates, and
-//  the configuration it parses from its declared default. The parameter class header is
-//  framework-internal, so the class is reached by name and its value surface re-declared.
-//
+/*!
+	@file       FxGripObjectTrackerParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerParameterTests
+	@abstract   Tests the FxGripObjectTrackerParameter type, creation, and default parse.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the type identity, the custom value classes, the hidden custom-UI parameter it creates holding tracker data, the configuration it parses from its declared default, and the host-refusal result.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
@@ -69,12 +70,14 @@ static const FxParameterId kTrackerTestParameter = 41;
 	return [[self trackerClass] addParameter:config toEffect:(id)self.effect];
 }
 
+/*! @abstract The parameter reports the object-tracker FxPlug type and the matching type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual([[self trackerClass] parameterType], FxParameterType_ObjectTracker);
 	XCTAssertEqualObjects([[self trackerClass] parameterTypeString], kFxParameterType_ObjectTracker);
 }
 
+/*! @abstract The custom value classes cover the tracker data and its sample class. */
 - (void)testCustomValueClassesCoverTheStoredGraph
 {
 	NSSet<Class> *classes = [[self trackerClass] customValueClasses];
@@ -82,6 +85,7 @@ static const FxParameterId kTrackerTestParameter = 41;
 	XCTAssertTrue([classes containsObject:NSClassFromString(@"FxGripObjectTrackerSample")]);
 }
 
+/*! @abstract Creation registers a custom-UI parameter whose default value is an enabled tracker data object. */
 - (void)testAddCreatesACustomUIParameterHoldingTrackerData
 {
 	XCTAssertTrue([self addWithDefault:nil]);
@@ -97,6 +101,7 @@ static const FxParameterId kTrackerTestParameter = 41;
 	XCTAssertTrue([(FxGripObjectTrackerData *)value enabled], @"default tracker is enabled");
 }
 
+/*! @abstract A declared configuration is parsed into the default tracker data's shape, smoothing, enabled flag, label, and initial box. */
 - (void)testDeclaredConfigurationIsParsedIntoTheDefault
 {
 	BOOL ok = [self addWithDefault:@{
@@ -116,6 +121,7 @@ static const FxParameterId kTrackerTestParameter = 41;
 	XCTAssertTrue(CGRectEqualToRect(value.initialBox, CGRectMake(0.1, 0.2, 0.3, 0.25)));
 }
 
+/*! @abstract A host that refuses creation makes the add call return false. */
 - (void)testHostRefusalIsReported
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;

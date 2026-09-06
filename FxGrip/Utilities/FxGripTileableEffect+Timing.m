@@ -1,10 +1,16 @@
-//
-//  FxGripTileableEffect+Timing.m
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/27/24.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripTileableEffect+Timing.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+Timing
+	@abstract   Implements the effect's timing, frame-rate, timecode, and frame-offset queries.
+	@discussion Introduced in FxGrip 0.1.0. The accessors read the FxPlug timing API and convert
+	            times to frame indices by multiplying by the timeline frame rate and flooring to the
+	            nearest integer. The drop-frame and timecode queries use FxTimingAPI_v5 and return
+	            NO or a placeholder string on a host that lacks it.
+*/
+
 /*
  Todo:
  - parameter 9998: Plugin Data - holds the plugin metadata for each instance.
@@ -26,6 +32,8 @@
 #import "FxGripTypes.h"
 #import "FxGrip_ARC.h"
 
+/*! Returns time advanced by a whole number of frames at the given frame duration. A negative frame
+	count moves earlier. */
 CMTime FxGripTimeByOffsettingFrames(CMTime time, NSInteger frames, CMTime frameDuration)
 {
 	return CMTimeAdd(time, CMTimeMultiply(frameDuration, (int32_t)frames));
@@ -34,6 +42,7 @@ CMTime FxGripTimeByOffsettingFrames(CMTime time, NSInteger frames, CMTime frameD
 
 // In a float, at 8388608, a 1 bit change in mantissa results in ~1.0f change in the number.
 // In a double, at 4503599627370496, a 1 bit change in mantissa results in ~1.0f change in the number.
+/*! Floors a value, rounding up when its fractional part is within epsilon of the next integer. */
 long long floorWithError(double value, double epsilon)
 {
 	// Check if the fractional part is very close to 1
@@ -46,6 +55,7 @@ long long floorWithError(double value, double epsilon)
 	}
 }
 
+/*! floorWithError with a fixed epsilon of 1e-4. */
 long long floorWithNearest(double value)
 {
 	return floorWithError(value, 1e-4);
@@ -53,6 +63,10 @@ long long floorWithNearest(double value)
 
 
 
+/*!
+	@abstract	The category exposing the effect's timing, frame rates, timecode, and frame offsets.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation FxGripTileableEffect (Timing)
 
 #pragma mark -
@@ -126,6 +140,8 @@ long long floorWithNearest(double value)
 											 parameterID:parameterID];
 }
 
+/*! The timeline timecode string for an input time: the time converted to timeline time, formatted
+	at the timeline frame duration in the timeline's drop-frame mode. */
 - (NSString *)timelineTimecodeStringForTime:(CMTime)time
 {
 	CMTime timelineTime = kCMTimeInvalid;
@@ -135,6 +151,8 @@ long long floorWithNearest(double value)
 							   dropFrame:self.isTimelineDropFrame];
 }
 
+/*! The input-clip timecode string for an input time, formatted at the effect's frame duration in
+	the input's drop-frame mode. */
 - (NSString *)inputTimecodeStringForTime:(CMTime)time
 {
 	return [FxGripTimecode stringForTime:time
@@ -324,6 +342,8 @@ long long floorWithNearest(double value)
 	return FxGripTimeByOffsettingFrames(time, frames, self.frameDuration);
 }
 
+/*! A request for the effect's source clip at time offset by frames, excluding leading filters, for
+	a temporal effect that samples neighboring frames. */
 - (nullable FxImageTileRequest *)sourceTileRequestAtTime:(CMTime)time frameOffset:(NSInteger)frames
 {
 	CMTime requestTime = [self timeByOffsettingTime:time byFrames:frames];

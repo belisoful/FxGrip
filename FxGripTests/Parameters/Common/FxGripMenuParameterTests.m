@@ -1,11 +1,15 @@
-//
-//  FxGripMenuParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripMenuParameter: the type identity, the payload
-//  +addParameter:toEffect: derives from a configuration, the menu-item list and default
-//  index handling, the host-refusal result, and the item list the initializer captures.
-//
+/*!
+	@file       FxGripMenuParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMenuParameterTests
+	@abstract   Tests FxGripMenuParameter: its FxPlug type identity and the creation payload
+	            +addParameter:toEffect: derives from a configuration.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the menu-item list and default
+	            index handling, the host-refusal result, and the item list the initializer
+	            captures.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -46,6 +50,7 @@ static const FxParameterId kMenuTestParameter = 41;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug menu type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripMenuParameter.parameterType, FxParameterType_Menu);
@@ -54,6 +59,7 @@ static const FxParameterId kMenuTestParameter = 41;
 
 #pragma mark Creation payload
 
+/*! @abstract A menu forwards its item list and declared default index to the creation call. */
 - (void)testMenuForwardsTheEntriesAndTheDefaultIndex
 {
 	NSArray *items = @[@"One", @"Two", @"Three"];
@@ -70,6 +76,7 @@ static const FxParameterId kMenuTestParameter = 41;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A menu with no declared default selects the first entry. */
 - (void)testMenuWithoutADefaultSelectsTheFirstEntry
 {
 	NSDictionary *extra = @{kFxParameterProperty_MenuItems: @[@"One", @"Two"]};
@@ -79,6 +86,7 @@ static const FxParameterId kMenuTestParameter = 41;
 	XCTAssertEqualObjects(self.call[@"default"], @0);
 }
 
+/*! @abstract A menu with no declared item list sends an empty list. */
 - (void)testMenuWithoutAnItemListSendsAnEmptyList
 {
 	XCTAssertTrue([self add:FxGripMenuParameter.class type:kFxParameterType_Menu extra:nil]);
@@ -86,6 +94,7 @@ static const FxParameterId kMenuTestParameter = 41;
 	XCTAssertEqualObjects(self.call[@"items"], @[]);
 }
 
+/*! @abstract A fractional default index is truncated to an integer. */
 - (void)testMenuTruncatesAFractionalDefaultIndex
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @1.9};
@@ -95,6 +104,7 @@ static const FxParameterId kMenuTestParameter = 41;
 	XCTAssertEqualObjects(self.call[@"default"], @1);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testMenuReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -104,6 +114,7 @@ static const FxParameterId kMenuTestParameter = 41;
 
 #pragma mark Initializer
 
+/*! @abstract The initializer captures the declared item list and the owning effect. */
 - (void)testTheInitializerCapturesTheItemList
 {
 	NSArray *items = @[@"One", @"Two"];
@@ -117,6 +128,7 @@ static const FxParameterId kMenuTestParameter = 41;
 	XCTAssertEqualObjects((id)parameter.effect, self.effect);
 }
 
+/*! @abstract The initializer leaves the item list empty for a menu declaring no entries. */
 - (void)testTheInitializerLeavesTheItemListEmptyForAMenuWithoutEntries
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kMenuTestParameter, kFxParameterType_Menu, @"Mode", nil);

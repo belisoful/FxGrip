@@ -1,7 +1,16 @@
-//
-//  FxGripSpaceMotion.m
-//  FxGrip
-//
+/*!
+	@file       FxGripSpaceMotion.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSpaceMotion
+	@abstract   Implements the camera motion and focus quantities derived from sampled scene transforms.
+	@discussion Introduced in FxGrip 0.1.0. Position reads the translation column, and orientation reads the
+	            normalized upper-left basis as a quaternion. Angular velocity takes the shortest-arc
+	            rotation between two orientations over an interval. The central, forward, and backward
+	            variants form linear and angular velocity from two samples by finite difference. Focus
+	            distance is the straight-line distance between two points.
+*/
 
 #import "FxGripSpaceMotion.h"
 

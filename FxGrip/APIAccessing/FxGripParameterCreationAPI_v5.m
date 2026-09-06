@@ -1,9 +1,15 @@
-//
-//  FxGripParameterCreationAPI_v5.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterCreationAPI_v5.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterCreationAPI_v5
+	@abstract   Implements the FxGrip wrapper for the host's FxParameterCreationAPI_v5.
+	@discussion Introduced in FxGrip 0.1.0. Every add method assembles the parameter payload with
+	            the current subgroup as its parent, runs preprocess:, forwards the amended values to
+	            the host API, and posts the parameter-add notification when the host call succeeds.
+	            A failed preprocess or host call returns NO without a notification.
+*/
 
 #import "FxGripParameterFlags.h"
 #import "FxGripParameterCreationAPI_v5.h"
@@ -15,6 +21,11 @@
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	Wraps the host parameter-creation API and notifies FxGrip of each added parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Holds the subgroup stack seeded with the @0 root and
+				runs each add method through the shared preprocess and notification path.
+*/
 @implementation FxGripParameterCreationAPI_v5
 
 //---------------------------------------------------------
@@ -47,6 +58,15 @@
 	SUPER_DEALLOC();
 }
 
+/*!
+	@method		preprocess:
+	@abstract	Runs the extension pre-add step on a parameter payload before the host call.
+	@param		userInfo	The mutable notification payload carrying the parameter dictionary.
+	@return		YES when no observer set an error; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. Posts the set-name-pre and add-pre notifications so
+				observers can amend the parameter, then reasserts the parameter's ID, type, and
+				parent ID on the payload.
+*/
 - (BOOL)preprocess:(NSMutableDictionary*)userInfo
 {
 	FxParameterType parameterType = userInfo.fxParameter.parameterType;
@@ -730,6 +750,12 @@
 }
 
 
+/*!
+	@method		startParameterSubGroup:parameterID:parameterFlags:
+	@abstract	Opens a parameter subgroup and makes it the parent for following parameters.
+	@discussion	Introduced in FxGrip 0.1.0. Pushes the group ID onto subGroupStack after the host
+				call succeeds, then posts the add and start-group notifications.
+*/
 - (BOOL)startParameterSubGroup:(nonnull NSString *)name
 				   parameterID:(UInt32)parameterID
 				parameterFlags:(FxParameterFlags)flags
@@ -765,6 +791,13 @@
 }
 
 
+/*!
+	@method		endParameterSubGroup
+	@abstract	Closes the current parameter subgroup.
+	@discussion	Introduced in FxGrip 0.1.0. Pops the subgroup stack and posts the end-group
+				notification when the host call succeeds and a group is open. The @0 root sentinel
+				stays on the stack, so an unbalanced end does not pop past the floor.
+*/
 - (BOOL)endParameterSubGroup
 {
 	BOOL success = [_api endParameterSubGroup];

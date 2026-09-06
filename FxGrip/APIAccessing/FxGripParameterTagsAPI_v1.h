@@ -1,9 +1,17 @@
-//
-//  FxGripParameterTagsAPI_v1.h
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterTagsAPI_v1.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterTagsAPI_v1
+	@abstract   The parameter tag storage and tag-addressed preset resolution API.
+	@discussion Introduced in FxGrip 0.1.0. The API stores tags on parameters, queries parameters
+	            by tag, resolves tags to preset definitions from the plugin plist, and applies
+	            preset definitions to the effect's parameters. FxGrip owns this API; no host vends
+	            it. Preset application from every entry point funnels into
+	            applyPreset:atTime:options:presetFlags:source:tag:, which owns the section
+	            ordering and the tag boundary.
+*/
 
 #ifndef FxGripParameterTagsAPI_v1_h
 #define FxGripParameterTagsAPI_v1_h
@@ -15,24 +23,34 @@
 /*!
 	@protocol   FxGripParameterTagsAPI_v1
 	@abstract   Parameter tag storage and tag-addressed preset resolution.
-	@discussion Introduced in FxGrip 1.0. FxGrip's own API; no host vends it.
+	@discussion Introduced in FxGrip 0.1.0. FxGrip's own API; no host vends it.
 				FxGripParameterTagsAPI_v1 (the class) is the implementation.
 */
 @protocol FxGripParameterTagsAPI_v1 <NSObject>
 
 // Parameter Tags
 
+/*! Every tag in use across the effect's parameters. */
 - (NSArray* _Nullable)tags;
+/*! The count of distinct tags in use across the effect. */
 - (SInt32)tagCount;
+/*! The count of tags on one parameter, or -1 when no meta manager is present. */
 - (SInt32)tagCount:(FxParameterId)parameterID;
 
+/*! The tags on one parameter. */
 - (NSArray* _Nullable)parameterTags:(FxParameterId)parameterID;
 
+/*! Answers whether a parameter carries a tag; sets `error` when no meta manager is present. */
 - (BOOL)parameter:(FxParameterId)parameterID hasTag:(NSString* _Nullable)tag error:(NSError* _Nullable * _Nullable)error;
+/*! Replaces a parameter's tags with `tags`. */
 - (NSError* _Nullable)setTags:(NSArray*_Nonnull)tags toParameter:(FxParameterId)parameterID;
+/*! Adds one tag to a parameter. */
 - (NSError* _Nullable)addTag:(NSString*_Nullable)tag toParameter:(FxParameterId)parameterID;
+/*! Removes one tag from a parameter. */
 - (NSError* _Nullable)removeTag:(NSString*_Nullable)tag fromParameter:(FxParameterId)parameterID;
+/*! Removes every tag from a parameter. */
 - (NSError* _Nullable)removeAllTags:(FxParameterId)parameterID;
+/*! The parameters that carry a tag. */
 - (NSArray* _Nullable)parametersWithTag:(NSString*_Nullable)tag;
 
 
@@ -41,7 +59,7 @@
 /*!
 	@method     presetDefinitionForTag:
 	@abstract   Resolves a tag to a preset definition.
-	@discussion Introduced in FxGrip 1.0. Reads the plugin's plist `presets` table.
+	@discussion Introduced in FxGrip 0.1.0. Reads the plugin's plist `presets` table.
 				Automatic rigging resolves from the plugin and the instance record only,
 				so a saved preset file never alters a plugin's rigging; browsing and
 				user-initiated apply use the merged listing in FxGripPresetsAPI_v1.
@@ -108,18 +126,24 @@
 
 
 /*!
-	@interface  FxGripParameterTagsAPI_v1
-	@abstract   Allows your plugin to create parameters on-the-fly
-	@discussion With this API your plugin can create and remove parameters outside of its
-				-addParameters method. It can also get and set various properties of parameters
-				during run-time, as well, such as the minimum and maximum allowable values.
-				NOTE: You should only implement this protocol in plug-ins that use FxPlug 4
-				or later. It will not be called in plug-ins that are written with FxPlug 2 or 3.
+	@class		FxGripParameterTagsAPI_v1
+	@abstract	FxGrip's implementation of the tag storage and preset resolution API.
+	@discussion	Introduced in FxGrip 0.1.0. Tag storage forwards to the effect's meta manager and
+				returns a no-meta error when the host carries none. Preset resolution reads the
+				plugin plist, and preset application funnels through the tag API core so the tag
+				boundary and section ordering hold for every caller.
 */
 @interface FxGripParameterTagsAPI_v1 : FxGripCommonAPI<FxGripParameterTagsAPI_v1>
 
+	/*! The wrapped host tags API, nil because no host vends one. */
 	@property (assign, readonly) id<FxGripParameterTagsAPI_v1> _Nonnull api;
 
+/*!
+	@method		initWithAPI:effect:
+	@abstract	Initializes the tags API wrapper.
+	@param		api	The wrapped host tags API, or nil.
+	@param		effect	The effect host whose meta manager stores the tags.
+*/
 - (nullable instancetype)initWithAPI:(id<FxGripParameterTagsAPI_v1> _Nullable)api effect:(nonnull id<FxGripEffectHost>)effect;
 
 // Parameter Tags

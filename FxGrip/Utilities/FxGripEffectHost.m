@@ -1,7 +1,15 @@
-//
-//  FxGripEffectHost.m
-//  FxGrip
-//
+/*!
+	@file       FxGripEffectHost.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripEffectHost
+	@abstract   Implements the exported host-service resolvers for FxGripEffectHost.
+	@discussion Introduced in FxGrip 0.1.0. The meta manager and parameter data resolve in two
+	            steps: the host's own member when it answers, else a resolve notification whose
+	            owning observer supplies the service. The resolvers use runtime dispatch so a
+	            host that lacks the member incurs no link-time dependency.
+*/
 
 #import "FxGripEffectHost.h"
 #import "FxGripTileableEffect+Notifications.h"

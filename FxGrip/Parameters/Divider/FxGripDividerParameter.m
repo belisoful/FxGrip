@@ -1,7 +1,15 @@
-//
-//  FxGripDividerParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripDividerParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDividerParameter
+	@abstract   Implements the horizontal divider custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. Creation builds a full-width custom parameter whose value
+	            is an FxGripDividerData seeded from the declared configuration. The view is an
+	            FxGripDividerBox attached as the data-push delegate, returned inside its sizing
+	            container.
+*/
 
 #import "FxGripDividerParameter.h"
 #import "FxGripTileableEffect.h"
@@ -10,6 +18,10 @@
 #import "FxGripDividerBox.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The horizontal divider custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Creation stores an FxGripDividerData value and adds the
+				custom-UI, not-animatable, full-view-width, and no-state flags. */
 @implementation FxGripDividerParameter
 
 + (nullable NSString*)parameterTypeString
@@ -27,6 +39,12 @@
 	return [NSSet setWithObject:FxGripDividerData.class];
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Creates the divider custom parameter on the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The declared configuration seeds the divider data. Creation
+				adds the custom-UI, not-animatable, full-view-width, and no-state flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id declared = parameter.parameterDefaultValue;
@@ -42,6 +60,12 @@
 									| kFxParameterFlag_NOSTATE];
 }
 
+/*!
+	@method		newParameterView
+	@abstract	Creates the divider box, seeds it from the declared configuration, and returns its container.
+	@return		The box's full-width container view.
+	@discussion	Introduced in FxGrip 0.1.0. The box is attached as the custom view, so the parameter
+				drives it directly through the data-push delegate. */
 - (NSView *_Nullable)newParameterView
 {
 	FxGripDividerBox *box = [FxGripDividerBox.alloc initWithFrame:NSMakeRect(0, 22, 100, 1)];

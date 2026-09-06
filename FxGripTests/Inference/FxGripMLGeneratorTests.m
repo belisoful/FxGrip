@@ -1,11 +1,12 @@
-//
-//  FxGripMLGeneratorTests.m
-//  FxGripTests
-//
-//  Covers the generator ML templates: no-source orchestration, the placeholder path, and the
-//  generator tile geometry. The harness mirrors the ML effect tests: sentinel outputs, a stub
-//  backend, no Metal.
-//
+/*!
+	@file       FxGripMLGeneratorTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLGeneratorTests
+	@abstract   Verifies the FxGripMLImageGenerator and FxGripMLVideoGenerator templates.
+	@discussion Introduced in FxGrip 0.1.0. A stub backend stages a result and records the request, and test generator subclasses capture the written output, count placeholder writes, and drive a terminal-state expectation. The tests confirm the image generator feeds its generator inputs to the backend and writes the generated output, renders the placeholder while the backend is not ready, and the video generator renders the placeholder until the clip is generated and then draws from the clip.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripMLImageGenerator.h>
@@ -134,6 +135,7 @@ static CMTime FxGripMLGenTestTime(void)
 
 @implementation FxGripMLGeneratorTests
 
+/*! @abstract The image generator sends its generator inputs to the backend, writes the generated output, and skips the placeholder. */
 - (void)testTheImageGeneratorRunsTheBackendOverGeneratorInputs
 {
 	FxGripMLTestImageGenerator *generator = [FxGripMLTestImageGenerator.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -152,6 +154,7 @@ static CMTime FxGripMLGenTestTime(void)
 	XCTAssertEqual(generator.placeholderWrites, 0u);
 }
 
+/*! @abstract A not-ready backend makes the image generator write the placeholder once and run no inference. */
 - (void)testTheImageGeneratorRendersThePlaceholderUntilReady
 {
 	FxGripMLTestImageGenerator *generator = [FxGripMLTestImageGenerator.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -172,6 +175,7 @@ static CMTime FxGripMLGenTestTime(void)
 // verbatim behavior; exercising it in the test bundle crashes without the host-loaded FxPlug
 // runtime (kFxRect_Empty and the rect notification chain), so it is host-verified.
 
+/*! @abstract The video generator writes the placeholder before generation and draws from the clip once it is ready, without a further placeholder write. */
 - (void)testTheVideoGeneratorRendersThePlaceholderThenTheClip
 {
 	FxGripMLTestVideoGenerator *generator = [FxGripMLTestVideoGenerator.alloc initWithAPIManager:(id _Nonnull)nil];

@@ -1,12 +1,12 @@
-//
-//  FxGripParameterSettingAPI_v5Tests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripParameterSettingAPI_v5. Every typed setter routes either into a
-//  custom parameter value that adopts FxGripMutableParameter or into the host API followed
-//  by a change notification; setParameterFlags: and setStringParameterValue: additionally
-//  run a pre-notification the observers can answer or rewrite.
-//
+/*!
+	@file       FxGripParameterSettingAPI_v5Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterSettingAPI_v5Tests
+	@abstract   Verifies the typed setters of FxGripParameterSettingAPI_v5, their host forwarding, change notifications, and custom-parameter interception.
+	@discussion Introduced in FxGrip 0.1.0. Each typed setter forwards to the host API and posts a change notification carrying the written value. A custom parameter intercepts the setter, mutates its own value through FxGripMutableParameter, and writes the result back as a custom value. setStringParameterValue: and setParameterFlags: post a pre-notification that observers can answer or rewrite before the host call.
+*/
 
 #import "FxGripSettingAPITestSupport.h"
 #import <objc/runtime.h>
@@ -23,6 +23,7 @@
 
 #pragma mark Plain setter forwarding
 
+/*! @abstract setBoolValue: forwards the boolean and time to the host and posts the bool-change notification carrying the id, value, and time. */
 - (void)testSetBoolValueForwardsToTheHostAndPostsTheChange
 {
 	XCTAssertTrue([self.settingAPI setBoolValue:YES
@@ -41,6 +42,7 @@
 										  FxGripSettingTestTime()));
 }
 
+/*! @abstract setFloatValue: forwards the float to the host and posts the float-change notification carrying the value. */
 - (void)testSetFloatValueForwardsToTheHostAndPostsTheChange
 {
 	XCTAssertTrue([self.settingAPI setFloatValue:0.25
@@ -54,6 +56,7 @@
 						  @0.25);
 }
 
+/*! @abstract setIntValue: forwards the integer to the host and posts the int-change notification carrying the value. */
 - (void)testSetIntValueForwardsToTheHostAndPostsTheChange
 {
 	XCTAssertTrue([self.settingAPI setIntValue:9
@@ -67,6 +70,7 @@
 						  @9);
 }
 
+/*! @abstract setHistogram... forwards black-in, black-out, white-in, white-out, gamma, and channel to the host and posts each component in the histogram-change notification. */
 - (void)testSetHistogramForwardsEveryComponentAndPostsThem
 {
 	XCTAssertTrue([self.settingAPI setHistogramBlackIn:0.1
@@ -96,6 +100,7 @@
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Channel], @(kFxHistogramChannel_Red));
 }
 
+/*! @abstract setPathID: forwards the path pointer to the host and posts it boxed as an NSValue in the path-change notification. */
 - (void)testSetPathIDForwardsThePointerAndPostsItBoxed
 {
 	int storage = 0;
@@ -110,6 +115,7 @@
 						  [NSValue valueWithPointer:pathID]);
 }
 
+/*! @abstract setRed:green:blue:alpha: forwards all four color components to the host and posts them in the RGBA-change notification. */
 - (void)testSetRedGreenBlueAlphaForwardsEveryComponentAndPostsThem
 {
 	XCTAssertTrue([self.settingAPI setRedValue:0.1
@@ -130,6 +136,7 @@
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Alpha], @0.4);
 }
 
+/*! @abstract setRed:green:blue: forwards the three color components to the host and posts them in the RGB-change notification, leaving alpha absent. */
 - (void)testSetRedGreenBlueForwardsThreeComponentsAndPostsThem
 {
 	XCTAssertTrue([self.settingAPI setRedValue:0.1
@@ -148,6 +155,7 @@
 	XCTAssertNil(payload[kFxParameterProperty_Alpha]);
 }
 
+/*! @abstract setX:Y: forwards both coordinates to the host and posts them in the XY-change notification. */
 - (void)testSetXYForwardsBothCoordinatesAndPostsThem
 {
 	XCTAssertTrue([self.settingAPI setXValue:0.25
@@ -164,6 +172,7 @@
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Y], @0.75);
 }
 
+/*! @abstract setCustomParameterValue: forwards the object to the host through the custom method and posts it in the custom-value-change notification. */
 - (void)testSetCustomParameterValueForwardsTheObjectAndPostsIt
 {
 	NSString *value = @"Payload";
@@ -177,6 +186,7 @@
 						  value);
 }
 
+/*! @abstract When the host refuses, each typed setter returns NO and no change notification is posted. */
 - (void)testAHostRefusalReportsFailureAndPostsNothing
 {
 	self.hostAPI.succeeds = NO;
@@ -202,6 +212,7 @@
 
 #pragma mark Custom parameter interception
 
+/*! @abstract A setter on a custom parameter mutates the custom value, then writes the mutated value back through the host custom method and posts the custom-value-change notification. */
 - (void)testASetterOnACustomParameterWritesThroughTheCustomValue
 {
 	[self markParameterCustom];
@@ -217,6 +228,7 @@
 	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterSetCustomValueName]);
 }
 
+/*! @abstract The custom value is read once, at the same time passed to the setter, and the host write uses that time. */
 - (void)testTheCustomValueIsReadAtTheTimeTheSetterWasGiven
 {
 	[self markParameterCustom];
@@ -228,6 +240,7 @@
 	XCTAssertTrue(FxGripSettingTestTimesEqual(self.hostAPI.lastTime, FxGripSettingTestTime()));
 }
 
+/*! @abstract Every typed setter routes through the custom value, which records the setters in call order: bool, float, int, histogram, pathid, rgba, rgb, xy, string. */
 - (void)testEveryTypedSetterInterceptsACustomParameter
 {
 	[self markParameterCustom];
@@ -253,6 +266,7 @@
 															   @"rgb", @"xy", @"string"]));
 }
 
+/*! @abstract When the custom value cannot be read, the setter returns NO, reaches no host, and posts nothing. */
 - (void)testACustomParameterWhoseValueCannotBeReadReportsFailure
 {
 	[self markParameterCustom];
@@ -266,6 +280,7 @@
 	XCTAssertEqualObjects(self.posted, @[]);
 }
 
+/*! @abstract When the custom value does not adopt FxGripMutableParameter, the setter returns NO, invokes no setter on the value, and reaches no host. */
 - (void)testACustomValueThatDoesNotAdoptTheMutableProtocolReportsFailure
 {
 	[self markParameterCustom];
@@ -279,6 +294,7 @@
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }
 
+/*! @abstract When the custom value does not implement the requested setter, the write returns NO and reaches no host. */
 - (void)testACustomValueThatDoesNotImplementTheSetterReportsFailure
 {
 	[self markParameterCustom];
@@ -291,6 +307,7 @@
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }
 
+/*! @abstract When the custom setter refuses the mutation, the write returns NO and the refused mutation is not written back to the host. */
 - (void)testACustomSetterThatRefusesTheValueReportsFailure
 {
 	[self markParameterCustom];
@@ -304,6 +321,7 @@
 	XCTAssertEqualObjects(self.hostAPI.calls, @[], @"a refused mutation is not written back");
 }
 
+/*! @abstract When the custom value cannot take the mutation, every typed setter returns NO and reaches no host. */
 - (void)testEverySetterReportsFailureWhenTheCustomValueCannotTakeTheMutation
 {
 	[self markParameterCustom];
@@ -328,6 +346,7 @@
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }
 
+/*! @abstract Without a dynamic API the custom value is never consulted, and the setter forwards the plain typed value to the host. */
 - (void)testWithoutADynamicAPINoSetterIntercepts
 {
 	[self markParameterCustom];
@@ -340,6 +359,7 @@
 	XCTAssertEqualObjects(self.hostMethods, @[@"float"]);
 }
 
+/*! @abstract A setter on a non-custom parameter never reads a custom value. */
 - (void)testANonCustomParameterNeverReadsTheCustomValue
 {
 	XCTAssertTrue([self.settingAPI setFloatValue:0.25
@@ -349,6 +369,7 @@
 	XCTAssertEqual(self.retrievalAPI.readCount, (NSUInteger)0);
 }
 
+/*! @abstract When the custom value refuses the XY mutation, setX:Y: returns NO and the refused mutation is not written back to the host. */
 - (void)testSetXYReportsFailureAndReachesNoHostWhenTheCustomValueRefusesTheMutation
 {
 	[self markParameterCustom];
@@ -365,6 +386,7 @@
 
 #pragma mark setStringParameterValue:
 
+/*! @abstract setStringParameterValue: posts the pre-notification before the host call and posts the pre and post notifications around the write. */
 - (void)testSetStringValuePostsThePreNotificationBeforeTheHostCall
 {
 	__block NSUInteger callsAtPre = NSUIntegerMax;
@@ -383,6 +405,7 @@
 											   FxGripNotifyAPI_ParameterSetStringValueName]));
 }
 
+/*! @abstract An observer that rewrites the string in the pre-notification changes the value the host and the change payload receive. */
 - (void)testAnObserverRewritingTheStringChangesWhatTheHostReceives
 {
 	[self observeName:FxGripNotifyAPI_ParameterSetStringValuePreName usingBlock:^(NSNotification *notification) {
@@ -397,6 +420,7 @@
 						  @"Localized");
 }
 
+/*! @abstract A string value the host refuses posts only the pre-notification. */
 - (void)testAStringValueTheHostRefusesPostsOnlyThePreNotification
 {
 	self.hostAPI.succeeds = NO;
@@ -407,6 +431,7 @@
 	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterSetStringValuePreName]);
 }
 
+/*! @abstract A string value on a custom parameter writes the observer-rewritten string through the custom value at the zero time and reports a custom value change. */
 - (void)testAStringValueOnACustomParameterUsesTheRewrittenStringAtTheZeroTime
 {
 	[self markParameterCustom];
@@ -426,6 +451,7 @@
 
 #pragma mark setParameterFlags:
 
+/*! @abstract setParameterFlags: forwards only the Apple-defined bits to the host and posts the pre and post flag notifications. */
 - (void)testSetParameterFlagsForwardsTheMaskedFlagsAndPostsBothNotifications
 {
 	FxParameterFlags flags = kFxParameterFlag_HIDDEN | kFxParameterFlag_NO_DEBUG;
@@ -440,6 +466,7 @@
 											   FxGripNotifyAPI_ParameterSetFlagsName]));
 }
 
+/*! @abstract The posted flags carry the saving bit and drop the cache bit. */
 - (void)testThePostedFlagsCarryTheSavingBitAndDropTheCacheBit
 {
 	FxParameterFlags flags = kFxParameterFlag_HIDDEN | kFxParameterFlag_CACHE;
@@ -452,6 +479,7 @@
 	XCTAssertEqualObjects(payload[kFxParameterProperty_Id], @(kSettingTestParameter));
 }
 
+/*! @abstract An observer that rewrites the flags in the pre-notification changes the value the host receives. */
 - (void)testAnObserverRewritingTheFlagsChangesWhatTheHostReceives
 {
 	[self observeName:FxGripNotifyAPI_ParameterSetFlagsPreName usingBlock:^(NSNotification *notification) {
@@ -465,6 +493,7 @@
 	XCTAssertEqualObjects(self.hostCall[@"value"], @(kFxParameterFlag_DISABLED));
 }
 
+/*! @abstract An observer that answers the flags pre-notification short-circuits the host call and posts only the pre-notification. */
 - (void)testAnObserverAnsweringThePreNotificationShortCircuitsTheHostCall
 {
 	[self observeName:FxGripNotifyAPI_ParameterSetFlagsPreName usingBlock:^(NSNotification *notification) {
@@ -478,6 +507,7 @@
 	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterSetFlagsPreName]);
 }
 
+/*! @abstract An observer that answers the flags pre-notification with NO reports failure and does not call the host. */
 - (void)testAnObserverAnsweringThePreNotificationWithNOReportsFailure
 {
 	[self observeName:FxGripNotifyAPI_ParameterSetFlagsPreName usingBlock:^(NSNotification *notification) {
@@ -490,6 +520,7 @@
 	XCTAssertEqualObjects(self.hostAPI.calls, @[]);
 }
 
+/*! @abstract Flags the host refuses post only the pre-notification. */
 - (void)testFlagsTheHostRefusesPostOnlyThePreNotification
 {
 	self.hostAPI.succeeds = NO;
@@ -500,6 +531,7 @@
 	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterSetFlagsPreName]);
 }
 
+/*! @abstract The flags pre-notification carries the requested flags and the parameter ID. */
 - (void)testTheFlagsPreNotificationCarriesTheRequestedFlags
 {
 	__block NSDictionary *seen = nil;

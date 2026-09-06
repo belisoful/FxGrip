@@ -1,9 +1,16 @@
-//
-//  FxGripParameterCreationAPI_v5.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterSettingAPI_v5.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterSettingAPI_v5
+	@abstract   Implements the parameter setting wrapper over the host FxParameterSettingAPI_v5.
+	@discussion Introduced in FxGrip 0.1.0. Typed writes check for a Custom parameter first,
+	            mutate its value through the FxGripMutableParameter accessor, and write it back,
+	            otherwise they forward to the host API. Each successful write posts an FxGrip
+	            notification carrying the new value and time. Flag and string writes post a
+	            pre-notification that lets observers override or amend the write.
+*/
 
 #import "FxGripParameterSettingAPI_v5.h"
 #import "FxGripParameterFlags.h"
@@ -15,6 +22,12 @@
 #import <BEFoundation/FxTime.h>
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	FxGrip's wrapper around the host FxParameterSettingAPI_v5.
+	@discussion	Introduced in FxGrip 0.1.0. Custom parameters mutate through FxGripMutableParameter
+				and write back; every other write forwards to the host API and posts an FxGrip
+				notification.
+*/
 @implementation FxGripParameterSettingAPI_v5
 
 //---------------------------------------------------------
@@ -47,6 +60,7 @@
 	SUPER_DEALLOC();
 }
 
+/*! @abstract Writes a Boolean value, routing through the custom value for a Custom parameter and posting the set-bool notification. */
 - (BOOL)setBoolValue:(BOOL)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -76,6 +90,7 @@
 	return success;
 }
 
+/*! @abstract Writes a custom parameter value and posts the set-custom-value notification. */
 - (BOOL)setCustomParameterValue:(nonnull NSObject<NSSecureCoding,NSCopying> *)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	BOOL success = [_api setCustomParameterValue:value toParameter:parameterID atTime:time];
@@ -95,6 +110,7 @@
 	return success;
 }
 
+/*! @abstract Writes a floating-point value, routing through the custom value for a Custom parameter and posting the set-float notification. */
 - (BOOL)setFloatValue:(double)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -124,6 +140,7 @@
 	return success;
 }
 
+/*! @abstract Writes histogram controls, routing through the custom value for a Custom parameter and posting the set-histogram notification. */
 - (BOOL)setHistogramBlackIn:(double)blackIn blackOut:(double)blackOut whiteIn:(double)whiteIn whiteOut:(double)whiteOut gamma:(double)gamma forChannel:(FxHistogramChannel)channel fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -158,6 +175,7 @@
 	return success;
 }
 
+/*! @abstract Writes an integer value, routing through the custom value for a Custom parameter and posting the set-int notification. */
 - (BOOL)setIntValue:(int)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -187,6 +205,14 @@
 	return success;
 }
 
+/*!
+	@method		setParameterFlags:toParameter:
+	@abstract	Writes a parameter's flags, letting observers override or amend the write.
+	@discussion	Introduced in FxGrip 0.1.0. A pre-notification lets an observer return the result
+				directly or amend the flags. The host receives only the FxPlug-masked flags. On
+				success the saved flags, less the cache flag, seed a post-notification.
+	@return		YES when the flags are written.
+*/
 - (BOOL)setParameterFlags:(FxParameterFlags)flags toParameter:(UInt32)parameterID
 {
 	NSMutableDictionary *userInfo = @{
@@ -221,6 +247,7 @@
 	
 }
 
+/*! @abstract Writes a path ID, routing through the custom value for a Custom parameter and posting the set-path-ID notification. */
 - (BOOL)setPathID:(nonnull FxPathID)pathID toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -250,6 +277,7 @@
 	return success;
 }
 
+/*! @abstract Writes an RGBA color, routing through the custom value for a Custom parameter and posting the set-RGBA notification. */
 - (BOOL)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue alphaValue:(double)alpha toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -282,6 +310,7 @@
 	return success;
 }
 
+/*! @abstract Writes an RGB color, routing through the custom value for a Custom parameter and posting the set-RGB notification. */
 - (BOOL)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -313,6 +342,14 @@
 	return success;
 }
 
+/*!
+	@method		setStringParameterValue:toParameter:
+	@abstract	Writes a string value, letting observers amend it and routing custom parameters.
+	@discussion	Introduced in FxGrip 0.1.0. A pre-notification lets observers replace the string.
+				A Custom parameter then routes through the custom value; otherwise the host receives
+				the write and a post-notification fires on success.
+	@return		YES when the string is written.
+*/
 - (BOOL)setStringParameterValue:(nonnull NSString *)string toParameter:(UInt32)parameterID
 {
 	NSMutableDictionary *userInfo = @{
@@ -348,6 +385,7 @@
 	return success;
 }
 
+/*! @abstract Writes a 2D point, routing through the custom value for a Custom parameter and posting the set-XY notification. */
 - (BOOL)setXValue:(double)x YValue:(double)y toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {

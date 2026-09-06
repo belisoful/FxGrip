@@ -1,9 +1,16 @@
-//
-//  FxGripObjectTrackerParameter.h
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripObjectTrackerParameter.h
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerParameter
+	@abstract   The custom parameter that tracks an object across the clip.
+	@discussion Introduced in FxGrip 0.1.0. The parameter's value is an FxGripObjectTrackerData
+	            holding the configuration, the region, and the per-frame result. The
+	            kFxGripObjectTrackerKey_* constants name the design-time configuration keys
+	            read from the parameter dictionary's default value. The analysis-pass methods
+	            arm the tracker, analyze each frame, and write the samples back into the value.
+*/
 
 #ifndef FxGripObjectTrackerParameter_h
 #define FxGripObjectTrackerParameter_h
@@ -35,7 +42,7 @@
 /*!
 	@class      FxGripObjectTrackerParameter
 	@abstract   The state object of a canvas object tracker.
-	@discussion Introduced in FxGrip 1.0. The parameter's value is an FxGripObjectTrackerData
+	@discussion Introduced in FxGrip 0.1.0. The parameter's value is an FxGripObjectTrackerData
 				that carries the tracker configuration, the user-placed region, and the
 				per-frame tracking result, so the whole tracker saves with the host document
 				and travels in a preset.

@@ -1,7 +1,12 @@
-//
-//  FxGripParameterClassTestSupport.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripParameterClassTestSupport.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterClassTestSupport
+	@abstract   Shared stubs for the parameter-class creation, retrieval, setting, timing, and dynamic API tests.
+	@discussion Introduced in FxGrip 0.1.0. The creation, retrieval, setting, and timing stubs record their calls and vend configured values, the stub effect mirrors the effect base's policy and group notification observers, and the stub API manager binds the versioned APIs together. Free functions build a parameter config dictionary and CMTimes for the tests.
+*/
 
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripTileableEffect+Notifications.h>
@@ -16,6 +21,10 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Creation API
 
+/*!
+	@abstract A stub host creation API that records each add-parameter call and can refuse chosen methods.
+	@discussion Introduced in FxGrip 0.1.0. Every creation method appends its arguments to the calls array under a short method key, and returns the configured success flag unless the method is in the refused set.
+*/
 @implementation FxGripParamClassTestCreationAPI
 
 - (instancetype)init
@@ -29,11 +38,13 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 	return self;
 }
 
+/*! @abstract Returns the most recently recorded creation call. */
 - (NSDictionary *)lastCall
 {
 	return self.calls.lastObject;
 }
 
+/*! @abstract Records a creation call and returns success unless the method is refused. */
 - (BOOL)record:(NSString *)method arguments:(NSDictionary *)arguments
 {
 	NSMutableDictionary *call = arguments.mutableCopy;
@@ -298,6 +309,10 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Retrieval / setting / dynamic APIs
 
+/*!
+	@abstract A stub host retrieval API that records each read and vends configured values.
+	@discussion Introduced in FxGrip 0.1.0. Each accessor records the read and returns the configured value, and it can refuse specific histogram channels. Gradient reads fill the sample buffer with a configured byte.
+*/
 @implementation FxGripParamClassTestRetrievalAPI
 
 - (instancetype)init
@@ -314,11 +329,13 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 	return self;
 }
 
+/*! @abstract Returns the most recently recorded read. */
 - (NSDictionary *)lastRead
 {
 	return self.reads.lastObject;
 }
 
+/*! @abstract Records a timed read field by field and returns the configured success flag. */
 // CoreMedia is not linked into the test bundle, so the time is recorded field by field.
 - (BOOL)record:(NSString *)accessor parameter:(UInt32)parameterID time:(CMTime)time
 {
@@ -329,6 +346,7 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 	return self.succeeds;
 }
 
+/*! @abstract Records an untimed read and returns the configured success flag. */
 - (BOOL)record:(NSString *)accessor parameter:(UInt32)parameterID
 {
 	[self.reads addObject:@{@"accessor": accessor, @"id": @(parameterID)}];
@@ -525,6 +543,10 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 @end
 
+/*!
+	@abstract A stub host timing API that records each query and vends configured or derived times.
+	@discussion Introduced in FxGrip 0.1.0. Start and duration return the configured times; the timeline and image conversions double and halve the query time so a test verifies the direction of the mapping.
+*/
 @implementation FxGripParamClassTestTimingAPI
 
 - (instancetype)init
@@ -576,6 +598,10 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 @end
 
+/*!
+	@abstract A stub host setting API that records each write and flag change.
+	@discussion Introduced in FxGrip 0.1.0. Each setter appends its arguments to the writes array under a short accessor key and returns the configured success flag; flag changes are recorded separately.
+*/
 @implementation FxGripParamClassTestSettingAPI
 
 - (instancetype)init
@@ -589,11 +615,13 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 	return self;
 }
 
+/*! @abstract Returns the most recently recorded write. */
 - (NSDictionary *)lastWrite
 {
 	return self.writes.lastObject;
 }
 
+/*! @abstract Records a write under its accessor key and returns the configured success flag. */
 - (BOOL)record:(NSString *)accessor arguments:(NSDictionary *)arguments
 {
 	NSMutableDictionary *write = arguments.mutableCopy;
@@ -679,6 +707,10 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 @end
 
+/*!
+	@abstract A stub host dynamic API that vends and records a parameter name.
+	@discussion Introduced in FxGrip 0.1.0. It returns the configured name and error, and records each set-name call.
+*/
 @implementation FxGripParamClassTestDynamicAPI
 
 - (instancetype)init
@@ -709,6 +741,10 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 #pragma mark - API manager
 
+/*!
+	@abstract A stub API manager that binds the versioned creation, retrieval, setting, timing, and dynamic stubs.
+	@discussion Introduced in FxGrip 0.1.0. The v5 and v6 set APIs share one setting stub so a test observes both versions through the same recorder.
+*/
 @implementation FxGripParamClassTestAPIManager
 
 - (instancetype)init
@@ -730,6 +766,10 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Effect
 
+/*!
+	@abstract A stub effect that mirrors the effect base's policy and group notification seams for the parameter-class tests.
+	@discussion Introduced in FxGrip 0.1.0. It carries the stub API manager and a priority notifier, attaches policy and group observers driven by its own properties, records group recursion, and vends the recorded creation calls. Parameter subscripting reads from an in-memory dictionary.
+*/
 @implementation FxGripParamClassTestEffect
 
 - (id)effectBase
@@ -812,6 +852,7 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 	}];
 }
 
+/*! @abstract Records a group-recursion request and returns the configured success flag and error. */
 - (BOOL)addParametersWithGroupID:(FxParameterId)groupID error:(NSError *_Nullable *_Nullable)error
 {
 	[self.addedGroupIDs addObject:@(groupID)];
@@ -835,11 +876,13 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 	return self.parameters[@(index)];
 }
 
+/*! @abstract Returns the first recorded creation call from the creation stub. */
 - (NSDictionary *)creationCall
 {
 	return self.apiManager.paramCreateAPIv5.calls.firstObject;
 }
 
+/*! @abstract Returns every recorded creation call from the creation stub. */
 - (NSArray<NSDictionary *> *)creationCalls
 {
 	return self.apiManager.paramCreateAPIv5.calls;
@@ -849,6 +892,7 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 
 #pragma mark - Configuration helper
 
+/*! @abstract Builds a parameter config dictionary with the id, type, and name, merging any extra keys. */
 NSMutableDictionary *FxGripParamClassTestConfig(FxParameterId parameterID,
 										   NSString *type,
 										   NSString *name,
@@ -862,6 +906,7 @@ NSMutableDictionary *FxGripParamClassTestConfig(FxParameterId parameterID,
 	return config;
 }
 
+/*! @abstract Builds a valid CMTime from a value and timescale. */
 CMTime FxGripParamClassTestTime(int64_t value, int32_t timescale)
 {
 	CMTime time = { .value = value, .timescale = timescale, .flags = kCMTimeFlags_Valid, .epoch = 0 };

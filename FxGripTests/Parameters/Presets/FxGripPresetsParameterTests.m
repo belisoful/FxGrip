@@ -1,26 +1,12 @@
-//
-//  FxGripPresetsParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPresetsParameter: the preset tag a configuration declares, the
-//  menu layout built from the two preset sources, the creation call, the type-map entry,
-//  and the selection handling the change notification drives.
-//
-//  Two safety rules shape the harness. Every preset folder is redirected into a per-test
-//  temporary folder by subclassing FxGripPresetsAPI_v1 and overriding -userPresetURL and
-//  -pluginPresetURL, and the effect's stub API manager vends that redirected instance, so
-//  no test reads or writes the real Application Support tree. The two action entries call
-//  NSWorkspace and the save panel, so every instance under test is a subclass that
-//  overrides -revealUserPresetsAtTime: and -saveCurrentStateAsPresetAtTime: to record the
-//  invocation; the selection restoration those actions perform is exercised by calling
-//  -restoreSelectionAtTime: directly.
-//
-//  The live menu refresh is covered by driving the private methods the folder watcher
-//  reaches, so the assertions do not depend on filesystem event latency; one end-to-end
-//  test writes into the watched folder and waits for the refresh. BEFoundation is not
-//  linked into the test bundle, so the watcher is only ever read as an opaque object
-//  through its instance variable.
-//
+/*!
+	@file       FxGripPresetsParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPresetsParameterTests
+	@abstract   Tests the FxGripPresetsParameter tag, menu, creation, selection, and live refresh.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the preset tag a configuration declares, the menu layout built from the user and plugin preset sources, the popup-menu creation call, the type-map entry, the selection handling the change notification drives, the reveal and save action entries, selection restoration, the user-preset folder watcher, and the live menu refresh.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -590,6 +576,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark presetTagForParameter:
 
+/*! @abstract The preset tag is the first entry under the tags key. */
 - (void)testThePresetTagIsTheFirstEntryUnderTags
 {
 	NSDictionary *config = [self configWithExtra:@{kFxParameterProperty_Tags: @[@"look", @"feel"]}];
@@ -597,6 +584,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([FxGripPresetsParameter presetTagForParameter:config], @"look");
 }
 
+/*! @abstract A non-string first tag yields no preset tag. */
 - (void)testANonStringFirstTagYieldsNoPresetTag
 {
 	NSDictionary *config = [self configWithExtra:@{kFxParameterProperty_Tags: @[@42, @"look"]}];
@@ -604,11 +592,13 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([FxGripPresetsParameter presetTagForParameter:config]);
 }
 
+/*! @abstract A configuration with no tags has no preset tag. */
 - (void)testAConfigurationWithoutTagsHasNoPresetTag
 {
 	XCTAssertNil([FxGripPresetsParameter presetTagForParameter:[self configWithExtra:nil]]);
 }
 
+/*! @abstract An empty tag list has no preset tag. */
 - (void)testAnEmptyTagListHasNoPresetTag
 {
 	NSDictionary *config = [self configWithExtra:@{kFxParameterProperty_Tags: @[]}];
@@ -616,6 +606,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([FxGripPresetsParameter presetTagForParameter:config]);
 }
 
+/*! @abstract A comma-divided tag string contributes its first tag as the preset tag. */
 - (void)testADividedTagStringContributesItsFirstTag
 {
 	NSDictionary *config = [self configWithExtra:@{kFxParameterProperty_Tags: @"look, feel"}];
@@ -625,6 +616,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark menuEntriesForParameter:effect:
 
+/*! @abstract The menu lists the default entry, then the user preset section, then the plugin preset section, then the reveal and save entries. */
 - (void)testTheMenuListsTheUserSectionThenThePluginSection
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -641,6 +633,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 												   kFxPresetsMenuEntry_Save]));
 }
 
+/*! @abstract An empty user section drops its separator along with it. */
 - (void)testAnEmptyUserSectionDropsItsSeparatorWithIt
 {
 	[self writePluginPresetNamed:@"Bundled"];
@@ -653,6 +646,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 												   kFxPresetsMenuEntry_Save]));
 }
 
+/*! @abstract An empty plugin section drops its separator along with it. */
 - (void)testAnEmptyPluginSectionDropsItsSeparatorWithIt
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -665,6 +659,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 												   kFxPresetsMenuEntry_Save]));
 }
 
+/*! @abstract A tag with no presets carries only the default, reveal, and save entries. */
 - (void)testATagWithNoPresetsCarriesTheFourFixedEntries
 {
 	NSArray *expected = [@[kFxPresetsMenuEntry_Default] arrayByAddingObjectsFromArray:[self tailEntries]];
@@ -672,6 +667,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([self taggedEntries], expected);
 }
 
+/*! @abstract A configuration with no tag lists no presets and carries only the fixed entries. */
 - (void)testAConfigurationWithoutATagCarriesTheFourFixedEntries
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -680,6 +676,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([self entriesForConfig:[self configWithExtra:nil]], expected);
 }
 
+/*! @abstract An effect with no presets API lists no presets and carries only the fixed entries. */
 - (void)testAnEffectWithoutAPresetsAPICarriesTheFourFixedEntries
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -689,6 +686,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([self taggedEntries], expected);
 }
 
+/*! @abstract No two separators appear next to each other in the menu. */
 - (void)testNoMenuPlacesTwoSeparatorsTogether
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -705,6 +703,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	}
 }
 
+/*! @abstract With both sections present the menu carries exactly three separators. */
 - (void)testEachSectionContributesExactlyOneSeparator
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -716,6 +715,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual([counts countForObject:kFxPresetsMenuEntry_Separator], (NSUInteger)3);
 }
 
+/*! @abstract A preset name reaches the menu unchanged. */
 - (void)testThePresetNameReachesTheMenuUnchanged
 {
 	[self writeUserPresetNamed:@"Warm Look 2"];
@@ -725,6 +725,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark addParameter:toEffect:
 
+/*! @abstract Creation registers a popup-menu parameter carrying the computed entries. */
 - (void)testAddParameterCreatesAPopupMenuCarryingTheEntries
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -738,6 +739,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(call[@"items"], [self taggedEntries]);
 }
 
+/*! @abstract Creation selects the default entry at index zero. */
 - (void)testAddParameterSelectsTheDefaultEntry
 {
 	XCTAssertTrue([FxGripPresetsParameter addParameter:[self taggedConfig] toEffect:(id)self.effect]);
@@ -745,6 +747,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramCreateAPIv5.lastCall[@"default"], @0);
 }
 
+/*! @abstract Creation keeps the default entry selected even when the configuration names another default index. */
 - (void)testAddParameterKeepsTheDefaultEntryEvenWhenTheConfigurationNamesAnother
 {
 	NSDictionary *config = [self configWithExtra:@{kFxParameterProperty_Tags: @[kPresetsParamTestTag],
@@ -755,6 +758,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramCreateAPIv5.lastCall[@"default"], @0);
 }
 
+/*! @abstract Creation forwards the declared flags to the host. */
 - (void)testAddParameterForwardsTheDeclaredFlags
 {
 	NSDictionary *config = [self configWithExtra:@{kFxParameterProperty_Tags: @[kPresetsParamTestTag],
@@ -766,6 +770,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 						  @(kFxParameterFlag_HIDDEN));
 }
 
+/*! @abstract A host that refuses creation makes the add call return false. */
 - (void)testAddParameterReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -775,12 +780,14 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Type identity
 
+/*! @abstract The parameter reports the presets FxPlug type and the matching type string. */
 - (void)testThePresetsParameterReportsItsTypeAndTypeString
 {
 	XCTAssertEqual(FxGripPresetsParameter.parameterType, FxParameterType_Presets);
 	XCTAssertEqualObjects(FxGripPresetsParameter.parameterTypeString, kFxParameterType_Presets);
 }
 
+/*! @abstract The effect resolves the presets type string and type to the presets parameter class. */
 - (void)testTheEffectResolvesThePresetsTypeToThePresetsParameterClass
 {
 	FxGripPresetsParamTestHostEffect *effect = [FxGripPresetsParamTestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -795,6 +802,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Change dispatch
 
+/*! @abstract A change notification naming another parameter is ignored and reads no value. */
 - (void)testAChangeNamingAnotherParameterIsIgnored
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -807,6 +815,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
 }
 
+/*! @abstract A change whose identifier is a string rather than a number is ignored. */
 - (void)testAChangeWithoutAParameterIdIsIgnored
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -822,6 +831,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
 }
 
+/*! @abstract The selected index is read from the host at the notification's time. */
 - (void)testTheSelectedIndexIsReadAtTheNotificationTime
 {
 	[self makeParameter];
@@ -835,6 +845,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(read[@"timescale"], @30);
 }
 
+/*! @abstract A change carrying no time reads the value at time zero. */
 - (void)testAChangeWithoutATimeReadsTheValueAtTimeZero
 {
 	[self makeParameter];
@@ -846,6 +857,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([self recordedSelection], kFxPresetsMenuEntry_Default);
 }
 
+/*! @abstract A selected-index read the host refuses applies no preset and records no selection. */
 - (void)testAValueTheHostRefusesLeavesTheSelectionAlone
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -858,6 +870,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self recordedSelection]);
 }
 
+/*! @abstract Selecting a separator index applies no preset and records no selection. */
 - (void)testASeparatorSelectionChangesNothing
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -869,6 +882,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self recordedSelection]);
 }
 
+/*! @abstract An index beyond the menu applies no preset and records no selection. */
 - (void)testAnIndexBeyondTheMenuChangesNothing
 {
 	[self makeParameter];
@@ -879,6 +893,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self recordedSelection]);
 }
 
+/*! @abstract A negative index applies no preset and records no selection. */
 - (void)testANegativeIndexChangesNothing
 {
 	[self makeParameter];
@@ -889,6 +904,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self recordedSelection]);
 }
 
+/*! @abstract Selecting the default entry records its name and applies no preset. */
 - (void)testTheDefaultEntryRecordsItsNameWithoutApplyingAPreset
 {
 	[self makeParameter];
@@ -899,6 +915,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual(self.presetsAPI.applyCount, (NSUInteger)0);
 }
 
+/*! @abstract Selecting a preset applies it with the default options at the notification's time. */
 - (void)testAPresetSelectionAppliesThePresetAtTheNotificationTime
 {
 	FxGripPreset *written = [self writeUserPresetNamed:@"Ambient"];
@@ -914,6 +931,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual(self.presetsAPI.appliedTime.timescale, (int32_t)30);
 }
 
+/*! @abstract Selecting a preset records the applied preset's name. */
 - (void)testAPresetSelectionRecordsTheAppliedName
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -924,6 +942,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([self recordedSelection], @"Ambient");
 }
 
+/*! @abstract A preset application that fails records no selection. */
 - (void)testAnApplicationThatFailsRecordsNothing
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -936,6 +955,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self recordedSelection]);
 }
 
+/*! @abstract A user preset shadows a plugin preset of the same name, so the user one applies. */
 - (void)testAUserPresetShadowsThePluginPresetOfTheSameName
 {
 	FxGripPreset *userPreset = [self writeUserPresetNamed:@"Shared"];
@@ -948,6 +968,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNotEqualObjects(self.presetsAPI.appliedPreset.uuid, pluginPreset.uuid);
 }
 
+/*! @abstract A plugin preset applies from its own section and records its name. */
 - (void)testAPluginPresetAppliesFromItsOwnSection
 {
 	FxGripPreset *pluginPreset = [self writePluginPresetNamed:@"Bundled"];
@@ -960,6 +981,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([self recordedSelection], @"Bundled");
 }
 
+/*! @abstract An entry naming no known preset applies nothing and records nothing. */
 - (void)testAnEntryNamingNoKnownPresetAppliesNothingAndRecordsNothing
 {
 	[self makeParameter];
@@ -972,6 +994,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self recordedSelection]);
 }
 
+/*! @abstract A configuration with no tag resolves no preset for a selected entry. */
 - (void)testAConfigurationWithoutATagResolvesNoPreset
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -989,6 +1012,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Index resolution
 
+/*! @abstract The index resolves against the stored menu rather than a fresh rebuild. */
 - (void)testTheStoredMenuResolvesTheIndexAheadOfARebuild
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1003,6 +1027,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 						  @"the recorded position names Cool, while a rebuild would name Ambient");
 }
 
+/*! @abstract The entries are rebuilt to resolve an index when no menu was stored. */
 - (void)testTheEntriesAreRebuiltWhenNoMenuWasStored
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1011,6 +1036,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects([parameter menuEntryNameAtIndex:2], @"Ambient");
 }
 
+/*! @abstract A non-array stored menu falls back to a rebuild to resolve the index. */
 - (void)testANonArrayStoredMenuFallsBackToARebuild
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1022,6 +1048,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Action entries
 
+/*! @abstract Selecting the reveal entry runs the reveal action at the notification's time. */
 - (void)testTheRevealEntryRunsTheRevealActionAtTheNotificationTime
 {
 	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
@@ -1034,6 +1061,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual(parameter.actionTime.timescale, (int32_t)30);
 }
 
+/*! @abstract Selecting the save entry runs the save action at the notification's time. */
 - (void)testTheSaveEntryRunsTheSaveActionAtTheNotificationTime
 {
 	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
@@ -1045,6 +1073,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual(parameter.actionTime.value, (int64_t)13);
 }
 
+/*! @abstract Selecting an action entry applies no preset and records no selection. */
 - (void)testAnActionEntryAppliesNoPreset
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1058,6 +1087,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark restoreSelectionAtTime:
 
+/*! @abstract Restoring the selection writes the recorded name's position in the stored menu. */
 - (void)testTheRestoredIndexIsTheRecordedNamesPositionInTheStoredMenu
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1076,6 +1106,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(write[@"timevalue"], @13);
 }
 
+/*! @abstract Restoring the selection uses the rebuilt menu's position when no menu was stored. */
 - (void)testTheRestoredIndexComesFromTheRebuiltMenuWhenNoneWasStored
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1088,6 +1119,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @3);
 }
 
+/*! @abstract The default entry is restored when nothing was recorded. */
 - (void)testTheDefaultEntryIsRestoredWhenNothingWasRecorded
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1098,6 +1130,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
 
+/*! @abstract The default entry is restored when the recorded name has left the menu. */
 - (void)testTheDefaultEntryIsRestoredWhenTheRecordedNameLeftTheMenu
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1109,6 +1142,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
 
+/*! @abstract The default entry is restored for an effect with no meta. */
 - (void)testTheDefaultEntryIsRestoredForAnEffectWithoutMeta
 {
 	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
@@ -1121,6 +1155,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Meta gating
 
+/*! @abstract An effect with no meta still applies the preset but records no selection. */
 - (void)testAnEffectWithoutMetaRecordsNoSelection
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1133,6 +1168,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self recordedSelection]);
 }
 
+/*! @abstract The selection is recorded on the parameter it names and not on another parameter. */
 - (void)testTheSelectionIsRecordedOnTheParameterItNames
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1146,6 +1182,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Notifications
 
+/*! @abstract The parameter's priority for the change notification follows the meta trigger priority. */
 - (void)testThePriorityOfTheChangeNotificationFollowsTheMetaTrigger
 {
 	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
@@ -1153,6 +1190,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual([parameter ncPriority:FxGripTileableEffectParameterChangedName], (NSInteger)-8);
 }
 
+/*! @abstract Every other notification keeps the base priority. */
 - (void)testEveryOtherNotificationKeepsTheBasePriority
 {
 	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
@@ -1187,6 +1225,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 						  @(kFxParameterFlag_CACHE | kFxParameterFlag_HIDDEN));
 }
 
+/*! @abstract After removeObservers, a selection change applies no preset. */
 - (void)testRemovingTheObserversEndsTheSelectionHandling
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1200,6 +1239,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Watcher attachment
 
+/*! @abstract The folder watcher attaches when the user preset folder exists at install. */
 - (void)testTheWatcherAttachesWhenTheUserPresetFolderExistsAtInstall
 {
 	[self createUserTagFolder];
@@ -1209,6 +1249,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNotNil([self watcherOfParameter:parameter]);
 }
 
+/*! @abstract No watcher attaches while the user preset folder is absent. */
 - (void)testNoWatcherAttachesWhileTheUserPresetFolderIsAbsent
 {
 	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
@@ -1216,6 +1257,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self watcherOfParameter:parameter]);
 }
 
+/*! @abstract No watcher attaches for a configuration with no tag. */
 - (void)testNoWatcherAttachesForAConfigurationWithoutATag
 {
 	[self createUserTagFolder];
@@ -1239,6 +1281,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNotNil([self watcherOfParameter:parameter]);
 }
 
+/*! @abstract A second attach keeps the first watcher. */
 - (void)testASecondAttachKeepsTheFirstWatcher
 {
 	[self createUserTagFolder];
@@ -1250,6 +1293,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual([self watcherOfParameter:parameter], watcher);
 }
 
+/*! @abstract removeObservers releases the folder watcher. */
 - (void)testRemovingTheObserversReleasesTheWatcher
 {
 	[self createUserTagFolder];
@@ -1261,6 +1305,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertNil([self watcherOfParameter:parameter]);
 }
 
+/*! @abstract A folder change after removeObservers refreshes nothing. */
 - (void)testAFolderChangeAfterTheObserversAreRemovedRefreshesNothing
 {
 	[self createUserTagFolder];
@@ -1295,6 +1340,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark refreshMenuEntriesAtTime:
 
+/*! @abstract A refresh pushes the current menu entries and the default index to the host. */
 - (void)testARefreshPushesTheCurrentEntriesToTheHost
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1315,6 +1361,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(call[@"default"], @0);
 }
 
+/*! @abstract A refresh runs inside a single out-of-band access context. */
 - (void)testARefreshRunsInsideAnOutOfBandAccessContext
 {
 	FxGripPresetsParamTestParameter *parameter = [self makeParameter];
@@ -1324,6 +1371,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqual(self.effect.startContextCount, (NSUInteger)1);
 }
 
+/*! @abstract A refresh restores the recorded selection at its new index after the menu changes. */
 - (void)testARefreshRestoresTheRecordedSelectionAtItsNewIndex
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1338,6 +1386,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 						  @"the added preset moved Ambient one place down");
 }
 
+/*! @abstract A refresh resolves the recorded selection through the stored menu when restoring. */
 - (void)testARefreshResolvesTheRecordedSelectionThroughTheStoredMenu
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1353,6 +1402,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 						  @"the rebuilt menu would place Cool at index 3");
 }
 
+/*! @abstract A refresh restores the default entry when nothing was recorded. */
 - (void)testARefreshRestoresTheDefaultEntryWhenNothingWasRecorded
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1363,6 +1413,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
 
+/*! @abstract A refresh restores the default entry when the recorded name has left the menu. */
 - (void)testARefreshRestoresTheDefaultEntryWhenTheRecordedNameLeftTheMenu
 {
 	FxGripPreset *preset = [self writeUserPresetNamed:@"Ambient"];
@@ -1378,6 +1429,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @0);
 }
 
+/*! @abstract A refresh restores the selection at the given time. */
 - (void)testARefreshRestoresTheSelectionAtTheGivenTime
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1392,6 +1444,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(write[@"timevalue"], @13);
 }
 
+/*! @abstract A host refusal of the menu rebuild leaves the selection untouched. */
 - (void)testAHostRefusalOfTheMenuRebuildLeavesTheSelectionUntouched
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1407,6 +1460,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Folder change delivery
 
+/*! @abstract A folder change queues the menu refresh on the main queue rather than running it immediately. */
 - (void)testAFolderChangeRefreshesTheMenuOnTheMainQueue
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1438,6 +1492,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 
 #pragma mark Save action refresh
 
+/*! @abstract A successful save attaches the watcher and refreshes the menu with the new preset. */
 - (void)testASuccessfulSaveAttachesTheWatcherAndRefreshesTheMenu
 {
 	FxGripPresetsParameter *parameter = [self makeUnwrappedParameter];
@@ -1456,6 +1511,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertTrue([self.dynamicAPI.lastMenuCall[@"items"] containsObject:@"Fresh"]);
 }
 
+/*! @abstract A successful save restores the selection exactly once. */
 - (void)testASuccessfulSaveRestoresTheSelectionOnce
 {
 	FxGripPresetsParameter *parameter = [self makeUnwrappedParameter];
@@ -1474,6 +1530,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @2);
 }
 
+/*! @abstract The saved preset carries the parameter name as its generate label and the configuration tag. */
 - (void)testTheSavedPresetCarriesTheParameterNameAndTheConfigurationTag
 {
 	FxGripPresetsParameter *parameter = [self makeUnwrappedParameter];
@@ -1487,6 +1544,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.presetsAPI.savedPreset.tag, kPresetsParamTestTag);
 }
 
+/*! @abstract A save the user abandons restores the selection without refreshing the menu. */
 - (void)testASaveTheUserAbandonsRestoresTheSelectionWithoutRefreshing
 {
 	[self writeUserPresetNamed:@"Ambient"];
@@ -1502,6 +1560,7 @@ static NSDictionary *FxGripPresetsParamTestTimeDictionary(CMTime time)
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"value"], @2);
 }
 
+/*! @abstract A capture the host refuses restores the selection without saving or refreshing. */
 - (void)testACaptureTheHostRefusesRestoresTheSelectionWithoutSavingOrRefreshing
 {
 	[self writeUserPresetNamed:@"Ambient"];

@@ -1,9 +1,16 @@
-//
-//  FxGripTileableEffect+Analyze.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripTileableEffect+Analyze.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+Analyze
+	@abstract   Implements the FxAnalyzer callbacks, per-frame storage, and object-tracker analysis.
+	@discussion Introduced in FxGrip 0.1.0. The analysis pass computes a record for each frame
+	            through the subclass hook, stores it at the frame's index in analysisData, and runs
+	            every object-tracker parameter on the same frame. The frame duration is stored so a
+	            time maps to the same frame index at analysis and at render. The utilities average a
+	            tile's color and luminance through Core Image.
+*/
 
 #import "FxGripTileableEffect+Analyze.h"
 #import "FxGripTileableEffect+Extensions.h"
@@ -13,10 +20,20 @@
 #import "FxGripObjectTrackerParameter.h"
 #import <CoreImage/CoreImage.h>
 
+/*!
+	@abstract	The category that implements the frame-analysis pass and its storage.
+	@discussion	Introduced in FxGrip 0.1.0. The category answers the FxAnalyzer callbacks, stores
+				each frame's record in analysisData, and drives object-tracker analysis.
+*/
 @implementation FxGripTileableEffect (Analyze)
 
 #pragma mark FxAnalyzer
 
+/*!
+	@method		desiredAnalysisTimeRange:forInputWithTimeRange:error:
+	@abstract	Reports the time range the analysis pass covers.
+	@return		YES, requesting the whole input time range by default.
+	@discussion	Introduced in FxGrip 0.1.0. A subclass narrows the range. */
 - (BOOL)desiredAnalysisTimeRange:(CMTimeRange *)desiredRange
 		   forInputWithTimeRange:(CMTimeRange)inputTimeRange
 						   error:(NSError * _Nullable * _Nullable)error
@@ -28,6 +45,13 @@
 	return YES;
 }
 
+/*!
+	@method		setupAnalysisForTimeRange:frameDuration:error:
+	@abstract	Prepares the analysis pass and stores the frame duration with the frame data.
+	@return		YES.
+	@discussion	Introduced in FxGrip 0.1.0. The frame duration converts a time to an absolute frame
+				index at analysis and at render, so it is stored in analysisData. The method also
+				begins the object-tracker parameters' analysis. */
 - (BOOL)setupAnalysisForTimeRange:(CMTimeRange)analysisRange
 					frameDuration:(CMTime)frameDuration
 							error:(NSError * _Nullable * _Nullable)error
@@ -48,6 +72,13 @@
 	return YES;
 }
 
+/*!
+	@method		analyzeFrame:atTime:error:
+	@abstract	Analyzes one frame and stores the resulting record.
+	@return		YES.
+	@discussion	Introduced in FxGrip 0.1.0. The method calls the subclass hook for the frame's
+				record, stores a non-nil record at the frame's index, and runs the object trackers
+				on the same frame. */
 - (BOOL)analyzeFrame:(FxImageTile *)frame
 			  atTime:(CMTime)frameTime
 			   error:(NSError * _Nullable * _Nullable)error
@@ -64,6 +95,12 @@
 	return YES;
 }
 
+/*!
+	@method		cleanupAnalysis:
+	@abstract	Ends the analysis pass and persists the analyzed data.
+	@return		YES.
+	@discussion	Introduced in FxGrip 0.1.0. The method ends object-tracker analysis and saves the
+				frame data into its hidden parameter. */
 - (BOOL)cleanupAnalysis:(NSError * _Nullable * _Nullable)error
 {
 	[self endObjectTrackerAnalysis];
@@ -100,6 +137,7 @@
 	return [self.analysisData latestRecordAtOrBefore:[self analysisFrameIndexForTime:time]];
 }
 
+/*! Persists the frame data into its hidden custom parameter through the parameter-set API. */
 - (void)saveAnalysisData
 {
 	FxGripAnalysis *analysis = (FxGripAnalysis *)[self extensionForClass:FxGripAnalysis.class];
@@ -133,6 +171,12 @@
 
 #pragma mark Utilities
 
+/*!
+	@method		averageColorOfImageTile:red:green:blue:alpha:
+	@abstract	Computes the area-average RGBA of a frame tile.
+	@return		YES when the tile has a readable surface; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The average is computed with Core Image's CIAreaAverage
+				on the tile's IOSurface. Any output channel pointer may be nil. */
 + (BOOL)averageColorOfImageTile:(FxImageTile *)tile
 						   red:(double *)red
 						 green:(double *)green
@@ -194,6 +238,7 @@
 
 #pragma mark Object trackers
 
+/*! The effect's object-tracker parameters. */
 - (NSArray<FxGripObjectTrackerParameter *> *)objectTrackerParameters
 {
 	NSMutableArray<FxGripObjectTrackerParameter *> *trackers = [NSMutableArray array];
@@ -212,6 +257,7 @@
 	}
 }
 
+/*! Runs each object-tracker parameter on the frame's Core Image at the frame index. */
 - (void)analyzeObjectTrackersWithTile:(FxImageTile *)tile atFrame:(NSInteger)frameIndex
 {
 	NSArray<FxGripObjectTrackerParameter *> *trackers = [self objectTrackerParameters];

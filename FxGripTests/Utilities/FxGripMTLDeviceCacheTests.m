@@ -1,7 +1,12 @@
-//
-//  FxGripMTLDeviceCacheTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripMTLDeviceCacheTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMTLDeviceCacheTests
+	@abstract   Tests the Metal device cache, its command queue pool, library function caching, and render pipeline memoization.
+	@discussion Introduced in FxGrip 0.1.0. FxGripMTLDeviceCache keys device cache items by registry ID, pixel format, and plugin ID, and pools command queues for scoped checkout. The cache memoizes library functions and render pipeline states. These tests run against the real system Metal device and cover concurrent access, scoped queue lifetime, synchronous and asynchronous shader compilation, and device removal.
+*/
 
 #import <XCTest/XCTest.h>
 #import <Metal/Metal.h>
@@ -104,6 +109,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 #pragma mark Legacy names
 
+/*! @abstract The legacy Guru class and selector are absent while the FxGrip class and scoped selectors respond. */
 - (void)testNoGuruSelectorsRemain
 {
 	XCTAssertNil(NSClassFromString(@"GuruMTLCommandQueue"));
@@ -115,11 +121,13 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 #pragma mark Cache lookup
 
+/*! @abstract The deviceCache accessor returns the same shared instance on every call. */
 - (void)testDeviceCacheIsSingleton
 {
 	XCTAssertTrue(FxGripMTLDeviceCache.deviceCache == FxGripMTLDeviceCache.deviceCache);
 }
 
+/*! @abstract A registry-ID lookup returns an item bound to the system device with the default pixel format and no plugin ID. */
 - (void)testDeviceWithRegistryIDReturnsSystemDevice
 {
 	FxGripMTLDeviceCacheItem *item = [FxGripMTLDeviceCache.deviceCache deviceWithRegistryID:self.device.registryID];
@@ -130,12 +138,14 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertNil(item.pluginID);
 }
 
+/*! @abstract An unknown registry ID returns nil from both the cache lookup and the device-from-ID resolver. */
 - (void)testUnknownRegistryIDReturnsNil
 {
 	XCTAssertNil([FxGripMTLDeviceCache.deviceCache deviceWithRegistryID:0xFFFFFFFFFFFFFFFFull]);
 	XCTAssertNil([FxGripMTLDeviceCache metalDeviceFromID:0xFFFFFFFFFFFFFFFFull]);
 }
 
+/*! @abstract The same key reuses one item, a different pixel format creates a distinct item, and the wildcard format matches an existing item. */
 - (void)testSameKeyReusesItemAndDifferentKeyCreatesItem
 {
 	FxGripMTLDeviceCacheItem *first = self.item;
@@ -155,6 +165,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertTrue(anyFormat == first || anyFormat == otherFormat);
 }
 
+/*! @abstract Concurrent lookups over four distinct plugin IDs create exactly one item per key. */
 - (void)testConcurrentLookupsCreateOneItemPerKey
 {
 	NSMutableSet *items = [NSMutableSet set];
@@ -173,6 +184,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 #pragma mark Command queue pool
 
+/*! @abstract Checking out a queue marks it in use and pooled, and returning it clears the in-use flag. */
 - (void)testCommandQueueCheckoutAndReturn
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -185,6 +197,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertFalse([self item:item marksQueueInUse:queue]);
 }
 
+/*! @abstract The pool grows to hand every caller a distinct queue, and each returns to the free state. */
 - (void)testPoolGrowsWhenEveryQueueIsCheckedOut
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -206,6 +219,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	}
 }
 
+/*! @abstract Returning nil or a queue the item does not own is ignored without throwing. */
 - (void)testReturningNilOrForeignQueueIsIgnored
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -219,6 +233,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 #pragma mark Scoped command queue
 
+/*! @abstract A scoped command queue exposes its underlying queue while held and returns it to the pool when it deallocates. */
 - (void)testScopedCommandQueueReturnsQueueOnDealloc
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -238,6 +253,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertFalse([self item:item marksQueueInUse:raw]);
 }
 
+/*! @abstract Initializing a scoped command queue with a nil cache item returns nil. */
 - (void)testScopedCommandQueueWithNilItemIsNil
 {
 	XCTAssertNil([[FxGripMTLCommandQueue alloc] initWithDeviceCacheItem:nil]);
@@ -245,12 +261,14 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 #pragma mark Library cache
 
+/*! @abstract A nil device and an unknown registry ID both yield no library cache. */
 - (void)testLibraryCacheForNilDeviceIsNil
 {
 	XCTAssertNil([FxGripMTLDeviceCache libraryCacheForDevice:nil]);
 	XCTAssertNil([FxGripMTLDeviceCache libraryCacheForRegistryID:0xFFFFFFFFFFFFFFFFull]);
 }
 
+/*! @abstract The library cache memoizes a resolved function, returns nil for an unknown name without caching, and clears a cached function on request. */
 - (void)testLibraryCacheMemoizesFunctionsAndSkipsMisses
 {
 	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:self.frameworkLibrary];
@@ -279,6 +297,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(cache.functionCache.count, 0u);
 }
 
+/*! @abstract Initializing a library cache with a nil library or a nil device returns nil. */
 - (void)testLibraryCacheInitWithNilIsNil
 {
 	XCTAssertNil([[FxGripMTLLibraryCache alloc] initWithLibrary:nil]);
@@ -295,6 +314,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	return name;
 }
 
+/*! @abstract An asynchronous load delivers the function, caches it, and serves a later request from the cache. */
 - (void)testAsyncLoadDeliversFunctionAndCachesIt
 {
 	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:self.frameworkLibrary];
@@ -320,6 +340,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	[self waitForExpectations:@[again] timeout:1.0];
 }
 
+/*! @abstract An asynchronous load of an unknown name reports an error and leaves the cache empty. */
 - (void)testAsyncLoadOfMissingFunctionReportsErrorWithoutCaching
 {
 	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:self.frameworkLibrary];
@@ -335,6 +356,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(cache.functionCache.count, 0u);
 }
 
+/*! @abstract An asynchronous descriptor load caches under the descriptor's function name, which a later synchronous descriptor request reuses. */
 - (void)testAsyncDescriptorLoadKeysByName
 {
 	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:self.frameworkLibrary];
@@ -351,6 +373,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertTrue([cache newFunctionWithDescriptor:descriptor error:NULL] == cache[name]);
 }
 
+/*! @abstract Concurrent asynchronous requests for one name trigger a single compile, and every handler receives the compiled function when it completes. */
 - (void)testConcurrentAsyncRequestsShareOneCompileAndEveryHandlerFires
 {
 	id<MTLLibrary> real = self.frameworkLibrary;
@@ -390,6 +413,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(deferred.compileCount, 1u);
 }
 
+/*! @abstract A failed compile delivers the error to every waiter, clears the loading placeholder, and permits a later retry to compile again. */
 - (void)testAsyncFailureReachesEveryWaiterAndClearsThePlaceholder
 {
 	FxGripDeferredLibrary *deferred = [FxGripDeferredLibrary deferredLibraryWithTarget:self.frameworkLibrary];
@@ -413,6 +437,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(deferred.compileCount, 2u, @"a failed compile must not block a retry");
 }
 
+/*! @abstract A synchronous request made while an asynchronous compile is pending compiles the function directly and caches that result. */
 - (void)testSyncRequestDuringAsyncCompileCompilesDirectly
 {
 	id<MTLLibrary> real = self.frameworkLibrary;
@@ -436,6 +461,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 #pragma mark Pipeline states
 
+/*! @abstract A render pipeline state built from the supplied library is memoized, so a matching request returns the same state. */
 - (void)testPipelineStateUsesSuppliedLibraryAndIsCached
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -453,6 +479,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(item.pipelineStates.count, 1u);
 }
 
+/*! @abstract A pipeline state request naming a missing shader returns nil and caches nothing. */
 - (void)testPipelineStateWithMissingFunctionIsNil
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -463,6 +490,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(item.pipelineStates.count, 0u);
 }
 
+/*! @abstract Concurrent requests for the same pipeline state resolve to a single cached state. */
 - (void)testConcurrentPipelineStateRequestsShareOneState
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -482,6 +510,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(item.pipelineStates.count, 1u);
 }
 
+/*! @abstract The item's depth stencil state is memoized, and the cache resolves a depth state by registry ID. */
 - (void)testDepthStateIsMemoized
 {
 	FxGripMTLDeviceCacheItem *item = self.item;
@@ -491,6 +520,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertTrue([FxGripMTLDeviceCache.deviceCache depthStateWithRegistryID:self.device.registryID] != nil);
 }
 
+/*! @abstract A depth texture matches the width and height of the requested bounds with the depth pixel format, and a nil device yields no texture. */
 - (void)testDepthTextureMatchesBounds
 {
 	FxRect bounds = { .left = 10, .bottom = 2, .right = 74, .top = 50 };
@@ -503,6 +533,7 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 #pragma mark Device removal
 
+/*! @abstract A device-removal notification drops the cached items, so a later lookup builds a fresh item. */
 - (void)testDeviceRemovalDropsItemsWithoutThrowing
 {
 	FxGripMTLDeviceCacheItem *before = self.item;

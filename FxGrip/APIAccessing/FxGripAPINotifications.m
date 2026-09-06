@@ -1,10 +1,15 @@
-//
-//  FxGripAPINotifications.m
-//  FxGripAPINotifications
-//
-//  Created by Apple on 1/7/20.
-//  Copyright © 2020-2023 Apple, Inc. All rights reserved.
-//
+/*!
+	@file       FxGripAPINotifications.m
+	@copyright  Copyright © 2020-2023 Apple, Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAPINotifications
+	@abstract   Defines the FxGrip API notification names, userInfo keys, and userInfo accessors.
+	@discussion Introduced in FxGrip 0.1.0. The constants hold the notification names posted by the
+	            parameter wrappers and the keys under which each notification stores its parameter,
+	            result, and error. The NSDictionary categories read those keys, and the
+	            NSMutableDictionary category writes them, removing a key when its value is nil.
+*/
 
 #import "FxGripAPINotifications.h"
 
@@ -56,6 +61,11 @@ NSNotificationName const _Nonnull FxGripNotifyAPI_ParameterSetXYName = @"FxGripN
 #pragma mark -
 #pragma mark NSDictionary FxPlug Notification UserInfo Access
 
+/*!
+	@abstract	Reads the FxGrip notification userInfo values by key.
+	@discussion	Introduced in FxGrip 0.1.0. mutableFxParameter returns the parameter only when it
+				is an NSMutableDictionary.
+*/
 @implementation NSDictionary (FxGripAPINotificationUserInfo)
 
 - (nullable NSDictionary *)fxParameter { //NSDictionary or NSMutableDictionary
@@ -82,6 +92,10 @@ NSNotificationName const _Nonnull FxGripNotifyAPI_ParameterSetXYName = @"FxGripN
 
 
 
+/*!
+	@abstract	Writes the FxGrip notification userInfo values by key.
+	@discussion	Introduced in FxGrip 0.1.0. Each setter removes its key when the value is nil.
+*/
 @implementation NSMutableDictionary (FxGripAPINotificationUserInfo)
 
 - (void)setFxParameter:(nullable NSDictionary *)fxParameter {

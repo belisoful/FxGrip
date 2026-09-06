@@ -1,12 +1,12 @@
-//
-//  NSDictionaryFxGripTileableEffectTests.m
-//  FxGripTests
-//
-//  Unit tests for the NSNumber, NSString, NSArray, NSDictionary, and
-//  NSMutableDictionary (FxGripTileableEffect) categories: the type and flag coercions,
-//  the plugin-property accessors behind the plugin-dictionary guard, and the
-//  parameter-property accessors behind the parameter-dictionary guard.
-//
+/*!
+	@file       NSDictionaryFxGripTileableEffectTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     NSDictionaryFxGripTileableEffectTests
+	@abstract   Unit tests for the FxGripTileableEffect categories on NSNumber, NSString, NSArray, NSDictionary, and NSMutableDictionary.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the parameter-type and flag coercions, the human-divider string split, array localization and index access, the plugin-property accessors behind the plugin-dictionary guard, and the parameter-property accessors behind the parameter-dictionary guard. They also cover the gradient depth resolution, the mutable-dictionary setters, and the declared accessor surface.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGrip/FxGripTypes.h"
@@ -57,6 +57,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSNumber parameterType
 
+/*! @abstract An NSNumber parameterType returns its integer value cast to the parameter type. */
 - (void)testNumberParameterTypeIsItsIntegerValue
 {
 	XCTAssertEqual(@(FxParameterType_Float).parameterType, FxParameterType_Float);
@@ -64,12 +65,14 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(@(FxParameterType_WebView).parameterType, FxParameterType_WebView);
 }
 
+/*! @abstract An NSNumber parameterType maps -1 to the array type and -2 to the dictionary type. */
 - (void)testNumberParameterTypeAcceptsTheNegativeContainerTypes
 {
 	XCTAssertEqual(@(-1).parameterType, FxParameterType_Array);
 	XCTAssertEqual(@(-2).parameterType, FxParameterType_Dictionary);
 }
 
+/*! @abstract An NSNumber parameterType truncates a fractional value to its integer part. */
 - (void)testNumberParameterTypeTruncatesAFractionalValue
 {
 	XCTAssertEqual(@(2.9).parameterType, FxParameterType_RGBA);
@@ -77,6 +80,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSString parameterType
 
+/*! @abstract An NSString parameterType resolves the declared type-name constants to their parameter types. */
 - (void)testStringParameterTypeResolvesTheDeclaredTypeNames
 {
 	XCTAssertEqual(kFxParameterType_Float.parameterType, FxParameterType_Float);
@@ -86,18 +90,21 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(kFxParameterType_WebView.parameterType, FxParameterType_WebView);
 }
 
+/*! @abstract An NSString parameterType resolves type names without regard to case. */
 - (void)testStringParameterTypeIsCaseInsensitive
 {
 	XCTAssertEqual(@"FLOAT".parameterType, FxParameterType_Float);
 	XCTAssertEqual(@"Toggle".parameterType, FxParameterType_Toggle);
 }
 
+/*! @abstract An NSString parameterType is the none type for an unknown or empty name. */
 - (void)testStringParameterTypeOfAnUnknownNameIsNone
 {
 	XCTAssertEqual(@"notatype".parameterType, FxParameterType_None);
 	XCTAssertEqual(@"".parameterType, FxParameterType_None);
 }
 
+/*! @abstract An unknown four-character name resolves to its packed four-character code. */
 - (void)testStringParameterTypeOfAnUnknownFourCharacterNameIsItsFourCharacterCode
 {
 	XCTAssertEqual(@"abcd".parameterType, (FxParameterType)0x61626364);
@@ -105,6 +112,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSString splitByHumanDividers
 
+/*! @abstract splitByHumanDividers separates on spaces, commas, semicolons, and periods. */
 - (void)testSplitByHumanDividersSeparatesOnWhitespaceAndPunctuation
 {
 	NSArray *parts = @"one two,three;four.five".splitByHumanDividers;
@@ -112,16 +120,19 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(parts, (@[ @"one", @"two", @"three", @"four", @"five" ]));
 }
 
+/*! @abstract splitByHumanDividers separates on newlines. */
 - (void)testSplitByHumanDividersSeparatesOnNewlines
 {
 	XCTAssertEqualObjects(@"a\nb".splitByHumanDividers, (@[ @"a", @"b" ]));
 }
 
+/*! @abstract splitByHumanDividers keeps an empty component between two adjacent separators. */
 - (void)testSplitByHumanDividersKeepsEmptyComponentsBetweenAdjacentSeparators
 {
 	XCTAssertEqualObjects(@"a,,b".splitByHumanDividers, (@[ @"a", @"", @"b" ]));
 }
 
+/*! @abstract splitByHumanDividers returns a single-element array for a string with no separators. */
 - (void)testSplitByHumanDividersOfAStringWithoutSeparatorsIsTheWholeString
 {
 	XCTAssertEqualObjects(@"single".splitByHumanDividers, (@[ @"single" ]));
@@ -130,6 +141,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSArray localize
 
+/*! @abstract localize preserves the element order and count of the array. */
 - (void)testLocalizePreservesTheElementOrderAndCount
 {
 	NSArray *source = @[ @"first", @"second", @"third" ];
@@ -140,6 +152,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(localized, source);
 }
 
+/*! @abstract localize passes non-string elements through as the same objects. */
 - (void)testLocalizePassesNonStringElementsThrough
 {
 	NSNumber *number = @42;
@@ -152,6 +165,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertTrue(localized[1] == inner);
 }
 
+/*! @abstract localize of an empty array is an empty array. */
 - (void)testLocalizeOfAnEmptyArrayIsAnEmptyArray
 {
 	XCTAssertEqualObjects(@[].localize, @[]);
@@ -159,6 +173,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSArray objectForIndex:
 
+/*! @abstract objectForIndex: returns the array element at the given position. */
 - (void)testArrayObjectForIndexReturnsTheElementAtThatPosition
 {
 	NSArray *list = @[ @"a", @"b", @"c" ];
@@ -167,6 +182,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects([list objectForIndex:2], @"c");
 }
 
+/*! @abstract objectForIndex: raises when the array index is out of range. */
 - (void)testArrayObjectForIndexRaisesWhenTheIndexIsOutOfRange
 {
 	XCTAssertThrows([@[ @"a" ] objectForIndex:1]);
@@ -174,11 +190,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSArray fxParameterFlags
 
+/*! @abstract fxParameterFlags of an empty array is the default flags value. */
 - (void)testFxParameterFlagsOfAnEmptyArrayIsTheDefault
 {
 	XCTAssertEqual(@[].fxParameterFlags, (FxParameterFlags)kFxParameterFlag_DEFAULT);
 }
 
+/*! @abstract fxParameterFlags accumulates the named flags with a bitwise OR. */
 - (void)testFxParameterFlagsAccumulatesNamedFlags
 {
 	FxParameterFlags expected = [FxGripParameterUtility convertFlag:kParameterFlagString_HIDDEN] |
@@ -187,6 +205,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((@[ kParameterFlagString_HIDDEN, kParameterFlagString_DISABLED ]).fxParameterFlags, expected);
 }
 
+/*! @abstract fxParameterFlags treats a plus-prefixed flag name as an addition. */
 - (void)testFxParameterFlagsTreatsAPlusPrefixAsAddition
 {
 	FxParameterFlags hidden = [FxGripParameterUtility convertFlag:kParameterFlagString_HIDDEN];
@@ -194,6 +213,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((@[ [@"+" stringByAppendingString:kParameterFlagString_HIDDEN] ]).fxParameterFlags, hidden);
 }
 
+/*! @abstract fxParameterFlags treats a minus-prefixed flag name as a removal. */
 - (void)testFxParameterFlagsTreatsAMinusPrefixAsRemoval
 {
 	NSString *minusHidden = [@"-" stringByAppendingString:kParameterFlagString_HIDDEN];
@@ -203,6 +223,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(flags.fxParameterFlags, [FxGripParameterUtility convertFlag:kParameterFlagString_DISABLED]);
 }
 
+/*! @abstract fxParameterFlags applies its entries in order, so a later entry overrides an earlier one. */
 - (void)testFxParameterFlagsAppliesEntriesInOrder
 {
 	NSString *minusHidden = [@"-" stringByAppendingString:kParameterFlagString_HIDDEN];
@@ -212,6 +233,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((@[ kParameterFlagString_HIDDEN, minusHidden ]).fxParameterFlags, (FxParameterFlags)kFxParameterFlag_DEFAULT);
 }
 
+/*! @abstract fxParameterFlags ignores entries that are not strings. */
 - (void)testFxParameterFlagsIgnoresNonStringEntries
 {
 	FxParameterFlags hidden = [FxGripParameterUtility convertFlag:kParameterFlagString_HIDDEN];
@@ -219,6 +241,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((@[ @42, [NSNull null], kParameterFlagString_HIDDEN ]).fxParameterFlags, hidden);
 }
 
+/*! @abstract fxParameterFlags ignores an unknown flag name and returns the default. */
 - (void)testFxParameterFlagsIgnoresUnknownFlagNames
 {
 	XCTAssertEqual((@[ @"notaflag" ]).fxParameterFlags, (FxParameterFlags)kFxParameterFlag_DEFAULT);
@@ -226,6 +249,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSArray negativeFxParameterFlags
 
+/*! @abstract negativeFxParameterFlags collects only the minus-prefixed flag names. */
 - (void)testNegativeFxParameterFlagsCollectsOnlyTheMinusPrefixedEntries
 {
 	NSString *minusHidden = [@"-" stringByAppendingString:kParameterFlagString_HIDDEN];
@@ -238,6 +262,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(flags.negativeFxParameterFlags, expected);
 }
 
+/*! @abstract negativeFxParameterFlags ignores plain and plus-prefixed entries. */
 - (void)testNegativeFxParameterFlagsIgnoresPlainAndPlusPrefixedEntries
 {
 	NSArray *flags = @[ kParameterFlagString_HIDDEN, [@"+" stringByAppendingString:kParameterFlagString_DISABLED] ];
@@ -245,6 +270,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(flags.negativeFxParameterFlags, (FxParameterFlags)kFxParameterFlag_DEFAULT);
 }
 
+/*! @abstract negativeFxParameterFlags ignores non-string entries and an empty array. */
 - (void)testNegativeFxParameterFlagsIgnoresNonStringEntries
 {
 	XCTAssertEqual((@[ @1, [NSNull null] ]).negativeFxParameterFlags, (FxParameterFlags)kFxParameterFlag_DEFAULT);
@@ -253,16 +279,19 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSDictionary objectForIndex:
 
+/*! @abstract objectForIndex: finds a value stored under an NSNumber key. */
 - (void)testDictionaryObjectForIndexFindsANumberKey
 {
 	XCTAssertEqualObjects([(@{ @(3): @"three" }) objectForIndex:3], @"three");
 }
 
+/*! @abstract objectForIndex: falls back to the decimal string form of the index key. */
 - (void)testDictionaryObjectForIndexFallsBackToTheDecimalStringKey
 {
 	XCTAssertEqualObjects([(@{ @"3": @"three" }) objectForIndex:3], @"three");
 }
 
+/*! @abstract objectForIndex: prefers the NSNumber key over the decimal string key. */
 - (void)testDictionaryObjectForIndexPrefersTheNumberKeyOverTheStringKey
 {
 	NSDictionary *dictionary = @{ @(3): @"number", @"3": @"string" };
@@ -270,6 +299,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects([dictionary objectForIndex:3], @"number");
 }
 
+/*! @abstract objectForIndex: is nil when neither the number key nor the string key is present. */
 - (void)testDictionaryObjectForIndexIsNilWhenNeitherKeyIsPresent
 {
 	XCTAssertNil([(@{ @"other": @"value" }) objectForIndex:3]);
@@ -278,6 +308,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Plugin Dictionary Guard
 
+/*! @abstract The plugin accessors are nil when the required uuid key is missing, so the plugin guard fails. */
 - (void)testPluginAccessorsAreNilWhenTheUuidIsMissing
 {
 	NSMutableDictionary *dictionary = FxGripPluginDictionary();
@@ -290,6 +321,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(dictionary.pluginGroupUUID);
 }
 
+/*! @abstract The plugin accessors are nil when the required className key is missing. */
 - (void)testPluginAccessorsAreNilWhenTheClassNameIsMissing
 {
 	NSMutableDictionary *dictionary = FxGripPluginDictionary();
@@ -299,6 +331,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(dictionary.pluginGroupUUID);
 }
 
+/*! @abstract The plugin accessors are nil when the required group key is missing. */
 - (void)testPluginAccessorsAreNilWhenTheGroupIsMissing
 {
 	NSMutableDictionary *dictionary = FxGripPluginDictionary();
@@ -308,6 +341,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(dictionary.pluginClassName);
 }
 
+/*! @abstract Every nullable plugin accessor is nil for a dictionary that does not satisfy the plugin guard. */
 - (void)testEveryNullablePluginAccessorIsNilForANonPluginDictionary
 {
 	NSDictionary *dictionary = @{ @"unrelated": @"value" };
@@ -325,6 +359,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(dictionary.pluginParameters);
 }
 
+/*! @abstract Every boolean plugin accessor is NO for a dictionary that does not satisfy the plugin guard, even when the keys are set. */
 - (void)testEveryBooleanPluginAccessorIsNoForANonPluginDictionary
 {
 	NSDictionary *dictionary = @{
@@ -344,6 +379,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Plugin Property Access
 
+/*! @abstract The plugin identity accessors return the uuid, class name, display name, and group uuid declared in the dictionary. */
 - (void)testPluginIdentityAccessorsReturnTheirDeclaredValues
 {
 	NSMutableDictionary *dictionary = FxGripPluginDictionary();
@@ -355,11 +391,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.pluginGroupUUID, dictionary[kProPlugPlugIn_GroupUUIDProperty]);
 }
 
+/*! @abstract pluginDisplayName is nil when no display name is declared. */
 - (void)testPluginDisplayNameIsNilWhenItIsNotDeclared
 {
 	XCTAssertNil(FxGripPluginDictionary().pluginDisplayName);
 }
 
+/*! @abstract The plugin descriptive accessors return the declared protocol names, info string, and default font name. */
 - (void)testPluginDescriptiveAccessorsReturnTheirDeclaredValues
 {
 	NSArray *protocols = @[ kProPlugPlugIn_ProtocolFxFilter ];
@@ -373,6 +411,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(full.pluginDefaultFontName, @"Helvetica");
 }
 
+/*! @abstract pluginPresets and pluginEffectProperties return their declared tables. */
 - (void)testPluginPresetsAndEffectPropertiesReturnTheirDeclaredTables
 {
 	NSDictionary *presets = @{ @"one": @{ @"names": @{} } };
@@ -385,6 +424,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.pluginEffectProperties, effects);
 }
 
+/*! @abstract pluginParameters returns the declared parameter configuration list. */
 - (void)testPluginParametersReturnsTheDeclaredConfigurationList
 {
 	NSArray *parameters = @[ FxGripParameterDictionary() ];
@@ -392,11 +432,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(FxGripPluginDictionaryWith(kProPlugPlugInX_ParametersProperty, parameters).pluginParameters, parameters);
 }
 
+/*! @abstract pluginParameters is nil when no parameter list is declared. */
 - (void)testPluginParametersIsNilWhenNoneAreDeclared
 {
 	XCTAssertNil(FxGripPluginDictionary().pluginParameters);
 }
 
+/*! @abstract pluginPriorUUIDs splits a string declaration on the human dividers. */
 - (void)testPluginPriorUUIDsSplitsAStringDeclaration
 {
 	NSDictionary *dictionary = FxGripPluginDictionaryWith(kProPlugPlugInX_PriorUuidsProperty, @"UUID-1, UUID-2;UUID-3");
@@ -404,6 +446,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.pluginPriorUUIDs, (@[ @"UUID-1", @"", @"UUID-2", @"UUID-3" ]));
 }
 
+/*! @abstract pluginPriorUUIDs passes an array declaration through unchanged. */
 - (void)testPluginPriorUUIDsPassesAnArrayDeclarationThrough
 {
 	NSArray *uuids = @[ @"UUID-1", @"UUID-2" ];
@@ -411,6 +454,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(FxGripPluginDictionaryWith(kProPlugPlugInX_PriorUuidsProperty, uuids).pluginPriorUUIDs, uuids);
 }
 
+/*! @abstract pluginPriorUUIDs is nil when none are declared. */
 - (void)testPluginPriorUUIDsIsNilWhenNoneAreDeclared
 {
 	XCTAssertNil(FxGripPluginDictionary().pluginPriorUUIDs);
@@ -418,6 +462,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Plugin Boolean Properties
 
+/*! @abstract pluginDebugMenu defaults to NO and follows a declared YES or NO value. */
 - (void)testPluginDebugMenuDefaultsToNoAndFollowsItsDeclaration
 {
 	XCTAssertFalse(FxGripPluginDictionary().pluginDebugMenu);
@@ -425,6 +470,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertFalse(FxGripPluginDictionaryWith(kProPlugPlugInX_DebugMenuProperty, @NO).pluginDebugMenu);
 }
 
+/*! @abstract pluginDebugActivator defaults to NO and follows a declared YES or NO value. */
 - (void)testPluginDebugActivatorDefaultsToNoAndFollowsItsDeclaration
 {
 	XCTAssertFalse(FxGripPluginDictionary().pluginDebugActivator);
@@ -432,6 +478,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertFalse(FxGripPluginDictionaryWith(kProPlugPlugInX_DebugActivatorProperty, @NO).pluginDebugActivator);
 }
 
+/*! @abstract pluginManageMeta defaults to YES and follows a declared YES or NO value. */
 - (void)testPluginManageMetaDefaultsToYesAndFollowsItsDeclaration
 {
 	XCTAssertTrue(FxGripPluginDictionary().pluginManageMeta);
@@ -439,6 +486,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertFalse(FxGripPluginDictionaryWith(kProPlugPlugInX_ManagedMetaProperty, @NO).pluginManageMeta);
 }
 
+/*! @abstract pluginManageParameterData defaults to NO and follows a declared YES or NO value. */
 - (void)testPluginManageParameterDataDefaultsToNoAndFollowsItsDeclaration
 {
 	XCTAssertFalse(FxGripPluginDictionary().pluginManageParameterData);
@@ -446,6 +494,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertFalse(FxGripPluginDictionaryWith(kProPlugPlugInX_ManagedParameterDataProperty, @NO).pluginManageParameterData);
 }
 
+/*! @abstract pluginTrackInstances defaults to NO and follows a declared YES or NO value. */
 - (void)testPluginTrackInstancesDefaultsToNoAndFollowsItsDeclaration
 {
 	// Opt-in, matching the manage-meta / manage-parameter-data gates.
@@ -456,6 +505,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Dictionary Guard
 
+/*! @abstract The parameter accessors fall back to their default values when the required id key is missing. */
 - (void)testParameterAccessorsFallBackWhenTheIdIsMissing
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -466,6 +516,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(dictionary.parameterName);
 }
 
+/*! @abstract The parameter accessors fall back to their default values when the required type key is missing. */
 - (void)testParameterAccessorsFallBackWhenTheTypeIsMissing
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -475,6 +526,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterID, (FxParameterId)kFxParameterId_None);
 }
 
+/*! @abstract The parameter accessors fall back to their default values when the required name key is missing. */
 - (void)testParameterAccessorsFallBackWhenTheNameIsMissing
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -484,6 +536,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterID, (FxParameterId)kFxParameterId_None);
 }
 
+/*! @abstract Every nullable parameter accessor is nil for a dictionary that does not satisfy the parameter guard. */
 - (void)testEveryNullableParameterAccessorIsNilForANonParameterDictionary
 {
 	NSDictionary *dictionary = @{ @"unrelated": @"value" };
@@ -510,6 +563,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(dictionary.parameterMenuItems);
 }
 
+/*! @abstract Every scalar parameter accessor returns its fallback value for a dictionary that does not satisfy the parameter guard. */
 - (void)testEveryScalarParameterAccessorFallsBackForANonParameterDictionary
 {
 	NSDictionary *dictionary = @{ kFxParameterProperty_Minimum: @5 };
@@ -545,6 +599,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterGradientSamples, @64);
 }
 
+/*! @abstract The unguarded color and gradient accessors are nil when their keys are absent. */
 - (void)testUnguardedParameterAccessorsAreNilWhenTheirKeysAreAbsent
 {
 	NSDictionary *dictionary = @{};
@@ -559,16 +614,19 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Identity
 
+/*! @abstract parameterID is the declared id number. */
 - (void)testParameterIdIsTheDeclaredNumber
 {
 	XCTAssertEqual(FxGripParameterDictionary().parameterID, (FxParameterId)7);
 }
 
+/*! @abstract parameterParentID defaults to the top-level group when none is declared. */
 - (void)testParameterParentIdDefaultsToTheTopLevelGroup
 {
 	XCTAssertEqual(FxGripParameterDictionary().parameterParentID, (FxParameterId)kFxParameterId_TopLevelGroup);
 }
 
+/*! @abstract parameterParentID is the declared parent id number. */
 - (void)testParameterParentIdIsTheDeclaredNumber
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_ParentId, @(12));
@@ -576,6 +634,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterParentID, (FxParameterId)12);
 }
 
+/*! @abstract parameterName and parameterDescription are their declared strings. */
 - (void)testParameterNameAndDescriptionAreTheirDeclaredStrings
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Description, @"How much.");
@@ -584,11 +643,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDescription, @"How much.");
 }
 
+/*! @abstract parameterDescription is nil when no description is declared. */
 - (void)testParameterDescriptionIsNilWhenItIsNotDeclared
 {
 	XCTAssertNil(FxGripParameterDictionary().parameterDescription);
 }
 
+/*! @abstract parameterFactory and parameterExtensionKey are their declared values. */
 - (void)testParameterFactoryAndExtensionKeyAreTheirDeclaredValues
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -600,6 +661,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterExtensionKey, @"ext");
 }
 
+/*! @abstract parameterClassName is the declared class-name string. */
 - (void)testParameterClassNameIsTheDeclaredString
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_ClassName, @"FxGripFloatParameter");
@@ -607,6 +669,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterClassName, @"FxGripFloatParameter");
 }
 
+/*! @abstract parameterClassName is nil when the declaration is not a string or is absent. */
 - (void)testParameterClassNameIsNilWhenTheDeclarationIsNotAString
 {
 	XCTAssertNil(FxGripParameterDictionaryWith(kFxParameterProperty_ClassName, @42).parameterClassName);
@@ -615,6 +678,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Type
 
+/*! @abstract parameterType resolves a number declaration to its parameter type. */
 - (void)testParameterTypeResolvesANumberDeclaration
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Type, @(FxParameterType_Toggle));
@@ -622,12 +686,14 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterType, FxParameterType_Toggle);
 }
 
+/*! @abstract parameterType resolves a string declaration to its parameter type. */
 - (void)testParameterTypeResolvesAStringDeclaration
 {
 	XCTAssertEqual(FxGripParameterDictionary().parameterType, FxParameterType_Float);
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_Type, kFxParameterType_Menu).parameterType, FxParameterType_Menu);
 }
 
+/*! @abstract parameterType is the none type when the declaration is neither a number nor a string. */
 - (void)testParameterTypeIsNoneWhenTheDeclarationIsNeitherANumberNorAString
 {
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_Type, @[ @1 ]).parameterType, FxParameterType_None);
@@ -635,11 +701,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Flags
 
+/*! @abstract parameterFlags defaults to the default flags value when none are declared. */
 - (void)testParameterFlagsDefaultsToNoFlags
 {
 	XCTAssertEqual(FxGripParameterDictionary().parameterFlags, (FxParameterFlags)kFxParameterFlag_DEFAULT);
 }
 
+/*! @abstract parameterFlags resolves a space-separated string declaration into the ORed flags. */
 - (void)testParameterFlagsResolvesAStringDeclaration
 {
 	NSString *declaration = [NSString stringWithFormat:@"%@ %@", kParameterFlagString_HIDDEN, kParameterFlagString_DISABLED];
@@ -649,6 +717,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_Flags, declaration).parameterFlags, expected);
 }
 
+/*! @abstract parameterFlags resolves an array declaration into the ORed flags. */
 - (void)testParameterFlagsResolvesAnArrayDeclaration
 {
 	NSArray *declaration = @[ kParameterFlagString_COLLAPSED ];
@@ -657,6 +726,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 				   [FxGripParameterUtility convertFlag:kParameterFlagString_COLLAPSED]);
 }
 
+/*! @abstract parameterFlags resolves a dictionary declaration from its values. */
 - (void)testParameterFlagsResolvesADictionaryDeclarationFromItsValues
 {
 	NSDictionary *declaration = @{ @"a": kParameterFlagString_HIDDEN };
@@ -665,6 +735,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 				   [FxGripParameterUtility convertFlag:kParameterFlagString_HIDDEN]);
 }
 
+/*! @abstract parameterFlags passes a number declaration through as the raw flags value. */
 - (void)testParameterFlagsPassesANumberDeclarationThrough
 {
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_Flags, @(6)).parameterFlags, (FxParameterFlags)6);
@@ -672,11 +743,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Flags Array
 
+/*! @abstract parameterFlagsArray is empty when no flags are declared. */
 - (void)testParameterFlagsArrayIsEmptyWhenNoFlagsAreDeclared
 {
 	XCTAssertEqualObjects(FxGripParameterDictionary().parameterFlagsArray, @[]);
 }
 
+/*! @abstract parameterFlagsArray splits a string declaration on the human dividers. */
 - (void)testParameterFlagsArraySplitsAStringDeclaration
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Flags, @"hidden disabled");
@@ -684,6 +757,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterFlagsArray, (@[ @"hidden", @"disabled" ]));
 }
 
+/*! @abstract parameterFlagsArray passes an array declaration through unchanged. */
 - (void)testParameterFlagsArrayPassesAnArrayDeclarationThrough
 {
 	NSArray *declaration = @[ kParameterFlagString_HIDDEN ];
@@ -691,6 +765,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(FxGripParameterDictionaryWith(kFxParameterProperty_Flags, declaration).parameterFlagsArray, declaration);
 }
 
+/*! @abstract parameterFlagsArray takes the values of a dictionary declaration. */
 - (void)testParameterFlagsArrayTakesADictionaryDeclarationsValues
 {
 	NSDictionary *declaration = @{ @"a": kParameterFlagString_HIDDEN };
@@ -699,6 +774,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 						  (@[ kParameterFlagString_HIDDEN ]));
 }
 
+/*! @abstract parameterFlagsArray expands a numeric flags declaration into its flag names. */
 - (void)testParameterFlagsArrayExpandsANumberDeclarationIntoNames
 {
 	FxParameterFlags hidden = [FxGripParameterUtility convertFlag:kParameterFlagString_HIDDEN];
@@ -709,6 +785,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Tags, Meta, and Custom Classes
 
+/*! @abstract parameterTags splits a string declaration on the human dividers. */
 - (void)testParameterTagsSplitsAStringDeclaration
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Tags, @"alpha,beta");
@@ -716,6 +793,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterTags, (@[ @"alpha", @"beta" ]));
 }
 
+/*! @abstract parameterTags passes an array declaration through unchanged. */
 - (void)testParameterTagsPassesAnArrayDeclarationThrough
 {
 	NSArray *tags = @[ @"alpha", @"beta" ];
@@ -723,11 +801,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(FxGripParameterDictionaryWith(kFxParameterProperty_Tags, tags).parameterTags, tags);
 }
 
+/*! @abstract parameterTags is nil when none are declared. */
 - (void)testParameterTagsIsNilWhenNoneAreDeclared
 {
 	XCTAssertNil(FxGripParameterDictionary().parameterTags);
 }
 
+/*! @abstract parameterMeta is the declared dictionary and is nil when none is declared. */
 - (void)testParameterMetaIsTheDeclaredDictionary
 {
 	NSDictionary *meta = @{ @"note": @"value" };
@@ -736,17 +816,20 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(FxGripParameterDictionary().parameterMeta);
 }
 
+/*! @abstract parameterCustomClass is the declared string and is nil when none is declared. */
 - (void)testParameterCustomClassIsTheDeclaredString
 {
 	XCTAssertEqualObjects(FxGripParameterDictionaryWith(kFxParameterProperty_CustomClass, @"MyView").parameterCustomClass, @"MyView");
 	XCTAssertNil(FxGripParameterDictionary().parameterCustomClass);
 }
 
+/*! @abstract parameterCustomClasses is an empty set when none are declared. */
 - (void)testParameterCustomClassesIsAnEmptySetWhenNoneAreDeclared
 {
 	XCTAssertEqualObjects(FxGripParameterDictionary().parameterCustomClasses, [NSSet set]);
 }
 
+/*! @abstract parameterCustomClasses splits a string declaration into a set. */
 - (void)testParameterCustomClassesSplitsAStringDeclaration
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_CustomClasses, @"One,Two");
@@ -754,6 +837,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterCustomClasses, ([NSSet setWithArray:(@[ @"One", @"Two" ])]));
 }
 
+/*! @abstract parameterCustomClasses converts an array declaration to a set, dropping duplicates. */
 - (void)testParameterCustomClassesConvertsAnArrayDeclarationToASet
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_CustomClasses, (@[ @"One", @"Two", @"One" ]));
@@ -761,6 +845,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterCustomClasses, ([NSSet setWithArray:(@[ @"One", @"Two" ])]));
 }
 
+/*! @abstract parameterCustomClasses passes a set declaration through unchanged. */
 - (void)testParameterCustomClassesPassesASetDeclarationThrough
 {
 	NSSet *classes = [NSSet setWithObject:@"One"];
@@ -770,6 +855,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Values
 
+/*! @abstract parameterDefaultValue and parameterResetValue are their declared values. */
 - (void)testParameterDefaultAndResetValuesAreTheirDeclarations
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -780,6 +866,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterResetValue, @0.0);
 }
 
+/*! @abstract parameterTargetPreset is the declared preset dictionary and is nil when none is declared. */
 - (void)testParameterTargetPresetIsItsDeclaration
 {
 	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetNames: @{} };
@@ -788,6 +875,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertNil(FxGripParameterDictionary().parameterTargetPreset);
 }
 
+/*! @abstract parameterSelector and parameterSelectorObject are their declared values. */
 - (void)testParameterSelectorAndSelectorObjectAreTheirDeclarations
 {
 	NSObject *target = [NSObject new];
@@ -801,6 +889,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Ranges
 
+/*! @abstract parameterMinimumInt and parameterMinimumDouble read the minimum key as an integer and a double. */
 - (void)testParameterMinimumIntAndDoubleReadTheMinimumKey
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Minimum, @(3.75));
@@ -809,6 +898,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterMinimumDouble, 3.75);
 }
 
+/*! @abstract parameterMinimumInt and parameterMinimumDouble coerce a string minimum declaration. */
 - (void)testParameterMinimumIntAndDoubleCoerceAStringDeclaration
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Minimum, @"-2.5");
@@ -817,12 +907,14 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterMinimumDouble, -2.5);
 }
 
+/*! @abstract parameterMinimumInt and parameterMinimumDouble are zero when no minimum is declared. */
 - (void)testParameterMinimumIntAndDoubleAreZeroWhenNoMinimumIsDeclared
 {
 	XCTAssertEqual(FxGripParameterDictionary().parameterMinimumInt, 0);
 	XCTAssertEqual(FxGripParameterDictionary().parameterMinimumDouble, 0.0);
 }
 
+/*! @abstract parameterMaximum, the slider bounds, and parameterDelta are their declared values. */
 - (void)testParameterMaximumSliderBoundsAndDeltaAreTheirDeclarations
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -837,6 +929,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDelta, @0.5);
 }
 
+/*! @abstract parameterMaximum, the slider bounds, and parameterDelta are nil when not declared. */
 - (void)testParameterMaximumSliderBoundsAndDeltaAreNilWhenNotDeclared
 {
 	NSDictionary *dictionary = FxGripParameterDictionary();
@@ -849,6 +942,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Default Coordinates
 
+/*! @abstract parameterDefaultX and parameterDefaultY read the explicit x and y keys. */
 - (void)testParameterDefaultCoordinatesUseTheExplicitXAndYKeys
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -859,6 +953,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDefaultY, @0.75);
 }
 
+/*! @abstract parameterDefaultX and parameterDefaultY coerce string values in the explicit x and y keys. */
 - (void)testParameterDefaultCoordinatesCoerceExplicitStringKeys
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -869,6 +964,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDefaultY, @0.75);
 }
 
+/*! @abstract parameterDefaultX and parameterDefaultY read the x and y entries of a dictionary default. */
 - (void)testParameterDefaultCoordinatesReadADictionaryDefault
 {
 	NSDictionary *value = @{ kFxParameterProperty_X: @1.0, kFxParameterProperty_Y: @2.0 };
@@ -878,6 +974,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDefaultY, @2.0);
 }
 
+/*! @abstract parameterDefaultX and parameterDefaultY read the first and second elements of an array default. */
 - (void)testParameterDefaultCoordinatesReadAnArrayDefaultPositionally
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Default, (@[ @3.0, @4.0 ]));
@@ -886,6 +983,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDefaultY, @4.0);
 }
 
+/*! @abstract parameterDefaultY is zero when the array default holds only one entry. */
 - (void)testParameterDefaultYIsZeroWhenTheArrayDefaultHasOnlyOneEntry
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Default, (@[ @3.0 ]));
@@ -894,6 +992,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDefaultY, @0.0);
 }
 
+/*! @abstract parameterDefaultX and parameterDefaultY split a whitespace-separated string default. */
 - (void)testParameterDefaultCoordinatesSplitAWhitespaceSeparatedStringDefault
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_Default, @"1.5 -2.5");
@@ -902,6 +1001,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterDefaultY, @(-2.5));
 }
 
+/*! @abstract parameterDefaultX and parameterDefaultY are zero when no default is declared. */
 - (void)testParameterDefaultCoordinatesAreZeroWhenNothingIsDeclared
 {
 	XCTAssertEqualObjects(FxGripParameterDictionary().parameterDefaultX, @0.0);
@@ -910,6 +1010,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Parameter Menu Items
 
+/*! @abstract parameterMenuItems is the declared items array for a menu parameter. */
 - (void)testParameterMenuItemsAreTheirDeclaration
 {
 	NSArray *items = @[ @"One", @"Two" ];
@@ -920,6 +1021,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(dictionary.parameterMenuItems, items);
 }
 
+/*! @abstract parameterMenuItems is an empty array for a menu or capsule parameter with no declared items. */
 - (void)testParameterMenuItemsAreEmptyForAMenuOrCapsuleWithoutADeclaration
 {
 	NSDictionary *menu = FxGripParameterDictionaryWith(kFxParameterProperty_Type, kFxParameterType_Menu);
@@ -929,6 +1031,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqualObjects(capsule.parameterMenuItems, @[]);
 }
 
+/*! @abstract parameterMenuItems is nil for a non-menu parameter with no declared items. */
 - (void)testParameterMenuItemsAreNilForAnotherTypeWithoutADeclaration
 {
 	XCTAssertNil(FxGripParameterDictionary().parameterMenuItems);
@@ -936,11 +1039,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Gradient Depth Type
 
+/*! @abstract parameterGradientDepthType is the none type when not declared. */
 - (void)testParameterGradientDepthTypeIsNoneWhenNotDeclared
 {
 	XCTAssertEqual(FxGripParameterDictionary().parameterGradientDepthType, FxGripDepthTypeNone);
 }
 
+/*! @abstract parameterGradientDepthType resolves a number declaration to the matching depth type. */
 - (void)testParameterGradientDepthTypeResolvesANumberDeclaration
 {
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, @0).parameterGradientDepthType, FxGripDepthTypeNone);
@@ -948,18 +1053,21 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, @2).parameterGradientDepthType, FxGripDepthTypeBytes);
 }
 
+/*! @abstract parameterGradientDepthType clamps an above-range number declaration to the FxDepth type. */
 - (void)testParameterGradientDepthTypeClampsANumberDeclarationAboveTheRange
 {
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, @(3)).parameterGradientDepthType, FxGripDepthTypeFxDepth);
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, @(9)).parameterGradientDepthType, FxGripDepthTypeFxDepth);
 }
 
+/*! @abstract parameterGradientDepthType clamps a negative number declaration to the none type. */
 - (void)testParameterGradientDepthTypeClampsANegativeNumberDeclarationToNone
 {
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, @(-1)).parameterGradientDepthType, FxGripDepthTypeNone);
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, @(-3)).parameterGradientDepthType, FxGripDepthTypeNone);
 }
 
+/*! @abstract parameterGradientDepthType resolves the named string declarations and defaults an unknown name to the FxDepth type. */
 - (void)testParameterGradientDepthTypeResolvesAStringDeclaration
 {
 	NSDictionary *bytes = FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, kFxParameterProperty_GradientDepthType_Bytes);
@@ -971,6 +1079,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(other.parameterGradientDepthType, FxGripDepthTypeFxDepth);
 }
 
+/*! @abstract parameterGradientDepthType is the none type when the declaration is neither a number nor a string. */
 - (void)testParameterGradientDepthTypeIsNoneWhenTheDeclarationIsNeitherANumberNorAString
 {
 	XCTAssertEqual(FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepthType, @[]).parameterGradientDepthType, FxGripDepthTypeNone);
@@ -978,11 +1087,13 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - Gradient Depth
 
+/*! @abstract parameterGradientDepth defaults to half precision when none is declared. */
 - (void)testParameterGradientDepthDefaultsToHalfPrecision
 {
 	XCTAssertEqual((FxDepth)FxGripParameterDictionary().parameterGradientDepth, (FxDepth)kFxDepth_FLOAT16);
 }
 
+/*! @abstract parameterGradientDepth passes a number through as the raw depth when no depth type is declared. */
 - (void)testParameterGradientDepthPassesANumberThroughWhenNoDepthTypeIsDeclared
 {
 	NSDictionary *dictionary = FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepth, @(kFxDepth_FLOAT32));
@@ -990,6 +1101,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((FxDepth)dictionary.parameterGradientDepth, (FxDepth)kFxDepth_FLOAT32);
 }
 
+/*! @abstract parameterGradientDepth converts a byte count to the matching FxDepth when the depth type is bytes. */
 - (void)testParameterGradientDepthConvertsAByteCountWhenTheDepthTypeIsBytes
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -1005,6 +1117,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((FxDepth)dictionary.parameterGradientDepth, (FxDepth)kFxDepth_FLOAT32);
 }
 
+/*! @abstract parameterGradientDepth leaves an unrecognized byte count unchanged. */
 - (void)testParameterGradientDepthLeavesAnUnrecognizedByteCountAlone
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -1014,6 +1127,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((FxDepth)dictionary.parameterGradientDepth, (FxDepth)3);
 }
 
+/*! @abstract parameterGradientDepth resolves the named depth strings and defaults an unknown name to half precision. */
 - (void)testParameterGradientDepthResolvesTheNamedDepths
 {
 	NSDictionary *uint8 = FxGripParameterDictionaryWith(kFxParameterProperty_GradientDepth, kFxParameterProperty_GradientDepth_UInt8);
@@ -1027,6 +1141,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual((FxDepth)other.parameterGradientDepth, (FxDepth)kFxDepth_FLOAT16);
 }
 
+/*! @abstract parameterGradientDepth resolves a named depth string even when the depth type is bytes. */
 - (void)testParameterGradientDepthIgnoresAByteDepthTypeForANamedDepth
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -1038,6 +1153,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 
 #pragma mark - NSMutableDictionary Setters
 
+/*! @abstract Setting parameterType writes the type key and reads back the same type. */
 - (void)testSetParameterTypeWritesTheTypeKeyAndReadsBack
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -1048,6 +1164,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterType, FxParameterType_Toggle);
 }
 
+/*! @abstract Setting parameterID writes the id key and reads back the same id. */
 - (void)testSetParameterIdWritesTheIdKeyAndReadsBack
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -1058,6 +1175,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterID, (FxParameterId)33);
 }
 
+/*! @abstract Setting parameterParentID writes the parent key and reads back the same id. */
 - (void)testSetParameterParentIdWritesTheParentKeyAndReadsBack
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -1068,6 +1186,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterParentID, (FxParameterId)5);
 }
 
+/*! @abstract Setting parameterFlags writes the flags key and reads back the same flags. */
 - (void)testSetParameterFlagsWritesTheFlagsKeyAndReadsBack
 {
 	NSMutableDictionary *dictionary = FxGripParameterDictionary();
@@ -1079,6 +1198,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertEqual(dictionary.parameterFlags, hidden);
 }
 
+/*! @abstract The setters build a dictionary that satisfies the parameter guard, so the read accessors return the set values. */
 - (void)testSettersBuildADictionaryThatSatisfiesTheParameterGuard
 {
 	NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
@@ -1120,6 +1240,7 @@ static NSDictionary *FxGripPluginDictionaryWith(NSString *key, id value)
 	XCTAssertTrue([dictionary respondsToSelector:@selector(parameterMaximumDouble)]);
 }
 
+/*! @abstract parameterMinimum_Raw returns the declared minimum for a parameter dictionary and is nil for a non-parameter dictionary. */
 - (void)testTheRawMinimumAccessorMatchesItsDeclaration
 {
 	NSDictionary *parameter = FxGripParameterDictionaryWith(kFxParameterProperty_Minimum, @(3.5));

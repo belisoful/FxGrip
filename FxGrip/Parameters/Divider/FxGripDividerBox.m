@@ -1,15 +1,25 @@
-//
-//  NSArray-Extension.m
-//  XPC Service
-//
-//  Created by ~ ~ on 3/19/24.
-//
+/*!
+	@file       FxGripDividerBox.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDividerBox
+	@abstract   Implements the separator box that draws a divider parameter's line.
+	@discussion Introduced in FxGrip 0.1.0. The box centers itself within its superview at the width
+	            fraction and margins from the parameter value. updateFromCustomData: accepts an
+	            FxGripDividerData or a plain dictionary and resizes the box and its container. The
+	            margin and height setters keep the derived parameter height in sync.
+*/
 
 #import "FxGripDividerBox.h"
 #import "FxGripDividerData.h"
 #import "FxGripTypes.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The separator box backing a divider parameter, centered in a sizing container.
+	@discussion	Introduced in FxGrip 0.1.0. The box reads its width fraction and margins from the
+				pushed value and lays itself out centered in the container. */
 @implementation FxGripDividerBox
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -43,6 +53,12 @@
 }
 
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Applies the width fraction and margins from the pushed value and resizes the box.
+	@param		value	An FxGripDividerData or a dictionary with percentWidth, marginTop, and marginBottom.
+	@discussion	Introduced in FxGrip 0.1.0. A change to the geometry updates the container height and
+				re-centers the box. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:[FxGripDividerData class]] && ![value isKindOfClass:[NSDictionary class]])
@@ -92,6 +108,7 @@
 	}
 }
 
+/*! Lazily builds the full-width container that holds the centered separator box. */
 - (NSView *)topView
 {
 	if (_topView == nil) {

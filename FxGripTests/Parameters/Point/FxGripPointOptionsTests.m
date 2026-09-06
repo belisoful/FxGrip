@@ -1,11 +1,12 @@
-//
-//  FxGripPointOptionsTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPointOptions: the defaults applied to an empty declaration, the
-//  typed parse of a full declaration, the pin display predicate, the enum clamping, the
-//  color-array parse, and the mouse-speed guard.
-//
+/*!
+	@file       FxGripPointOptionsTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPointOptionsTests
+	@abstract   Tests the FxGripPointOptions parse of a point parameter declaration.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the defaults applied to an empty or non-dictionary declaration, the typed parse of a full declaration, the pin display predicate, the enum clamping, the control-color array parse, and the mouse-speed guard.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripPointOptions.h>
@@ -18,6 +19,7 @@
 
 #pragma mark Defaults
 
+/*! @abstract An empty declaration applies every documented default value. */
 - (void)testAnEmptyDeclarationAppliesEveryDocumentedDefault
 {
 	FxGripPointOptions *options = [FxGripPointOptions.alloc initWithConfiguration:nil];
@@ -46,6 +48,7 @@
 	XCTAssertFalse(options.distanceShiftOneAxis);
 }
 
+/*! @abstract A non-dictionary configuration is treated as empty and applies the defaults. */
 - (void)testANonDictionaryConfigurationIsTreatedAsEmpty
 {
 	FxGripPointOptions *options = [FxGripPointOptions.alloc initWithConfiguration:(NSDictionary *)@"nonsense"];
@@ -56,6 +59,7 @@
 
 #pragma mark Full parse
 
+/*! @abstract A full declaration parses every option into its typed property. */
 - (void)testAFullDeclarationParsesEveryOption
 {
 	NSDictionary *config = @{
@@ -107,6 +111,7 @@
 
 #pragma mark Guards
 
+/*! @abstract A three-element control-color array parses with an opaque alpha. */
 - (void)testAThreeElementColorArrayDefaultsAlphaToOpaque
 {
 	FxGripPointOptions *options = [FxGripPointOptions.alloc initWithConfiguration:@{
@@ -116,6 +121,7 @@
 	XCTAssertEqual(options.controlColor.alphaComponent, 1.0);
 }
 
+/*! @abstract A control color that is too short or not an array is ignored, leaving no color. */
 - (void)testAShortOrNonArrayColorIsIgnored
 {
 	FxGripPointOptions *shortArray = [FxGripPointOptions.alloc initWithConfiguration:@{
@@ -127,6 +133,7 @@
 	XCTAssertNil(notAnArray.controlColor);
 }
 
+/*! @abstract An out-of-range constraint or divider falls back to its neutral value. */
 - (void)testAnOutOfRangeConstraintOrDividerFallsBackToTheNeutralValue
 {
 	FxGripPointOptions *options = [FxGripPointOptions.alloc initWithConfiguration:@{
@@ -136,12 +143,14 @@
 	XCTAssertEqual(options.divider, FxGripPointDividerNone);
 }
 
+/*! @abstract A zero or negative mouse speed falls back to one. */
 - (void)testANonPositiveMouseSpeedFallsBackToOne
 {
 	XCTAssertEqual([FxGripPointOptions.alloc initWithConfiguration:@{kFxGripPointKey_MouseSpeed: @0.0}].mouseSpeed, 1.0);
 	XCTAssertEqual([FxGripPointOptions.alloc initWithConfiguration:@{kFxGripPointKey_MouseSpeed: @(-2.0)}].mouseSpeed, 1.0);
 }
 
+/*! @abstract A zero pin distance does not display as a pin. */
 - (void)testAZeroPinDistanceIsNotAPin
 {
 	FxGripPointOptions *options = [FxGripPointOptions.alloc initWithConfiguration:@{kFxGripPointKey_PinDistance: @0.0}];

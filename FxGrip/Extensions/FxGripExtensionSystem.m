@@ -1,7 +1,14 @@
-//
-//  FxGripExtensionSystem.m
-//  FxGrip
-//
+/*!
+	@file       FxGripExtensionSystem.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripExtensionSystem
+	@abstract   Implements the standalone extension dispatcher over an effect host.
+	@discussion Introduced in FxGrip 0.1.0. The dispatch methods post the lifecycle notifications an
+	            FxGripTileableEffect posts, with the same names and payloads, so a loaded extension
+	            cannot tell the system from the effect base.
+*/
 
 #import "FxGripExtensionSystem.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -10,6 +17,11 @@
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	Runs FxGrip extensions inside a plug-in that does not use the effect base.
+	@discussion	Introduced in FxGrip 0.1.0. The system loads extensions against a host and forwards
+				each FxPlug lifecycle call to the matching dispatch method.
+*/
 @implementation FxGripExtensionSystem
 {
 	id<FxGripEffectHost> _host;
@@ -42,6 +54,10 @@
 	return [_extensions copy];
 }
 
+/*!
+	@method		loadExtension:
+	@abstract	Loads an extension against the host and records it when it loads.
+	@return		The extension's own load result. */
 - (BOOL)loadExtension:(id<FxGripExtension>)extension
 {
 	// The extensions bind to an effect; the host stands in for one, as it does for the
@@ -75,6 +91,10 @@
 								userInfo:@{FxGripTileableEffectInitAPIManagerKey: _host.apiManager}];
 }
 
+/*!
+	@method		dispatchProperties:
+	@abstract	Runs the extensions over the plug-in's properties dictionary.
+	@return		The properties the extensions leave, or the input copy when none replaces it. */
 - (NSMutableDictionary *)dispatchProperties:(NSDictionary *)properties
 {
 	NSMutableDictionary *props = [NSMutableDictionary dictionaryWithDictionary:properties ?: @{}];
@@ -84,6 +104,11 @@
 	return [result isKindOfClass:NSMutableDictionary.class] ? result : props;
 }
 
+/*!
+	@method		dispatchAddParameters:
+	@abstract	Runs the extensions over the plug-in's parameter dictionaries.
+	@return		The parameter array the extensions leave, flattened, or the input copy when none
+				replaces it. */
 - (NSMutableArray *)dispatchAddParameters:(NSArray *)parameters
 {
 	NSMutableArray *mutable = [NSMutableArray arrayWithArray:parameters ?: @[]];
@@ -133,6 +158,10 @@
 	[_host.notifier postNotificationName:FxGripTileableEffectPluginStateName object:_host userInfo:userInfo];
 }
 
+/*!
+	@method		flush
+	@abstract	Posts the flush notification so extensions write their state to the host.
+	@return		The error an extension leaves, or nil on success. */
 - (nullable NSError *)flush
 {
 	NSMutableDictionary *userInfo = @{}.mutableCopy;

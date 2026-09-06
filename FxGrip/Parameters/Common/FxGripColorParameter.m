@@ -1,10 +1,12 @@
-//
-//  FxGripParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripColorParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripColorParameter
+	@abstract   Implements the parameter model for a host RGBA color well.
+	@discussion Introduced in FxGrip 0.1.0. The class registers a color parameter through the parameter-creation API and reads and writes its components at a render time. The host's parameter-policy observers resolve the declared default color before registration.
+*/
 
 #import "FxGripColorParameter.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -30,6 +32,10 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	return config;
 }
 
+/*!
+	@abstract	The parameter model for a host RGBA color well.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers a color parameter, reads and writes its red, green, blue, and alpha components at a render time, and encodes the color into the plugin-state coder.
+*/
 @implementation FxGripColorParameter
 
 // This flag is if the host program should modify the colors for its internal gamut
@@ -58,6 +64,13 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Registers the color parameter with the effect's host.
+	@param		parameter	The parameter configuration dictionary.
+	@param		effect		The host that receives the parameter.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The default red, green, and blue are 0.0, and the default alpha is 1.0. The policy observers resolve the declared default color to the working gamut before registration. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	// The host's policy observers convert a declared color space to the working gamut.
@@ -84,6 +97,12 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		valueAtTime:
+	@abstract	Reads the color at a render time.
+	@param		renderTime	The time to sample the parameter at.
+	@return		The color, or opaque black when FxParameterRetrievalAPI_v6 is unavailable.
+	@discussion	Introduced in FxGrip 0.1.0. A retrieval failure sets the parameter's error. */
 -(FxGripColor) valueAtTime:(CMTime)renderTime
 {
 	FxGripColor colorValue = kFxGripBlackOpaque;
@@ -97,6 +116,11 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 
 
 
+/*!
+	@method		setValue:atTime:
+	@abstract	Writes the color at a time.
+	@param		color	The color to set. A NULL value performs no write.
+	@param		time	The time to set the color at. */
 - (void)setValue:(FxGripColor*_Nullable)color atTime:(CMTime)time
 {
 	if (!color) {
@@ -105,11 +129,16 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	[self setRedValue:color->red greenValue:color->green blueValue:color->blue alphaValue:color->alpha atTime:time];
 }
 
+/*! @abstract Writes the red, green, blue, and alpha components at a time through FxParameterSettingAPI_v5. */
 - (void)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue alphaValue:(double)alpha atTime:(CMTime)time
 {
 	[self.effect.apiManager.paramSetAPIv5 setRedValue:red greenValue:green blueValue:blue alphaValue:alpha toParameter:self.parameterID atTime:time];
 }
 
+/*!
+	@method		setRedValue:greenValue:blueValue:atTime:
+	@abstract	Writes the red, green, and blue components at a time and preserves the current alpha.
+	@discussion	Introduced in FxGrip 0.1.0. The method reads the current alpha before the write. */
 - (void)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue atTime:(CMTime)time
 {
 	FxGripColor colorValue = kFxGripBlackOpaque;
@@ -121,10 +150,15 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 }
 
 
+/*!
+	@method		encodeWithCoder:
+	@abstract	Encodes the color at the coder's render time into the plugin-state coder.
+	@param		coder	The coder that receives the color.
+	@discussion	Introduced in FxGrip 0.1.0. The color encodes only when the coder is an FxPlug plugin-state encoder. */
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder
 {
 	[super encodeWithCoder:coder];
-	
+
 	if (coder.isFxPluginStateEncoder) {
 		FxGripColor color = [self valueAtTime:coder.renderTime];
 		[coder encodeBytes:(void*)&color length:sizeof(color) atIndex:self.parameterID];

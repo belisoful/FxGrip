@@ -1,7 +1,15 @@
-//
-//  FxGripOnScreenControl.h
-//  FxGrip
-//
+/*!
+	@file       FxGripOnScreenControl.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOnScreenControl
+	@abstract   The base class for FxPlug on-screen controls, with its Metal draw kit and part model.
+	@discussion Introduced in FxGrip 0.1.0. The base implements the whole FxOnScreenControl_v4 surface:
+	            the Metal drawing scaffold, coordinate and parameter access, mouse and key routing,
+	            and a shadow pass. A subclass either overrides the drawing and interaction hooks or
+	            adds FxGripOSCPart instances, which the base hit-tests, draws, and drags.
+*/
 
 #ifndef FxGripOnScreenControl_h
 #define FxGripOnScreenControl_h
@@ -27,7 +35,7 @@ FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 /*!
 	@class      FxGripOnScreenControl
 	@abstract   The base class for FxPlug on-screen controls.
-	@discussion Introduced in FxGrip 1.0. An on-screen control registers as its own
+	@discussion Introduced in FxGrip 0.1.0. An on-screen control registers as its own
 				plugin entry (protocol `FxOnScreenControl`, with the effect's UUID in
 				`supportedPlugins`); an effect's registration dictionary lists its OSC
 				UUIDs under the `"osc"` key and the registrar wires `supportedPlugins`.
@@ -55,12 +63,16 @@ FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 */
 @interface FxGripOnScreenControl : NSObject <FxOnScreenControl_v4>
 
+/*! The wrapped host API accessor, for parameter and OSC API access. */
 @property (readonly, nonnull) id<FxGripAPIAccessing> apiManager;
+
+/*! The control's own plugin UUID, read from the API manager. */
 @property (readonly, nullable, retain) NSString *pluginUUID;
 
 /*! The control's parts, in the order added; drawn first-to-last, hit-tested last-to-first. */
 @property (readonly, nonnull) NSArray<FxGripOSCPart *> *parts;
 
+/*! Initializes the control with the host's API manager. */
 - (nullable instancetype)initWithAPIManager:(nonnull id<PROAPIAccessing>)apiManager;
 
 /*! Appends a part and points its `control` back at the receiver. */
@@ -77,9 +89,13 @@ FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 
 #pragma mark Parameter access
 
+/*! Reads a point parameter's x and y as an object point; returns YES on success. */
 - (BOOL)getObjectPoint:(nonnull CGPoint *)objectPoint fromParameter:(FxParameterId)parameterID atTime:(CMTime)time;
+/*! Writes an object point to a point parameter's x and y; returns YES on success. */
 - (BOOL)setObjectPoint:(CGPoint)objectPoint toParameter:(FxParameterId)parameterID atTime:(CMTime)time;
+/*! Reads a float parameter's value; returns YES on success. */
 - (BOOL)getFloatValue:(nonnull double *)value fromParameter:(FxParameterId)parameterID atTime:(CMTime)time;
+/*! Writes a value to a float parameter; returns YES on success. */
 - (BOOL)setFloatValue:(double)value toParameter:(FxParameterId)parameterID atTime:(CMTime)time;
 
 /*! Reads the custom-data object stored in a parameter, or nil when none is set. */
@@ -176,7 +192,7 @@ FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 /*!
 	@method     encodeTexturedQuadLL:lr:ur:ul:texture:color:canvasSize:commandEncoder:
 	@abstract   Draws texture across the quad spanned by four canvas corners, tinted by color.
-	@discussion Introduced in FxGrip 1.0. Binds the FxGrip OSC textured pipeline for the
+	@discussion Introduced in FxGrip 0.1.0. Binds the FxGrip OSC textured pipeline for the
 				draw and restores the flat-color pipeline afterward, so a part may mix
 				textured and flat draws in one drawSelected: pass. The texture's top-left
 				maps to the upper-left corner. Callable only from within a part's
@@ -194,7 +210,7 @@ FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 /*!
 	@method     textureForText:fontSize:color:device:
 	@abstract   Renders text to a new premultiplied RGBA texture sized to fit it.
-	@discussion Introduced in FxGrip 1.0. Returns nil when text is empty or the texture
+	@discussion Introduced in FxGrip 0.1.0. Returns nil when text is empty or the texture
 				cannot be created. The pixel size is available from the returned texture's
 				width and height; a HUD part sizes its quad from them to keep the readout a
 				fixed pixel size at every zoom.

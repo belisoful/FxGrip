@@ -1,19 +1,12 @@
-//
-//  FxGripImageBufferTests.m
-//  FxGripTests
-//
-//  Unit tests for the compressed image buffer: the tight repacking of strided source rows,
-//  the storage codec and its fallback, the on-demand decompression, the channel-aware format
-//  conversions, the lossy image codecs and their quality setting, the Metal and preview
-//  bridges, pixel equality across codecs, and the keyed secure-coding round trip.
-//
-//  A lossy codec reproduces pixels approximately, so its tests assert a component tolerance
-//  and a payload-size relation rather than exact bytes. Their fixtures are smooth gradients
-//  and gradients carrying a fixed ripple, so the encoder sees the same image every run.
-//
-//  The archives that must be rejected are built by encoding a stub under the buffer's class
-//  name, so a single field can carry a value the buffer never writes.
-//
+/*!
+	@file       FxGripImageBufferTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripImageBufferTests
+	@abstract   Unit tests for the compressed image buffer covering repacking, storage codecs, conversion, coding, identity, Metal and preview bridges, and lossy codecs.
+	@discussion Introduced in FxGrip 0.1.0. The tests repack strided source rows tightly, store pixels under each codec with an uncompressed fallback, and convert between the channel-aware formats. They assert the keyed secure-coding round trip, pixel equality across codecs, the Metal and NSBitmapImageRep bridges, and the lossy image codecs with their quality setting. Lossy tests assert a component tolerance and a payload-size relation rather than exact bytes, and Metal tests skip when no device is present.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -301,6 +294,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Initialization
 
+/*! @abstract Initialization repacks strided source rows into tightly packed pixel data. */
 - (void)testInitRepacksStridedRowsTightly
 {
 	const NSUInteger width = 4;
@@ -329,6 +323,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(buffer.pixelData, expected);
 }
 
+/*! @abstract Initialization drops the per-row padding bytes and keeps only the pixel bytes. */
 - (void)testInitDropsTheRowPaddingBytes
 {
 	const NSUInteger width = 4;
@@ -356,6 +351,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	}
 }
 
+/*! @abstract The buffer reports the width, height, format, tight row bytes, and uncompressed length. */
 - (void)testInitReportsTheTightRowBytesAndLength
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self compressiblePixelsForWidth:5 height:4 format:FxGripPixelFormatRGB16U]
@@ -371,6 +367,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(buffer.uncompressedLength, 5u * 4u * 6u);
 }
 
+/*! @abstract Initialization returns nil for an invalid pixel format. */
 - (void)testInitRejectsAnInvalidFormat
 {
 	uint8_t pixels[64] = {0};
@@ -383,6 +380,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 											compression:FxGripCompressionNone]);
 }
 
+/*! @abstract Initialization returns nil for a zero width. */
 - (void)testInitRejectsAZeroWidth
 {
 	uint8_t pixels[64] = {0};
@@ -395,6 +393,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 											compression:FxGripCompressionNone]);
 }
 
+/*! @abstract Initialization returns nil for a zero height. */
 - (void)testInitRejectsAZeroHeight
 {
 	uint8_t pixels[64] = {0};
@@ -407,6 +406,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 											compression:FxGripCompressionNone]);
 }
 
+/*! @abstract Initialization returns nil when the source stride is narrower than one tight row. */
 - (void)testInitRejectsAStrideNarrowerThanARow
 {
 	uint8_t pixels[64] = {0};
@@ -419,6 +419,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 											compression:FxGripCompressionNone]);
 }
 
+/*! @abstract Initialization returns nil for a NULL bytes pointer. */
 - (void)testInitRejectsNullBytes
 {
 	const void *pixels = NULL;
@@ -433,6 +434,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Storage
 
+/*! @abstract Compressible pixels store under the requested codec, shrink below the uncompressed length, and decompress back to the original. */
 - (void)testCompressiblePixelsStoreWithTheRequestedCodec
 {
 	NSData *pixels = [self compressiblePixelsForWidth:64 height:64 format:FxGripPixelFormatRGBA8U];
@@ -446,6 +448,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(buffer.pixelData, pixels);
 }
 
+/*! @abstract Each lossless codec stores compressible pixels under itself and decompresses back to the original. */
 - (void)testEachCodecStoresCompressiblePixelsUnderItself
 {
 	const FxGripCompression codecs[] = {FxGripCompressionLZFSE, FxGripCompressionLZ4,
@@ -462,6 +465,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	}
 }
 
+/*! @abstract Incompressible pixels fall back to uncompressed storage while still reading back exactly. */
 - (void)testIncompressiblePixelsFallBackToUncompressedStorage
 {
 	NSData *pixels = [self incompressiblePixelsForWidth:8 height:8 format:FxGripPixelFormatRGBA8U];
@@ -475,6 +479,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(buffer.pixelData, pixels);
 }
 
+/*! @abstract The none codec stores the pixels verbatim as the compressed data. */
 - (void)testCompressionNoneStoresThePixelsVerbatim
 {
 	NSData *pixels = [self compressiblePixelsForWidth:16 height:16 format:FxGripPixelFormatRGBA8U];
@@ -487,6 +492,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(buffer.compressedData, pixels);
 }
 
+/*! @abstract pixelData round-trips exactly for every pixel format under a lossless codec. */
 - (void)testPixelDataRoundTripsExactlyForEveryFormat
 {
 	for (NSUInteger index = 0; index < kImageBufferTestFormatCount; index++) {
@@ -502,6 +508,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	}
 }
 
+/*! @abstract Compressible pixel data round-trips exactly for every format under the Zlib codec. */
 - (void)testCompressedPixelDataRoundTripsExactlyForEveryFormat
 {
 	for (NSUInteger index = 0; index < kImageBufferTestFormatCount; index++) {
@@ -519,6 +526,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Conversion
 
+/*! @abstract Converting to half float and back keeps each value within half-precision tolerance and halves the length. */
 - (void)testConversionToHalfFloatKeepsValuesWithinHalfPrecision
 {
 	const float source[] = {0.1f, 0.5f, 2.5f, -1.25f};
@@ -537,6 +545,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	}
 }
 
+/*! @abstract Half-float conversion keeps values outside the zero-to-one range rather than clamping them. */
 - (void)testHalfFloatConversionKeepsValuesOutsideTheZeroToOneRange
 {
 	const float source[] = {-1.25f, 2.5f, 8.0f, 0.0f};
@@ -553,6 +562,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[2], 8.0f);
 }
 
+/*! @abstract Converting float to an integer format clamps values below zero and above one. */
 - (void)testConversionToAnIntegerFormatClampsBelowZeroAndAboveOne
 {
 	const float source[] = {-0.5f, 0.0f, 0.5f, 1.5f};
@@ -568,6 +578,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[3], 255);
 }
 
+/*! @abstract Converting float to a 32-bit integer format maps one to the full-scale value. */
 - (void)testConversionToAThirtyTwoBitIntegerFormatMapsOneToFullScale
 {
 	const float source[] = {0.0f, 1.0f, 0.5f, 1.0f};
@@ -582,6 +593,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[3], UINT32_MAX);
 }
 
+/*! @abstract Converting from an 8-bit format normalizes full scale to one. */
 - (void)testConversionFromAnEightBitFormatNormalizesFullScaleToOne
 {
 	const uint8_t source[] = {0, 128, 255, 255};
@@ -600,6 +612,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[3], 1.0f);
 }
 
+/*! @abstract Converting from a 16-bit format normalizes full scale to one. */
 - (void)testConversionFromASixteenBitFormatNormalizesFullScaleToOne
 {
 	const uint16_t source[] = {0, 65535, 32768, 65535};
@@ -617,6 +630,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualWithAccuracy(values[2], 32768.0f / 65535.0f, 1e-6);
 }
 
+/*! @abstract An 8-bit to 16-bit and back conversion is lossless. */
 - (void)testAnIntegerRoundTripThroughTheFullScaleIsLossless
 {
 	const uint8_t source[] = {0, 1, 128, 255};
@@ -633,6 +647,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(back.pixelData, buffer.pixelData);
 }
 
+/*! @abstract Converting to add an alpha channel fills it opaque for an integer format. */
 - (void)testConversionAddingAlphaFillsItOpaque
 {
 	const uint8_t source[] = {10, 20, 30};
@@ -651,6 +666,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[3], 255);
 }
 
+/*! @abstract Converting to add an alpha channel fills it with one for a float format. */
 - (void)testConversionAddingAlphaToAFloatFormatFillsItWithOne
 {
 	const float source[] = {0.25f, 0.5f, 0.75f};
@@ -663,6 +679,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[3], 1.0f);
 }
 
+/*! @abstract Converting to drop the alpha channel discards it and keeps the color channels. */
 - (void)testConversionDroppingAlphaDiscardsIt
 {
 	const float source[] = {1.5f, 2.5f, 3.5f, 0.25f};
@@ -679,6 +696,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[2], 3.5f);
 }
 
+/*! @abstract Converting to the same format recompresses the pixels under the new codec. */
 - (void)testConversionToTheSameFormatRecompressesThePixels
 {
 	NSData *pixels = [self compressiblePixelsForWidth:32 height:32 format:FxGripPixelFormatRGBA8U];
@@ -694,6 +712,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(recompressed.pixelData, pixels);
 }
 
+/*! @abstract Conversion preserves the width, height, and tight row bytes of the new format. */
 - (void)testConversionPreservesTheDimensions
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self compressiblePixelsForWidth:7 height:5 format:FxGripPixelFormatRGBA8U]
@@ -709,6 +728,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(converted.rowBytes, 7u * 6u);
 }
 
+/*! @abstract Converting to an invalid format returns nil. */
 - (void)testConversionToAnInvalidFormatIsNil
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self compressiblePixelsForWidth:4 height:4 format:FxGripPixelFormatRGBA8U]
@@ -721,6 +741,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Secure coding
 
+/*! @abstract A secure-coding archive round trip preserves the pixels, format, and dimensions. */
 - (void)testTheArchiveRoundTripPreservesThePixelsFormatAndDimensions
 {
 	NSData *pixels = [self incompressiblePixelsForWidth:9 height:6 format:FxGripPixelFormatRGBA16F];
@@ -737,6 +758,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(decoded.pixelData, pixels);
 }
 
+/*! @abstract A secure-coding archive round trip keeps the storage codec and compressed bytes. */
 - (void)testTheArchiveRoundTripKeepsTheStorageCodec
 {
 	NSData *pixels = [self compressiblePixelsForWidth:32 height:32 format:FxGripPixelFormatRGBA8U];
@@ -750,6 +772,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(decoded.compressedData, buffer.compressedData);
 }
 
+/*! @abstract Encoding writes the compressed payload without decompressing, so the archive stays close to the compressed size. */
 - (void)testEncodingWritesTheCompressedPayloadWithoutDecompressing
 {
 	NSData *pixels = [self compressiblePixelsForWidth:256 height:256 format:FxGripPixelFormatRGBA8U];
@@ -764,6 +787,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertLessThan(archiveLength, buffer.uncompressedLength / 100u);
 }
 
+/*! @abstract Decoding rejects an archive whose stored length contradicts the dimensions and format. */
 - (void)testAnArchiveWhoseLengthContradictsTheDimensionsIsRejected
 {
 	NSData *pixels = [self incompressiblePixelsForWidth:4 height:4 format:FxGripPixelFormatRGBA8U];
@@ -778,6 +802,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNil([self unarchivedBufferFromData:archive]);
 }
 
+/*! @abstract Decoding rejects an archive whose stored format is invalid. */
 - (void)testAnArchiveWithAnInvalidFormatIsRejected
 {
 	NSData *pixels = [self incompressiblePixelsForWidth:4 height:4 format:FxGripPixelFormatRGBA8U];
@@ -792,6 +817,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNil([self unarchivedBufferFromData:archive]);
 }
 
+/*! @abstract Decoding rejects an archive that carries no payload. */
 - (void)testAnArchiveWithoutAPayloadIsRejected
 {
 	NSData *archive = [self archiveWithIntegerFields:@{kImageBufferCoderKey_Version: @1,
@@ -805,6 +831,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNil([self unarchivedBufferFromData:archive]);
 }
 
+/*! @abstract Decoding accepts an archive whose fields are internally consistent and returns the pixels. */
 - (void)testAnArchiveWithConsistentFieldsIsAccepted
 {
 	NSData *pixels = [self incompressiblePixelsForWidth:4 height:4 format:FxGripPixelFormatRGBA8U];
@@ -821,6 +848,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Identity
 
+/*! @abstract Two buffers holding equal pixels under different codecs are equal and hash alike. */
 - (void)testBuffersWithEqualPixelsUnderDifferentCodecsAreEqual
 {
 	NSData *pixels = [self compressiblePixelsForWidth:16 height:16 format:FxGripPixelFormatRGBA8U];
@@ -836,6 +864,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(lzfse.hash, uncompressed.hash);
 }
 
+/*! @abstract Two buffers holding different pixels are not equal. */
 - (void)testBuffersWithDifferentPixelsAreNotEqual
 {
 	FxGripImageBuffer *flat = [self bufferWithPixels:[self compressiblePixelsForWidth:8 height:8 format:FxGripPixelFormatRGBA8U]
@@ -850,6 +879,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNotEqualObjects(flat, noise);
 }
 
+/*! @abstract Two buffers holding the same bytes under different formats are not equal. */
 - (void)testBuffersWithTheSameBytesUnderDifferentFormatsAreNotEqual
 {
 	NSData *pixels = [self compressiblePixelsForWidth:4 height:4 format:FxGripPixelFormatRGBA8U];
@@ -863,6 +893,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNotEqualObjects(asBytes, asShorts);
 }
 
+/*! @abstract A buffer is not equal to an object of another kind. */
 - (void)testABufferIsNotEqualToAnotherKindOfObject
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self compressiblePixelsForWidth:4 height:4 format:FxGripPixelFormatRGBA8U]
@@ -873,6 +904,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNotEqualObjects(buffer, @"buffer");
 }
 
+/*! @abstract copy returns the same immutable instance. */
 - (void)testCopyReturnsTheSameImmutableInstance
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self compressiblePixelsForWidth:4 height:4 format:FxGripPixelFormatRGBA8U]
@@ -895,6 +927,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	return (__bridge_transfer id<MTLDevice>)create();
 }
 
+/*! @abstract An RGBA float buffer round-trips through a Metal texture with its dimensions, pixel format, and pixels intact. */
 - (void)testAFloatBufferRoundTripsThroughAMetalTexture
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -915,6 +948,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(readBack, buffer);
 }
 
+/*! @abstract An RGBA 8-bit buffer round-trips through a Metal texture with its pixels and format intact. */
 - (void)testAnEightBitBufferRoundTripsThroughAMetalTexture
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -933,6 +967,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(readBack.format, FxGripPixelFormatRGBA8U);
 }
 
+/*! @abstract A three-channel RGB buffer makes no Metal texture. */
 - (void)testAnRGBBufferHasNoMetalTexture
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -946,6 +981,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNil([buffer newTextureWithDevice:device]);
 }
 
+/*! @abstract A texture in an unsupported Metal pixel format makes no buffer. */
 - (void)testATextureInAnUnsupportedFormatMakesNoBuffer
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -964,6 +1000,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Previews
 
+/*! @abstract The bitmap representation carries the buffer's dimensions and four samples per pixel. */
 - (void)testTheBitmapRepresentationCarriesTheBufferDimensions
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self incompressiblePixelsForWidth:6 height:5 format:FxGripPixelFormatRGBA8U]
@@ -979,6 +1016,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(rep.samplesPerPixel, 4);
 }
 
+/*! @abstract A float buffer converts to an 8-bit bitmap representation carrying the buffer's dimensions. */
 - (void)testAFloatBufferConvertsForTheBitmapRepresentation
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self compressiblePixelsForWidth:6 height:5 format:FxGripPixelFormatRGB32F]
@@ -994,6 +1032,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(rep.bitsPerPixel, 32);
 }
 
+/*! @abstract The image preview carries the buffer size and a single representation. */
 - (void)testTheImagePreviewCarriesTheBufferSize
 {
 	FxGripImageBuffer *buffer = [self bufferWithPixels:[self incompressiblePixelsForWidth:6 height:5 format:FxGripPixelFormatRGBA8U]
@@ -1011,6 +1050,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Lossy codecs
 
+/*! @abstract JPEG encodes gray and RGB gradients within a per-byte tolerance and shrinks the payload. */
 - (void)testJPEGHoldsGrayAndRGBWithinTolerance
 {
 	// Large enough that the codec's container overhead cannot outweigh the pixels.
@@ -1041,6 +1081,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	}
 }
 
+/*! @abstract A lower JPEG quality yields a smaller compressed payload than a higher quality. */
 - (void)testALowerJPEGQualityYieldsASmallerPayload
 {
 	NSData *pixels = [self gradientPixelsForWidth:64 height:64 format:FxGripPixelFormatRGB8U];
@@ -1059,6 +1100,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertLessThan(half.compressedData.length, high.compressedData.length);
 }
 
+/*! @abstract HEIC encodes an opaque RGBA image and keeps its alpha fully opaque. */
 - (void)testHEICCarriesAnOpaqueRGBAImage
 {
 	NSData *pixels = [self gradientPixelsForWidth:64 height:64 format:FxGripPixelFormatRGBA8U];
@@ -1171,6 +1213,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertLessThan(maxDelta, 257u);
 }
 
+/*! @abstract The quality clamps to the zero-to-one range and persists through the archive. */
 - (void)testTheQualityClampsAndPersistsThroughTheArchive
 {
 	NSData *pixels = [self gradientPixelsForWidth:16 height:16 format:FxGripPixelFormatGray8U];
@@ -1195,6 +1238,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Channel-aware conversion
 
+/*! @abstract Converting color to gray collapses the channels to Rec.709 luminance. */
 - (void)testConversionCollapsesColorToRec709Luminance
 {
 	const float red[4] = {1.f, 0.f, 0.f, 1.f};
@@ -1207,6 +1251,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualWithAccuracy(value[0], 0.2126f, 0.0001f);
 }
 
+/*! @abstract Converting gray to color replicates the gray value across the color channels. */
 - (void)testConversionReplicatesGrayToTheColorChannels
 {
 	const float gray[1] = {0.25f};
@@ -1221,6 +1266,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[2], 0.25f);
 }
 
+/*! @abstract Converting color to gray-alpha carries the alpha alongside the luminance. */
 - (void)testConversionToGrayAlphaCarriesTheAlphaWithTheLuminance
 {
 	const float pixel[4] = {0.f, 1.f, 0.f, 0.5f};
@@ -1234,6 +1280,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[1], 0.5f);
 }
 
+/*! @abstract Converting gray-alpha to RGBA replicates the gray across the color channels and carries the alpha. */
 - (void)testConversionFromGrayAlphaReplicatesAndCarriesAlpha
 {
 	const float pixel[2] = {0.75f, 0.25f};
@@ -1249,6 +1296,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqual(values[3], 0.25f);
 }
 
+/*! @abstract Converting gray to gray-alpha keeps the gray value and adds an opaque alpha. */
 - (void)testConversionFromGrayAddsAnOpaqueAlpha
 {
 	const float gray[1] = {0.5f};
@@ -1264,6 +1312,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 
 #pragma mark Metal, new formats
 
+/*! @abstract A gray float buffer round-trips through a Metal texture with its format and pixels intact. */
 - (void)testAGrayFloatBufferRoundTripsThroughATexture
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -1278,6 +1327,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(returned.pixelData, source.pixelData);
 }
 
+/*! @abstract A gray-alpha half-float buffer round-trips through a Metal texture with its format and pixels intact. */
 - (void)testAGrayAlphaHalfBufferRoundTripsThroughATexture
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -1294,6 +1344,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertEqualObjects(returned.pixelData, pixels);
 }
 
+/*! @abstract A three-channel half-float buffer makes no Metal texture. */
 - (void)testAThreeChannelHalfBufferMakesNoTexture
 {
 	id<MTLDevice> device = [self metalDevice];
@@ -1306,6 +1357,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	XCTAssertNil([buffer newTextureWithDevice:device]);
 }
 
+/*! @abstract A gray buffer still makes a bitmap preview at the buffer's dimensions. */
 - (void)testAGrayBufferStillMakesAPreview
 {
 	NSData *pixels = [self gradientPixelsForWidth:8 height:8 format:FxGripPixelFormatGray8U];
@@ -1341,6 +1393,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	}
 }
 
+/*! @abstract AVIF encodes an RGBA gradient within a per-channel tolerance and keeps its alpha opaque. */
 - (void)testAVIFRoundTripsWithinToleranceAndKeepsOpaqueAlpha
 {
 	XCTSkipIf(!FxGripCompressionIsAvailable(FxGripCompressionAVIF), @"No AVIF encoder on this OS.");
@@ -1366,6 +1419,7 @@ static const NSUInteger kImageBufferTestGrayAlphaFormatCount = 5;
 	}
 }
 
+/*! @abstract AVIF carries a 16-bit gray ramp with better than 8-bit precision. */
 - (void)testAVIFCarriesASixteenBitRampBeyondTheEightBitFloor
 {
 	XCTSkipIf(!FxGripCompressionIsAvailable(FxGripCompressionAVIF), @"No AVIF encoder on this OS.");

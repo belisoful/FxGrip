@@ -1,12 +1,15 @@
-//
-//  FxGripIntParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripIntParameter: the type identity, the payload
-//  +addParameter:toEffect: derives from a configuration, the integer truncation of
-//  fractional values, the host-refusal result, and the ignore-min/max flag accessors an
-//  instance exposes.
-//
+/*!
+	@file       FxGripIntParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripIntParameterTests
+	@abstract   Tests FxGripIntParameter: its FxPlug type identity and the creation payload
+	            +addParameter:toEffect: derives from a configuration.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the integer truncation of
+	            fractional values, the host-refusal result, and the ignore-min/max flag
+	            accessors an instance exposes.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -53,6 +56,7 @@ static const FxParameterId kIntTestParameter = 21;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug integer type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripIntParameter.parameterType, FxParameterType_Int);
@@ -61,6 +65,7 @@ static const FxParameterId kIntTestParameter = 21;
 
 #pragma mark Creation payload
 
+/*! @abstract An integer created with no bounds defaults to a zero-to-one-hundred range and a unit delta. */
 - (void)testIntWithoutBoundsUsesZeroToOneHundredAndAUnitDelta
 {
 	XCTAssertTrue([self add:FxGripIntParameter.class type:kFxParameterType_Integer extra:nil]);
@@ -105,6 +110,7 @@ static const FxParameterId kIntTestParameter = 21;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract The slider bounds fall back to the parameter bounds when none are declared. */
 - (void)testIntSliderBoundsFallBackToTheParameterBounds
 {
 	NSDictionary *extra = @{kFxParameterProperty_Minimum: @(-10),
@@ -116,6 +122,7 @@ static const FxParameterId kIntTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"slidermax"], @10);
 }
 
+/*! @abstract A fractional default and delta are truncated to integers. */
 - (void)testIntTruncatesAFractionalConfigurationValue
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @7.9,
@@ -127,6 +134,7 @@ static const FxParameterId kIntTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"delta"], @2);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testIntReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -136,6 +144,7 @@ static const FxParameterId kIntTestParameter = 21;
 
 #pragma mark Instance flags
 
+/*! @abstract The flagIgnoreMinMax accessor reads the IGNORE_MINMAX bit from the host flags. */
 - (void)testIgnoreMinMaxReadsTheHostFlags
 {
 	FxGripIntParameter *parameter = [self makeIntParameter];
@@ -147,6 +156,7 @@ static const FxParameterId kIntTestParameter = 21;
 	XCTAssertFalse(parameter.flagIgnoreMinMax);
 }
 
+/*! @abstract Setting flagIgnoreMinMax adds the bit to the existing flags and writes them to the host. */
 - (void)testSettingIgnoreMinMaxWritesTheBitToTheHost
 {
 	FxGripIntParameter *parameter = [self makeIntParameter];
@@ -159,6 +169,7 @@ static const FxParameterId kIntTestParameter = 21;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls, expected);
 }
 
+/*! @abstract Clearing flagIgnoreMinMax removes only that bit and leaves the other flags set. */
 - (void)testClearingIgnoreMinMaxRemovesOnlyThatBit
 {
 	FxGripIntParameter *parameter = [self makeIntParameter];
@@ -170,6 +181,7 @@ static const FxParameterId kIntTestParameter = 21;
 						  @(kFxParameterFlag_HIDDEN));
 }
 
+/*! @abstract Setting flagIgnoreMinMax to its current state writes nothing to the host. */
 - (void)testSettingIgnoreMinMaxToItsCurrentStateWritesNothing
 {
 	FxGripIntParameter *parameter = [self makeIntParameter];

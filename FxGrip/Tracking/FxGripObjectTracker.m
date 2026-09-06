@@ -1,13 +1,23 @@
-//
-//  FxGripObjectTracker.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripObjectTracker.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTracker
+	@abstract   Implements the Vision-backed object tracker and its per-frame sample.
+	@discussion Introduced in FxGrip 0.1.0. The tracker wraps a VNSequenceRequestHandler. It seeds a
+	            detected-object observation, or a rectangle observation in rotation mode, and advances
+	            it one frame per call. Each updated observation becomes the next frame's input.
+*/
 
 #import "FxGripObjectTracker.h"
 #import <Vision/Vision.h>
 
+/*!
+	@abstract	One frame's tracking result.
+	@discussion	Introduced in FxGrip 0.1.0. The sample holds the normalized bounding box, its center,
+				the rotation, and the confidence. It is secure-codable and copyable.
+*/
 @implementation FxGripObjectTrackerSample
 
 - (instancetype)initWithBoundingBox:(CGRect)boundingBox confidence:(float)confidence
@@ -95,6 +105,11 @@
 @property (readwrite, nullable, nonatomic) FxGripObjectTrackerSample *lastSample;
 @end
 
+/*!
+	@abstract	Tracks one object's bounding box across a frame sequence.
+	@discussion	Introduced in FxGrip 0.1.0. The tracker holds a Vision sequence handler and the last
+				observation. It seeds on the first frame and advances one frame per call.
+*/
 @implementation FxGripObjectTracker
 
 - (instancetype)initWithLevel:(FxGripObjectTrackerLevel)level
@@ -113,6 +128,16 @@
 													  : VNRequestTrackingLevelAccurate;
 }
 
+/*!
+	@method		startTrackingImage:boundingBox:error:
+	@abstract	Seeds the tracker with the first frame and the initial normalized bounding box.
+	@param		image			The first frame as a CIImage.
+	@param		normalizedBox	The initial region, normalized with a lower-left origin.
+	@param		error			Set on failure.
+	@return		YES when the tracker is seeded.
+	@discussion	Introduced in FxGrip 0.1.0. A fresh sequence handler begins a new temporal sequence. In
+				rotation mode the method detects a rectangle inside the seed box and tracks it; when no
+				rectangle is found it falls back to the bounding-box path with zero rotation. */
 - (BOOL)startTrackingImage:(CIImage *)image
 			   boundingBox:(CGRect)normalizedBox
 					 error:(NSError * _Nullable * _Nullable)error
@@ -143,6 +168,11 @@
 	return YES;
 }
 
+/*!
+	@method		detectRectangleInImage:nearBox:
+	@abstract	Returns the detected rectangle whose center is nearest the seed box center.
+	@discussion	Introduced in FxGrip 0.1.0. The method runs a one-shot rectangle detection and picks the
+				candidate closest to the box center, or nil when none is found. */
 // The rectangle whose center is nearest the seed box center, or nil when none is found.
 - (nullable VNRectangleObservation *)detectRectangleInImage:(CIImage *)image nearBox:(CGRect)box
 {
@@ -168,6 +198,10 @@
 	return best;
 }
 
+/*!
+	@method		sampleFromRectangle:
+	@abstract	Builds a sample from a rectangle observation.
+	@discussion	Introduced in FxGrip 0.1.0. The rotation is the angle of the tracked quad's top edge. */
 // The axis-aligned bounds plus the rotation of the tracked quad's top edge.
 - (FxGripObjectTrackerSample *)sampleFromRectangle:(VNRectangleObservation *)rectangle
 {
@@ -178,6 +212,15 @@
 													  confidence:rectangle.confidence];
 }
 
+/*!
+	@method		trackImage:error:
+	@abstract	Advances the track by one frame and returns the updated sample.
+	@param		image	The next frame as a CIImage.
+	@param		error	Set on failure.
+	@return		The updated sample, or nil when the object is lost or on error.
+	@discussion	Introduced in FxGrip 0.1.0. In rotation mode the method runs a rectangle-tracking
+				request; otherwise it runs an object-tracking request. The updated observation is stored
+				as the next frame's input. */
 - (nullable FxGripObjectTrackerSample *)trackImage:(CIImage *)image
 											 error:(NSError * _Nullable * _Nullable)error
 {
@@ -223,6 +266,11 @@
 	return self.lastSample;
 }
 
+/*!
+	@method		reset
+	@abstract	Clears the sequence handler and the seeded observation.
+	@discussion	Introduced in FxGrip 0.1.0. A later startTrackingImage:boundingBox:error: begins a new
+				sequence. */
 - (void)reset
 {
 	self.sequenceHandler = [[VNSequenceRequestHandler alloc] init];

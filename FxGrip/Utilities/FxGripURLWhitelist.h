@@ -1,7 +1,17 @@
-//
-//  FxGripURLWhitelist.h
-//  FxGrip
-//
+/*!
+	@file       FxGripURLWhitelist.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripURLWhitelist
+	@abstract   An ordered allow-list of URL glob patterns.
+	@discussion Introduced in FxGrip 0.1.0. Each pattern is a glob where ? matches one character
+	            and * matches any run. A URL is allowed when a pattern matches its full absolute
+	            string or a label-boundary suffix of its host, so a bare domain covers its
+	            subdomains without opening a look-alike host. An empty list blocks every URL and
+	            the single pattern * allows every URL. The class supports secure coding and
+	            copying.
+*/
 
 #ifndef FxGripURLWhitelist_h
 #define FxGripURLWhitelist_h
@@ -25,7 +35,7 @@ extern const unichar kFxGripURLWhitelistAnyString;		// '*'
 /*!
 	@class      FxGripURLWhitelist
 	@abstract   An ordered allow-list of URL glob patterns.
-	@discussion Introduced in FxGrip 1.0. Each pattern is a glob: `?` matches one character,
+	@discussion Introduced in FxGrip 0.1.0. Each pattern is a glob: `?` matches one character,
 				`*` matches any run of characters, and every other character is literal. A
 				pattern compiles to an anchored, case-insensitive regular expression through
 				regexPatternForGlob:.

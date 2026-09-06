@@ -1,11 +1,14 @@
-//
-//  FxGripExtensionTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripExtensionBase: initialization defaults, notification
-//  priority, the setExtActive: guard, index/individuation behavior, and
-//  observer registration performed by extLoadWithEffect:.
-//
+/*!
+	@file       FxGripExtensionTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripExtensionTests
+	@abstract   Tests FxGripExtensionBase initialization, priority, activation gating, keying, and observer registration.
+	@discussion Introduced in FxGrip 0.1.0. Stub effects and observing subclasses exercise the base class in isolation.
+	            The tests cover default state, notification priority, the setExtActive: document guard, index and
+	            individuation keying, and the selective observer registration extLoadWithEffect: performs.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripExtension.h>
@@ -82,12 +85,14 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 
 @implementation FxGripExtensionTests
 
+/*! @abstract Verifies the base extension allocates and initializes to a non-nil instance. */
 - (void)testInitReturnsNonNilInstance
 {
 	FxGripExtensionBase *ext = [FxGripExtensionBase.alloc init];
 	XCTAssertNotNil(ext);
 }
 
+/*! @abstract Verifies a fresh extension is active, has key index -1, keys to its class name, carries the default priority, and disables include-when-disabled and individuation. */
 - (void)testInitDefaults
 {
 	FxGripExtensionBase *ext = [FxGripExtensionBase.alloc init];
@@ -100,12 +105,14 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertFalse(ext.extIndividuate);
 }
 
+/*! @abstract Verifies the default key is the concrete subclass name. */
 - (void)testExtKeyDefaultsToConcreteSubclassName
 {
 	FxGripExtInitObservingExtension *ext = [FxGripExtInitObservingExtension.alloc init];
 	XCTAssertEqualObjects(ext.extKey, NSStringFromClass(FxGripExtInitObservingExtension.class));
 }
 
+/*! @abstract Verifies ncPriority: returns the default priority for a nil name and for a known notification name. */
 - (void)testNcPriorityReturnsDefaultPriority
 {
 	FxGripExtensionBase *ext = [FxGripExtensionBase.alloc init];
@@ -113,6 +120,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqual([ext ncPriority:FxGripTileableEffectInitName], FxGripExtensionDefaultPriority);
 }
 
+/*! @abstract Verifies ncPriority: reflects a changed extDefaultPriority value. */
 - (void)testNcPriorityTracksChangedDefaultPriority
 {
 	FxGripExtensionBase *ext = [FxGripExtensionBase.alloc init];
@@ -123,6 +131,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqual([ext ncPriority:FxGripTileableEffectFlushName], 20);
 }
 
+/*! @abstract Verifies setExtActive: toggles the flag both ways when no effect is loaded. */
 - (void)testSetExtActiveTogglesWithNoEffectLoaded
 {
 	FxGripExtensionBase *ext = [FxGripExtensionBase.alloc init];
@@ -134,6 +143,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertTrue(ext.extActive);
 }
 
+/*! @abstract Verifies setExtActive: still applies while the loaded effect is not yet added to the document. */
 - (void)testSetExtActiveSucceedsWhenEffectNotYetAddedToDocument
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];
@@ -147,6 +157,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertFalse(ext.extActive);
 }
 
+/*! @abstract Verifies setExtActive: is ignored once the loaded effect is added to the document. */
 - (void)testSetExtActiveRejectedAfterEffectAddedToDocument
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];
@@ -160,6 +171,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertTrue(ext.extActive, @"setExtActive: must be ignored once the effect is added to the document");
 }
 
+/*! @abstract Verifies a nonzero load index is stored and appended to the key even when individuation is off. */
 - (void)testExtLoadWithIndexStoresIndexAndAppendsItWithoutIndividuation
 {
 	FxGripExtInitObservingExtension *ext = [FxGripExtInitObservingExtension.alloc init];
@@ -173,6 +185,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(ext.extKey, [keyBeforeLoad stringByAppendingString:@"7"]);
 }
 
+/*! @abstract Verifies load index zero stores the index but leaves the key as the bare class name by default. */
 - (void)testExtLoadWithIndexZeroKeepsBareClassNameByDefault
 {
 	FxGripExtInitObservingExtension *ext = [FxGripExtInitObservingExtension.alloc init];
@@ -183,6 +196,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(ext.extKey, NSStringFromClass(FxGripExtInitObservingExtension.class));
 }
 
+/*! @abstract Verifies load index one appends "1" to the key. */
 - (void)testExtLoadWithIndexOneAppendsIndexToKey
 {
 	FxGripExtInitObservingExtension *ext = [FxGripExtInitObservingExtension.alloc init];
@@ -193,6 +207,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(ext.extKey, [NSStringFromClass(FxGripExtInitObservingExtension.class) stringByAppendingString:@"1"]);
 }
 
+/*! @abstract Verifies load index two appends "2" to the key. */
 - (void)testExtLoadWithIndexTwoAppendsIndexToKey
 {
 	FxGripExtInitObservingExtension *ext = [FxGripExtInitObservingExtension.alloc init];
@@ -203,6 +218,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(ext.extKey, [NSStringFromClass(FxGripExtInitObservingExtension.class) stringByAppendingString:@"2"]);
 }
 
+/*! @abstract Verifies an individuating extension appends the index even at index zero. */
 - (void)testIndividuatingExtensionAppendsZeroIndexToKey
 {
 	FxGripExtIndividuatingExtension *ext = [FxGripExtIndividuatingExtension.alloc init];
@@ -214,6 +230,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(ext.extKey, [NSStringFromClass(FxGripExtIndividuatingExtension.class) stringByAppendingString:@"0"]);
 }
 
+/*! @abstract Verifies an individuating extension appends a nonzero index a single time. */
 - (void)testIndividuatingExtensionAppendsNonzeroIndexOnce
 {
 	FxGripExtIndividuatingExtension *ext = [FxGripExtIndividuatingExtension.alloc init];
@@ -224,18 +241,21 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(ext.extKey, [NSStringFromClass(FxGripExtIndividuatingExtension.class) stringByAppendingString:@"1"]);
 }
 
+/*! @abstract Verifies extIndividuate defaults to NO on the base class and on a plain subclass. */
 - (void)testExtIndividuateDefaultsToNo
 {
 	XCTAssertFalse([FxGripExtensionBase.alloc init].extIndividuate);
 	XCTAssertFalse([FxGripExtSilentExtension.alloc init].extIndividuate);
 }
 
+/*! @abstract Verifies extLoadWithIndex: returns the extIncludeWhenDisabled value. */
 - (void)testExtLoadWithIndexReturnValueMatchesIncludeWhenDisabled
 {
 	FxGripExtensionBase *ext = [FxGripExtensionBase.alloc init];
 	XCTAssertEqual([ext extLoadWithIndex:3], ext.extIncludeWhenDisabled);
 }
 
+/*! @abstract Verifies extLoadWithEffect:index: at index zero keeps the bare key and stores the effect. */
 - (void)testExtLoadWithEffectIndexZeroKeepsBareKeyAndSetsEffect
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];
@@ -249,6 +269,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects((id)ext.effect, effect);
 }
 
+/*! @abstract Verifies extLoadWithEffect:index: at a nonzero index appends the index and stores the effect. */
 - (void)testExtLoadWithEffectNonzeroIndexAppendsIndexAndSetsEffect
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];
@@ -262,6 +283,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects((id)ext.effect, effect);
 }
 
+/*! @abstract Verifies two instances of one class load at distinct keys so neither overwrites the other in the extension dictionary. */
 - (void)testTwoInstancesOfOneClassLoadAtDistinctKeys
 {
 	FxGripExtInitObservingExtension *first = [FxGripExtInitObservingExtension.alloc init];
@@ -281,6 +303,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(extensions[second.extKey], second);
 }
 
+/*! @abstract Verifies extLoadWithEffect: registers an observer for extInit: so the posted init notification reaches the extension. */
 - (void)testExtLoadWithEffectRegistersObserverForImplementedSelector
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];
@@ -294,6 +317,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertTrue(ext.didReceiveInit);
 }
 
+/*! @abstract Verifies an inactive extension registers no observers, so the posted init notification does not reach it. */
 - (void)testExtLoadWithEffectRegistersNoObserverWhenInactive
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];
@@ -308,6 +332,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertFalse(ext.didReceiveInit, @"an inactive extension registers no observers");
 }
 
+/*! @abstract Verifies loading an extension that implements no ext* selectors registers nothing and posting does not throw. */
 - (void)testExtLoadWithEffectForExtensionWithoutSelectorsDoesNotCrash
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];
@@ -319,6 +344,7 @@ static NSNotificationCenter *FxGripExtTestMakePriorityCenter(void)
 	XCTAssertNoThrow([effect.notifier postNotificationName:FxGripTileableEffectInitName object:effect userInfo:nil]);
 }
 
+/*! @abstract Verifies extLoadWithEffect: stores the effect on the extension. */
 - (void)testExtLoadWithEffectSetsEffect
 {
 	FxGripExtTestStubEffect *effect = [FxGripExtTestStubEffect.alloc init];

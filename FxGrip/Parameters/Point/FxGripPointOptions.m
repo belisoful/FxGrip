@@ -1,13 +1,32 @@
-//
-//  FxGripPointOptions.m
-//  FxGrip
-//
+/*!
+	@file       FxGripPointOptions.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPointOptions
+	@abstract   Implements the parsed design-time options of a point parameter.
+	@discussion Introduced in FxGrip 0.1.0. The initializer reads each configuration key once,
+	            coercing the value to the expected type and applying the documented default when
+	            the key is absent or wrong-typed. The constraint and divider are clamped to their
+	            valid enum cases.
+*/
 
 #import "FxGripPointOptions.h"
 #import "FxGripTypes.h"
 
+/*!
+	@abstract	The parsed design-time options of a point parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The value object answers the on-screen control's
+				range, mapping, appearance, and constraint from the declaration.
+*/
 @implementation FxGripPointOptions
 
+/*!
+	@method		initWithConfiguration:
+	@abstract	Reads a point parameter's declared configuration into typed properties.
+	@param		configuration	The declared configuration dictionary, or nil.
+	@discussion	Introduced in FxGrip 0.1.0. A nil or non-dictionary configuration yields all
+				defaults. Mouse speed falls back to the default when it is not positive. */
 - (nonnull instancetype)initWithConfiguration:(nullable NSDictionary *)configuration
 {
 	self = [super init];

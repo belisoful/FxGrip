@@ -1,9 +1,16 @@
-//
-//  NSCoder+AtIndex.h
-//  XPC Service
-//
-//  Created by ~ ~ on 3/19/24.
-//
+/*!
+	@file       FxTileImage+FxGrip.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxTileImage+FxGrip
+	@abstract   Implements the FxImageTile device, format, coordinate, and compositing helpers.
+	@discussion Introduced in FxGrip 0.1.0. The free functions transform a rectangle's four
+	            corners and take their bounding box, so a rotated transform still yields a
+	            covering rectangle. The compositing path reads the tile texture as a CIImage,
+	            source-over composites the overlay through a CIContext, and scales the result back
+	            onto the output texture with an MPS bilinear encoder.
+*/
 
 #import "FxTileImage+FxGrip.h"
 #import "FxGripRect.h"
@@ -17,6 +24,7 @@
 #import <BEFoundation/CIImage+BExtension.h>
 #import "FxGrip_ARC.h"
 
+/*! @abstract The bounding image-space rectangle of pixelBounds under inverseTransform; CGRectZero when it is nil. */
 CGRect FxGripImageRectForPixelBounds(FxRect pixelBounds, FxMatrix44 *inverseTransform)
 {
 	if (inverseTransform == nil) {
@@ -30,6 +38,7 @@ CGRect FxGripImageRectForPixelBounds(FxRect pixelBounds, FxMatrix44 *inverseTran
 	return FxGripCGRectBoundingPoints(corners, 4);
 }
 
+/*! @abstract The pixel bounds covering imageRect under transform, rounded outward; the empty rectangle when it is nil. */
 FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *transform)
 {
 	if (transform == nil) {
@@ -43,8 +52,19 @@ FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *transform)
 	return FxGripRectFromCGRect(FxGripCGRectBoundingPoints(corners, 4));
 }
 
+/*!
+	@abstract	Resolves the tile's Metal device and pixel format, and converts tile coordinates.
+	@discussion	Introduced in FxGrip 0.1.0. The device lookup caches the resolved device on the
+				tile as an associated object.
+*/
 @implementation FxImageTile (FxGrip)
 
+/*!
+	@method		device
+	@abstract	The MTLDevice for the tile's device registry ID.
+	@discussion	Introduced in FxGrip 0.1.0. A device cached on the tile is reused when its
+				registry ID still matches. Otherwise the matching device is found among all Metal
+				devices and cached. */
 - (id<MTLDevice>)device
 {
 	void *deviceKey = @selector(device);
@@ -80,6 +100,7 @@ FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *transform)
 	return self.ioSurface.pixelFormat;
 }
 
+/*! @abstract The IOSurface pixel format mapped to a MTLPixelFormat; zero and a log for an unexpected format. */
 - (MTLPixelFormat)metalPixelFormat
 {
 	MTLPixelFormat  result = 0;
@@ -152,8 +173,22 @@ FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *transform)
 @end
 
 
+/*!
+	@abstract	Composites a Core Image overlay or rasterized text onto the tile's output texture.
+	@discussion	Introduced in FxGrip 0.1.0. Compositing reads the output texture, source-over
+				combines the overlay, and writes the result back.
+*/
 @implementation FxImageTile (FxGripText)
 
+/*!
+	@method		fxg_compositeCIImage:opacity:error:
+	@abstract	Source-over composites a Core Image overlay onto the tile's output texture.
+	@discussion	Introduced in FxGrip 0.1.0. The overlay's alpha is scaled by opacity. The
+				combined image renders through a CIContext to a CGImage, loads as a texture, and
+				an MPS bilinear encoder writes it back to the output texture. The command buffer
+				waits so the source texture outlives the GPU work. Returns NO and sets outError
+				when the tile has no device or texture, or the composite produces no image; a nil
+				overlay returns YES. */
 - (BOOL)fxg_compositeCIImage:(CIImage *)overlay
 					 opacity:(CGFloat)opacity
 					   error:(NSError *_Nullable *_Nullable)outError
@@ -213,6 +248,12 @@ FxRect FxGripPixelBoundsForImageRect(CGRect imageRect, FxMatrix44 *transform)
 	return YES;
 }
 
+/*!
+	@method		fxg_drawText:attributes:atPixelPoint:error:
+	@abstract	Rasterizes text and composites it onto the tile at the pixel point.
+	@discussion	Introduced in FxGrip 0.1.0. The text rasterizes opaque with no padding, translates
+				to the placement, and composites at full opacity. Returns NO and sets outError
+				when rasterization or compositing fails. */
 - (BOOL)fxg_drawText:(NSString *)text
 		 attributes:(NSDictionary<NSAttributedStringKey, id> *)attributes
 	   atPixelPoint:(CGPoint)pixelPoint

@@ -1,7 +1,12 @@
-//
-//  SCNLight+FxGripTests.m
-//  FxGripTests
-//
+/*!
+	@file       SCNLight+FxGripTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     SCNLight+FxGripTests
+	@abstract   Tests for the SCNLight+FxGrip category that maps an FxLight to an SCNLight and node.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover light-type mapping, intensity scaling to lumens, color and shadow passthrough, spot cone-angle conversion to degrees, node positioning, and directional aiming of local -z along the light direction.
+*/
 
 #import <XCTest/XCTest.h>
 #import <SceneKit/SceneKit.h>
@@ -24,6 +29,7 @@ static FxLight MakeLight(FxLightType type)
 	return light;
 }
 
+/*! @abstract Each FxLightType maps to its corresponding SCNLight type. */
 - (void)testTypeMapping
 {
 	XCTAssertEqualObjects([SCNLight fxg_lightFromFxLight:MakeLight(kFxLightType_Ambient)].type, SCNLightTypeAmbient);
@@ -32,6 +38,7 @@ static FxLight MakeLight(FxLightType type)
 	XCTAssertEqualObjects([SCNLight fxg_lightFromFxLight:MakeLight(kFxLightType_Spot)].type, SCNLightTypeSpot);
 }
 
+/*! @abstract The FxLight intensity scales to SCNLight lumens, with 0.5 mapping to 500. */
 - (void)testIntensityScalesToLumens
 {
 	FxLight light = MakeLight(kFxLightType_Point);
@@ -39,6 +46,7 @@ static FxLight MakeLight(FxLightType type)
 	XCTAssertEqualWithAccuracy([SCNLight fxg_lightFromFxLight:light].intensity, 500.0, 1e-3);
 }
 
+/*! @abstract The FxLight color passes through to the SCNLight color. */
 - (void)testColorPassesThrough
 {
 	FxLight light = MakeLight(kFxLightType_Point);
@@ -46,6 +54,7 @@ static FxLight MakeLight(FxLightType type)
 	XCTAssertEqualObjects([SCNLight fxg_lightFromFxLight:light].color, NSColor.redColor);
 }
 
+/*! @abstract An FxLight that casts shadows produces an SCNLight that casts a shadow. */
 - (void)testCastsShadow
 {
 	FxLight light = MakeLight(kFxLightType_Spot);
@@ -53,6 +62,7 @@ static FxLight MakeLight(FxLightType type)
 	XCTAssertTrue([SCNLight fxg_lightFromFxLight:light].castsShadow);
 }
 
+/*! @abstract Spot cutoff and penumbra angles in radians convert to the SCNLight outer and inner angles in degrees. */
 - (void)testSpotConeAnglesConvertToDegrees
 {
 	FxLight light = MakeLight(kFxLightType_Spot);
@@ -63,6 +73,7 @@ static FxLight MakeLight(FxLightType type)
 	XCTAssertEqualWithAccuracy(scnLight.spotInnerAngle, 30.0, 1e-3);
 }
 
+/*! @abstract +fxg_lightNodeFromFxLight: returns a node carrying the light at the FxLight position. */
 - (void)testNodeCarriesLightAtPosition
 {
 	FxLight light = MakeLight(kFxLightType_Point);
@@ -75,6 +86,7 @@ static FxLight MakeLight(FxLightType type)
 	XCTAssertEqualWithAccuracy(node.simdPosition.z, 4.0f, 1e-5);
 }
 
+/*! @abstract A directional light node orients so that local -z points along the FxLight direction. */
 - (void)testDirectionalNodeAimsLocalMinusZAlongDirection
 {
 	FxLight light = MakeLight(kFxLightType_Directional);

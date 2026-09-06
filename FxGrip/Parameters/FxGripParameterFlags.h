@@ -1,15 +1,30 @@
-//
-//  FxGripParameterFlags.h
-//  FxGrip 
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterFlags.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterFlags
+	@abstract   The parameter-flags bit layout, masks, accessors, and configuration key strings.
+	@discussion Introduced in FxGrip 0.1.0. FxGripParameterFlags is a union that overlays a named
+	            bitfield on the FxParameterFlags integer, so a caller reads a bit by name or the
+	            whole value at once. Apple owns the high bits (the APP mask); FxGrip claims the
+	            gap bits for its own preset, cache, saving, and debug flags. The flagXxx(x)
+	            accessors test a bit, and the FxParameterAddFlag / FxParameterRemoveFlag /
+	            FxParameterSetFlagOn macros toggle a bit and mark the cache. The
+	            kParameterFlagString_* constants name each flag in a parameter declaration.
+*/
 
 #ifndef FxGripParameterFlags_h
 #define FxGripParameterFlags_h
 
 #import <FxPlug/FxPlugSDK.h>
 
+/*!
+	@typedef	FxGripParameterFlags
+	@abstract	A named-bitfield overlay on the FxParameterFlags integer.
+	@discussion	Introduced in FxGrip 0.1.0. The struct names each flag bit; the flags member
+				aliases the same storage as one FxParameterFlags value.
+*/
 typedef union FxGripParameterFlags {
 	struct {
 		unsigned int notAnimatable:1;		//	bit 0
@@ -56,7 +71,9 @@ typedef union FxGripParameterFlags {
 
 } FxGripParameterFlags;
 
+/*! Casts an FxParameterFlags value to the named-bitfield union. */
 #define gfxFlags(flags) ((FxGripParameterFlags)flags)
+/*! Casts the named-bitfield union back to an FxParameterFlags value. */
 #define fxFlags(flags) ((FxParameterFlags)flags)
 
 

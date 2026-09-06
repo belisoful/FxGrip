@@ -1,10 +1,12 @@
-//
-//  FxGripGroupParameter.m
-//  PlugIn
-//
-//  Created by Apple on 2/12/20.
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripGroupParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripGroupParameter
+	@abstract   Implements the parameter model for a host parameter group.
+	@discussion Introduced in FxGrip 0.1.0. The class registers a parameter subgroup through the parameter-creation API and holds its child parameters. Group registration opens the subgroup, posts a notification for the configuration's owner to add the children, and closes the subgroup.
+*/
 
 #import "FxGripGroupParameter.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -14,6 +16,10 @@
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	The parameter model for a host parameter group.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers a parameter subgroup and holds its child parameters for enumeration and indexed access.
+*/
 @implementation FxGripGroupParameter
 
 + (nullable NSString*)parameterTypeString
@@ -26,6 +32,13 @@
 	return FxParameterType_Group;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Registers the parameter group and its children with the effect's host.
+	@param		parameter	The parameter configuration dictionary.
+	@param		effect		The host that receives the parameter.
+	@return		YES when the host opens the group, adds every child, and closes the group.
+	@discussion	Introduced in FxGrip 0.1.0. The method posts FxGripTileableEffectAddGroupParametersName for the configuration's owner to register the children. The subgroup closes even when a child fails, so the parameter tree stays balanced. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	BOOL success = [effect.apiManager.paramCreateAPIv5
@@ -53,6 +66,12 @@
 	return success;
 }
 
+/*!
+	@method		initWithDictionary:effect:
+	@abstract	Initializes the group and its empty child array.
+	@param		dictionary	The parameter configuration dictionary.
+	@param		effect		The host that owns the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The children are added later through the host registration API. */
 - (instancetype)initWithDictionary:(NSDictionary*)dictionary effect:(nonnull id<FxGripEffectHost>)effect;
 {
 	self = [super initWithDictionary:dictionary effect:effect];
@@ -113,10 +132,15 @@
 #pragma mark FxGripSubParameters
 
 
+/*!
+	@method		addChildParameter:
+	@abstract	Adds a parameter to the group's children.
+	@param		parameter	The parameter to add.
+	@return		YES when the parameter is added; NO when it is already a child. */
 - (BOOL)addChildParameter:(id<FxGripParameter> _Nonnull)parameter
 {
 	BOOL isChild = [_children containsObject:parameter];
-	
+
 	if (isChild) {
 		return NO;
 	}
@@ -124,10 +148,15 @@
 	return YES;
 }
 
+/*!
+	@method		removeChildParameter:
+	@abstract	Removes a parameter from the group's children.
+	@param		parameter	The parameter to remove.
+	@return		YES when the parameter is removed; NO when it is not a child. */
 - (BOOL)removeChildParameter:(id<FxGripParameter> _Nonnull)parameter
 {
 	BOOL isChild = [_children containsObject:parameter];
-	
+
 	if (!isChild) {
 		return NO;
 	}
@@ -159,6 +188,7 @@
 }
 
 
+/*! @abstract Counts the direct children plus the children of every nested group, recursively. */
 - (NSUInteger)allCount
 {
 	NSUInteger count = self.count;
@@ -170,6 +200,7 @@
 	return count;
 }
 
+/*! @abstract Flattens the direct children and the children of every nested group into one array, recursively. */
 - (nonnull NSArray<id<FxGripParameter>>*)allChildren
 {
 	NSArray<id<FxGripParameter>>* children = self.children;

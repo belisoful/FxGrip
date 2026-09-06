@@ -1,7 +1,16 @@
-//
-//  FxGripInferenceRequest.h
-//  FxGrip
-//
+/*!
+	@file       FxGripInferenceRequest.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInferenceRequest
+	@abstract   The immutable input value for one inference run.
+	@discussion Introduced in FxGrip 0.1.0. A request holds the model's named inputs and a separate
+	            bag of scalar parameters. Inputs are the tensors or media a backend consumes, keyed
+	            by the model's input names. Parameters are the scalar controls a backend reads, such
+	            as seed and strength. The split lets one type describe an image pass and a text pass.
+	            The value is immutable, so a change builds a new request.
+*/
 
 #ifndef FxGripInferenceRequest_h
 #define FxGripInferenceRequest_h
@@ -13,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripInferenceRequest
 	@abstract   The immutable input to one inference run: named inputs plus parameters.
-	@discussion Introduced in FxGrip 1.0. A request carries the model's named inputs and a
+	@discussion Introduced in FxGrip 0.1.0. A request carries the model's named inputs and a
 				separate bag of parameters, keeping the two roles distinct:
 
 				- inputs are the tensors or media a backend consumes, keyed by the model's
@@ -37,11 +46,14 @@ NS_ASSUME_NONNULL_BEGIN
 /*! The scalar controls a backend reads. */
 @property (nonatomic, readonly, copy) NSDictionary<NSString *, id> *parameters;
 
+/*! Creates a request with the given inputs and parameters. A nil parameters value becomes empty. */
 + (instancetype)requestWithInputs:(NSDictionary<NSString *, id> *)inputs
 					   parameters:(nullable NSDictionary<NSString *, id> *)parameters;
 
+/*! Creates a request with the given inputs and no parameters. */
 + (instancetype)requestWithInputs:(NSDictionary<NSString *, id> *)inputs;
 
+/*! The designated initializer. A nil inputs or parameters value becomes an empty dictionary. */
 - (instancetype)initWithInputs:(NSDictionary<NSString *, id> *)inputs
 					parameters:(nullable NSDictionary<NSString *, id> *)parameters NS_DESIGNATED_INITIALIZER;
 

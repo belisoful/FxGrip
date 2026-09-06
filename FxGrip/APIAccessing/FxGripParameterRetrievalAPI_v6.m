@@ -1,9 +1,15 @@
-//
-//  FxGripParameterCreationAPI_v5.m
-//  XPC Service
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterRetrievalAPI_v6.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterRetrievalAPI_v6
+	@abstract   Implements the parameter retrieval wrapper over the host FxParameterRetrievalAPI_v6.
+	@discussion Introduced in FxGrip 0.1.0. Typed reads check for a Custom parameter first and
+	            route to the value's FxGripMutableParameter accessor when it responds, otherwise
+	            they forward to the host API. String and flag reads post FxGrip notifications so
+	            observers can supply or amend the returned value.
+*/
 
 #import "FxGripParameterFlags.h"
 #import "FxGripParameterRetrievalAPI_v6.h"
@@ -16,6 +22,12 @@
 
 #import <FxGrip_ARC.h>
 
+/*!
+	@abstract	FxGrip's wrapper around the host FxParameterRetrievalAPI_v6.
+	@discussion	Introduced in FxGrip 0.1.0. Custom parameters route through FxGripMutableParameter;
+				every other read forwards to the host API, with string and flag reads posting
+				FxGrip notifications.
+*/
 @implementation FxGripParameterRetrievalAPI_v6
 
 //---------------------------------------------------------
@@ -48,6 +60,7 @@
 }
 
 
+/*! @abstract Reads a Boolean value, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getBoolValue:(nonnull BOOL *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -59,6 +72,13 @@
 	return [_api getBoolValue:value fromParameter:parameterID atTime:time];
 }
 
+/*!
+	@method		getCustomParameterValue:fromParameter:atTime:
+	@abstract	Reads a custom parameter value and attaches the effect to it.
+	@discussion	Introduced in FxGrip 0.1.0. When the returned value conforms to FxGripCustomViewData,
+				the wrapper sets its parameterEffect so the value can reach the effect.
+	@return		YES when the host returns a value.
+*/
 - (BOOL)getCustomParameterValue:(NSObject<NSSecureCoding,NSCopying> * _Nullable * _Nonnull)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	BOOL success = [_api getCustomParameterValue:value fromParameter:parameterID atTime:time];
@@ -72,6 +92,7 @@
 	return success;
 }
 
+/*! @abstract Reads a floating-point value, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getFloatValue:(nonnull double *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -83,6 +104,7 @@
 	return [_api getFloatValue:value fromParameter:parameterID atTime:time];
 }
 
+/*! @abstract Reads a font name, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getFontName:(NSString * _Nullable * _Nonnull)fontName fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -94,6 +116,7 @@
 	return [_api getFontName:fontName fromParameter:parameterID atTime:time];
 }
 
+/*! @abstract Reads gradient samples, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getGradientSamples:(nonnull void *)samples numSamples:(NSUInteger)numSamples depth:(FxDepth)sampleDepth fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -105,6 +128,7 @@
 	return [_api getGradientSamples:samples numSamples:numSamples depth:sampleDepth fromParameter:parameterID atTime:time];
 }
 
+/*! @abstract Reads histogram controls, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getHistogramBlackIn:(nonnull double *)blackIn BlackOut:(nonnull double *)blackOut WhiteIn:(nonnull double *)whiteIn WhiteOut:(nonnull double *)whiteOut Gamma:(nonnull double *)gamma forChannel:(FxHistogramChannel)channel fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -128,6 +152,7 @@
 							  atTime:time];
 }
 
+/*! @abstract Reads an integer value, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getIntValue:(nonnull int *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -139,6 +164,14 @@
 	return [_api getIntValue:value fromParameter:parameterID atTime:time];
 }
 
+/*!
+	@method		getParameterFlags:fromParameter:
+	@abstract	Reads a parameter's flags, letting observers override or amend the host value.
+	@discussion	Introduced in FxGrip 0.1.0. A pre-notification lets an observer return the flags
+				directly. Otherwise the host value seeds the payload, a second notification lets
+				observers amend it, and the amended flags are returned.
+	@return		YES when the flags resolve.
+*/
 - (BOOL)getParameterFlags:(nonnull FxParameterFlags *)flags fromParameter:(UInt32)parameterID
 {
 	NSMutableDictionary *userInfo = @{
@@ -172,6 +205,7 @@
 	return userInfo.fxError == NULL;
 }
 
+/*! @abstract Reads a path ID, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getPathID:(FxPathID  _Nullable * _Nonnull)pathID fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -183,6 +217,7 @@
 	return [_api getPathID:pathID fromParameter:parameterID atTime:time];
 }
 
+/*! @abstract Reads an RGBA color, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getRedValue:(nonnull double *)red greenValue:(nonnull double *)green blueValue:(nonnull double *)blue alphaValue:(nonnull double *)alpha fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -194,6 +229,7 @@
 	return [_api getRedValue:red greenValue:green blueValue:blue alphaValue:alpha fromParameter:parameterID atTime:time];
 }
 
+/*! @abstract Reads an RGB color, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getRedValue:(nonnull double *)red greenValue:(nonnull double *)green blueValue:(nonnull double *)blue fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -205,6 +241,14 @@
 	return [_api getRedValue:red greenValue:green blueValue:blue fromParameter:parameterID atTime:time];
 }
 
+/*!
+	@method		getStringParameterValue:fromParameter:
+	@abstract	Reads a string value, letting observers amend it through a notification.
+	@discussion	Introduced in FxGrip 0.1.0. A Custom parameter routes to the custom value's
+				accessor. Otherwise the host value is read, then the get-string notification lets
+				observers replace it before it returns.
+	@return		YES when the host returns a string.
+*/
 - (BOOL)getStringParameterValue:(NSString * _Nonnull * _Nullable)string fromParameter:(UInt32)parameterID
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
@@ -229,6 +273,7 @@
 	return success;
 }
 
+/*! @abstract Reads a 2D point, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getXValue:(nonnull double *)x YValue:(nonnull double *)y fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
 	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {

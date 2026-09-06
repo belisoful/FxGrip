@@ -1,7 +1,16 @@
-//
-//  FxGripInferenceBackend.h
-//  FxGrip
-//
+/*!
+	@file       FxGripInferenceBackend.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInferenceBackend
+	@abstract   The protocol for a swappable inference engine behind an FxGrip ML effect.
+	@discussion Introduced in FxGrip 0.1.0. The protocol is the seam between an FxGrip ML effect
+	            and the engine that runs a model. A backend turns an FxGripInferenceRequest into an
+	            FxGripInferenceResult synchronously. A backend reports readiness through isReady, and
+	            a caller checks it before a run. A plugin adopts the protocol to bring a heavier
+	            runtime without FxGrip linking it.
+*/
 
 #ifndef FxGripInferenceBackend_h
 #define FxGripInferenceBackend_h
@@ -15,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@protocol   FxGripInferenceBackend
 	@abstract   A swappable inference engine that turns a request into a result.
-	@discussion Introduced in FxGrip 1.0. The backend is the seam between an FxGrip ML effect
+	@discussion Introduced in FxGrip 0.1.0. The backend is the seam between an FxGrip ML effect
 				and whatever runs the model. FxGrip ships engines that depend only on Apple
 				frameworks (a Core ML runner, a remote OpenAI-compatible client, and a
 				passthrough mock); a plugin adopts this protocol to bring a heavier runtime

@@ -1,7 +1,17 @@
-//
-//  FxGripPresetsAPI_v1.h
-//  FxGrip
-//
+/*!
+	@file       FxGripPresetsAPI_v1.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPresetsAPI_v1
+	@abstract   The preset file and discovery API in the style of Apple's FxPlug APIs.
+	@discussion Introduced in FxGrip 0.1.0. The API captures the effect's parameters as a preset,
+	            applies presets through the tag API core, browses the merged plugin and user
+	            listings, and watches the managed user folder. FxGrip owns this API; no host vends
+	            it. Preset application funnels into the tag API's
+	            applyPreset:atTime:options:presetFlags:source:tag:, which owns the tag boundary and
+	            section ordering.
+*/
 
 #ifndef FxGripPresetsAPI_v1_h
 #define FxGripPresetsAPI_v1_h
@@ -12,6 +22,8 @@
 
 @class BEPathWatcher;
 
+/*! @enum FxGripParameterPresetFlagOptions
+	Flags that relax preset application: compatibility, the tag boundary, and meta data. */
 typedef enum FxGripParameterPresetFlagOptions {
 	kFxParameterPreset_Default				= (0 << 0),
 
@@ -29,7 +41,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 /*!
 	@protocol   FxGripPresetsAPI_v1
 	@abstract   The preset file and discovery layer, in the style of Apple's FxPlug APIs.
-	@discussion Introduced in FxGrip 1.0. FxGrip's own API; no host vends it. Captures and applies
+	@discussion Introduced in FxGrip 0.1.0. FxGrip's own API; no host vends it. Captures and applies
 				presets, browses the merged plugin and user listings, and watches the managed user
 				folder. FxGripPresetsAPI_v1 is the implementation.
 */
@@ -59,10 +71,14 @@ typedef enum FxGripParameterPresetFlagOptions {
 @end
 
 
+/*! The remap sub-key naming a color-space value mapping. */
 #define kFxPresetProperty_ColorSpace	@"colorSpace"
+/*! The key-map entry holding per-key value remappings. */
 #define kFxPresetProperty_RemapValues	@"remapValues"
+/*! The key-map entry holding the preset file extension. */
 #define kFxPresetProperty_Extension		@"extension"
 
+/*! FxFactory's color-space code for sRGB color. */
 #define kFxFactorPresetColorSpace_sRGB_Color 1
 
 /*! The canonical system-key → FxFactory-file-key mapping, with the value-remap and
@@ -83,7 +99,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 /*!
 	@interface  FxGripPresetsAPI_v1
 	@abstract   The preset file and discovery layer.
-	@discussion Introduced in FxGrip 1.0. FxGrip implements this API itself; no host
+	@discussion Introduced in FxGrip 0.1.0. FxGrip implements this API itself; no host
 				vends it, so the wrapper is constructed without a host API. Preset
 				application funnels into the tag API core
 				(applyPreset:atTime:options:presetFlags:source:tag:), which owns the tag
@@ -110,7 +126,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 /*!
 	@method     generatePreset:fromLabel:
 	@abstract   Captures the effect's current parameter state as a preset.
-	@discussion Introduced in FxGrip 1.0. Captures every runtime parameter's value at
+	@discussion Introduced in FxGrip 0.1.0. Captures every runtime parameter's value at
 				time zero, plus its tags and meta. Parameters flagged PRESETNOTAGS or
 				PRESETNOMETA opt out of the tags and meta capture. The plugin identity
 				fields are filled from the effect.
@@ -120,7 +136,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 /*!
 	@method     setPreset:options:atTime:
 	@abstract   Applies a preset through the tag API core.
-	@discussion Introduced in FxGrip 1.0. Verifies compatibility unless
+	@discussion Introduced in FxGrip 0.1.0. Verifies compatibility unless
 				kFxParameterPreset_IgnoreCompatibility, then applies the preset's
 				values, tags, and meta sections (meta withheld under
 				kFxParameterPreset_IgnoreMetaData) with FxGripPresetSourceFile and the
@@ -134,7 +150,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 /*!
 	@method     savePreset:remap:
 	@abstract   Saves a preset to a user-chosen file through the save panel.
-	@discussion Introduced in FxGrip 1.0. The panel starts in the managed user preset
+	@discussion Introduced in FxGrip 0.1.0. The panel starts in the managed user preset
 				folder (created on demand). `keyMap` maps system keys to file keys;
 				presetDictionary already writes the FxFactory file keys, so
 				kFxFactoryPresetKeyMap and nil are equivalent.
@@ -158,7 +174,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 	@method     userPresetURL
 	@abstract   The managed user preset folder:
 				`~/Library/Application Support/<company>/<plugin name>`.
-	@discussion Introduced in FxGrip 1.0. `<company>` is the plugin group's display name
+	@discussion Introduced in FxGrip 0.1.0. `<company>` is the plugin group's display name
 				and `<plugin name>` the plugin's display name; both are version
 				agnostic, so presets survive plugin updates. The folder is not created
 				by this accessor.
@@ -181,7 +197,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 /*!
 	@method     observeTag:observer:
 	@abstract   Watches the managed per-tag user preset folder.
-	@discussion Introduced in FxGrip 1.0. The handler runs on each change to the folder.
+	@discussion Introduced in FxGrip 0.1.0. The handler runs on each change to the folder.
 				The caller keeps the returned watcher alive; deallocating it ends the
 				watch. Returns nil when the folder does not exist.
 */
@@ -190,7 +206,7 @@ typedef enum FxGripParameterPresetFlagOptions {
 /*!
 	@method     compatiblePreset:
 	@abstract   Answers whether a preset's plugin identity matches this effect.
-	@discussion Introduced in FxGrip 1.0. The preset's plugin UUID must equal the
+	@discussion Introduced in FxGrip 0.1.0. The preset's plugin UUID must equal the
 				effect's, or appear in the plugin's `supportedPlugins` alternatives.
 */
 - (BOOL)compatiblePreset:(FxGripPreset*_Nullable)preset;

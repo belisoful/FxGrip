@@ -1,12 +1,12 @@
-//
-//  FxGripI18NTests.m
-//  FxGripTests
-//
-//  Unit tests for the internationalization pipeline: the notification round-trip
-//  the parameter API wrappers perform around the host API, the FxGripI18N
-//  handlers that mutate the nested parameter dictionary, the plist-driven
-//  delocalization gating, and the API manager accessor on the init userInfo.
-//
+/*!
+	@file       FxGripI18NTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripI18NTests
+	@abstract   Unit tests for the FxGrip internationalization pipeline.
+	@discussion Introduced in FxGrip 0.1.0. The tests drive the notification round-trip the parameter API wrappers perform around the host API, confirming an observer can rewrite the nested parameter name, menu entries, and string value the wrapper returns or forwards. They cover the FxGripI18N handlers that mutate the nested parameter dictionary, the plist-driven delocalization gating and its cascade, the localize and delocalize round trip through a fixture table, and the API manager accessor on the init userInfo.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
@@ -303,6 +303,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 
 #pragma mark Wrapper Mutation Round-Trips
 
+/*! @abstract The v3 get-name wrapper returns the name an observer rewrote into the mutable nested parameter dictionary. */
 - (void)testDynamicAPIv3GetNameReturnsTheNameTheObserverRewrote
 {
 	self.dynamicStub.hostName = @"HostName";
@@ -322,6 +323,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(name, @"Delocalized");
 }
 
+/*! @abstract The v3 get-name wrapper returns the host name when no observer rewrites it. */
 - (void)testDynamicAPIv3GetNameWithoutObserversReturnsTheHostName
 {
 	self.dynamicStub.hostName = @"HostName";
@@ -333,6 +335,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(name, @"HostName", @"the readback reads the thin payload directly");
 }
 
+/*! @abstract The v3 set-name wrapper forwards to the host the name an observer rewrote in the pre-notification. */
 - (void)testDynamicAPIv3SetNameForwardsTheNameTheObserverRewrote
 {
 	__block BOOL nestedWasMutable = NO;
@@ -351,6 +354,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.dynamicStub.receivedName, @"Localized");
 }
 
+/*! @abstract The parameter-info entries wrapper returns the menu entries an observer mapped, since it asks no host API. */
 - (void)testDynamicAPIv4EntriesReturnTheEntriesTheObserverMapped
 {
 	// parameter:entries: asks no host API: the entries come from the observers alone, so
@@ -375,6 +379,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(entries, (@[@"One-loc", @"Two-loc"]));
 }
 
+/*! @abstract The v6 string-value wrapper returns the value an observer rewrote into the mutable nested parameter dictionary. */
 - (void)testRetrievalAPIv6StringValueReturnsTheValueTheObserverRewrote
 {
 	self.retrievalStub.hostString = @"HostValue";
@@ -397,6 +402,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 
 #pragma mark Delocalization Gating
 
+/*! @abstract A freshly initialized extension enables every localization and delocalization flag. */
 - (void)testInitEnablesEveryLocalizationAndDelocalizationFlag
 {
 	FxGripI18N *extension = [FxGripI18N.alloc init];
@@ -409,6 +415,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertTrue(extension.isDelocalizingMenus);
 }
 
+/*! @abstract Loading with delocalize-names disabled cascades to disable delocalizing values and menus while leaving the localization flags on. */
 - (void)testLoadWithDelocalizeNamesDisabledCascadesToValuesAndMenus
 {
 	FxGripI18N *extension = [self loadedI18NWithProperties:@{kProPlugPlugInX_DelocalizeNamesProperty: @NO}];
@@ -419,6 +426,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertTrue(extension.isLocalizingNames, @"the localization flags are independent of the plist gating");
 }
 
+/*! @abstract Loading with delocalize-values re-enabled cascades to delocalizing menus while names stays disabled. */
 - (void)testLoadWithDelocalizeValuesEnabledCascadesToMenusOnly
 {
 	FxGripI18N *extension = [self loadedI18NWithProperties:@{
@@ -433,6 +441,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 
 #pragma mark Handlers
 
+/*! @abstract The set-name pre-handler writes the localized name at the nested parameter level and leaves the outer userInfo untouched. */
 - (void)testSetNamePreHandlerWritesTheNestedParameterAndLeavesTheOuterUserInfo
 {
 	[self loadedI18NWithProperties:@{}];
@@ -453,6 +462,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertNil(userInfo[kFxParameterProperty_Name]);
 }
 
+/*! @abstract The set-name pre-handler writes nothing when the nested name is missing or not a string. */
 - (void)testSetNamePreHandlerIgnoresAMissingOrNonStringName
 {
 	[self loadedI18NWithProperties:@{}];
@@ -474,6 +484,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(numeric[kFxParameterProperty_Name], @42);
 }
 
+/*! @abstract The set-menu pre-handler maps the nested menu-items array in place. */
 - (void)testSetMenuPreHandlerMapsTheNestedMenuItemsArray
 {
 	[self loadedI18NWithProperties:@{}];
@@ -496,6 +507,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(entries, (@[@"FxGripI18NTestAlpha", @"FxGripI18NTestBeta"]));
 }
 
+/*! @abstract The set-menu pre-handler writes nothing when the nested menu items are not an array. */
 - (void)testSetMenuPreHandlerIgnoresNonArrayMenuItems
 {
 	[self loadedI18NWithProperties:@{}];
@@ -510,6 +522,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(parameter[kFxParameterProperty_MenuItems], @"nope");
 }
 
+/*! @abstract delocalize: passes through a string absent from the table and returns nil for nil. */
 - (void)testDelocalizePassesThroughStringsAbsentFromTheTable
 {
 	FxGripI18N *extension = [FxGripI18N.alloc init];
@@ -518,6 +531,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertNil([extension delocalize:nil]);
 }
 
+/*! @abstract localize: and delocalize: round-trip through one fixture table and pass an unknown entry through unchanged. */
 - (void)testLocalizeAndDelocalizeRoundTripThroughTheSameTable
 {
 	FxGripI18NTestFixtureTable *extension = [FxGripI18NTestFixtureTable.alloc init];
@@ -533,6 +547,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 
 #pragma mark Init UserInfo Accessor
 
+/*! @abstract fxApiManager returns the API manager object carried under the init notification key. */
 - (void)testApiManagerReturnsTheObjectCarriedByTheInitNotification
 {
 	NSObject *manager = NSObject.new;
@@ -541,6 +556,7 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	XCTAssertTrue((id)[userInfo fxApiManager] == (id)manager);
 }
 
+/*! @abstract fxApiManager is nil when the userInfo carries no API manager. */
 - (void)testApiManagerIsNilWhenTheInitNotificationCarriesNoManager
 {
 	XCTAssertNil([@{} fxApiManager]);

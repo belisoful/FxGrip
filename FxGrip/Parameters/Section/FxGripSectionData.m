@@ -1,16 +1,26 @@
-//
-//  FxGripInterpolatingDictionary.m
-//  PlugIn
-//
-//  Created by Apple on 10/22/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
-//
+/*!
+	@file       FxGripSectionData.m
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSectionData
+	@abstract   Implements the dictionary-backed custom value of a section parameter.
+	@discussion Introduced in FxGrip 0.1.0. The value wraps a mutable dictionary and implements
+	            the standard custom-value typed accessors over it. The standard-key setters
+	            honor the locked flag. Secure coding stores and restores the dictionary.
+*/
 
 #import "FxGripSectionData.h"
 #import <BEFoundation/FxTime.h>
 #import <BEFoundation/BEMutable.h>
 #import "FxGripDictionary.h"
 
+/*!
+	@abstract	The mutable-dictionary custom value of a section parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The typed accessors read and write entries in the
+				backing dictionary. A locked value blocks a standard-key write to a key that is
+				not already set.
+*/
 // Locked makes the default keys for types (bool, int, float, etc) only settable if they are already set.
 //  So the keys for the automatic var->custum->var must be set in the configuration to be usable,
 //		or it must be unlocked.
@@ -175,6 +185,12 @@
 }
 
 
+/*!
+	@method		exemptKeys
+	@abstract	Returns the mutable list of keys held out of interpolation.
+	@discussion	Introduced in FxGrip 0.1.0. The list is stored under the exempt-keys key, coerced
+				to a mutable array, and always contains the exempt-keys key and the last-changed
+				key. */
 - (NSMutableArray*)exemptKeys
 {
 	NSMutableArray *exemptKeys = (NSMutableArray*)[self objectForKey:kCustomAPI_ExemptKeysKey];
@@ -205,6 +221,11 @@
 #pragma mark -
 #pragma mark Locking
 
+/*!
+	@method		isLocked
+	@abstract	Answers whether standard-key writes are restricted to already-set keys.
+	@return		YES when the value is locked; the default is YES when no lock entry is stored.
+	@discussion	Introduced in FxGrip 0.1.0. */
 // This is to lock the default API values to only those that are already set.
 //  Any API call to set a variable in FxGripMutableParameter will return
 //	NO if its not already set.
@@ -336,6 +357,13 @@
 
 // Histograms
 //bIn, bOut, wIn, wOut, & gamma for each RGBA
+/*!
+	@method		getHistogramBlackIn:blackOut:whiteIn:whiteOut:gamma:forChannel:forKey:
+	@abstract	Reads a channel's histogram levels from the value at a key.
+	@return		YES when an array is stored at the key; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The stored array holds one levels row per channel. A
+				request for the RGB channel averages the red, green, and blue rows. A missing row
+				yields the identity levels. */
 - (BOOL)getHistogramBlackIn:(double*)blackIn
 				   blackOut:(double*)blackOut
 					whiteIn:(double*)whiteIn

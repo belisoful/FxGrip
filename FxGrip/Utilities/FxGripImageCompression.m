@@ -1,7 +1,16 @@
-//
-//  FxGripImageCompression.m
-//  FxGrip
-//
+/*!
+	@file       FxGripImageCompression.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripImageCompression
+	@abstract   Implements the pixel-format descriptors, lossless codecs, and the compression envelope.
+	@discussion Introduced in FxGrip 0.1.0. The format functions validate the packed channel count
+	            and component type. The lossless codecs go through the system Compression library,
+	            returning nil when a codec does not shrink the data. The envelope prefixes a
+	            signed header that records the codec and original length, and its signature cannot
+	            begin a binary property list.
+*/
 
 #import "FxGripImageCompression.h"
 #import <ImageIO/ImageIO.h>
@@ -115,6 +124,7 @@ BOOL FxGripCompressionIsAvailable(FxGripCompression compression)
 	return [encodableIdentifiers containsObject:identifier];
 }
 
+/*! The system Compression algorithm for a lossless codec; 0 for None or a lossy codec. */
 static compression_algorithm FxGripCompressionAlgorithm(FxGripCompression compression)
 {
 	switch (compression) {
@@ -187,6 +197,7 @@ NSData *FxGripEnvelopeCompressedData(NSData *data, FxGripCompression compression
 	return envelope;
 }
 
+/*! Sets a FxGripCompressionErrorDomain error and returns nil. */
 static NSData *FxGripEnvelopeError(NSError **error, NSString *description)
 {
 	if (error) {

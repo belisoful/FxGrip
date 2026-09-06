@@ -1,7 +1,12 @@
-//
-//  FxGripSpaceEffectTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripSpaceEffectTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSpaceEffectTests
+	@abstract   Tests for FxGripSpaceEffect, the base effect that builds a per-render SceneKit scene and delegates to a space backend.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the default and replaceable backend, the whole-frame render flags, the per-render scene and camera, the scene-parameter capture seam, the apply hook, the physics-bake backend upgrade, and the scene-template round trip. Stub and hook subclasses stand in for a plugin's own space effect.
+*/
 
 #import <XCTest/XCTest.h>
 #import <SceneKit/SceneKit.h>
@@ -82,12 +87,14 @@
 	self.effect = [FxGripSpaceEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 }
 
+/*! @abstract A fresh effect's space backend and default backend both identify as "scenekit-metal". */
 - (void)testDefaultBackendIsSceneKitMetal
 {
 	XCTAssertEqualObjects(self.effect.spaceBackend.backendIdentifier, @"scenekit-metal");
 	XCTAssertEqualObjects([self.effect defaultSpaceBackend].backendIdentifier, @"scenekit-metal");
 }
 
+/*! @abstract Setting a backend replaces the default, and setting it to nil restores the "scenekit-metal" default. */
 - (void)testBackendCanBeSetAndResetToDefault
 {
 	self.effect.spaceBackend = [FxGripSpaceStubBackend.alloc init];
@@ -97,11 +104,13 @@
 	XCTAssertEqualObjects(self.effect.spaceBackend.backendIdentifier, @"scenekit-metal");
 }
 
+/*! @abstract An effect renders the source layer plane by default. */
 - (void)testRendersSourceLayerPlaneDefaultsYes
 {
 	XCTAssertTrue(self.effect.rendersSourceLayerPlane);
 }
 
+/*! @abstract An effect needs the full buffer, since it renders the whole frame. */
 - (void)testNeedsFullBufferForWholeFrameRender
 {
 	XCTAssertTrue(self.effect.needsFullBuffer);
@@ -116,6 +125,7 @@
 	return decoder;
 }
 
+/*! @abstract Each -buildSceneWithCoder: call returns its own scene and point-of-view camera node, parented to that scene's root with a camera container and lights but no source plane. */
 - (void)testBuildSceneReturnsIndependentScenesEachWithACamera
 {
 	SCNNode *pov1 = nil;
@@ -134,6 +144,7 @@
 	XCTAssertEqual(scene1.rootNode.childNodes.count, 2u);
 }
 
+/*! @abstract The update-scene apply hook fires during -buildSceneWithCoder: and receives the render point-of-view camera node. */
 - (void)testApplyHookReceivesThePointOfViewCameraNode
 {
 	FxGripSpaceApplyEffect *effect = [FxGripSpaceApplyEffect.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -145,6 +156,7 @@
 	XCTAssertEqualObjects(effect.receivedCameraNode, pov, @"the hook's camera node is the render point of view");
 }
 
+/*! @abstract -pluginCoder: calls the scene-parameters seam, whose encoded value is recoverable from the plugin state. */
 - (void)testCaptureInvokesSceneParametersSeamAndEncodesIntoState
 {
 	FxGripSpaceSeamEffect *effect = [FxGripSpaceSeamEffect.alloc initWithAPIManager:(id _Nonnull)nil];
@@ -161,6 +173,7 @@
 	XCTAssertEqual([decoder decodeIntegerForKey:@"customValue"], 42);
 }
 
+/*! @abstract The base -encodeSceneParametersIntoCoder: succeeds and reports no error without encoding anything. */
 - (void)testDefaultSceneParametersSeamIsNoOp
 {
 	NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
@@ -170,6 +183,7 @@
 	XCTAssertNil(error);
 }
 
+/*! @abstract Physics bake is off by default, so the backend is the plain "scenekit-metal" backend and not the physics subclass. */
 - (void)testPhysicsBakeDisabledByDefaultUsesPlainMetalBackend
 {
 	XCTAssertFalse(self.effect.physicsBakeEnabled);
@@ -177,12 +191,14 @@
 	XCTAssertEqualObjects(self.effect.spaceBackend.backendIdentifier, @"scenekit-metal");
 }
 
+/*! @abstract Enabling physics bake upgrades the default backend to FxGripSceneKitPhysicsBackend. */
 - (void)testEnablingPhysicsBakeUpgradesTheDefaultBackend
 {
 	self.effect.physicsBakeEnabled = YES;
 	XCTAssertTrue([self.effect.spaceBackend isKindOfClass:FxGripSceneKitPhysicsBackend.class]);
 }
 
+/*! @abstract Enabling physics bake leaves a plugin's own explicitly set backend in place. */
 - (void)testEnablingPhysicsBakeKeepsAUserSetBackend
 {
 	FxGripSpaceStubBackend *stub = [FxGripSpaceStubBackend.alloc init];
@@ -191,6 +207,7 @@
 	XCTAssertEqualObjects(self.effect.spaceBackend, stub, @"a plugin's own backend is not replaced");
 }
 
+/*! @abstract A scene template captured into plugin state is recreated in the per-render scene as an independent copy that keeps its child geometry. */
 - (void)testSceneTemplateSerializesAndRecreatesAnIndependentCopy
 {
 	FxGripSpaceTemplateEffect *effect = [FxGripSpaceTemplateEffect.alloc initWithAPIManager:(id _Nonnull)nil];

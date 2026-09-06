@@ -1,11 +1,12 @@
-//
-//  FxGripMLVideoExampleTests.m
-//  FxGripTests
-//
-//  FxGripMLVideoExampleEffect is the worked example for FxGripMLVideoEffect: a prompt, a Generate
-//  push-button, and a status and progress control that mirror the generation lifecycle. The
-//  Inference DocC article quotes the class verbatim, and these tests keep the sample honest.
-//
+/*!
+	@file       FxGripMLVideoExampleTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLVideoExampleTests
+	@abstract   Verifies the FxGripMLVideoExampleEffect worked example that the Inference DocC article quotes.
+	@discussion Introduced in FxGrip 0.1.0. The example composes a prompt, a Generate push-button, and status and progress controls that mirror the whole-clip generation lifecycle. The tests confirm the inspector declares the four controls, the Generate click runs the generation with the prompt, an unrelated click falls through to the base, the lifecycle mirrors into the status and progress controls, and a failure shows the error on the status light.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripMLVideoEffect.h>
@@ -219,6 +220,7 @@ enum : UInt32 {
 	return nil;
 }
 
+/*! @abstract The example inspector declares four controls: a prompt string, a push button, a status, and a progress. */
 - (void)testTheExampleDeclaresThePromptButtonStatusAndProgress
 {
 	NSArray *parameters = [self.effect exampleParameters];
@@ -228,6 +230,7 @@ enum : UInt32 {
 	XCTAssertEqualObjects(parameters[3][kFxParameterProperty_Type], kFxParameterType_Progress);
 }
 
+/*! @abstract Clicking Generate runs the generation to the ready state and feeds the prompt parameter to the request. */
 - (void)testTheGenerateClickRunsTheGenerationWithThePrompt
 {
 	self.effect.stubManager.paramGetAPIv6.stringValue = @"a slow sunrise";
@@ -243,12 +246,14 @@ enum : UInt32 {
 						  @"the prompt parameter fed the request");
 }
 
+/*! @abstract A click on an unrelated parameter falls through to the base and starts no generation. */
 - (void)testAnUnrelatedClickFallsThroughToTheBase
 {
 	XCTAssertNoThrow([self.effect parameterClicked:999]);
 	XCTAssertEqual(self.effect.generationState, FxGripMLVideoStateIdle);
 }
 
+/*! @abstract A successful generation writes the ready dot, the "Clip ready" label, and a progress fraction of one into the status and progress controls. */
 - (void)testTheLifecycleMirrorsIntoTheStatusAndProgressControls
 {
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:
@@ -274,6 +279,7 @@ enum : UInt32 {
 	XCTAssertEqualWithAccuracy(fraction, 1.0, 1e-12);
 }
 
+/*! @abstract A failed generation writes the error dot state into the status control. */
 - (void)testAFailureShowsTheErrorOnTheStatusLight
 {
 	self.backend.stagedResult = [FxGripInferenceResult resultWithOutputs:@{ @"text": @"no clip" }];

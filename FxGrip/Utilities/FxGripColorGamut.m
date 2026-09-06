@@ -1,7 +1,15 @@
-//
-//  FxGripColorGamut.m
-//  FxGrip
-//
+/*!
+	@file       FxGripColorGamut.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripColorGamut
+	@abstract   Implements the working-gamut matrices, sRGB transfer, and matrix coder.
+	@discussion Introduced in FxGrip 0.1.0. Each matrix derives from a gamut's primary
+	            chromaticities against a D65 white, so the luminance row agrees with the
+	            published weights. Rec.2020 supplies the wide gamut and Rec.709 supplies the
+	            default. The coder packs the nine matrix components as floats under a key.
+*/
 
 #import "FxGripColorGamut.h"
 

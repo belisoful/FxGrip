@@ -1,7 +1,16 @@
-//
-//  FxGripImageBuffer.m
-//  FxGrip
-//
+/*!
+	@file       FxGripImageBuffer.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripImageBuffer
+	@abstract   Implements the compressed image buffer, format conversion, and codec paths.
+	@discussion Introduced in FxGrip 0.1.0. Pixels compress at initialization through the lossless
+	            buffer path or the lossy image path. The lossy path splits color and alpha into
+	            separate ImageIO containers wrapped in a binary-plist envelope, so alpha never
+	            premultiplies the color. Format conversion decomposes each pixel to a canonical
+	            RGBA double and recomposes it in the target format.
+*/
 
 #import "FxGripImageBuffer.h"
 #import <ImageIO/ImageIO.h>
@@ -380,6 +389,11 @@ static NSData *FxGripLossyDecodedData(NSData *payload, NSUInteger width, NSUInte
 }
 
 
+/*!
+	@abstract	An immutable image buffer that stores its pixels compressed.
+	@discussion	Introduced in FxGrip 0.1.0. The payload holds the compressed bytes, and pixelData
+				decompresses on demand.
+*/
 @implementation FxGripImageBuffer
 {
 	NSData *_payload;
@@ -435,6 +449,7 @@ static NSData *FxGripLossyDecodedData(NSData *payload, NSUInteger width, NSUInte
 	return self;
 }
 
+/*! @abstract Repacks source rows to a tight stride, then compresses; nil for a nil source or a stride smaller than tight. */
 - (nullable instancetype)initWithBytes:(const void *)pixels
 							  rowBytes:(NSUInteger)rowBytes
 								 width:(NSUInteger)width
@@ -480,6 +495,7 @@ static NSData *FxGripLossyDecodedData(NSData *payload, NSUInteger width, NSUInte
 	return _payload;
 }
 
+/*! @abstract The decompressed, tightly-packed pixels; nil when the payload fails to decode or size-check. */
 - (nullable NSData *)pixelData
 {
 	if (FxGripCompressionIsLossy(_compression)) {
@@ -499,6 +515,11 @@ static NSData *FxGripLossyDecodedData(NSData *payload, NSUInteger width, NSUInte
 									quality:kFxGripImageBufferDefaultQuality];
 }
 
+/*!
+	@method		bufferByConvertingToFormat:compression:quality:
+	@abstract	Converts to another pixel format through a canonical RGBA intermediate and recompresses.
+	@discussion	Introduced in FxGrip 0.1.0. A same-format request recompresses without conversion.
+				Returns nil for an invalid target format or a payload that fails to decode. */
 - (nullable FxGripImageBuffer *)bufferByConvertingToFormat:(FxGripPixelFormat)format
 											   compression:(FxGripCompression)compression
 												   quality:(float)quality
@@ -592,6 +613,7 @@ static MTLPixelFormat FxGripMTLPixelFormatForFormat(FxGripPixelFormat format)
 	}
 }
 
+/*! @abstract A new Metal texture holding the pixels; nil for a 3-channel format, a decode failure, or a nil device. */
 - (nullable id<MTLTexture>)newTextureWithDevice:(nonnull id<MTLDevice>)device
 {
 	MTLPixelFormat metalFormat = FxGripMTLPixelFormatForFormat(_format);
@@ -613,6 +635,7 @@ static MTLPixelFormat FxGripMTLPixelFormatForFormat(FxGripPixelFormat format)
 	return texture;
 }
 
+/*! @abstract Reads a Metal texture into a buffer; nil for an unsupported texture format. */
 + (nullable instancetype)bufferWithTexture:(nonnull id<MTLTexture>)texture
 							   compression:(FxGripCompression)compression
 {
@@ -637,6 +660,7 @@ static MTLPixelFormat FxGripMTLPixelFormatForFormat(FxGripPixelFormat format)
 
 #pragma mark Previews
 
+/*! @abstract An RGBA8U preview representation, converting the format when needed; nil on decode failure. */
 - (nullable NSBitmapImageRep *)bitmapRep
 {
 	FxGripImageBuffer *preview = self;
@@ -710,6 +734,7 @@ static MTLPixelFormat FxGripMTLPixelFormatForFormat(FxGripPixelFormat format)
 
 #pragma mark NSSecureCoding
 
+/*! @abstract Archives the geometry, codec, quality, uncompressed length, and compressed payload. */
 - (void)encodeWithCoder:(nonnull NSCoder *)coder
 {
 	[coder encodeInteger:kFxGripImageBufferCoderVersion forKey:kFxGripImageBufferKey_Version];
@@ -722,6 +747,7 @@ static MTLPixelFormat FxGripMTLPixelFormatForFormat(FxGripPixelFormat format)
 	[coder encodeObject:_payload forKey:kFxGripImageBufferKey_Payload];
 }
 
+/*! @abstract Restores a buffer from an archive; nil when the payload is missing or the length mismatches the geometry. */
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder
 {
 	self = [super init];

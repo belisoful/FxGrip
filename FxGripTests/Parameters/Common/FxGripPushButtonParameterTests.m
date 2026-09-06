@@ -1,12 +1,15 @@
-//
-//  FxGripPushButtonParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripPushButtonParameter creation: the synthesized click selector it
-//  registers with the host, the validation of the optional configuration-declared selector
-//  hook, and the selector-capturing initializer. The click dispatch itself is covered by
-//  FxGripParameterClickTests.
-//
+/*!
+	@file       FxGripPushButtonParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPushButtonParameterTests
+	@abstract   Tests FxGripPushButtonParameter creation: the synthesized click selector it
+	            registers with the host.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the validation of the optional
+	            configuration-declared selector hook and the selector-capturing initializer.
+	            FxGripParameterClickTests covers the click dispatch itself.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -54,6 +57,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug push-button type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripPushButtonParameter.parameterType, FxParameterType_PushButton);
@@ -62,6 +66,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 
 #pragma mark Creation
 
+/*! @abstract A push button registers the synthesized selector that encodes its parameter ID. */
 - (void)testAPushButtonRegistersTheSelectorThatEncodesItsParameterID
 {
 	XCTAssertTrue([self add:FxGripPushButtonParameter.class
@@ -88,6 +93,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 	XCTAssertEqualObjects(self.call[@"selector"], self.synthesizedSelectorName);
 }
 
+/*! @abstract A declared selector lacking the click prefix is refused before the host is called. */
 - (void)testADeclaredSelectorWithoutTheClickPrefixIsRefusedBeforeTheHostIsCalled
 {
 	XCTAssertFalse([self add:FxGripPushButtonParameter.class
@@ -97,6 +103,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 	XCTAssertEqualObjects(self.effect.creationCalls, @[]);
 }
 
+/*! @abstract The click-prefix check accepts declared selectors regardless of case. */
 - (void)testTheClickPrefixCheckIsCaseInsensitive
 {
 	XCTAssertTrue([self add:FxGripPushButtonParameter.class
@@ -109,6 +116,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 	XCTAssertEqual(self.effect.creationCalls.count, (NSUInteger)2);
 }
 
+/*! @abstract A declared selector naming only the click prefix is accepted. */
 - (void)testADeclaredSelectorNamingOnlyThePrefixIsAccepted
 {
 	XCTAssertTrue([self add:FxGripPushButtonParameter.class
@@ -118,6 +126,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 	XCTAssertEqual(self.effect.creationCalls.count, (NSUInteger)1);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testAPushButtonReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -128,6 +137,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 	XCTAssertEqual(self.effect.creationCalls.count, (NSUInteger)1);
 }
 
+/*! @abstract Each push button registers the synthesized selector encoding its own parameter ID. */
 - (void)testEveryPushButtonRegistersItsOwnSelector
 {
 	NSDictionary *first = FxGripParamClassTestConfig(7, kFxParameterType_PushButton, @"First", nil);
@@ -144,6 +154,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 
 #pragma mark Selector capture
 
+/*! @abstract The initializer captures the declared selector as both a string and a selector. */
 - (void)testThePushButtonInitializerCapturesTheDeclaredSelector
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kPushButtonTestParameter, kFxParameterType_PushButton, @"Reset",
@@ -155,6 +166,7 @@ static const FxParameterId kPushButtonTestParameter = 61;
 	XCTAssertEqualObjects(NSStringFromSelector(parameter.selector), @"clickReset");
 }
 
+/*! @abstract The initializer leaves the selector nil when the configuration declares none. */
 - (void)testThePushButtonInitializerLeavesTheSelectorEmptyWithoutADeclaration
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kPushButtonTestParameter, kFxParameterType_PushButton, @"Reset", nil);

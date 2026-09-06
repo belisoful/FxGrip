@@ -1,12 +1,23 @@
-//
-//  FxGripObjectTrackerData.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripObjectTrackerData.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerData
+	@abstract   Implements the Object Tracker parameter value type.
+	@discussion Introduced in FxGrip 0.1.0. Samples are held in a frame-indexed dictionary and
+	            are sparse. Resolution of a frame holds the last known sample forward and
+	            averages the bounding box across the smoothing window. The type supports
+	            secure coding and copying so it saves with the host document.
+*/
 
 #import "FxGripObjectTrackerData.h"
 
+/*!
+	@abstract	The persisted value of an Object Tracker parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The value stores the tracker configuration, the
+				user-placed region, the linked parameter IDs, and the per-frame samples.
+*/
 @implementation FxGripObjectTrackerData
 {
 	NSMutableDictionary<NSNumber *, FxGripObjectTrackerSample *> *_samples;
@@ -66,6 +77,12 @@
 	_samples[@(frameIndex)] = sample;
 }
 
+/*!
+	@method		latestSampleAtOrBeforeFrame:
+	@abstract	Returns the sample at the greatest stored frame at or before a frame.
+	@return		The nearest earlier sample, or nil when no sample is at or before the frame.
+	@discussion	Introduced in FxGrip 0.1.0. The lookup serves a seek to a frame the pass has not
+				written by holding the last known result forward. */
 - (nullable FxGripObjectTrackerSample *)latestSampleAtOrBeforeFrame:(NSInteger)frameIndex
 {
 	NSInteger best = NSIntegerMin;
@@ -83,6 +100,13 @@
 	[_samples removeAllObjects];
 }
 
+/*!
+	@method		transform:atFrame:
+	@abstract	Resolves the tracked transform at a frame into the output structure.
+	@return		YES when a sample exists at or before the frame; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The base sample is the latest at or before the frame.
+				A smoothing window greater than zero averages the bounding-box origin, size, and
+				rotation across the frames within the window. The location is the box center. */
 - (BOOL)transform:(FxGripObjectTrackerTransform *)outTransform atFrame:(NSInteger)frameIndex
 {
 	if (outTransform == NULL) {
@@ -128,6 +152,12 @@
 	return YES;
 }
 
+/*!
+	@method		cornerBoxAtFrame:lowerLeft:upperRight:center:
+	@abstract	Reports the tracked box corners and center at a frame.
+	@return		YES when a sample exists at or before the frame; NO otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The corners and center derive from the resolved,
+				smoothed transform. Any output pointer may be NULL. */
 - (BOOL)cornerBoxAtFrame:(NSInteger)frameIndex
 			   lowerLeft:(CGPoint *)lowerLeft
 			  upperRight:(CGPoint *)upperRight
@@ -149,6 +179,12 @@
 	return YES;
 }
 
+/*!
+	@method		anchorPointAtFrame:initialAnchor:seedFrame:outPoint:
+	@abstract	Resolves an anchor point's position at a frame.
+	@return		YES when both the seed frame and the frame resolve and the seed box is non-degenerate.
+	@discussion	Introduced in FxGrip 0.1.0. The anchor keeps its initial offset from the seed-frame
+				center, scaled per axis by the box size change from the seed frame. */
 - (BOOL)anchorPointAtFrame:(NSInteger)frameIndex
 			 initialAnchor:(CGPoint)initialAnchor
 				 seedFrame:(NSInteger)seedFrame

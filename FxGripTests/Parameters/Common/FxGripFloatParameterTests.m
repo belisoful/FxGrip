@@ -1,11 +1,15 @@
-//
-//  FxGripFloatParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripFloatParameter: the type identity, the payload
-//  +addParameter:toEffect: derives from a configuration, the defaults applied when the
-//  configuration omits a bound, the delta fallback, and the host-refusal result.
-//
+/*!
+	@file       FxGripFloatParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripFloatParameterTests
+	@abstract   Tests FxGripFloatParameter: its FxPlug type identity and the creation payload
+	            +addParameter:toEffect: derives from a configuration.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the defaults applied when the
+	            configuration omits a bound, the slider-bound and delta fallbacks, the flag
+	            forwarding, and the host-refusal result.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -46,12 +50,14 @@ static const FxParameterId kFloatTestParameter = 21;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug float type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripFloatParameter.parameterType, FxParameterType_Float);
 	XCTAssertEqualObjects(FxGripFloatParameter.parameterTypeString, kFxParameterType_Float);
 }
 
+/*! @abstract An instance reports the float type through its instance parameterType accessor. */
 - (void)testAnInstanceReportsTheClassTypeThroughTheInstanceAccessor
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kFloatTestParameter, kFxParameterType_Float, @"Amount", nil);
@@ -64,6 +70,7 @@ static const FxParameterId kFloatTestParameter = 21;
 
 #pragma mark Creation payload
 
+/*! @abstract A float created with no bounds defaults to a zero-to-one range and a hundredth delta. */
 - (void)testFloatWithoutBoundsUsesZeroToOneAndTheHundredthDelta
 {
 	XCTAssertTrue([self add:FxGripFloatParameter.class type:kFxParameterType_Float extra:nil]);
@@ -80,6 +87,7 @@ static const FxParameterId kFloatTestParameter = 21;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A float forwards every declared bound and the declared delta to the creation call. */
 - (void)testFloatForwardsEveryDeclaredBoundAndTheDeclaredDelta
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @0.5,
@@ -103,6 +111,7 @@ static const FxParameterId kFloatTestParameter = 21;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract The slider bounds fall back to the parameter bounds when none are declared. */
 - (void)testFloatSliderBoundsFallBackToTheParameterBounds
 {
 	NSDictionary *extra = @{kFxParameterProperty_Minimum: @(-5.0),
@@ -114,6 +123,7 @@ static const FxParameterId kFloatTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"slidermax"], @5.0);
 }
 
+/*! @abstract The delta falls back to one when the declared range is wider than a unit. */
 - (void)testFloatDeltaFallsBackToOneWhenTheRangeIsNotUnit
 {
 	NSDictionary *extra = @{kFxParameterProperty_Minimum: @0.0,
@@ -124,6 +134,7 @@ static const FxParameterId kFloatTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"delta"], @1.0);
 }
 
+/*! @abstract The delta falls back to a hundredth for a unit-wide range at any offset. */
 - (void)testFloatDeltaFallsBackToAHundredthForAnyUnitWideRange
 {
 	NSDictionary *extra = @{kFxParameterProperty_Minimum: @(-3.0),
@@ -134,6 +145,7 @@ static const FxParameterId kFloatTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"delta"], @0.01);
 }
 
+/*! @abstract The declared flag strings are combined into the flag bitmask sent to the host. */
 - (void)testFloatCarriesTheConfiguredFlagsThrough
 {
 	NSArray *flags = @[kParameterFlagString_HIDDEN, kParameterFlagString_DISABLED];
@@ -145,6 +157,7 @@ static const FxParameterId kFloatTestParameter = 21;
 						  @(kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED));
 }
 
+/*! @abstract A host refusal returns false after a single creation call. */
 - (void)testFloatReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;

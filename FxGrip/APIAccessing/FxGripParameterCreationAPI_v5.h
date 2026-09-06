@@ -1,9 +1,15 @@
-//
-//  FxGripParameterCreationAPI_v5.h
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripParameterCreationAPI_v5.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterCreationAPI_v5
+	@abstract   The FxGrip wrapper for the host's FxParameterCreationAPI_v5.
+	@discussion Introduced in FxGrip 0.1.0. Each add method builds the parameter's payload, sends it
+	            through the extension preprocess step, forwards it to the host creation API, and
+	            posts the parameter-add notification. The subgroup methods maintain a stack so a new
+	            parameter records its parent group. It mirrors FxPlug protocol version 5.
+*/
 
 #ifndef FxGripParameterCreationAPI_v5_h
 #define FxGripParameterCreationAPI_v5_h
@@ -12,17 +18,24 @@
 #import "FxGripCommonAPI.h"
 
 /*!
-	@interface  FxGripParameterCreationAPI_v5:
-	@abstract   Initializes the API manager for your plug-in.
-	@discussion Accesses the apis with error checking.
-
- */
+	@class		FxGripParameterCreationAPI_v5
+	@abstract	Wraps the host parameter-creation API and notifies FxGrip of each added parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The add methods mirror Apple's FxParameterCreationAPI_v5
+				method for method. Each one packages the parameter's properties, runs the extension
+				preprocess step that lets observers amend or reject the parameter, calls the host
+				API, and posts FxGripNotifyAPI_ParameterAddName on success. startParameterSubGroup:
+				pushes the group ID onto subGroupStack and endParameterSubGroup pops it, so the
+				parent ID travels with each parameter.
+*/
 
 @interface FxGripParameterCreationAPI_v5 : FxGripCommonAPI<FxParameterCreationAPI_v5>
 
+	/*! The wrapped host creation API. */
 	@property (assign, readonly, nullable) id<FxParameterCreationAPI_v5> api;
+	/*! The stack of open subgroup IDs; the last entry is the parent for the next parameter, with @0 as the root floor. */
 	@property (retain, readonly, nonnull) NSMutableArray<NSNumber*> *subGroupStack;
 
+/*! @abstract Wraps a host creation API for an effect. */
 - (nullable instancetype)initWithAPI:(id<FxParameterCreationAPI_v5> _Nonnull)api effect:(nonnull id<FxGripEffectHost>)effect;
 
 - (BOOL)addAngleSliderWithName:(nonnull NSString *)name

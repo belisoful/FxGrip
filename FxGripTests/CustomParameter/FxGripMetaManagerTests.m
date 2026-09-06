@@ -1,7 +1,12 @@
-//
-//  FxGripMetaManagerTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripMetaManagerTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMetaManagerTests
+	@abstract   Tests for FxGripMetaManager, the per-parameter tag and metadata record store.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover the record lifecycle, the tag reverse index, meta key-value storage, unsaved marking, persistence, secure coding, copying, equality, and the recursive lock.
+*/
 
 #import <XCTest/XCTest.h>
 #import <dlfcn.h>
@@ -53,6 +58,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 
 #pragma mark - Record Management
 
+/*! @abstract Adding a parameter creates its record, seeds the id key, and starts with no tags or meta. */
 - (void)testAddParameterCreatesTheRecord
 {
 	XCTAssertFalse([self.manager parameterExists:kParamA]);
@@ -66,6 +72,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqual([self.manager metaCountFromParameter:kParamA], 0);
 }
 
+/*! @abstract -parameterData: returns the mutable record itself, so a write through it is visible on the next read. */
 - (void)testParameterDataReturnsTheLiveRecord
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -76,12 +83,14 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects([self.manager parameterData:kParamA][@"scratch"], @"visible");
 }
 
+/*! @abstract Adding a parameter that already exists returns NO. */
 - (void)testDuplicateAddParameterReturnsNo
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
 	XCTAssertFalse([self.manager addParameter:kParamA]);
 }
 
+/*! @abstract Adding a parameter whose record lost its id key restores the id and keeps the existing keys and tags. */
 - (void)testAddParameterAdoptsARecordMissingItsIdAndPreservesOtherKeys
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -98,11 +107,13 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects([self.manager parameterTags:kParamA], @[@"seed"]);
 }
 
+/*! @abstract Removing a parameter that has no record returns NO. */
 - (void)testRemoveParameterReturnsNoForAMissingRecord
 {
 	XCTAssertFalse([self.manager removeParameter:kParamMissing]);
 }
 
+/*! @abstract Removing a parameter deletes its record, so it no longer exists and its data is nil. */
 - (void)testRemoveParameterDeletesTheRecord
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -111,6 +122,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertNil([self.manager parameterData:kParamA]);
 }
 
+/*! @abstract Removing a parameter drops it from the tag reverse index, and the tag disappears once its last parameter is gone. */
 - (void)testRemoveParameterScrubsTheTagReverseIndex
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -127,17 +139,20 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 
 #pragma mark - Tag API
 
+/*! @abstract A new manager reports a tag count of zero and an empty tag list. */
 - (void)testFreshManagerHasNoTags
 {
 	XCTAssertEqual(self.manager.tagCount, 0);
 	XCTAssertEqualObjects(self.manager.tags, @[]);
 }
 
+/*! @abstract -tagCount: returns -1 for a parameter that has no record. */
 - (void)testTagCountForAMissingRecordIsNegativeOne
 {
 	XCTAssertEqual([self.manager tagCount:kParamMissing], -1);
 }
 
+/*! @abstract Adding a tag registers it in the parameter's tag list and the tag reverse index, and -parameter:hasTag:error: reports membership without an error. */
 - (void)testAddTagRoundTripsThroughBothIndexes
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -156,6 +171,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertNil(error);
 }
 
+/*! @abstract Adding the same tag twice leaves one tag on the parameter and one parameter under the tag. */
 - (void)testAddTagIsIdempotent
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -166,6 +182,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects([self.manager parametersWithTag:@"color"], @[@(kParamA)]);
 }
 
+/*! @abstract Every tag mutator returns a per-parameter failure error when the parameter has no record. */
 - (void)testTagMutatorsOnAMissingRecordReturnAnError
 {
 	[self assertError:[self.manager addTag:@"color" toParameter:kParamMissing]
@@ -178,6 +195,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
  isFailureForParameter:kParamMissing];
 }
 
+/*! @abstract Removing a tag clears it from the parameter and the reverse index, and the tag entry is deleted once its last parameter drops it. */
 - (void)testRemoveTagClearsBothIndexesAndDeletesTheEmptiedEntry
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -194,6 +212,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqual(self.manager.tagCount, 0);
 }
 
+/*! @abstract -removeAllTags: empties the parameter's tags and removes every emptied tag from the reverse index. */
 - (void)testRemoveAllTagsEmptiesTheParameterAndScrubsTheIndex
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -206,6 +225,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqual(self.manager.tagCount, 0);
 }
 
+/*! @abstract -setTags: replaces the parameter's tags in order and scrubs the replaced tags from the reverse index. */
 - (void)testSetTagsReplacesTheExistingTagsInOrder
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -219,6 +239,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqual(self.manager.tagCount, 3);
 }
 
+/*! @abstract -parametersWithTag: returns an immutable snapshot that does not reflect later additions to the tag. */
 - (void)testParametersWithTagReturnsACopy
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -233,11 +254,13 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqual([self.manager parametersWithTag:@"shared"].count, 2u);
 }
 
+/*! @abstract -parametersWithTag: returns nil for a nil tag. */
 - (void)testParametersWithNilTagIsNil
 {
 	XCTAssertNil([self.manager parametersWithTag:nil]);
 }
 
+/*! @abstract Adding or removing a nil tag on an existing parameter returns a per-parameter failure error. */
 - (void)testNilTagMutatorsReturnAnError
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -247,6 +270,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 
 #pragma mark - Meta API
 
+/*! @abstract -metaCountFromParameter: returns -1 for a missing record, 0 for an empty one, and the entry count after meta is set. */
 - (void)testMetaCountFromParameterReflectsTheRecordState
 {
 	XCTAssertEqual([self.manager metaCountFromParameter:kParamMissing], -1);
@@ -259,6 +283,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqual([self.manager metaCountFromParameter:kParamA], 2);
 }
 
+/*! @abstract A meta value set under a key reads back equal through -getMeta:forKey:fromParameter:. */
 - (void)testSetAndGetMetaValueForKeyRoundTrip
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -269,6 +294,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects((id)value, @"hello");
 }
 
+/*! @abstract -getMeta:forKey: with a nil out pointer answers whether the key exists without returning the value. */
 - (void)testGetMetaForKeyWithANilOutPointerIsAnExistenceCheck
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -278,6 +304,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertFalse([self.manager getMeta:nil forKey:@"missing" fromParameter:kParamA]);
 }
 
+/*! @abstract -getMeta:forKey: returns NO and leaves the out value nil for a missing key, a missing record, or a nil key. */
 - (void)testGetMetaForKeyIsNoForAMissingKeyOrMissingRecord
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -290,6 +317,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertFalse([self.manager getMeta:&value forKey:nil fromParameter:kParamA]);
 }
 
+/*! @abstract -setMeta:toParameter: replaces the entire meta dictionary, dropping the prior keys. */
 - (void)testSetMetaToParameterReplacesTheWholeMetaDictionary
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -302,6 +330,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertTrue([self.manager parameter:kParamA hasMetaKey:@"fresh" error:NULL]);
 }
 
+/*! @abstract -getMeta:fromParameter: assigns a copy of the meta dictionary that later writes do not mutate. */
 - (void)testGetMetaFromParameterAssignsACopy
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -315,6 +344,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects(meta, @{@"first": @"one"});
 }
 
+/*! @abstract The get, set, keys, and remove-all meta accessors each return a per-parameter failure error for a missing record. */
 - (void)testMetaAccessorsOnAMissingRecordReturnAnError
 {
 	NSDictionary *meta = nil;
@@ -330,6 +360,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
  isFailureForParameter:kParamMissing];
 }
 
+/*! @abstract -getMetaKeys:fromParameter: assigns the stored meta keys. */
 - (void)testGetMetaKeysAssignsTheStoredKeys
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -341,6 +372,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects([NSSet setWithArray:keys], ([NSSet setWithArray:@[@"alpha", @"beta"]]));
 }
 
+/*! @abstract -removeAllMeta: empties the parameter's meta container. */
 - (void)testRemoveAllMetaEmptiesTheContainer
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -350,6 +382,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqual([self.manager metaCountFromParameter:kParamA], 0);
 }
 
+/*! @abstract -removeMetaKey: returns YES when it removed an existing key and NO for an absent or nil key. */
 - (void)testRemoveMetaKeyReportsWhetherTheKeyExisted
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -361,6 +394,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertFalse([self.manager removeMetaKey:nil fromParameter:kParamA]);
 }
 
+/*! @abstract -parameter:hasMetaKey:error: reports presence of a meta key without an error. */
 - (void)testHasMetaKeyReportsPresence
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -373,6 +407,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertNil(error);
 }
 
+/*! @abstract -parameter:hasMetaKey:error: returns NO with a per-parameter failure error for a missing record. */
 - (void)testHasMetaKeyOnAMissingRecordIsNoWithAnError
 {
 	NSError *error = nil;
@@ -382,11 +417,13 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 
 #pragma mark - Unsaved Marking
 
+/*! @abstract A new manager starts in the saved state. */
 - (void)testFreshManagerIsNotUnsaved
 {
 	XCTAssertFalse(self.manager.unsaved);
 }
 
+/*! @abstract Every record, tag, and meta mutation that changes state marks the manager unsaved. */
 - (void)testEveryMutatorMarksTheManagerUnsaved
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -435,6 +472,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertTrue(self.manager.unsaved);
 }
 
+/*! @abstract A mutation that changes nothing leaves the saved state untouched. */
 - (void)testNoOpMutationsDoNotMarkTheManagerUnsaved
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -458,12 +496,14 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 
 #pragma mark - Persistence
 
+/*! @abstract -saveMeta succeeds and does nothing when the manager is already saved. */
 - (void)testSaveMetaSucceedsWhenNothingIsUnsaved
 {
 	XCTAssertFalse(self.manager.unsaved);
 	XCTAssertTrue([self.manager saveMeta]);
 }
 
+/*! @abstract -saveMeta fails without an effect to persist through and keeps the manager unsaved. */
 - (void)testSaveMetaWithoutAnEffectFailsAndKeepsTheUnsavedState
 {
 	XCTAssertTrue([self.manager addParameter:kParamA]);
@@ -475,6 +515,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 
 #pragma mark - Coding, Copying, Equality
 
+/*! @abstract Builds a manager with two parameters carrying overlapping tags and mixed meta value types. */
 - (FxGripMetaManager *)populatedManager
 {
 	FxGripMetaManager *manager = FxGripMetaManager.new;
@@ -489,6 +530,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	return manager;
 }
 
+/*! @abstract A secure archive round trip preserves the tags, the reverse index, and the meta values, and decodes equal to the original. */
 - (void)testSecureCodingRoundTripPreservesTagsAndMeta
 {
 	FxGripMetaManager *original = [self populatedManager];
@@ -524,6 +566,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects(decoded, original);
 }
 
+/*! @abstract A secure archive round trip preserves an NSDate meta value. */
 // setMeta: accepts any secure-codable value; a date must survive the round trip. Before
 // the decode allow-list admitted NSDate the archive succeeded but decode failed with
 // NSCocoaErrorDomain 4864, silently discarding the whole record on reload.
@@ -548,6 +591,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertEqualObjects(meta[@"captured"], when);
 }
 
+/*! @abstract A decoded manager accepts new tags, meta, and parameters, so the archive restores a mutable object. */
 - (void)testDecodedManagerIsFullyMutable
 {
 	FxGripMetaManager *original = [self populatedManager];
@@ -571,6 +615,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertTrue([decoded removeParameter:kParamA]);
 }
 
+/*! @abstract A copy equals the original and mutations on either side do not reach the other. */
 - (void)testCopyIsEqualAndDeeplyIndependent
 {
 	FxGripMetaManager *original = [self populatedManager];
@@ -592,6 +637,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertFalse([duplicate parameter:kParamB hasTag:@"originalOnly" error:NULL]);
 }
 
+/*! @abstract Equal managers share a hash, a content change breaks equality, and comparison to a foreign object is false. */
 - (void)testEqualityDivergesWithContentAndHashMatchesWhenEqual
 {
 	FxGripMetaManager *original = [self populatedManager];
@@ -607,6 +653,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	XCTAssertTrue([original isEqual:original]);
 }
 
+/*! @abstract classesForParameter lists the container and leaf classes the archive admits, and the instance list matches the class list. */
 - (void)testClassesForParameterAllowsTheArchivedContainerClasses
 {
 	NSOrderedSet<Class> *classes = FxGripMetaManager.classesForParameter;
@@ -621,6 +668,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 
 #pragma mark - Locking
 
+/*! @abstract The lock is recursive on one thread, so nested lock and lockWithinTime: acquisitions each succeed. */
 - (void)testLockIsRecursiveOnTheSameThread
 {
 	XCTAssertTrue([self.manager lock]);
@@ -632,6 +680,7 @@ static NSString *FxGripTestsExpectedErrorDomain(void)
 	[self.manager unlock];
 }
 
+/*! @abstract -lockWithinTime: times out on another thread while the lock is held, and acquires once it is released. */
 - (void)testLockWithinTimeFailsOnAnotherThreadWhileHeld
 {
 	XCTAssertTrue([self.manager lock]);

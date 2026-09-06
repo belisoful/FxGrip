@@ -1,7 +1,18 @@
-//
-//  FxGripSpaceEffect.m
-//  FxGrip
-//
+/*!
+	@file       FxGripSpaceEffect.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSpaceEffect
+	@abstract   Implements the 3D Space effect template.
+	@discussion Introduced in FxGrip 0.1.0. The state pass encodes the host camera, lights, and view-matrix
+	            samples one frame on each side of the render time into the per-frame coder. The render
+	            pass decodes that state, builds an independent SceneKit scene with a camera node, a
+	            lights container, an optional source layer plane, and any authored template, then draws
+	            it through the space backend. The template holds no scene state, so concurrent renders
+	            never share a scene. Host FxMatrix44 values are converted into the SceneKit column-vector
+	            convention here.
+*/
 
 #import "FxGripSpaceEffect.h"
 #import "FxGripSceneKitMetalBackend.h"
@@ -24,6 +35,7 @@ static NSString * const FxGripSpaceCoderNextKey = @"_fxspace_next";
 // The archived scene-template node.
 static NSString * const FxGripSpaceCoderTemplateKey = @"_fxspace_template";
 
+/*! Converts a host double, row-major Matrix44Data into a simd column-vector matrix. */
 static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 {
 	matrix_float4x4 m;
@@ -31,6 +43,11 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return m;
 }
 
+/*!
+	@abstract	A tileable-effect template that renders a SceneKit scene through the host 3D camera and lights.
+	@discussion	Introduced in FxGrip 0.1.0. The template holds no per-frame scene state and builds a fresh
+				scene on each render. A versioned lock-guarded cache archives a static scene template once.
+*/
 @implementation FxGripSpaceEffect
 {
 	id<FxGripSpaceBackend> _spaceBackend;
@@ -72,6 +89,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return _spaceBackend;
 }
 
+/*! @abstract The backend used when none is set: a physics backend when physicsBakeEnabled, otherwise the Metal backend. */
 - (id<FxGripSpaceBackend>)defaultSpaceBackend
 {
 	if (self.physicsBakeEnabled) {
@@ -80,6 +98,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return [FxGripSceneKitMetalBackend backend];
 }
 
+/*! @abstract Sets the render backend, recording that the plugin set it; nil restores the default backend. */
 - (void)setSpaceBackend:(nullable id<FxGripSpaceBackend>)spaceBackend
 {
 	_userSetBackend = (spaceBackend != nil);
@@ -90,6 +109,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	}
 }
 
+/*! @abstract Toggles the physics bake and refreshes the default backend, leaving a plugin-set backend in place. */
 - (void)setPhysicsBakeEnabled:(BOOL)physicsBakeEnabled
 {
 	if (_physicsBakeEnabled == physicsBakeEnabled) {
@@ -103,6 +123,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	}
 }
 
+/*! @abstract Adds the physics-bake extension to the loaded set when physicsBakeEnabled. */
 - (NSMutableArray<id<FxGripExtension>> *)loadExtensions
 {
 	NSMutableArray<id<FxGripExtension>> *extensions = [super loadExtensions];
@@ -114,6 +135,13 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 
 #pragma mark Capture (state pass)
 
+/*!
+	@method		pluginCoder:atTime:quality:error:
+	@abstract	Encodes the host camera, lights, velocity samples, and any scene template into plugin state.
+	@discussion	Introduced in FxGrip 0.1.0. Runs in the capture pass, where the Fx3DAPI_v5 and
+				FxLightingAPI_v3 APIs are valid. The prev and next view-matrix samples are encoded only
+				when the frame duration is valid and positive. The subclass hook
+				encodeSceneParametersIntoCoder:atTime:error: runs last and its result is returned. */
 - (BOOL)pluginCoder:(NSCoder *)coder
 			 atTime:(CMTime)renderTime
 			quality:(FxQuality)qualityLevel
@@ -146,6 +174,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return [self encodeSceneParametersIntoCoder:coder atTime:renderTime error:outError];
 }
 
+/*! @abstract The default per-frame parameter capture hook, a no-op returning YES; a subclass overrides it. */
 - (BOOL)encodeSceneParametersIntoCoder:(NSCoder *)coder
 								atTime:(CMTime)renderTime
 								 error:(NSError * _Nullable *)error
@@ -153,16 +182,19 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return YES;
 }
 
+/*! @abstract The default authored-template hook, returning nil; a subclass returns a node subtree to archive. */
 - (nullable SCNNode *)sceneTemplateNodeAtTime:(CMTime)renderTime
 {
 	return nil;
 }
 
+/*! @abstract The default scene-template revision, 0; a subclass returns a larger value after mutating the template. */
 - (NSInteger)sceneTemplateVersion
 {
 	return 0;
 }
 
+/*! @abstract The cached secure-coding archive of the scene template, re-archived only when the version changes. */
 - (nullable NSData *)archivedTemplateForNode:(SCNNode *)node
 {
 	NSInteger version = [self sceneTemplateVersion];
@@ -187,6 +219,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 
 #pragma mark Geometry callbacks
 
+/*! @abstract Reports the whole destination image bounds, because a 3D render projects the full frame. */
 - (BOOL)destinationImageRect:(FxRect *)destinationImageRect
 				sourceImages:(NSArray<FxImageTile *> *)sourceImages
 			destinationImage:(FxImageTile *)destinationImage
@@ -198,6 +231,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return YES;
 }
 
+/*! @abstract Requests the full source image bounds so the whole layer is available to the projection. */
 - (BOOL)sourceTileRect:(FxRect *)sourceTileRect
 	  sourceImageIndex:(NSUInteger)sourceImageIndex
 		  sourceImages:(NSArray<FxImageTile *> *)sourceImages
@@ -217,6 +251,12 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 
 #pragma mark Render
 
+/*!
+	@method		renderDestinationImage:sourceImages:pluginCoder:atTime:error:
+	@abstract	Builds the per-render scene from plugin state and draws it into the destination tile.
+	@discussion	Introduced in FxGrip 0.1.0. When the backend is not ready the source tile is blitted
+				unchanged, or the render succeeds with no source. Otherwise the scene is built and drawn
+				through the backend at the render time in seconds. */
 - (BOOL)renderDestinationImage:(FxImageTile *)destinationImage
 				  sourceImages:(NSArray<FxImageTile *> *)sourceImages
 				   pluginCoder:(NSCoder *)pluginCoder
@@ -252,6 +292,13 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 
 #pragma mark Per-render scene construction
 
+/*!
+	@method		buildSceneWithCoder:sourceTile:atTime:pointOfView:
+	@abstract	Builds a fresh scene from the decoded plugin state and returns its camera as the point of view.
+	@discussion	Introduced in FxGrip 0.1.0. Adds a configured camera node, a lights container, an optional
+				source layer plane, and any authored template, computes camera motion, then calls
+				updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:. Each call returns an
+				independent scene. */
 - (SCNScene *)buildSceneWithCoder:(NSCoder *)coder
 					   sourceTile:(nullable FxImageTile *)sourceTile
 						   atTime:(CMTime)renderTime
@@ -288,6 +335,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return scene;
 }
 
+/*! @abstract The default scene-content hook, a no-op; a subclass adds its own nodes to the per-render scene. */
 - (void)updateSceneContents:(SCNScene *)scene
 				 cameraNode:(SCNNode *)cameraNode
 				  fromCoder:(NSCoder *)coder
@@ -296,6 +344,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 {
 }
 
+/*! @abstract Configures the camera node from the decoded host focal length, frustum, and view matrix. */
 - (void)configureCameraNode:(SCNNode *)cameraNode withCoder:(NSCoder *)coder
 {
 	double focalLength = [coder decodeFx3DFocalLength];
@@ -326,6 +375,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	}
 }
 
+/*! @abstract Decodes each host light and adds an SCNLight node for it under the lights container. */
 - (void)addLightsToNode:(SCNNode *)lightsNode fromCoder:(NSCoder *)coder
 {
 	long count = [coder decodeFxLightCount];
@@ -337,6 +387,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	}
 }
 
+/*! @abstract Builds a unit plane textured with the source tile at the host layer transform, or nil when no source is present. */
 - (nullable SCNNode *)layerPlaneNodeWithCoder:(NSCoder *)coder sourceTile:(nullable FxImageTile *)sourceTile
 {
 	if (sourceTile == nil) {
@@ -356,6 +407,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return node;
 }
 
+/*! @abstract Central-difference camera motion from the prev and next view-matrix samples, or zero when a sample is absent. */
 - (FxGripCameraMotion)cameraMotionFromCoder:(NSCoder *)coder
 {
 	Matrix44Data *prevData = [coder decodeFx3DViewMatrixData:FxGripSpaceCoderPrevKey];
@@ -372,6 +424,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	return FxGripCameraMotionCentral(previous, next, dt);
 }
 
+/*! @abstract Unarchives the scene-template node subtree from plugin state, or nil when none is stored. */
 - (nullable SCNNode *)templateContentFromCoder:(NSCoder *)coder
 {
 	NSData *archived = nil;
@@ -407,6 +460,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 
 #pragma mark Passthrough
 
+/*! @abstract Copies the source tile's texture into the destination texture through a cached command queue. */
 - (BOOL)blitTile:(FxImageTile *)sourceTile toTexture:(id<MTLTexture>)destinationTexture error:(NSError * _Nullable *)outError
 {
 	id<MTLTexture> sourceTexture = [sourceTile metalTextureForDevice:sourceTile.device];

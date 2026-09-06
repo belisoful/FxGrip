@@ -1,13 +1,26 @@
-//
-//  FxGripWatermark.m
-//  FxGrip
-//
+/*!
+	@file       FxGripWatermark.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripWatermark
+	@abstract   Implements text-watermark rendering onto a render tile.
+	@discussion Introduced in FxGrip 0.1.0. The text layer rasterizes through Core Image, with an
+	            optional drop shadow composited under it. Each style places the text with an
+	            affine transform. renderOntoImageTile: composites the placed image onto the tile's
+	            Metal texture at the configuration's opacity.
+*/
 
 #import "FxGripWatermark.h"
 #import "FxGripErrors.h"
 #import "FxTileImage+FxGrip.h"
 #import <BEFoundation/CIImage+BExtension.h>
 
+/*!
+	@abstract	A declarative description of a watermark's text, typography, and layout.
+	@discussion	Introduced in FxGrip 0.1.0. A default instance describes a diagonally tiled,
+				semi-transparent watermark.
+*/
 @implementation FxGripWatermarkConfiguration
 
 - (instancetype)init
@@ -37,6 +50,7 @@
 	return configuration;
 }
 
+/*! @abstract A diagonally tiled configuration at 35% opacity, the common trial look. */
 + (instancetype)trialConfigurationWithText:(NSString *)text
 {
 	FxGripWatermarkConfiguration *configuration = [self configurationWithText:text];
@@ -45,6 +59,7 @@
 	return configuration;
 }
 
+/*! @abstract A single centered configuration, rotated -30 degrees at 50% opacity. */
 + (instancetype)centeredConfigurationWithText:(NSString *)text
 {
 	FxGripWatermarkConfiguration *configuration = [self configurationWithText:text];
@@ -76,8 +91,14 @@
 @end
 
 
+/*!
+	@abstract	Renders a watermark configuration onto a render tile.
+	@discussion	Introduced in FxGrip 0.1.0. The watermark holds a copy of the configuration and
+				composites the placed text onto the destination tile's Metal texture.
+*/
 @implementation FxGripWatermark
 
+/*! @abstract A watermark that renders the given configuration. */
 + (instancetype)watermarkWithConfiguration:(FxGripWatermarkConfiguration *)configuration
 {
 	return [[self alloc] initWithConfiguration:configuration];
@@ -92,6 +113,7 @@
 	return self;
 }
 
+/*! @abstract The rasterized text image, with the shadow color composited under it when set. */
 - (nullable CIImage *)textLayer
 {
 	FxGripWatermarkConfiguration *configuration = self.configuration;
@@ -120,6 +142,7 @@
 	return textImage;
 }
 
+/*! @abstract The text centered on the frame and rotated by the angle. */
 - (CIImage *)centeredImageFromText:(CIImage *)text frame:(CGRect)frame angle:(CGFloat)angleDegrees
 {
 	CGRect extent = text.extent;
@@ -131,6 +154,7 @@
 	return [text imageByApplyingTransform:transform];
 }
 
+/*! @abstract The text scaled to span 90% of the frame width, centered, and rotated by the angle. */
 - (nullable CIImage *)bannerImageFromText:(CIImage *)text frame:(CGRect)frame angle:(CGFloat)angleDegrees
 {
 	CGRect extent = text.extent;
@@ -147,6 +171,7 @@
 	return [text imageByApplyingTransform:transform];
 }
 
+/*! @abstract The text pinned to a frame corner with the inset. */
 - (CIImage *)cornerImageFromText:(CIImage *)text frame:(CGRect)frame corner:(FxGripWatermarkCorner)corner inset:(CGFloat)inset
 {
 	CGRect extent = text.extent;
@@ -174,6 +199,11 @@
 	return [text imageByApplyingTransform:CGAffineTransformMakeTranslation(x, y)];
 }
 
+/*!
+	@method		diagonalTiledImageFromText:frame:
+	@abstract	The text tiled across the frame on a grid and rotated 45 degrees.
+	@discussion	Introduced in FxGrip 0.1.0. The text seats inside a transparent cell that carries
+				the configured spacing as its own margin, so CIAffineTile repeats it evenly. */
 - (nullable CIImage *)diagonalTiledImageFromText:(CIImage *)text frame:(CGRect)frame
 {
 	FxGripWatermarkConfiguration *configuration = self.configuration;
@@ -205,6 +235,12 @@
 	return [tiled imageByApplyingTransform:rotation];
 }
 
+/*!
+	@method		watermarkImageForSize:device:
+	@abstract	Builds the watermark image placed in a frame of the given pixel size.
+	@discussion	Introduced in FxGrip 0.1.0. The result is cropped to the frame and is opaque; the
+				opacity applies at composite time. Returns nil when the text is empty, the size is
+				not positive, or text generation fails. */
 - (nullable CIImage *)watermarkImageForSize:(CGSize)pixelSize device:(id<MTLDevice>)device
 {
 	FxGripWatermarkConfiguration *configuration = self.configuration;
@@ -239,6 +275,12 @@
 	return [placed imageByCroppingToRect:frame];
 }
 
+/*!
+	@method		renderOntoImageTile:error:
+	@abstract	Composites the configured watermark onto the destination tile.
+	@discussion	Introduced in FxGrip 0.1.0. Returns NO and sets outError when the tile has no
+				backing Metal device or texture. Returns YES with no change when the text is empty
+				or the watermark image is nil. */
 - (BOOL)renderOntoImageTile:(FxImageTile *)destinationImage
 					  error:(NSError *_Nullable *_Nullable)outError
 {

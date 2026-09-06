@@ -1,7 +1,14 @@
-//
-//  FxGripCapsuleParameter.m
-//  FxGrip
-//
+/*!
+	@file       FxGripCapsuleParameter.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCapsuleParameter
+	@abstract   Implements the pill badge view and its custom parameter.
+	@discussion Introduced in FxGrip 0.1.0. The view draws a rounded-rectangle fill behind a
+	            centered label and sizes itself to the text plus padding. A corner radius below
+	            zero draws a full pill. The parameter seeds the badge from the declared default.
+*/
 
 #import "FxGripCapsuleParameter.h"
 #import "FxGripCapsule.h"
@@ -14,6 +21,11 @@
 static const CGFloat kFxGripCapsulePaddingX = 10.0;
 static const CGFloat kFxGripCapsulePaddingY = 3.0;
 
+/*!
+	@abstract	The pill-shaped badge backing a capsule parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The read-only badge draws a rounded fill behind a
+				centered label.
+*/
 @implementation FxGripCapsuleView
 {
 	NSTextField *_label;
@@ -64,6 +76,11 @@ static const CGFloat kFxGripCapsulePaddingY = 3.0;
 	[self setNeedsDisplay:YES];
 }
 
+/*!
+	@method		drawRect:
+	@abstract	Fills the badge as a rounded rectangle.
+	@discussion	Introduced in FxGrip 0.1.0. A negative corner radius draws a full pill by using
+				half the height as the radius. */
 - (void)drawRect:(NSRect)dirtyRect
 {
 	CGFloat radius = _cornerRadius >= 0.0 ? _cornerRadius : self.bounds.size.height / 2.0;
@@ -81,6 +98,11 @@ static const CGFloat kFxGripCapsulePaddingY = 3.0;
 	return nil;
 }
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Applies the text, size, colors, and radius from the pushed value.
+	@discussion	Introduced in FxGrip 0.1.0. A value that is not an FxGripDictionary is ignored.
+				The badge relays out after applying the value. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripDictionary.class]) {
@@ -115,6 +137,11 @@ static const CGFloat kFxGripCapsulePaddingY = 3.0;
 @end
 
 
+/*!
+	@abstract	The custom parameter that hosts the read-only pill badge.
+	@discussion	Introduced in FxGrip 0.1.0. The value is an FxGripDictionary. Creation sets the
+				custom-UI, not-animatable, and no-state flags.
+*/
 @implementation FxGripCapsuleParameter
 
 + (nullable NSString*)parameterTypeString
@@ -134,6 +161,12 @@ static const CGFloat kFxGripCapsulePaddingY = 3.0;
 	return classes;
 }
 
+/*!
+	@method		addParameter:toEffect:
+	@abstract	Adds the pill badge as a custom parameter to the effect.
+	@return		YES when the host creates the parameter.
+	@discussion	Introduced in FxGrip 0.1.0. Creation sets the custom-UI, not-animatable, and
+				no-state flags. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect
 {
 	id declared = parameter.parameterDefaultValue;

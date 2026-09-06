@@ -1,7 +1,14 @@
-//
-//  FxGripPathGeometry.m
-//  FxGrip
-//
+/*!
+	@file       FxGripPathGeometry.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPathGeometry
+	@abstract   Implements FxVertex-to-cubic-Bezier conversion and cubic evaluation.
+	@discussion Introduced in FxGrip 0.1.0. Each segment takes its shape from its start vertex's outgoing
+	            side and its end vertex's incoming side, so mixed interpolation styles compose. The
+	            closed case wraps the last segment back to the first vertex.
+*/
 
 #import "FxGripPathGeometry.h"
 
@@ -68,6 +75,7 @@ static void FxGripPathVertexControls(const FxVertex *vertices,
 	}
 }
 
+/*! @abstract Builds cubic segments from a vertex list, resolving each vertex's control vectors. */
 NSUInteger FxGripPathCubicSegments(const FxVertex *vertices,
 								   NSUInteger count,
 								   BOOL closed,
@@ -96,6 +104,7 @@ NSUInteger FxGripPathCubicSegments(const FxVertex *vertices,
 	return written;
 }
 
+/*! @abstract Evaluates one cubic segment at parameter t in [0, 1]. */
 CGPoint FxGripCubicSegmentPoint(FxGripCubicSegment segment, double t)
 {
 	double u = 1.0 - t;
@@ -107,8 +116,14 @@ CGPoint FxGripCubicSegmentPoint(FxGripCubicSegment segment, double t)
 					   b0 * segment.p0.y + b1 * segment.c1.y + b2 * segment.c2.y + b3 * segment.p3.y);
 }
 
+/*!
+	@abstract	Cubic-segment conversion for a stored path.
+	@discussion	Introduced in FxGrip 0.1.0. The category reads the path's vertices into a temporary
+				buffer and converts them with FxGripPathCubicSegments.
+*/
 @implementation FxGripPathData (Geometry)
 
+/*! @abstract Converts the stored path's vertices to cubic segments, writing at most capacity. */
 - (NSUInteger)copyCubicSegmentsToBuffer:(FxGripCubicSegment *)buffer capacity:(NSUInteger)capacity
 {
 	NSUInteger count = self.vertexCount;

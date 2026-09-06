@@ -1,7 +1,14 @@
-//
-//  FxGripOSCPathPart.m
-//  FxGrip
-//
+/*!
+	@file       FxGripOSCPathPart.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOSCPathPart
+	@abstract   Implements the editable on-screen path part over the two vertex backings.
+	@discussion Introduced in FxGrip 0.1.0. Reads resolve to FxVertex arrays, drawing flattens each
+	            cubic segment, and hit testing records which vertex, tangent, or segment a gesture
+	            touched. Editing writes back through the custom-data or per-parameter backing.
+*/
 
 #import "FxGripOSCPathPart.h"
 #import "FxGripEventModifiers.h"
@@ -50,6 +57,12 @@ static CGPoint FxGripOSCPathToObject(CGPoint pixelVector, NSSize inputSize)
 	return CGPointMake(pixelVector.x / inputSize.width, pixelVector.y / inputSize.height);
 }
 
+/*!
+	@abstract	One on-screen path built from FxVertex vertices, editable in place.
+	@discussion	Introduced in FxGrip 0.1.0. Draws and edits the path per its options over a custom-data
+				or per-parameter backing. The Editable option is available only with the custom-data
+				backing.
+*/
 @implementation FxGripOSCPathPart
 {
 	NSInteger _selectedVertexIndex;
@@ -61,6 +74,7 @@ static CGPoint FxGripOSCPathToObject(CGPoint pixelVector, NSSize inputSize)
 	NSMutableArray<NSNumber *> *_mutableStyles;	// per-parameter backing's live styles
 }
 
+/*! @abstract Creates a path part on a custom-data FxGripPathData parameter. */
 + (nonnull instancetype)pathPartWithID:(NSInteger)partID
 					   pathParameterID:(FxParameterId)pathParameterID
 							   options:(FxGripOSCPathOptions)options
@@ -71,6 +85,7 @@ static CGPoint FxGripOSCPathToObject(CGPoint pixelVector, NSSize inputSize)
 	return NARC_AUTORELEASE(part);
 }
 
+/*! @abstract Creates a path part on per-parameter location parameters at a fixed vertex count. */
 + (nonnull instancetype)pathPartWithID:(NSInteger)partID
 				  locationParameterIDs:(nonnull NSArray<NSNumber *> *)locationParameterIDs
 								closed:(BOOL)closed
@@ -344,6 +359,11 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 
 #pragma mark Hit testing
 
+/*!
+	@method		hitTestObjectPoint:canvasPoint:atTime:
+	@abstract	Records which vertex, tangent, or segment the pointer touched and returns YES on a hit.
+	@discussion	Introduced in FxGrip 0.1.0. Vertices win over tangents, which win over the body. The
+				recorded hit is read by the mouse and drag handlers. */
 - (BOOL)hitTestObjectPoint:(CGPoint)objectPoint canvasPoint:(CGPoint)canvasPoint atTime:(CMTime)time
 {
 	_lastHitKind = FxGripOSCPathActiveNone;
@@ -432,6 +452,11 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 
 #pragma mark Mouse and key
 
+/*!
+	@method		mouseDownAtObjectPoint:canvasPoint:modifiers:atTime:
+	@abstract	Selects the hit vertex, and deletes it or inserts a segment vertex when Editable is set.
+	@discussion	Introduced in FxGrip 0.1.0. A delete-click on a vertex removes it; a click on a segment
+				inserts a vertex. */
 - (BOOL)mouseDownAtObjectPoint:(CGPoint)objectPoint
 				   canvasPoint:(CGPoint)canvasPoint
 					 modifiers:(FxModifierKeys)modifiers
@@ -452,6 +477,7 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 	return NO;
 }
 
+/*! @abstract Removes the selected vertex on Delete or Backspace when Editable is set. */
 - (BOOL)keyDownWithKey:(unsigned short)asciiKey modifiers:(FxModifierKeys)modifiers atTime:(CMTime)time
 {
 	if (!(self.options & FxGripOSCPathOptionEditable)) {
@@ -464,6 +490,7 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 	return [self removeSelectedVertexAtTime:time];
 }
 
+/*! @abstract Toggles the hit vertex between corner and smooth when Editable is set. */
 - (BOOL)mouseDoubleClickAtObjectPoint:(CGPoint)objectPoint
 						  canvasPoint:(CGPoint)canvasPoint
 							modifiers:(FxModifierKeys)modifiers
@@ -488,6 +515,7 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 
 #pragma mark Drag
 
+/*! @abstract Routes the drag to the active vertex, tangent, or the whole path body. */
 - (BOOL)dragToObjectPoint:(CGPoint)objectPoint
 			  objectDelta:(CGPoint)objectDelta
 				modifiers:(FxModifierKeys)modifiers
@@ -561,6 +589,11 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 							  atTime:time];
 }
 
+/*!
+	@method		dragTangentAtIndex:isOutgoing:toObjectPoint:modifiers:atTime:
+	@abstract	Writes a vertex's tangent from the pointer, mirroring the opposite tangent by default.
+	@discussion	Introduced in FxGrip 0.1.0. Command retracts the tangent to make the side linear; Shift
+				snaps the angle to 45° increments; Option breaks the mirrored pair. */
 - (BOOL)dragTangentAtIndex:(NSUInteger)index
 				isOutgoing:(BOOL)isOutgoing
 			 toObjectPoint:(CGPoint)objectPoint
@@ -611,6 +644,7 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 
 #pragma mark Editing
 
+/*! @abstract Inserts a vertex at the nearest segment's projection and selects it. */
 - (BOOL)insertVertexAtObjectPoint:(CGPoint)objectPoint atTime:(CMTime)time
 {
 	FxGripPathData *data = [self pathDataAtTime:time];
@@ -654,6 +688,7 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 	return YES;
 }
 
+/*! @abstract Removes the selected vertex, holding at minimumVertexCount; custom-data backing only. */
 - (BOOL)removeSelectedVertexAtTime:(CMTime)time
 {
 	if (_selectedVertexIndex < 0 || !self.usesCustomData) {
@@ -728,6 +763,7 @@ static BOOL FxGripOSCPathStyleHasTangents(FxPathStyle style)
 					  commandEncoder:commandEncoder];
 }
 
+/*! @abstract Strokes the flattened path, then draws the tangent and vertex handles per the options. */
 - (void)drawSelected:(BOOL)selected
 		  canvasSize:(CGSize)canvasSize
 	  commandEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder

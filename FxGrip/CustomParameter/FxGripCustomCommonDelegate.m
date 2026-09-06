@@ -1,9 +1,14 @@
-//
-//  FxGripCustomCommonDelegate.m
-//  XPC Service
-//
-//  Created by ~belisoful ~ on 2/29/24.
-//
+/*!
+	@file       FxGripCustomCommonDelegate.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCustomCommonDelegate
+	@abstract   Implements the shared base for custom-parameter view delegates.
+	@discussion Introduced in FxGrip 0.1.0. The class is the foundation for delegates that observe
+	            AppKit control callbacks from a custom parameter view and forward the changed value
+	            to the host parameter.
+*/
 
 #import "FxGripCustomCommonDelegate.h"
 
@@ -14,6 +19,11 @@
  */
 
 
+/*!
+	@abstract	The shared base for custom-parameter view delegates.
+	@discussion	Introduced in FxGrip 0.1.0. Subclasses forward AppKit control callbacks to the host
+				parameter through the out-of-band parameter access API.
+*/
 @implementation FxGripCustomCommonDelegate
 /*
  

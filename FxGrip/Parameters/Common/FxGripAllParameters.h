@@ -1,7 +1,12 @@
-//
-//  FxGripAllParameters.h
-//  Includes all the common parameter classes
-//
+/*!
+	@file       FxGripAllParameters.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripAllParameters
+	@abstract   The convenience header that imports every common parameter class.
+	@discussion Introduced in FxGrip 0.1.0. The header imports the public header of each parameter class in the common parameter library. A client imports this single header to reference all common parameter types.
+*/
 
 #import "FxGripAngleParameter.h"
 #import "FxGripColorParameter.h"

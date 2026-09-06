@@ -1,7 +1,14 @@
-//
-//  FxGripCurveSetEditorView.m
-//  FxGrip
-//
+/*!
+	@file       FxGripCurveSetEditorView.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveSetEditorView
+	@abstract   Implements the inspector composite that edits a curve-set value as strips.
+	@discussion Introduced in FxGrip 0.1.0. Each declared mapping adds one labeled strip, stacked
+	            top-down. A strip's continuous edit updates the working set; its commit lands the
+	            final curve and writes the whole set to the host inside one out-of-band action.
+*/
 
 #import "FxGripCurveSetEditorView.h"
 #import "FxGripOOBParameterAccess.h"
@@ -19,6 +26,11 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 }
 @end
 
+/*!
+	@abstract	The inspector composite of labeled curve strips over one curve-set value.
+	@discussion	Introduced in FxGrip 0.1.0. The composite holds the working set and the child
+				strips, propagating shared style settings to every strip.
+*/
 @implementation FxGripCurveSetEditorView
 
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect
@@ -75,6 +87,12 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 	return YES;
 }
 
+/*!
+	@method		addEditorForKey:title:role:domain:background:
+	@abstract	Appends one labeled curve strip for a mapping.
+	@return		The created strip, configured and stacked.
+	@discussion	Introduced in FxGrip 0.1.0. The strip is labeled with the localized title, bound
+				to the mapping key, and seeded from the working set. The composite grows to fit. */
 - (nonnull FxGripCurveEditorView *)addEditorForKey:(nonnull NSString *)key
 											 title:(nonnull NSString *)title
 											  role:(FxGripCurveRole)role
@@ -114,6 +132,11 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 
 #pragma mark Data push
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Adopts a pushed curve set as the working set and refreshes every strip.
+	@discussion	Introduced in FxGrip 0.1.0. A value that is not a curve set is ignored. The value
+				is copied class-preserving so the composite owns its working set. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripCurveSetData.class]) {
@@ -132,6 +155,11 @@ static const CGFloat kFxGripCurveStripSpacing = 6.0;
 
 #pragma mark Strip edits
 
+/*!
+	@method		curveEditorView:didEditCurve:
+	@abstract	Records a strip's in-progress edit into the working set.
+	@discussion	Introduced in FxGrip 0.1.0. The edit updates the mapping key without writing to
+				the host, so the host's undo records only the committed gesture. */
 - (void)curveEditorView:(nonnull FxGripCurveEditorView *)editor didEditCurve:(nonnull FxGripCurveData *)curve
 {
 	if (editor.mappingKey != nil) {

@@ -1,9 +1,16 @@
-//
-//  FxGripOOBParameterAccess.h
-//  MetalFx ML Upscale
-//
-//  Created by ~ ~ on 2/29/24.
-//
+/*!
+	@file       FxGripTileableEffect+ColorGamut.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+ColorGamut
+	@abstract   The category that reports the effect's working color gamut and gamut math.
+	@discussion Introduced in FxGrip 0.1.0. The category reads the host color-gamut API to report
+	            the working primaries, and derives the luminance weights, RGB-to-XYZ and
+	            XYZ-to-RGB matrices, and gamut-conversion matrices for that gamut. It also reports
+	            whether the effect's color parameters are on the gamma or linear curve, from the
+	            effect's desired processing color info.
+*/
 
 #ifndef FxGripTileableEffect_ColorGamut_h
 #define FxGripTileableEffect_ColorGamut_h
@@ -12,6 +19,11 @@
 #import <simd/simd.h>
 #import "FxGripTileableEffect.h"
 
+/*!
+	@abstract	The category exposing the effect's working gamut and color-space conversions.
+	@discussion	Introduced in FxGrip 0.1.0. The working primaries come from the host color-gamut
+				API and default to Rec. 709 when the API is unavailable.
+*/
 @interface FxGripTileableEffect (ColorGamut)
 
 /*!

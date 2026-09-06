@@ -1,11 +1,12 @@
-//
-//  FxGripWindowTests.m
-//  FxGripTests
-//
-//  Covers the window extension's lifecycle against stubbed FxRemoteWindowAPI versions: the
-//  host reply, content-view installation and swapping, version fallback, and close. AppKit
-//  classes are reached by name; the stub reply runs synchronously so no waiting is needed.
-//
+/*!
+	@file       FxGripWindowTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripWindowTests
+	@abstract   Unit tests for the FxGripWindow remote-window extension lifecycle.
+	@discussion Introduced in FxGrip 0.1.0. Stubbed FxRemoteWindowAPI versions reply synchronously with a staged parent view or error, so no waiting is needed. The tests cover the host reply, content-view installation and swapping, the v2 ranged-size present with its v1 fixed-size fallback, the v3 close with its no-v3 behavior, and the closed-window reset.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripWindow.h>
@@ -112,12 +113,14 @@ static NSView *FxGripWindowTestView(void)
 	[super tearDown];
 }
 
+/*! @abstract The extension key equals the shared FxGripWindow extension key constant. */
 - (void)testTheExtensionKeyIsStable
 {
 	XCTAssertEqualObjects(self.window.extKey, FxGripWindowExtensionKey);
 	XCTAssertEqualObjects(FxGripWindowExtensionKey, @"FxGripWindow");
 }
 
+/*! @abstract Presenting stores the host parent view, installs the content view in it, and reports presented. */
 - (void)testPresentingStoresTheParentAndInstallsTheContent
 {
 	NSView *parent = FxGripWindowTestView();
@@ -138,6 +141,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertEqual(self.api.fixedRequests, 1u);
 }
 
+/*! @abstract A failed presentation reports the host error and leaves the window closed with no parent view. */
 - (void)testAFailedPresentationReportsTheErrorAndStaysClosed
 {
 	self.api.stagedError = [NSError errorWithDomain:@"test" code:7 userInfo:nil];
@@ -153,6 +157,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertEqual(replied.code, 7);
 }
 
+/*! @abstract Presenting with no remote-window API fails with the window-API-unavailable error and stays closed. */
 - (void)testPresentingWithoutTheAPIFailsWithTheWindowError
 {
 	self.effect.manager.windowAPI = nil;
@@ -167,6 +172,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertEqual(replied.code, kFxGripError_WindowAPIUnavailable);
 }
 
+/*! @abstract A ranged present uses the v2 minimum/maximum-size API when the host vends v2. */
 - (void)testARangedPresentUsesV2WhenVended
 {
 	self.effect.manager.vendsV2 = YES;
@@ -182,6 +188,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertTrue(self.window.isWindowPresented);
 }
 
+/*! @abstract A ranged present falls back to a fixed v1 window at the minimum size when the host does not vend v2. */
 - (void)testARangedPresentFallsBackToAFixedV1Window
 {
 	self.effect.manager.vendsV2 = NO;
@@ -196,6 +203,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertEqualWithAccuracy(self.api.lastMinSize.width, 200, 1e-9);
 }
 
+/*! @abstract Setting the content view while presented removes the old content and installs the new one in the parent. */
 - (void)testSettingTheContentViewWhilePresentedSwapsIt
 {
 	NSView *parent = FxGripWindowTestView();
@@ -211,6 +219,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertEqual(second.superview, parent, @"the new content installs in place");
 }
 
+/*! @abstract Closing calls the v3 close API, clears the presented state and parent, and removes the content view. */
 - (void)testCloseUsesV3AndClearsState
 {
 	self.effect.manager.vendsV3 = YES;
@@ -226,6 +235,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertNil(content.superview);
 }
 
+/*! @abstract Closing without a v3 API clears the presented state and returns NO without calling the host. */
 - (void)testCloseWithoutV3ClearsStateAndReturnsNO
 {
 	self.effect.manager.vendsV3 = NO;
@@ -237,6 +247,7 @@ static NSView *FxGripWindowTestView(void)
 	XCTAssertFalse(self.window.isWindowPresented, @"state clears even when the host cannot close");
 }
 
+/*! @abstract noteWindowClosed clears the presented state and parent view so a later present starts fresh. */
 - (void)testNoteWindowClosedResetsForTheNextPresent
 {
 	self.api.stagedParentView = FxGripWindowTestView();

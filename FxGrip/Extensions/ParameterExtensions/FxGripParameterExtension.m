@@ -1,9 +1,15 @@
-//
-//  FxGripParameterExtension.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripParameterExtension.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterExtension
+	@abstract   Implements the base extension that is itself an effect parameter.
+	@discussion Introduced in FxGrip 0.1.0. On load the extension observes the parameter-add
+	            notification at a fixed priority and tags the matching parameter with its extension key.
+	            The parameter ID freezes from the first observed add. The block observer is removed
+	            through a cached notifier because the effect reference is already nil during dealloc.
+*/
 
 #import "FxGripParameterExtension.h"
 #import "FxGripTileableEffect.h"
@@ -30,6 +36,11 @@
 @end
 
 
+/*!
+	@abstract	The extension that participates in the effect as one of its parameters.
+	@discussion	Introduced in FxGrip 0.1.0. The extension attaches to the effect's notifier on load and
+				tags its parameter with the extension key as the parameter registers.
+*/
 @implementation FxGripParameterExtension
 {
 	id _parameterAddObserver;
@@ -76,6 +87,12 @@
 	}
 }
 
+/*!
+	@method		extLoadWithEffect:
+	@abstract	Attaches the extension to the effect and observes the parameter-add notification.
+	@discussion	Introduced in FxGrip 0.1.0. When the extension is active, it registers a block observer
+				for FxGripNotifyAPI_ParameterAddPreName at priority -18. The observer freezes the
+				parameter ID and tags the added parameter with the extension key. */
 - (BOOL)extLoadWithEffect:(nonnull id<FxGripTileableEffect>)effect
 {
 	BOOL success = [super extLoadWithEffect:effect];
@@ -93,6 +110,11 @@
 	return success;
 }
 
+/*!
+	@method		parameterForDictionary:
+	@abstract	Configures the extension's parameter fields from a parameter dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. The method reads the name, ID, parent ID, and flags from the
+				dictionary and returns the extension itself as the parameter object. */
 - (nullable id) parameterForDictionary:(nonnull NSDictionary *)data
 {
 	_addedToEffect = YES;
@@ -117,6 +139,12 @@
 }
 
 
+/*!
+	@method		notifyParameterAddWithExtension:
+	@abstract	Tags the registering parameter with the extension key and factory.
+	@discussion	Introduced in FxGrip 0.1.0. The method acts only on the notification whose parameter ID
+				matches this extension. It sets the extension key when the parameter lacks one and sets
+				the factory when the extension conforms to FxParameterFactory. */
 - (void)notifyParameterAddWithExtension:(NSNotification*)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;

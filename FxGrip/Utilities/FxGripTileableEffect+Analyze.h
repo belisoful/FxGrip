@@ -1,9 +1,16 @@
-//
-//  FxGripTileableEffect+Analyze.h
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripTileableEffect+Analyze.h
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+Analyze
+	@abstract   The category that adds the FxPlug frame-analysis pass and its per-frame storage.
+	@discussion Introduced in FxGrip 0.1.0. The category implements the FxAnalyzer protocol on the
+	            effect base. An effect opts into pre-render analysis by declaring FxAnalyzer on its
+	            own interface. The base answers the analysis callbacks, stores each frame's result
+	            in the effect's analysisData, and reads it back at render. Object-tracker
+	            parameters are analyzed automatically during the same pass.
+*/
 
 #ifndef FxGripTileableEffect_Analyze_h
 #define FxGripTileableEffect_Analyze_h
@@ -14,9 +21,8 @@
 #import "FxGripObjectTrackerData.h"
 
 /*!
-	@category   FxGripTileableEffect (Analyze)
 	@abstract   The frame-analysis pass and its per-frame storage.
-	@discussion Introduced in FxGrip 1.0. This category implements the FxPlug `FxAnalyzer`
+	@discussion Introduced in FxGrip 0.1.0. This category implements the FxPlug `FxAnalyzer`
 				protocol on the effect base. An effect opts into pre-render analysis by
 				declaring `<FxAnalyzer>` on its own interface; the base then answers the
 				analysis callbacks, stores each frame's result in the effect's analysisData

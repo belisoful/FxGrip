@@ -1,7 +1,18 @@
-//
-//  FxGripMLImageEffect.h
-//  FxGrip
-//
+/*!
+	@file       FxGripMLImageEffect.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMLImageEffect
+	@abstract   The tileable-effect template that renders a source image through an inference backend.
+	@discussion Introduced in FxGrip 0.1.0. The template owns the render-thread orchestration for an
+	            image-to-image model. It turns the source tile into the backend's image input, runs
+	            the backend, and writes the backend's image output to the destination tile. The
+	            backend defaults to an FxGripPassthroughBackend, so the effect renders its source
+	            unchanged with no model present. A per-frame cache stores each result so a slow model
+	            runs once per frame. A subclass declares the model's specifics and inherits the
+	            plumbing.
+*/
 
 #ifndef FxGripMLImageEffect_h
 #define FxGripMLImageEffect_h
@@ -16,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 	@class      FxGripMLImageEffect
 	@abstract   A tileable-effect template that renders one source image through an inference
 				backend.
-	@discussion Introduced in FxGrip 1.0. Owns the render-thread orchestration for an
+	@discussion Introduced in FxGrip 0.1.0. Owns the render-thread orchestration for an
 				image-to-image model: it turns the source tile into the backend's image input,
 				runs the backend, and writes the backend's image output to the destination tile.
 				A subclass declares the model's specifics and inherits the plumbing.

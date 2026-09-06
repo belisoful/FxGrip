@@ -1,10 +1,15 @@
-//
-//  FxGripTileableEffectNotifications.m
-//  FxGripTileableEffectNotifications
-//
-//  Created by Apple on 1/7/20.
-//  Copyright © 2020-2023 Apple, Inc. All rights reserved.
-//
+/*!
+	@file       FxGripTileableEffect+Notifications.m
+	@copyright  Copyright © 2020-2023 Apple, Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableEffect+Notifications
+	@abstract   Defines the effect's notification names and userInfo payload accessors.
+	@discussion Introduced in FxGrip 0.1.0. The file assigns the string value of each notification
+	            name and userInfo key. It implements the NSDictionary category that reads the API
+	            manager, effect properties, parameter configuration, and coder from a userInfo
+	            dictionary.
+*/
 
 #import "FxGripTileableEffect+Notifications.h"
 
@@ -53,6 +58,10 @@ NSNotificationName const _Nonnull FxGripTileableEffectUnloadName = @"FxGripEffec
 #pragma mark -
 #pragma mark NSDictionary FxPlug Notification UserInfo Access
 
+/*!
+	@abstract	The category that reads FxGrip notification payloads from a userInfo dictionary.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation NSDictionary (FxNotificationUserInfo)
 
 - (nullable id<FxGripAPIAccessing>)fxApiManager {

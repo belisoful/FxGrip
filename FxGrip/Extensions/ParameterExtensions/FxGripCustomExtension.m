@@ -1,9 +1,13 @@
-//
-//  FxGripCustomExtension.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripCustomExtension.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCustomExtension
+	@abstract   Implements the parameter extension that models a custom-value parameter.
+	@discussion Introduced in FxGrip 0.1.0. The extension seeds the ordered set of accepted value classes
+	            and draws its parameter behavior from the included custom parameter library.
+*/
 
 #import "FxGripCustomExtension.h"
 #import "FxGripTileableEffect.h"
@@ -17,8 +21,14 @@
 #pragma mark -
 #pragma mark FxGripCustomExtension Implementation
 
+/*!
+	@abstract	The extension that represents a custom-value effect parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The extension stores a secure-codable value and accepts the
+				value classes listed in dataClasses.
+*/
 @implementation FxGripCustomExtension
 
+/*! @abstract Seeds the ordered set of value classes the custom parameter accepts. */
 -(instancetype _Nullable) init
 {
 	self = [super init];

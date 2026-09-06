@@ -1,9 +1,14 @@
-//
-//  FxGripMetaManager.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripMetaManager.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripMetaManager
+	@abstract   Implements the per-parameter tag and meta store for an effect instance.
+	@discussion Introduced in FxGrip 0.1.0. A single mutable dictionary holds two root containers: a
+	            tag reverse index and a per-parameter record store. Aliases into that dictionary are
+	            re-established after every decode and copy. A recursive lock guards every public method.
+*/
 
 #import <AppKit/AppKit.h>
 #import "FxGripMetaManager.h"
@@ -17,6 +22,12 @@
 
 static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 
+/*!
+	@abstract	The per-parameter tag and meta store for an effect instance.
+	@discussion	Introduced in FxGrip 0.1.0. The store archives as the InstanceMeta custom parameter.
+				Mutations mark the manager unsaved, and saveMeta writes it back through the effect's
+				parameter-setting API.
+*/
 @implementation FxGripMetaManager
 {
 	NSMutableDictionary<NSString*, NSObject*> *_data;
@@ -83,6 +94,7 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 
 #pragma mark Errors
 
+/*! @abstract Builds an error in the FxGrip plug error domain, offsetting the code by the parameter ID. */
 + (NSError *)errorForParameter:(FxParameterId)parameterID description:(NSString *)description
 {
 	// FxGripPlugErrorDomain guards the weak-linked FxPlug domain symbol, which is NULL
@@ -106,6 +118,14 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 
 #pragma mark Record Management
 
+/*!
+	@method		addParameter:
+	@abstract	Creates the record for a parameter ID.
+	@discussion	Introduced in FxGrip 0.1.0. A pre-seeded record without an ID is adopted and completed;
+				a record that already carries an ID is rejected. Pre-seeded tag and meta containers are
+				promoted to their mutable classes.
+	@result		YES when the record is created or adopted; NO for a duplicate.
+*/
 - (BOOL)addParameter:(FxParameterId)parameterID
 {
 	[_metaLock lock];
@@ -151,6 +171,11 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	return YES;
 }
 
+/*!
+	@method		removeParameter:
+	@abstract	Removes the record and scrubs the parameter ID from the tag reverse index.
+	@result		YES when the record existed.
+*/
 - (BOOL)removeParameter:(FxParameterId)parameterID
 {
 	[_metaLock lock];
@@ -264,6 +289,7 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	return hasTag;
 }
 
+/*! @abstract Replaces a parameter's tags by clearing them and adding each supplied tag. */
 - (NSError *_Nullable)setTags:(NSArray<NSString*> *_Nonnull)tags toParameter:(FxParameterId)parameterID
 {
 	[_metaLock lock];
@@ -522,6 +548,13 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	[_metaLock unlock];
 }
 
+/*!
+	@method		saveMeta
+	@abstract	Writes the manager to the host as the InstanceMeta custom parameter value.
+	@discussion	Introduced in FxGrip 0.1.0. Runs only when unsaved. The unsaved flag clears after the
+				host write, so a write that cannot proceed leaves the manager unsaved for a later flush.
+	@result		YES when nothing needs saving or the write is issued; NO when the setting API is unavailable.
+*/
 - (BOOL)saveMeta
 {
 	[_metaLock lock];
@@ -578,6 +611,7 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 	[_metaLock unlock];
 }
 
+/*! @abstract Decodes the root store and re-establishes the tag and parameter aliases. */
 - (nullable instancetype)initWithCoder:(NSCoder *)coder
 {
 	self = [self initWithEffect:nil];
@@ -625,6 +659,13 @@ static NSString * const kFxGripMetaManagerCoderDataKey = @"data";
 
 #pragma mark FxGripCustomDataClasses
 
+/*!
+	@method		classesForParameter
+	@abstract	The secure-decode allow-list for the manager's archive contents.
+	@discussion	Introduced in FxGrip 0.1.0. The list admits the collection, value, and FxGrip dictionary
+				classes a plugin can store under a meta key, so a meta record survives reload.
+	@result		The ordered set of decodable classes.
+*/
 + (NSOrderedSet<Class>*_Nonnull)classesForParameter
 {
 	return [NSOrderedSet orderedSetWithArray:@[

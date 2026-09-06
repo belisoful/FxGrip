@@ -1,9 +1,12 @@
-//
-//  FxGripPluginTests.m
-//  FxGripPluginTests
-//
-//  Created by ~ ~ on 3/15/24.
-//
+/*!
+	@file       FxGripStaticRegistrarTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripStaticRegistrarTests
+	@abstract   Unit tests for FxGripStaticRegistrar protocol conformance, plugin validation, and OSC linking.
+	@discussion Introduced in FxGrip 0.1.0. The tests verify the registrar's declared protocol conformance, its baseline error behavior with no registered content, the validation the registration pipeline applies to plugin dictionaries, and the on-screen-control linking that moves a consumer's OSC directive into the OSC plugin's supportedPlugins list.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGrip/FxGripStaticRegistrar.h"
@@ -88,11 +91,13 @@
     // Put teardown code here. This method is called after the invocation of each test method in the class.
 }
 
+/*! @abstract FxGripStaticRegistrar conforms to PROPlugInRegistering and FxGripStaticRegistrarSubclass. */
 - (void)testClassProtocols {
 	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(PROPlugInRegistering)]);
 	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(FxGripStaticRegistrarSubclass)]);
 }
 
+/*! @abstract FxGripStaticRegistrar conforms to the registering-groups and registering-plugins protocols in addition to the base registration protocols. */
 - (void)testRegistrationProtocols {
 	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(PROPlugInRegistering)]);
 	XCTAssertTrue([FxGripStaticRegistrar conformsToProtocol:@protocol(FxGripStaticRegistrarSubclass)]);
@@ -101,6 +106,7 @@
 }
 
 
+/*! @abstract A fresh registrar is loadable, loads the first instance without error, and reports nil registered groups and plugins. */
 - (void)testInit {
 	FxGripStaticRegistrar *staticRegistrar = [FxGripStaticRegistrar.alloc init];
 	
@@ -113,6 +119,7 @@
 	XCTAssertNil(staticRegistrar.registeredPlugIns);
 }
 
+/*! @abstract +sharedInstance returns an instance of FxGripStaticRegistrar. */
 - (void)testSharedInstance
 {
 	FxGripStaticRegistrar *globalStaticRegistrar = [FxGripStaticRegistrar sharedInstance];
@@ -120,6 +127,7 @@
 }
 
 
+/*! @abstract A base registrar with no groups returns nil from -registeredPlugInGroupsWithError: and sets an error. */
 - (void)testRegisteredPlugInGroupsWithError_Baseline {
 	FxGripStaticRegistrar *staticRegistrar = [FxGripStaticRegistrar.alloc init];
 	
@@ -128,6 +136,7 @@
 	XCTAssertNotNil(error);
 }
 
+/*! @abstract A base registrar with no plugins returns nil from -registeredPlugInsWithError: and sets an error. */
 - (void)testRegisteredPlugInsWithError_Baseline {
 	FxGripStaticRegistrar *staticRegistrar = [FxGripStaticRegistrar.alloc init];
 	
@@ -138,6 +147,7 @@
 
 
 
+/*! @abstract A subclass overriding -registeredPlugInGroups returns exactly those group dictionaries. */
 - (void)testRegisteredPlugInGroups_Property {
 	FxGripStaticRegistrar *propertyRegistrar = [StaticRegistrarPropertiesClass.alloc init];
 	
@@ -158,6 +168,7 @@
 // supplies it is declaring the finished set, so it is returned as-is. Subclasses feeding
 // unprocessed plugins use the plugInReferences / plugInsWithError: hooks, which run the
 // registration pipeline (see testRegisterPlugin_* below).
+/*! @abstract A subclass supplying -registeredPlugIns has that finished set returned unchanged and with no error. */
 - (void)testRegisteredPlugIns_Property {
 	FxGripStaticRegistrar *staticRegistrar = [StaticRegistrarPropertiesClass.alloc init];
 
@@ -170,6 +181,7 @@
 
 #pragma mark registerPlugin: validation
 
+/*! @abstract A plugin dictionary with all required fields and a loaded class registers and is reported by UUID. */
 - (void)testRegisterPlugin_CompleteInformationWithLoadedClass_Registers {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 	NSString *uuid = NSUUID.UUID.UUIDString;
@@ -188,6 +200,7 @@
 	XCTAssertTrue([registrar containsPluginUUID:uuid]);
 }
 
+/*! @abstract A plugin naming a class that does not exist in the process is rejected despite complete fields. */
 - (void)testRegisterPlugin_UnloadedClassName_IsRejected {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 	NSString *uuid = NSUUID.UUID.UUIDString;
@@ -207,6 +220,7 @@
 	XCTAssertFalse([registrar containsPluginUUID:uuid]);
 }
 
+/*! @abstract A plugin missing the version field is rejected and not stored. */
 - (void)testRegisterPlugin_MissingRequiredField_IsRejected {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 	NSString *uuid = NSUUID.UUID.UUIDString;
@@ -226,6 +240,7 @@
 // The dictionaries the properties subclass supplies are exactly the kind of unvalidated
 // input the pipeline rejects: plugin 1 names an unloaded class, plugin 2 carries no
 // plugin uuid.
+/*! @abstract The properties subclass dictionaries are both rejected, one for an unloaded class and one for a missing plugin UUID. */
 - (void)testRegisterPlugins_PropertyClassDictionaries_AreAllRejected {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 	StaticRegistrarPropertiesClass *properties = [StaticRegistrarPropertiesClass.alloc init];
@@ -237,6 +252,7 @@
 }
 
 
+/*! @abstract A base registrar with no groups returns nil and sets an error. */
 - (void)testPlugInGroupsWithError_Baseline {
 	FxGripStaticRegistrar *staticRegistrar = [FxGripStaticRegistrar.alloc init];
 	
@@ -245,6 +261,7 @@
 	XCTAssertNotNil(error);
 }
 
+/*! @abstract A base registrar with no plugins returns nil and sets an error. */
 - (void)testPlugInsWithError_Baseline {
 	FxGripStaticRegistrar *staticRegistrar = [FxGripStaticRegistrar.alloc init];
 	
@@ -281,6 +298,7 @@
 
 // An `osc` directive links a plugin to its on-screen-control plugin: registration strips the
 // directive from the consumer and adds the consumer's uuid to the OSC's supportedPlugins.
+/*! @abstract Registering a consumer with an OSC directive strips the directive and adds the consumer UUID to the OSC plugin's supportedPlugins. */
 - (void)testRegisteredPlugIns_OSCConsumer_MovesToSupportedPlugins {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 
@@ -301,6 +319,7 @@
 
 // Two consumers naming the same OSC both accumulate; the OSC entry is upgraded to a mutable
 // copy in place without corrupting either consumer's record.
+/*! @abstract Two consumers naming the same OSC both accumulate in its supportedPlugins, and neither consumer retains the OSC directive. */
 - (void)testRegisteredPlugIns_MultipleOSCConsumers_Accumulate {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 
@@ -324,6 +343,7 @@
 }
 
 // A dangling OSC reference is logged and skipped, leaving the consumer registered.
+/*! @abstract An OSC directive naming an unregistered plugin is skipped without throwing, and the consumer stays registered without the directive. */
 - (void)testRegisteredPlugIns_OSCReferenceToMissingPlugin_DoesNotCrash {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 
@@ -337,6 +357,7 @@
 	XCTAssertNil([self plugin:kConsumerAUUID inArray:plugIns][kProPlugPlugInX_OSCUUIDsProperty]);
 }
 
+/*! @abstract -registerGroupUUID:groupName: with a nil UUID or nil name registers nothing and does not throw. */
 - (void)testRegisterGroupUUID_NilArguments_DoNotRegisterOrCrash {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
 

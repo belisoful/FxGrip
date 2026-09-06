@@ -1,11 +1,12 @@
-//
-//  FxGripParameterGroupingAPI_v1Tests.m
-//  FxGripTests
-//
-//  Unit tests for the grouping wrapper. The subgroup query reads the parameter type from
-//  the dynamic API; every other query walks the effect's own parameter objects rather
-//  than a host API, because FxPlug ships no grouping API.
-//
+/*!
+	@file       FxGripParameterGroupingAPI_v1Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterGroupingAPI_v1Tests
+	@abstract   Verifies the grouping wrapper's subgroup, child-count, child-enumeration, and parent queries against the effect's own parameter objects.
+	@discussion Introduced in FxGrip 0.1.0. The subgroup query reads the parameter type from the dynamic API. The child and parent queries walk the effect's parameter objects. Reparenting is refused.
+*/
 
 #import <XCTest/XCTest.h>
 #import <objc/runtime.h>
@@ -195,6 +196,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 #pragma mark isSubGroup:
 
+/*! @abstract A group-typed parameter is a subgroup, and the query reads the type from the dynamic API. */
 - (void)testAGroupTypedParameterIsASubGroup
 {
 	self.dynamicAPI.types[@(kGroupingTestGroup)] = @(FxParameterType_Group);
@@ -203,6 +205,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(self.dynamicAPI.requestedParameters, @[@(kGroupingTestGroup)]);
 }
 
+/*! @abstract A parameter of a non-group type is not a subgroup. */
 - (void)testAParameterOfAnyOtherTypeIsNotASubGroup
 {
 	self.dynamicAPI.types[@(kGroupingTestLeaf)] = @(FxParameterType_Float);
@@ -210,11 +213,13 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertFalse([self.api isSubGroup:kGroupingTestLeaf]);
 }
 
+/*! @abstract An unknown parameter is not a subgroup. */
 - (void)testAnUnknownParameterIsNotASubGroup
 {
 	XCTAssertFalse([self.api isSubGroup:kGroupingTestMissing]);
 }
 
+/*! @abstract Without a dynamic API the type reads as None, so nothing is a subgroup. */
 - (void)testWithoutADynamicAPINothingIsASubGroup
 {
 	FxGripParameterGroupingAPI_v1 *api =
@@ -228,6 +233,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 #pragma mark hasSubParameters:
 
+/*! @abstract A group holding children has subparameters. */
 - (void)testAGroupHoldingChildrenHasSubParameters
 {
 	[self installPopulatedGroup];
@@ -235,6 +241,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertTrue([self.api hasSubParameters:kGroupingTestGroup]);
 }
 
+/*! @abstract An empty group holds no subparameters. */
 - (void)testAnEmptyGroupHasNoSubParameters
 {
 	[self addParameter:kGroupingTestGroup parent:kFxParameterId_TopLevelGroup container:YES];
@@ -242,6 +249,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertFalse([self.api hasSubParameters:kGroupingTestGroup]);
 }
 
+/*! @abstract A non-container parameter holds no subparameters. */
 - (void)testAParameterThatHoldsNoChildrenHasNoSubParameters
 {
 	[self addParameter:kGroupingTestLeaf parent:kFxParameterId_TopLevelGroup container:NO];
@@ -249,6 +257,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertFalse([self.api hasSubParameters:kGroupingTestLeaf]);
 }
 
+/*! @abstract An unknown parameter holds no subparameters. */
 - (void)testAnUnknownParameterHasNoSubParameters
 {
 	XCTAssertFalse([self.api hasSubParameters:kGroupingTestMissing]);
@@ -256,6 +265,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 #pragma mark parameterSubCount:
 
+/*! @abstract The subcount reports the number of children a group holds. */
 - (void)testParameterSubCountReportsTheChildCount
 {
 	[self installPopulatedGroup];
@@ -263,6 +273,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertEqual([self.api parameterSubCount:kGroupingTestGroup], (UInt32)2);
 }
 
+/*! @abstract The subcount is zero for a parameter that holds no children. */
 - (void)testParameterSubCountIsZeroForAParameterThatHoldsNoChildren
 {
 	[self addParameter:kGroupingTestLeaf parent:kFxParameterId_TopLevelGroup container:NO];
@@ -270,6 +281,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertEqual([self.api parameterSubCount:kGroupingTestLeaf], (UInt32)0);
 }
 
+/*! @abstract The subcount is zero for an unknown parameter. */
 - (void)testParameterSubCountIsZeroForAnUnknownParameter
 {
 	XCTAssertEqual([self.api parameterSubCount:kGroupingTestMissing], (UInt32)0);
@@ -277,6 +289,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 #pragma mark parameterIDAtSubIndex:fromParameter:
 
+/*! @abstract The child at each subindex reports the group's children in order. */
 - (void)testParameterIDAtSubIndexReportsEachChildInOrder
 {
 	[self installPopulatedGroup];
@@ -287,6 +300,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 				   kGroupingTestChildB);
 }
 
+/*! @abstract The child at a subindex past the last child is zero. */
 - (void)testParameterIDAtSubIndexIsZeroPastTheLastChild
 {
 	[self installPopulatedGroup];
@@ -295,6 +309,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 				   (FxParameterId)0);
 }
 
+/*! @abstract The child at a subindex is zero for a parameter that holds no children. */
 - (void)testParameterIDAtSubIndexIsZeroForAParameterThatHoldsNoChildren
 {
 	[self addParameter:kGroupingTestLeaf parent:kFxParameterId_TopLevelGroup container:NO];
@@ -303,6 +318,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 				   (FxParameterId)0);
 }
 
+/*! @abstract The child at a subindex is zero for an unknown parameter. */
 - (void)testParameterIDAtSubIndexIsZeroForAnUnknownParameter
 {
 	XCTAssertEqual([self.api parameterIDAtSubIndex:0 fromParameter:kGroupingTestMissing],
@@ -311,6 +327,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 #pragma mark getParameterSubGroup:
 
+/*! @abstract The subgroup query reports the parent group of a child. */
 - (void)testGetParameterSubGroupReportsTheParentOfAChild
 {
 	[self installPopulatedGroup];
@@ -318,6 +335,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 	XCTAssertEqual([self.api getParameterSubGroup:kGroupingTestChildA], kGroupingTestGroup);
 }
 
+/*! @abstract The subgroup query reports the top-level group for a top-level parameter. */
 - (void)testGetParameterSubGroupReportsTheTopLevelGroupForATopLevelParameter
 {
 	[self addParameter:kGroupingTestLeaf parent:kFxParameterId_TopLevelGroup container:NO];
@@ -326,6 +344,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 				   (FxParameterId)kFxParameterId_TopLevelGroup);
 }
 
+/*! @abstract The subgroup query reports None for an unknown parameter. */
 - (void)testGetParameterSubGroupReportsNoneForAnUnknownParameter
 {
 	XCTAssertEqual([self.api getParameterSubGroup:kGroupingTestMissing],
@@ -334,6 +353,7 @@ static NSNotificationCenter *FxGripGroupingTestMakePriorityCenter(void)
 
 #pragma mark setParameterSubGroup:toParameter:
 
+/*! @abstract Reparenting is refused and leaves the child's parent unchanged. */
 - (void)testReparentingIsNotSupported
 {
 	[self installPopulatedGroup];

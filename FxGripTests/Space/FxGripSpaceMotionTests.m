@@ -1,7 +1,12 @@
-//
-//  FxGripSpaceMotionTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripSpaceMotionTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSpaceMotionTests
+	@abstract   Tests for the FxGripSpaceMotion transform and camera-motion functions.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover position and focus-distance extraction, forward, backward, and central linear and angular velocity, orientation recovery that ignores non-uniform scale, and the non-positive time-step guard.
+*/
 
 #import <XCTest/XCTest.h>
 #import <simd/simd.h>
@@ -31,6 +36,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 
 #pragma mark Position and focus
 
+/*! @abstract FxGripTransformPosition returns the transform's translation column. */
 - (void)testPositionIsTheTranslationColumn
 {
 	simd_float3 p = FxGripTransformPosition(TransformWithTranslation(3.0f, 4.0f, 5.0f));
@@ -39,6 +45,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 	XCTAssertEqualWithAccuracy(p.z, 5.0f, 1e-5);
 }
 
+/*! @abstract FxGripFocusDistance returns the Euclidean distance between two points. */
 - (void)testFocusDistanceIsEuclidean
 {
 	float d = FxGripFocusDistance(simd_make_float3(0.0f, 0.0f, 0.0f), simd_make_float3(0.0f, 0.0f, 10.0f));
@@ -50,6 +57,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 
 #pragma mark Linear velocity
 
+/*! @abstract Central linear velocity divides the span between the previous and next samples by twice the time step. */
 - (void)testCentralLinearVelocityUsesTheSpanBetweenSamples
 {
 	simd_float4x4 previous = TransformWithTranslation(-1.0f, 0.0f, 0.0f);
@@ -61,6 +69,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 	XCTAssertEqualWithAccuracy(motion.linearVelocity.z, 0.0f, 1e-5);
 }
 
+/*! @abstract Forward linear velocity divides the displacement from the current to the next sample by the time step. */
 - (void)testForwardLinearVelocity
 {
 	simd_float4x4 current = TransformWithTranslation(0.0f, 0.0f, 0.0f);
@@ -70,6 +79,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 	XCTAssertEqualWithAccuracy(motion.linearVelocity.x, 2.0f, 1e-5);
 }
 
+/*! @abstract Backward linear velocity divides the displacement from the previous to the current sample by the time step. */
 - (void)testBackwardLinearVelocity
 {
 	simd_float4x4 previous = TransformWithTranslation(1.0f, 0.0f, 0.0f);
@@ -79,6 +89,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 	XCTAssertEqualWithAccuracy(motion.linearVelocity.x, 3.0f, 1e-5);
 }
 
+/*! @abstract Under constant velocity, the forward, backward, and central estimates agree. */
 - (void)testForwardAndBackwardAgreeUnderConstantVelocity
 {
 	simd_float4x4 a = TransformWithTranslation(0.0f, 0.0f, 0.0f);
@@ -96,6 +107,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 
 #pragma mark Angular velocity
 
+/*! @abstract Central angular velocity of a rotation about the y-axis recovers the rate about y and zero about x and z. */
 - (void)testCentralAngularVelocityAboutY
 {
 	float theta = 0.2f;
@@ -109,6 +121,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 	XCTAssertEqualWithAccuracy(motion.angularVelocity.z, 0.0f, 1e-4);
 }
 
+/*! @abstract FxGripAngularVelocity of two equal orientations is zero. */
 - (void)testAngularVelocityIsZeroWithoutRotation
 {
 	simd_quatf identity = simd_quaternion(0.0f, simd_make_float3(0.0f, 1.0f, 0.0f));
@@ -118,6 +131,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 
 #pragma mark Orientation
 
+/*! @abstract FxGripTransformOrientation recovers the rotation up to the quaternion double cover even when the basis carries non-uniform scale. */
 - (void)testOrientationIgnoresNonUniformScale
 {
 	simd_quatf rotation = simd_quaternion(0.5f, simd_normalize(simd_make_float3(1.0f, 2.0f, 3.0f)));
@@ -133,6 +147,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 
 #pragma mark Guards
 
+/*! @abstract A zero or negative time step yields zero linear and angular velocity for every estimator. */
 - (void)testNonPositiveDtYieldsZeroMotion
 {
 	simd_float4x4 a = TransformWithTranslation(0.0f, 0.0f, 0.0f);

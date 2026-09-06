@@ -1,7 +1,12 @@
-//
-//  FxGripDividerDataTests.m
-//  FxGripTests
-//
+/*!
+	@file       FxGripDividerDataTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripDividerDataTests
+	@abstract   Tests the FxGripDividerData model behind the divider parameter.
+	@discussion Introduced in FxGrip 0.1.0. The tests cover default construction, dictionary configuration, the geometry the top margin, bottom margin, and parameter height derive from one another, the float and int parameter accessors, view-change notification, and copying, equality, and secure coding.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxTypes.h>
@@ -68,6 +73,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - Construction
 
+/*! @abstract A default divider takes the golden-ratio width, margins of 7 and 12, and the derived parameter height. */
 - (void)testInitAppliesTheGoldenRatioWidthAndDefaultMargins
 {
 	XCTAssertEqualWithAccuracy(self.divider.percentWidth, kGoldenRatio - 1.0, 1e-12);
@@ -76,6 +82,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.parameterHeight, 7 + kDividerHeight + 12);
 }
 
+/*! @abstract A configuration dictionary sets the width and bottom margin and recomputes the parameter height. */
 - (void)testDataWithDictionaryReadsTheWidthAndBottomMargin
 {
 	FxGripDividerData *d = [FxGripDividerData dataWithDictionary:@{@"width": @(0.25), @"marginbottom": @(5)}];
@@ -85,6 +92,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(d.parameterHeight, 7 + kDividerHeight + 5);
 }
 
+/*! @abstract An empty or nil configuration dictionary keeps the default width and parameter height. */
 - (void)testDataWithAnEmptyOrNilDictionaryKeepsTheDefaults
 {
 	FxGripDividerData *empty = [FxGripDividerData dataWithDictionary:@{}];
@@ -98,6 +106,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - Derived Geometry
 
+/*! @abstract Setting the top margin recomputes the parameter height from the two margins and the divider height. */
 - (void)testSettingTheTopMarginRecomputesTheParameterHeight
 {
 	self.divider.marginTop = 3;
@@ -106,6 +115,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.parameterHeight, 3 + kDividerHeight + 12);
 }
 
+/*! @abstract Setting the bottom margin recomputes the parameter height. */
 - (void)testSettingTheBottomMarginRecomputesTheParameterHeight
 {
 	self.divider.marginBottom = 4;
@@ -114,6 +124,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.parameterHeight, 7 + kDividerHeight + 4);
 }
 
+/*! @abstract Setting an odd parameter height splits the remaining space evenly between the two margins. */
 - (void)testSettingAnOddParameterHeightSplitsTheMarginsEvenly
 {
 	self.divider.parameterHeight = 21;
@@ -123,6 +134,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.parameterHeight, 21);
 }
 
+/*! @abstract Setting an even parameter height gives the extra point to the bottom margin. */
 - (void)testSettingAnEvenParameterHeightGivesTheExtraPointToTheBottom
 {
 	self.divider.parameterHeight = 20;
@@ -132,6 +144,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.parameterHeight, 20);
 }
 
+/*! @abstract Setting the parameter height to the divider height leaves both margins at zero. */
 - (void)testSettingTheParameterHeightToTheDividerHeightLeavesNoMargins
 {
 	self.divider.parameterHeight = kDividerHeight;
@@ -140,6 +153,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.marginBottom, 0);
 }
 
+/*! @abstract Setting the width leaves the margins and parameter height unchanged. */
 - (void)testSettingTheWidthDoesNotDisturbTheMargins
 {
 	self.divider.percentWidth = 0.125;
@@ -151,6 +165,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - Parameter Accessors
 
+/*! @abstract The float parameter accessor reads and writes the width. */
 - (void)testTheFloatAccessorMapsToTheWidth
 {
 	double value = 0.0;
@@ -164,6 +179,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(value, 0.5);
 }
 
+/*! @abstract The int parameter accessor reads and writes the parameter height, which resplits the margins. */
 - (void)testTheIntAccessorMapsToTheParameterHeight
 {
 	int value = 0;
@@ -181,6 +197,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - View Notification
 
+/*! @abstract Every geometry setter notifies the attached view once and passes the divider as the value. */
 - (void)testEveryGeometrySetterNotifiesTheAttachedView
 {
 	FxGripDividerTestView *view = [FxGripDividerTestView.alloc init];
@@ -195,6 +212,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqualObjects(view.lastValue, self.divider);
 }
 
+/*! @abstract A geometry setter with no attached view does not throw and still applies the value. */
 - (void)testSettersTolerateADetachedView
 {
 	self.divider.parameterView = nil;
@@ -203,6 +221,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.marginTop, 5);
 }
 
+/*! @abstract A view that does not adopt the data-changed protocol is not notified, and the setter still applies. */
 - (void)testAViewThatDoesNotAdoptTheDelegateProtocolIsNotNotified
 {
 	// parameterView is unsafe_unretained, so the stand-in has to outlive the setter call.
@@ -215,6 +234,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - Copying, Equality, Coding
 
+/*! @abstract A copy carries the geometry and the view and effect references and compares equal. */
 - (void)testCopyCarriesTheGeometryAndTheViewReferences
 {
 	FxGripDividerTestView *view = [FxGripDividerTestView.alloc init];
@@ -236,6 +256,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqualObjects(self.divider, copy);
 }
 
+/*! @abstract Equality compares the geometry and ignores the view reference, and a differing margin breaks equality. */
 - (void)testEqualityIgnoresTheViewAndComparesTheGeometry
 {
 	FxGripDividerTestView *view = [FxGripDividerTestView.alloc init];
@@ -250,11 +271,13 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertFalse([self.divider isEqual:nil]);
 }
 
+/*! @abstract The class advertises support for secure coding. */
 - (void)testTheClassAdvertisesSecureCoding
 {
 	XCTAssertTrue([FxGripDividerData supportsSecureCoding]);
 }
 
+/*! @abstract A secure-coding round trip preserves the width, margins, and parameter height. */
 - (void)testSecureCodingRoundTripPreservesTheGeometry
 {
 	self.divider.percentWidth = 0.375;
@@ -276,6 +299,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqualObjects(decoded, self.divider);
 }
 
+/*! @abstract A decoded divider has no view or effect attachment. */
 - (void)testADecodedDividerHasNoViewAttachment
 {
 	NSData *data = [NSKeyedArchiver archivedDataWithRootObject:self.divider requiringSecureCoding:YES error:NULL];
@@ -287,6 +311,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - Dictionary Keys
 
+/*! @abstract A configuration dictionary sets the top margin and recomputes the parameter height. */
 - (void)testDataWithDictionaryReadsTheTopMargin
 {
 	FxGripDividerData *d = [FxGripDividerData dataWithDictionary:@{@"margintop": @(3)}];
@@ -295,6 +320,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(d.parameterHeight, 3 + kDividerHeight + 12);
 }
 
+/*! @abstract A configuration dictionary sets both margins together and recomputes the parameter height. */
 - (void)testDataWithDictionaryReadsBothMarginsTogether
 {
 	FxGripDividerData *d = [FxGripDividerData dataWithDictionary:@{@"margintop": @(2), @"marginbottom": @(6)}];
@@ -304,6 +330,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(d.parameterHeight, 2 + kDividerHeight + 6);
 }
 
+/*! @abstract A misspelled margin key is ignored and the defaults hold. */
 - (void)testAMisspelledTopMarginKeyIsIgnored
 {
 	FxGripDividerData *d = [FxGripDividerData dataWithDictionary:@{@"margintpo": @(3)}];
@@ -315,6 +342,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - Margin Clamping
 
+/*! @abstract A parameter height below the divider height clamps the margins to zero without underflow. */
 - (void)testAParameterHeightBelowTheDividerHeightDoesNotUnderflowTheMargins
 {
 	self.divider.parameterHeight = 0;
@@ -326,6 +354,7 @@ static const double kGoldenRatio = 1.618033988749895;
 
 #pragma mark - Equality
 
+/*! @abstract Equal dividers share a hash. */
 - (void)testEqualDividersShareAHash
 {
 	FxGripDividerData *other = [FxGripDividerData.alloc init];
@@ -334,6 +363,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqual(self.divider.hash, other.hash);
 }
 
+/*! @abstract Dividers differing in a margin are unequal and do not share a hash. */
 - (void)testDifferentDividersDoNotShareAHash
 {
 	FxGripDividerData *other = [FxGripDividerData.alloc init];
@@ -343,6 +373,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertNotEqual(self.divider.hash, other.hash);
 }
 
+/*! @abstract Comparing a divider to a foreign object answers false without throwing. */
 - (void)testIsEqualToAForeignObjectAnswersFalse
 {
 	BOOL equal = YES;
@@ -350,6 +381,7 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertFalse(equal);
 }
 
+/*! @abstract A copy preserves the asymmetric default margins. */
 - (void)testCopyPreservesAsymmetricMargins
 {
 	FxGripDividerData *copy = [self.divider copy];

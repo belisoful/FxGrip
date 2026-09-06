@@ -1,11 +1,19 @@
-//
-//  SCNLight+FxGrip.m
-//  FxGrip
-//
+/*!
+	@file       SCNLight+FxGrip.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     SCNLight+FxGrip
+	@abstract   Implements the SceneKit light construction from an FxPlug FxLight.
+	@discussion Introduced in FxGrip 0.1.0. The type map converts an FxLightType to an SCNLightType, and a
+	            rotation helper orients directional and spot lights so the node's local -Z axis points
+	            along the light's direction. Intensity is scaled to SceneKit's lumen default.
+*/
 
 #import "SCNLight+FxGrip.h"
 #import <simd/simd.h>
 
+/*! Maps an FxLightType to the matching SCNLightType, defaulting to omni. */
 static SCNLightType FxGripSCNLightType(FxLightType type)
 {
 	switch (type) {
@@ -45,8 +53,17 @@ static simd_quatf FxGripRotationFromTo(simd_float3 from, simd_float3 to)
 	return simd_quaternion(acosf(d), simd_normalize(simd_cross(f, t)));
 }
 
+/*!
+	@abstract	Builds a SceneKit light from an FxPlug FxLight.
+	@discussion	Introduced in FxGrip 0.1.0.
+*/
 @implementation SCNLight (FxGrip)
 
+/*!
+	@method		fxg_lightFromFxLight:
+	@abstract	An SCNLight configured from an FxLight.
+	@discussion	Introduced in FxGrip 0.1.0. Type, color, and cast-shadows map directly; intensity is scaled
+				by 1000 to SceneKit's lumen default; spot cone angles convert from radians to degrees. */
 + (instancetype)fxg_lightFromFxLight:(FxLight)light
 {
 	SCNLight *scnLight = [SCNLight light];
@@ -63,6 +80,11 @@ static simd_quatf FxGripRotationFromTo(simd_float3 from, simd_float3 to)
 	return scnLight;
 }
 
+/*!
+	@method		fxg_lightNodeFromFxLight:
+	@abstract	An SCNNode carrying the light at the reported world position.
+	@discussion	Introduced in FxGrip 0.1.0. Directional and spot lights are oriented so the node's local
+				-Z axis points along the light's direction. */
 + (SCNNode *)fxg_lightNodeFromFxLight:(FxLight)light
 {
 	SCNNode *node = [SCNNode node];

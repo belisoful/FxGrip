@@ -1,11 +1,15 @@
-//
-//  FxGripColorParameterTests.m
-//  FxGripTests
-//
-//  Unit tests for FxGripColorParameter (RGBA): the type identity, the payload
-//  +addParameter:toEffect: derives from the nested default record, the color-space gamma
-//  conversion, and the value plumbing through the retrieval and setting APIs.
-//
+/*!
+	@file       FxGripColorParameterTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripColorParameterTests
+	@abstract   Tests FxGripColorParameter (RGBA): its FxPlug type identity and the creation
+	            payload +addParameter:toEffect: derives from a nested default record.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the opaque-black default, the
+	            per-component forwarding, the color-space gamma conversion, and the value
+	            plumbing through the retrieval and setting APIs.
+*/
 
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
@@ -58,6 +62,7 @@ static const double kColorTestGamma = 2.2;
 
 #pragma mark Type identity
 
+/*! @abstract The class reports the FxPlug RGBA type and its type string. */
 - (void)testReportsItsFxPlugTypeAndTypeString
 {
 	XCTAssertEqual(FxGripColorParameter.parameterType, FxParameterType_RGBA);
@@ -66,6 +71,7 @@ static const double kColorTestGamma = 2.2;
 
 #pragma mark Creation
 
+/*! @abstract A color created with no default sends opaque black to the creation call. */
 - (void)testColorWithoutADefaultIsOpaqueBlack
 {
 	XCTAssertTrue([self add:FxGripColorParameter.class type:kFxParameterType_RGBA extra:nil]);
@@ -80,6 +86,7 @@ static const double kColorTestGamma = 2.2;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A color forwards the red, green, blue, and alpha of its nested default record. */
 - (void)testColorForwardsEveryComponentOfTheNestedDefault
 {
 	NSDictionary *color = @{kFxParameterProperty_Red: @0.1,
@@ -100,6 +107,7 @@ static const double kColorTestGamma = 2.2;
 										@"flags": @(kFxParameterFlag_DEFAULT)}));
 }
 
+/*! @abstract A default naming no alpha keeps the opaque alpha of one. */
 - (void)testColorKeepsTheOpaqueAlphaWhenTheDefaultNamesNoAlpha
 {
 	NSDictionary *extra = @{kFxParameterProperty_Default: @{kFxParameterProperty_Red: @0.5}};
@@ -110,6 +118,7 @@ static const double kColorTestGamma = 2.2;
 	XCTAssertEqualObjects(self.call[@"alpha"], @1.0);
 }
 
+/*! @abstract A gamma-encoded declared color is linearized for a linear effect, and alpha is left unchanged. */
 - (void)testALinearDeclaredColorLosesItsGammaForALinearEffect
 {
 	self.effect.isLinearColorParameters = YES;
@@ -127,6 +136,7 @@ static const double kColorTestGamma = 2.2;
 	XCTAssertEqualObjects(self.call[@"alpha"], @1.0, @"alpha is never gamma adjusted");
 }
 
+/*! @abstract A linear declared color gains gamma encoding for a gamma effect. */
 - (void)testAGammaDeclaredColorGainsGammaForAGammaEffect
 {
 	self.effect.isGammaColorParameters = YES;
@@ -139,6 +149,7 @@ static const double kColorTestGamma = 2.2;
 	XCTAssertEqualWithAccuracy([self callDouble:@"red"], pow(0.5, kColorTestGamma), 1e-12);
 }
 
+/*! @abstract A declared color whose color space matches the effect is forwarded without conversion. */
 - (void)testAColorSpaceThatMatchesTheEffectIsForwardedUnchanged
 {
 	NSDictionary *color = @{kFxParameterProperty_Red: @0.5,
@@ -150,6 +161,7 @@ static const double kColorTestGamma = 2.2;
 	XCTAssertEqualObjects(self.call[@"red"], @0.5);
 }
 
+/*! @abstract When the host creation API refuses, +addParameter:toEffect: returns false. */
 - (void)testColorReportsAHostRefusal
 {
 	self.effect.apiManager.paramCreateAPIv5.succeeds = NO;
@@ -159,6 +171,7 @@ static const double kColorTestGamma = 2.2;
 
 #pragma mark Values
 
+/*! @abstract -valueAtTime: reads all four color components and the render time from the retrieval API. */
 - (void)testColorValueAtTimeReadsFourComponentsFromTheRetrievalAPI
 {
 	FxGripColorParameter *parameter = [self makeColorParameter];
@@ -179,6 +192,7 @@ static const double kColorTestGamma = 2.2;
 	XCTAssertEqualObjects(retrieval.lastRead[@"timevalue"], @7);
 }
 
+/*! @abstract -setValue:atTime: writes every color component through the setting API. */
 - (void)testColorSetValueWritesEveryComponent
 {
 	FxGripColorParameter *parameter = [self makeColorParameter];
@@ -195,6 +209,7 @@ static const double kColorTestGamma = 2.2;
 							 @"alpha": @0.4}));
 }
 
+/*! @abstract -setValue:atTime: writes nothing when the color pointer is NULL. */
 - (void)testColorSetValueIgnoresANullColor
 {
 	FxGripColorParameter *parameter = [self makeColorParameter];
@@ -216,6 +231,7 @@ static const double kColorTestGamma = 2.2;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"red"], @0.6);
 }
 
+/*! @abstract The three-component write is abandoned with no write when the alpha read-back fails. */
 - (void)testColorWritingOnlyRGBIsAbandonedWhenTheAlphaReadFails
 {
 	FxGripColorParameter *parameter = [self makeColorParameter];
@@ -226,6 +242,7 @@ static const double kColorTestGamma = 2.2;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.writes, @[]);
 }
 
+/*! @abstract The flagDontRemapColors accessor reads and writes the DONT_REMAP_COLORS flag bit. */
 - (void)testDontRemapColorsReadsAndWritesItsFlagBit
 {
 	FxGripColorParameter *parameter = [self makeColorParameter];

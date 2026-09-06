@@ -1,16 +1,23 @@
-//
-//  FxGripInterpolatingDictionary.m
-//  PlugIn
-//
-//  Created by Apple on 10/22/18.
-//  Copyright © 2019-2023 Apple Inc. All rights reserved.
-//
-// @todo interpolation style, ease in, ease out, s-curve
-//    		make a prefix or postfix to skip interpolation
+/*!
+	@file       FxGripInterpolatingDictionary.m
+	@copyright  Copyright © 2019-2023 Apple Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInterpolatingDictionary
+	@abstract   Implements keyframe interpolation over a dictionary custom parameter value.
+	@discussion Introduced in FxGrip 0.1.0. The interpolation walks the two values in parallel by key,
+	            blending strings, collections, and numbers, and copying everything the base cannot blend.
+	            Number blending preserves the CFNumber type of the left value.
+*/
 
 #import "FxGripInterpolatingDictionary.h"
 #import "FxGrip_ARC.h"
 
+/*!
+	@abstract	A dictionary custom parameter value that keyframe-interpolates its entries.
+	@discussion	Introduced in FxGrip 0.1.0. Entries whose key is exempt or underscore-prefixed are copied;
+				the rest are blended by type. A subclass extends blending through customInterpolateValue:.
+*/
 @implementation FxGripInterpolatingDictionary
 
 // The secure unarchiver requires every concrete class to answer classForCoder itself;
@@ -26,6 +33,15 @@
 
 
 
+/*!
+	@method		interpolateBetween:withWeight:
+	@abstract	Blends the receiver toward another instance at a weight, producing a new instance.
+	@discussion	Introduced in FxGrip 0.1.0. The FxCustomParameterInterpolation_v2 entry point. Keys
+				prefixed with the none-prefix are skipped. The result is the receiver's own class.
+	@param		rightValue	The value at the later keyframe.
+	@param		weight		The blend weight from 0 (receiver) to 1 (rightValue).
+	@result		A new interpolated instance.
+*/
 - (NSObject<NSSecureCoding, NSCopying>*)interpolateBetween:(NSObject<NSSecureCoding, NSCopying>*)rightValue
 												withWeight:(float)weight
 {
@@ -50,11 +66,23 @@
 	return NARC_AUTORELEASE(result);
 }
 
+/*! @abstract Blends two values at a weight, with no key path. */
 - (id)interpolateValue:(id)left rightValue:(id)right withWeight:(float)weight
 {
 	return [self interpolateValue:left rightValue:right path:nil withWeight:weight];
 }
 
+/*!
+	@method		interpolateValue:rightValue:path:withWeight:
+	@abstract	Blends two values at a weight, recursing into collections by key path.
+	@discussion	Introduced in FxGrip 0.1.0. Values of different classes return nil. Strings and
+				exempt-path values are copied. Arrays and dictionaries blend element by element,
+				skipping none-prefixed keys. Numbers blend in the left value's CFNumber type; a
+				char or 8-bit integer, which represents a boolean, is copied. Other classes defer
+				to customInterpolateValue:rightValue:path:withWeight:, then fall back to a copy.
+	@param		path	The slash-joined key path of the entry.
+	@result		The blended value, or a copy when the value cannot be blended.
+*/
 - (id)interpolateValue:(id)left rightValue:(id)right path:(NSString*)path withWeight:(float)weight
 {
 	if ([left class] != [right class]) {
@@ -168,6 +196,12 @@
 
 // exemptKeys is inherited from FxGripDictionary.
 
+/*!
+	@method		customInterpolateValue:rightValue:path:withWeight:
+	@abstract	The subclass hook for values the base cannot blend.
+	@discussion	Introduced in FxGrip 0.1.0. The base returns nil, so the caller copies the left value.
+				A subclass returns the blended value for the classes it understands.
+*/
 - (id)customInterpolateValue:(id)left rightValue:(id)right path:(NSString*)path withWeight:(float)weight
 {
 	return nil;

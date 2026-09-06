@@ -1,13 +1,12 @@
-//
-//  FxGripOSCPathPartTests.m
-//  FxGripTests
-//
-//  Unit tests for the unified FxGripOSCPathPart across both backings: the
-//  custom-data FxGripPathData parameter (variable count, editable) and the
-//  per-parameter location/tangent arrays (fixed count, keyframeable). The stub
-//  OSC API maps canvas to object space by a uniform scale of 100, matching the
-//  FxGripOnScreenControl test harness.
-//
+/*!
+	@file       FxGripOSCPathPartTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripOSCPathPartTests
+	@abstract   Verifies the FxGripOSCPathPart on-screen control across its custom-data and per-parameter backings.
+	@discussion Introduced in FxGrip 0.1.0. A stub OSC API maps canvas to object space by a uniform scale of 100, and stub retrieval and setting APIs stage and capture path, point, and float parameters. The tests cover vertex-handle hit testing and dragging, body-drag translation, editable insert and delete with a minimum count, smooth-vertex toggling, tangent-handle hit, drag, mirroring, and break, converter-driven body hits on a Bézier curve, and the per-parameter location and tangent backing.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
@@ -212,6 +211,7 @@ static CMTime FxGripPathPartTestTime(void)
 
 #pragma mark Custom-data backing
 
+/*! @abstract A vertex hit registers within the canvas hit radius of a vertex and misses in the interior. */
 - (void)testVertexHandleHitsByCanvasDistance
 {
 	[self stageCustomTrianglePartWithID:1 options:FxGripOSCPathOptionVertexHandles];
@@ -220,6 +220,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqual([self hitTestAtCanvasX:45 y:45], (NSInteger)0, @"the interior is not a vertex");
 }
 
+/*! @abstract Dragging a vertex writes its new object-space location to the path parameter. */
 - (void)testDraggingAVertexWritesItsNewLocation
 {
 	[self stageCustomTrianglePartWithID:1 options:FxGripOSCPathOptionVertexHandles];
@@ -231,6 +232,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqualWithAccuracy(moved.location.y, 0.30, 1e-9);
 }
 
+/*! @abstract A body drag translates every vertex of the path by the drag delta. */
 - (void)testBodyDragTranslatesEveryVertex
 {
 	[self stageCustomTrianglePartWithID:1 options:FxGripOSCPathOptionBodyDrag];
@@ -246,6 +248,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqualWithAccuracy([path locationAtIndex:2].y, 0.7, 1e-9);
 }
 
+/*! @abstract An Option-click on a segment of an editable path inserts a vertex at the projected point. */
 - (void)testEditableInsertsAVertexOnSegmentClick
 {
 	[self stageCustomTrianglePartWithID:1 options:FxGripOSCPathOptionEditable | FxGripOSCPathOptionVertexHandles];
@@ -258,6 +261,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqualWithAccuracy([path locationAtIndex:1].x, 0.4, 1e-9, @"inserted at the projection");
 }
 
+/*! @abstract A delete key removes the selected vertex from an editable path above its minimum count. */
 - (void)testEditableDeletesTheSelectedVertex
 {
 	FxGripOSCPathPart *part = [self stageCustomTrianglePartWithID:1
@@ -272,6 +276,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqual([self stagedPathForParameter:30].vertexCount, (NSUInteger)2);
 }
 
+/*! @abstract A delete key holds the vertex count at the minimum and removes no vertex. */
 - (void)testEditableDeleteStopsAtTheMinimum
 {
 	FxGripOSCPathPart *part = [self stageCustomTrianglePartWithID:1
@@ -284,6 +289,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqual([self stagedPathForParameter:30].vertexCount, (NSUInteger)3, @"held at the minimum");
 }
 
+/*! @abstract A double-click switches a linear vertex to Bézier and regenerates nonzero tangents. */
 - (void)testDoubleClickTogglesAVertexToSmoothAndBack
 {
 	FxGripOSCPathPart *part = [self stageCustomTrianglePartWithID:1
@@ -321,6 +327,7 @@ static CMTime FxGripPathPartTestTime(void)
 	self.manager.paramGetAPIv6.customs[@(30)] = [FxGripPathData pathWithVertices:vertices count:2 closed:NO];
 }
 
+/*! @abstract A tangent handle hits at its tip, and dragging it writes the new tangent vector relative to the vertex location. */
 - (void)testTangentHandleHitAndDragWritesTheVector
 {
 	[self stageTwoBezierVerticesWithOutTangent:CGPointMake(0.1, 0.0) inTangent:CGPointMake(0.1, 0.0)];
@@ -339,6 +346,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqualWithAccuracy(vertex.outTangent.y, 0.1, 1e-9);
 }
 
+/*! @abstract Dragging one tangent rotates the opposite tangent to stay collinear while keeping its own length. */
 - (void)testDraggingATangentMirrorsTheOppositeAligned
 {
 	[self stageTwoBezierVerticesWithOutTangent:CGPointMake(0.1, 0.0) inTangent:CGPointMake(0.1, 0.0)];
@@ -357,6 +365,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqualWithAccuracy(vertex.inTangent.x, 0.0, 1e-6);
 }
 
+/*! @abstract An Option drag breaks the tangent pair and leaves the opposite tangent untouched. */
 - (void)testOptionBreaksTheTangentPair
 {
 	[self stageTwoBezierVerticesWithOutTangent:CGPointMake(0.1, 0.0) inTangent:CGPointMake(0.1, 0.0)];
@@ -375,6 +384,7 @@ static CMTime FxGripPathPartTestTime(void)
 
 #pragma mark Converter-driven body
 
+/*! @abstract A body hit follows the Bézier curve, missing the straight chord and hitting the bulge. */
 - (void)testBodyHitFollowsTheBezierCurve
 {
 	// Two Bézier vertices whose tangents bulge the curve upward off the straight chord. A point on
@@ -398,6 +408,7 @@ static CMTime FxGripPathPartTestTime(void)
 
 #pragma mark Per-parameter backing
 
+/*! @abstract With per-parameter backing, dragging a vertex writes its location parameter and leaves the other vertex untouched. */
 - (void)testPerParameterVertexDragWritesTheLocationParameter
 {
 	[self.control addPart:[FxGripOSCPathPart pathPartWithID:1
@@ -417,6 +428,7 @@ static CMTime FxGripPathPartTestTime(void)
 	XCTAssertEqualWithAccuracy(self.manager.paramGetAPIv6.points[@(42)].pointValue.x, 0.8, 1e-9, @"the other vertex is untouched");
 }
 
+/*! @abstract Moving a per-parameter vertex leaves its tangent vector parameters unchanged so the tips ride along. */
 - (void)testPerParameterTangentsRideAlongWithTheLocation
 {
 	// Tangents are vectors in their own parameters, so moving the location leaves them unchanged

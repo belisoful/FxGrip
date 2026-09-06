@@ -1,9 +1,15 @@
-//
-//  FxGripParameterData.m
-//  FxGrip
-//
-//  Copyright © 2024 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripParameterData.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterData
+	@abstract   Implements the per-parameter static-property store extension.
+	@discussion Introduced in FxGrip 0.1.0. The store captures each parameter's record from the add
+	            notification, restores stored app-mask flag bits on a flags read, recaptures flag and
+	            menu writes, and persists the store to a hidden custom parameter on flush. Store
+	            mutations are synchronized.
+*/
 
 #import "FxGripParameterData.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -21,6 +27,11 @@
 }
 @end
 
+/*!
+	@abstract	The extension that captures and persists per-parameter static properties.
+	@discussion	Introduced in FxGrip 0.1.0. The store loads from the document, captures parameter
+				records, and flushes to a hidden custom parameter.
+*/
 @implementation FxGripParameterData
 
 @synthesize isLoaded = _isLoaded;
@@ -177,6 +188,11 @@
 }
 
 
+/*!
+	@method		extAddParameters:
+	@abstract	Registers the hidden ParameterData custom parameter that stores the records.
+	@discussion	Introduced in FxGrip 0.1.0. The parameter carries no state, is never presented or
+				animated, and stays out of the debug view. */
 - (void)extAddParameters:(nonnull NSNotification*)notification
 {
 	NSDictionary *metaData = @{
@@ -192,6 +208,11 @@
 
 
 
+/*!
+	@method		extAddedToDocument:
+	@abstract	Loads the stored records from the document's custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The store is loaded only when it was not already seeded
+				before the document load. */
 - (void)extAddedToDocument:(nonnull NSNotification*)notification
 {
 	_documentAdded = YES;
@@ -234,6 +255,10 @@
 
 
 
+/*!
+	@method		extAPIParameterGetFlags:
+	@abstract	Merges the stored app-mask flag bits into the flags reported on a flags read.
+	@discussion	Introduced in FxGrip 0.1.0. Returns when the parameter has no stored flags. */
 - (void)extAPIParameterGetFlags:(nonnull NSNotification*)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
@@ -248,6 +273,10 @@
 }
 
 
+/*!
+	@method		extAPIParameterSetFlags:
+	@abstract	Recaptures a parameter's app-mask flags on a flags write.
+	@discussion	Introduced in FxGrip 0.1.0. Temporary flag bits are dropped before storing. */
 - (void)extAPIParameterSetFlags:(nonnull NSNotification*)notification
 {
 	NSDictionary *parameter = notification.userInfo.fxParameter;
@@ -262,6 +291,7 @@
 }
 
 
+/*! @abstract Recaptures a parameter's menu items on a menu write. */
 - (void)extAPIParameterSetMenu:(nonnull NSNotification*)notification
 {
 	NSDictionary *parameter = notification.userInfo.fxParameter;
@@ -278,8 +308,12 @@
 
 
 // when changing flags.
-// 
+//
 
+/*!
+	@method		extAPIParameterRemove:
+	@abstract	Drops a parameter's record and flushes when the instance is live.
+	@discussion	Introduced in FxGrip 0.1.0. */
 - (void)extAPIParameterRemove:(nonnull NSNotification*)notification
 {
 	NSNumber *pid = notification.userInfo.fxParameter[kFxParameterProperty_Id];
@@ -300,6 +334,10 @@
 }
 
 
+/*!
+	@method		extFlush:
+	@abstract	Persists the store to the custom parameter when it has unsaved changes.
+	@discussion	Introduced in FxGrip 0.1.0. Returns when the store is clean or absent. */
 - (void)extFlush:(nonnull NSNotification*)notification
 {
 	@synchronized (self) {
@@ -317,6 +355,10 @@
 
 
 
+/*!
+	@abstract	The effect-side accessors for the parameter data extension.
+	@discussion	Introduced in FxGrip 0.1.0. parameterData resolves the loaded extension.
+*/
 @implementation FxGripTileableEffect (ParameterData)
 
 - (FxGripParameterData*)parameterData

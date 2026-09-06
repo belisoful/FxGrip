@@ -1,10 +1,12 @@
-//
-//  FxGripTimingAPI_v4Tests.m
-//  FxGripTests
-//
-//  Unit tests for the timing wrapper. Every query forwards to the host timing API and
-//  fills the caller's CMTime; a NULL out-parameter suppresses the host call entirely.
-//
+/*!
+	@file       FxGripTimingAPI_v4Tests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTimingAPI_v4Tests
+	@abstract   Verifies that FxGripTimingAPI_v4 forwards each timing query to the host API and routes out-parameters correctly.
+	@discussion Introduced in FxGrip 0.1.0. A stub host API records which query ran and writes a value derived from call order. The tests confirm that each wrapper method fills the caller's CMTime, forwards parameter identifiers and source times, and skips the host call for a NULL out-parameter.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxPlugSDK.h>
@@ -237,6 +239,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Effect and input timing
 
+/*! @abstract frameDuration: writes the host's frame duration and issues exactly one host query. */
 - (void)testFrameDurationFillsTheHostValue
 {
 	CMTime duration = FxGripTimingTestMakeTime(0);
@@ -247,6 +250,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"frameDuration"]);
 }
 
+/*! @abstract sampleDuration: writes the host's sample duration and issues exactly one host query. */
 - (void)testSampleDurationFillsTheHostValue
 {
 	CMTime duration = FxGripTimingTestMakeTime(0);
@@ -257,6 +261,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"sampleDuration"]);
 }
 
+/*! @abstract startTimeForEffect: writes the host's effect start time and issues exactly one host query. */
 - (void)testStartTimeForEffectFillsTheHostValue
 {
 	CMTime startTime = FxGripTimingTestMakeTime(0);
@@ -267,6 +272,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"startTimeForEffect"]);
 }
 
+/*! @abstract durationTimeForEffect: writes the host's effect duration and issues exactly one host query. */
 - (void)testDurationTimeForEffectFillsTheHostValue
 {
 	CMTime duration = FxGripTimingTestMakeTime(0);
@@ -277,6 +283,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"durationTimeForEffect"]);
 }
 
+/*! @abstract startTimeOfInputToFilter: writes the host's input start time and issues exactly one host query. */
 - (void)testStartTimeOfInputToFilterFillsTheHostValue
 {
 	CMTime startTime = FxGripTimingTestMakeTime(0);
@@ -287,6 +294,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"startTimeOfInputToFilter"]);
 }
 
+/*! @abstract durationTimeOfInputToFilter: writes the host's input duration and issues exactly one host query. */
 - (void)testDurationTimeOfInputToFilterFillsTheHostValue
 {
 	CMTime duration = FxGripTimingTestMakeTime(0);
@@ -297,6 +305,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"durationTimeOfInputToFilter"]);
 }
 
+/*! @abstract inPointTimeOfTimelineForEffect: writes the host's timeline in-point and issues exactly one host query. */
 - (void)testInPointTimeOfTimelineFillsTheHostValue
 {
 	CMTime inPoint = FxGripTimingTestMakeTime(0);
@@ -307,6 +316,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"inPointTimeOfTimelineForEffect"]);
 }
 
+/*! @abstract outPointTimeOfTimelineForEffect: writes the host's timeline out-point and issues exactly one host query. */
 - (void)testOutPointTimeOfTimelineFillsTheHostValue
 {
 	CMTime outPoint = FxGripTimingTestMakeTime(0);
@@ -319,6 +329,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Image parameter timing
 
+/*! @abstract startTime:ofImageParameter: writes the host's start time and forwards the parameter identifier. */
 - (void)testStartTimeOfImageParameterForwardsTheParameterID
 {
 	CMTime startTime = FxGripTimingTestMakeTime(0);
@@ -330,6 +341,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 						  @(kTimingTestParameter));
 }
 
+/*! @abstract durationTime:ofImageParameter: writes the host's duration and forwards the parameter identifier. */
 - (void)testDurationTimeOfImageParameterForwardsTheParameterID
 {
 	CMTime duration = FxGripTimingTestMakeTime(0);
@@ -343,6 +355,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Time conversion
 
+/*! @abstract timelineTime:fromInputTime: writes the host's result and forwards the source time value. */
 - (void)testTimelineTimeFromInputTimeForwardsTheSourceTime
 {
 	CMTime timelineTime = FxGripTimingTestMakeTime(0);
@@ -353,6 +366,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.inputValues[@"timelineTimeFromInputTime"], @300);
 }
 
+/*! @abstract timelineTime:fromImageTime:forParameterID: writes the host's result and forwards both the source time and the parameter identifier. */
 - (void)testTimelineTimeFromImageTimeForwardsTheSourceTimeAndTheParameterID
 {
 	CMTime timelineTime = FxGripTimingTestMakeTime(0);
@@ -367,6 +381,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 						  @(kTimingTestParameter));
 }
 
+/*! @abstract inputTime:fromTimelineTime: writes the host's result and forwards the source time value. */
 - (void)testInputTimeFromTimelineTimeForwardsTheSourceTime
 {
 	CMTime inputTime = FxGripTimingTestMakeTime(0);
@@ -377,6 +392,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqualObjects(self.hostAPI.inputValues[@"inputTimeFromTimelineTime"], @120);
 }
 
+/*! @abstract imageTime:forParameterID:fromTimelineTime: writes the host's result and forwards both the source time and the parameter identifier. */
 - (void)testImageTimeFromTimelineTimeForwardsTheSourceTimeAndTheParameterID
 {
 	CMTime imageTime = FxGripTimingTestMakeTime(0);
@@ -393,6 +409,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark NULL out-parameters
 
+/*! @abstract Passing NULL as the out-parameter to every wrapper method leaves the host with no recorded calls. */
 - (void)testANullOutParameterSuppressesEveryHostQuery
 {
 	[self.api frameDuration:NULL];
@@ -415,6 +432,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 
 #pragma mark Scalar queries
 
+/*! @abstract fieldOrderForInputToFilter: returns the host's field order and passes the given filter through. */
 - (void)testFieldOrderReportsTheHostValueForTheGivenFilter
 {
 	self.hostAPI.fieldOrder = kFxFieldOrder_LOWER_FIRST;
@@ -424,6 +442,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertTrue(self.hostAPI.lastFilter == (id)self.effect);
 }
 
+/*! @abstract timelineFpsNumeratorForEffect: returns the host's timeline FPS numerator. */
 - (void)testTimelineFpsNumeratorReportsTheHostValue
 {
 	self.hostAPI.fpsNumerator = 30000;
@@ -431,6 +450,7 @@ static BOOL FxGripTimingTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertEqual([self.api timelineFpsNumeratorForEffect:(id)self.effect], (NSUInteger)30000);
 }
 
+/*! @abstract timelineFpsDenominatorForEffect: returns the host's timeline FPS denominator. */
 - (void)testTimelineFpsDenominatorReportsTheHostValue
 {
 	self.hostAPI.fpsDenominator = 1001;

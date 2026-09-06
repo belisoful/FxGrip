@@ -1,12 +1,34 @@
-//
-//  FxGripTextImage.m
-//  FxGrip
-//
+/*!
+	@file       FxGripTextImage.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTextImage
+	@abstract   Implements text-to-Metal-texture rasterization.
+	@discussion Introduced in FxGrip 0.1.0. The primary method draws into a CoreGraphics sRGB
+	            bitmap, allocates a matching texture, and uploads the rows flipped so the texture
+	            reads top-first. The convenience methods build an attributed string and defer to
+	            it.
+*/
 
 #import "FxGripTextImage.h"
 
+/*!
+	@abstract	Rasterizes text into a Metal texture.
+	@discussion	Introduced in FxGrip 0.1.0. Each call allocates an independent premultiplied
+				RGBA8 sRGB texture sized to the text plus padding.
+*/
 @implementation FxGripTextImage
 
+/*!
+	@method		textureForAttributedString:padding:device:
+	@abstract	Rasterizes an attributed string into a new texture sized to fit it.
+	@param		text	The attributed string to draw, carrying its own font and color runs.
+	@param		padding	The transparent border in pixels added on every side.
+	@param		device	The Metal device that allocates the texture.
+	@return		A new texture, or nil when text is empty, device is nil, or allocation fails.
+	@discussion	Introduced in FxGrip 0.1.0. The bitmap rows are flipped on upload so the texture
+				reads row 0 as the visual top. */
 + (nullable id<MTLTexture>)textureForAttributedString:(NSAttributedString *)text
 											  padding:(NSUInteger)padding
 											   device:(id<MTLDevice>)device
@@ -78,6 +100,7 @@
 	return texture;
 }
 
+/*! @abstract Rasterizes a string in one font and color, using four-pixel padding. */
 + (nullable id<MTLTexture>)textureForText:(NSString *)text
 									 font:(NSFont *)font
 									color:(NSColor *)color
@@ -94,6 +117,7 @@
 	return [self textureForAttributedString:attributed padding:4 device:device];
 }
 
+/*! @abstract Rasterizes a string in Helvetica at a size, reading the simd color as sRGB. */
 + (nullable id<MTLTexture>)textureForText:(NSString *)text
 								 fontSize:(CGFloat)fontSize
 									color:(simd_float4)color

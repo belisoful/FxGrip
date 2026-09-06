@@ -1,12 +1,14 @@
-//
-//  FxGripSettingAPITestSupport.h
-//  FxGripTests
-//
-//  Shared test doubles and a base XCTestCase for the parameter setting API wrappers. The
-//  version-five and version-six setting wrappers are exercised against the same host,
-//  dynamic, retrieval, and custom-value stubs; this unit holds them so the per-version test
-//  files carry only their own assertions.
-//
+/*!
+	@file       FxGripSettingAPITestSupport.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripSettingAPITestSupport
+	@abstract   Shared test doubles and a base XCTestCase for the parameter setting API wrappers.
+	@discussion Introduced in FxGrip 0.1.0. The version-five and version-six setting wrappers are
+	            exercised against the same host, dynamic, retrieval, and custom-value stubs. This unit
+	            holds them so the per-version test files carry only their own assertions.
+*/
 
 #import <XCTest/XCTest.h>
 #import <FxPlug/FxPlugSDK.h>

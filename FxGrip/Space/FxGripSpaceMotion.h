@@ -1,35 +1,34 @@
-//
-//  FxGripSpaceMotion.h
-//  FxGrip
-//
+/*!
+	@file       FxGripSpaceMotion.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-02
+	@header     FxGripSpaceMotion
+	@abstract   Camera motion and focus quantities the FxPlug host does not supply, derived from
+	            sampled scene transforms.
+	@discussion Introduced in FxGrip 0.1.0. The `Fx3DAPI_v5` host API reports the camera view and
+	            layer matrices at a given time but no velocity, and no focus distance. The 3D Space
+	            subsystem samples those matrices at t-dt, t, and t+dt (the existing keyed
+	            `NSCoder(FxPlug)` scene encoders store the extra samples) and turns them into the
+	            values a 3D-aware effect needs: linear and angular camera velocity for motion blur,
+	            and the camera-to-layer distance for autofocus. SceneKit consumes these directly
+	            through `SCNCamera.motionBlurIntensity` and `SCNCamera.focusDistance`.
+
+	            Every function takes transforms in the standard simd column-vector convention: a
+	            point p maps as `M * (p, 1)`, the translation is `columns[3].xyz`, and the
+	            upper-left 3x3 is rotation times scale. This matches `SCNNode.simdTransform` and a
+	            camera-to-world (inverse view) matrix. Converting the host `FxMatrix44`
+	            (double, row-major) into this convention is the caller's concern, handled by the
+	            host-to-SceneKit configuration layer, not here.
+
+	            The same functions compute object motion when fed model-to-world transforms.
+*/
 
 #ifndef FxGripSpaceMotion_h
 #define FxGripSpaceMotion_h
 
 #import <Foundation/Foundation.h>
 #import <simd/simd.h>
-
-/*!
-	@header     FxGripSpaceMotion
-	@abstract   Camera motion and focus quantities the FxPlug host does not supply, derived from
-				sampled scene transforms.
-	@discussion Introduced in FxGrip 1.0. The `Fx3DAPI_v5` host API reports the camera view and
-				layer matrices at a given time but no velocity, and no focus distance. The 3D Space
-				subsystem samples those matrices at t-dt, t, and t+dt (the existing keyed
-				`NSCoder(FxPlug)` scene encoders store the extra samples) and turns them into the
-				values a 3D-aware effect needs: linear and angular camera velocity for motion blur,
-				and the camera-to-layer distance for autofocus. SceneKit consumes these directly
-				through `SCNCamera.motionBlurIntensity` and `SCNCamera.focusDistance`.
-
-				Every function takes transforms in the standard simd column-vector convention: a
-				point p maps as `M * (p, 1)`, the translation is `columns[3].xyz`, and the
-				upper-left 3x3 is rotation times scale. This matches `SCNNode.simdTransform` and a
-				camera-to-world (inverse view) matrix. Converting the host `FxMatrix44`
-				(double, row-major) into this convention is the caller's concern, handled by the
-				host-to-SceneKit configuration layer, not here.
-
-				The same functions compute object motion when fed model-to-world transforms.
-*/
 
 /*! Linear and angular velocity of a sampled transform. */
 typedef struct FxGripCameraMotion {

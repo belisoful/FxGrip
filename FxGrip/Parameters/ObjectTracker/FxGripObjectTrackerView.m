@@ -1,9 +1,15 @@
-//
-//  FxGripObjectTrackerView.m
-//  FxGrip
-//
-//  Copyright © 2026 Belisoful All rights reserved.
-//
+/*!
+	@file       FxGripObjectTrackerView.m
+	@copyright  Copyright © 2026 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripObjectTrackerView
+	@abstract   Implements the inspector control that edits an object tracker's options.
+	@discussion Introduced in FxGrip 0.1.0. The view lays out popups for shape, behavior, and
+	            resolution, a stepper for smoothing, and a status line. Each edit reads the
+	            current value, applies one option change, and writes it back through an
+	            out-of-band access context.
+*/
 
 #import "FxGripObjectTrackerView.h"
 #import "FxGripObjectTrackerData.h"
@@ -13,6 +19,11 @@ static const CGFloat kRowHeight = 22.0;
 static const CGFloat kRowGap = 4.0;
 static const CGFloat kLabelWidth = 78.0;
 
+/*!
+	@abstract	The inspector control that edits an object tracker's options.
+	@discussion	Introduced in FxGrip 0.1.0. The controls set the tracker configuration; the
+				placed region and the tracked samples stay untouched.
+*/
 @implementation FxGripObjectTrackerView
 {
 	NSPopUpButton *_shapePopUp;
@@ -107,6 +118,11 @@ static const CGFloat kLabelWidth = 78.0;
 
 #pragma mark FxGripCustomViewDataDelegate
 
+/*!
+	@method		updateFromCustomData:
+	@abstract	Sets the controls from the tracker value the host pushes.
+	@discussion	Introduced in FxGrip 0.1.0. A value that is not tracker data is ignored. The status
+				line reports the tracked frame count, or that the tracker is not analyzed. */
 - (void)updateFromCustomData:(NSObject<NSSecureCoding,NSCopying> * _Nullable)value
 {
 	if (![value isKindOfClass:FxGripObjectTrackerData.class]) {
@@ -127,6 +143,13 @@ static const CGFloat kLabelWidth = 78.0;
 
 #pragma mark Edits
 
+/*!
+	@method		commitChange:
+	@abstract	Applies one option change to the current value and writes it back.
+	@param		mutate	A block that changes one option on the value.
+	@discussion	Introduced in FxGrip 0.1.0. The value is read and written through an out-of-band
+				access context at the current time. The copy preserves the placed region and the
+				tracked samples. */
 // Reads the current value, applies one option change, and writes it back out of band. The
 // copy preserves the placed region and the tracked samples.
 - (void)commitChange:(void (^)(FxGripObjectTrackerData *data))mutate

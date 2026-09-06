@@ -1,7 +1,15 @@
-//
-//  FxGripExtensionSystem.h
-//  FxGrip
-//
+/*!
+	@file       FxGripExtensionSystem.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripExtensionSystem
+	@abstract   Runs FxGrip extensions inside a plug-in that does not use the effect base.
+	@discussion Introduced in FxGrip 0.1.0. The system posts the same lifecycle notifications an
+	            FxGripTileableEffect posts, over an effect host, so the extension machinery runs
+	            standalone. The plug-in forwards each FxPlug lifecycle call to the matching dispatch
+	            method.
+*/
 
 #ifndef FxGripExtensionSystem_h
 #define FxGripExtensionSystem_h
@@ -16,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@class      FxGripExtensionSystem
 	@abstract   Runs FxGrip extensions inside an FxPlug plug-in that does not use the effect base.
-	@discussion Introduced in FxGrip 1.0. FxGripTileableEffect drives its extensions by posting
+	@discussion Introduced in FxGrip 0.1.0. FxGripTileableEffect drives its extensions by posting
 				lifecycle notifications; this class posts the same notifications, with the same
 				payloads, over an effect host, so the extension machinery runs as a self-contained
 				subsystem. The plug-in loads the extensions it wants and forwards each FxPlug
@@ -37,8 +45,10 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @interface FxGripExtensionSystem : NSObject
 
+/*! Creates a system that dispatches over the given host. */
 - (instancetype)initWithHost:(id<FxGripEffectHost>)host;
 
+/*! The host the loaded extensions observe. */
 @property (readonly, nonnull, assign) id<FxGripEffectHost> host;
 
 /*! The loaded extensions, in load order. */

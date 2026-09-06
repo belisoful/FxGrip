@@ -1,10 +1,15 @@
-//
-//  FxGripTileableGenerator.m
-//  FxGripTileableGenerator
-//
-//  Created by Apple on 1/7/20.
-//  Copyright © 2020-2023 Apple, Inc. All rights reserved.
-//
+/*!
+	@file       FxGripTileableGenerator.m
+	@copyright  Copyright © 2020-2023 Apple, Inc. All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripTileableGenerator
+	@abstract   Implements the destination-bounds and source-tile behavior of a tileable generator.
+	@discussion Introduced in FxGrip 0.1.0. The generator reports the destination image's pixel
+	            bounds as its output rect and reports an empty source-tile rect, because a
+	            generator draws its output without sampling a source image. Both the pluginState
+	            and pluginCoder render paths are handled.
+*/
 
 #import "FxGripTileableGenerator.h"
 
@@ -13,6 +18,11 @@
 #pragma mark FxGripTileableGenerator Implementation
 
 
+/*!
+	@abstract	The FxGrip base class for tileable generator plugins.
+	@discussion	Introduced in FxGrip 0.1.0. The output rect covers the destination image's pixel
+				bounds and the source-tile rect is empty for every source index.
+*/
 @implementation FxGripTileableGenerator
 
 //---------------------------------------------------------
@@ -26,6 +36,12 @@
 // and the render time.
 //---------------------------------------------------------
 
+/*!
+	@method		destinationImageRect:sourceImages:destinationImage:pluginState:atTime:error:
+	@abstract	Reports the destination image's pixel bounds as the generator's output rect.
+	@discussion	Introduced in FxGrip 0.1.0. A generator produces output for the whole destination
+				image, so the output rect is the destination image's pixel bounds.
+	@return		YES. */
 - (BOOL)destinationImageRect:(FxRect *)destinationImageRect
 				sourceImages:(NSArray<FxImageTile *> *)sourceImages
 			destinationImage:(nonnull FxImageTile *)destinationImage
@@ -48,6 +64,10 @@
 // to render the given output tile.
 //---------------------------------------------------------
 
+/*!
+	@method		sourceTileRect:sourceImageIndex:sourceImages:destinationTileRect:destinationImage:pluginState:atTime:error:
+	@abstract	Reports an empty source-tile rect because a generator has no source image.
+	@return		YES. */
 - (BOOL)sourceTileRect:(FxRect *)sourceTileRect
 	  sourceImageIndex:(NSUInteger)sourceImageIndex
 		  sourceImages:(NSArray<FxImageTile *> *)sourceImages
@@ -76,6 +96,12 @@
 // and the render time.
 //---------------------------------------------------------
 
+/*!
+	@method		destinationImageRect:sourceImages:destinationImage:pluginCoder:atTime:error:
+	@abstract	Reports the destination image's pixel bounds as the generator's output rect.
+	@discussion	Introduced in FxGrip 0.1.0. This is the pluginCoder render path of the same
+				destination-bounds behavior.
+	@return		YES. */
 - (BOOL)destinationImageRect:(FxRect *)destinationImageRect
 				sourceImages:(NSArray<FxImageTile *> *)sourceImages
 			destinationImage:(nonnull FxImageTile *)destinationImage
@@ -98,6 +124,10 @@
 // to render the given output tile.
 //---------------------------------------------------------
 
+/*!
+	@method		sourceTileRect:sourceImageIndex:sourceImages:destinationTileRect:destinationImage:pluginCoder:atTime:error:
+	@abstract	Reports an empty source-tile rect because a generator has no source image.
+	@return		YES. */
 - (BOOL)sourceTileRect:(FxRect *)sourceTileRect
 	  sourceImageIndex:(NSUInteger)sourceImageIndex
 		  sourceImages:(NSArray<FxImageTile *> *)sourceImages

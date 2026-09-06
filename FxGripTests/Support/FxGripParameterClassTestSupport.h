@@ -1,13 +1,16 @@
-//
-//  FxGripParameterClassTestSupport.h
-//  FxGripTests
-//
-//  Test doubles shared by the parameter-class suites. Each parameter class reaches the
-//  host only through `effect.apiManager.paramCreateAPIv5`, so the stub creation API
-//  records the method name and every argument it received. The stub effect exposes the
-//  members the parameter classes read: the API manager, the color-gamut answers, the
-//  default font name, and the group recursion hook.
-//
+/*!
+	@file       FxGripParameterClassTestSupport.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterClassTestSupport
+	@abstract   Test doubles shared by the parameter-class suites.
+	@discussion Introduced in FxGrip 0.1.0. Each parameter class reaches the host only through
+	            effect.apiManager.paramCreateAPIv5, so the stub creation API records the method name and
+	            every argument it received. The stub effect exposes the members the parameter classes
+	            read: the API manager, the color-gamut answers, the default font name, and the group
+	            recursion hook.
+*/
 
 #ifndef FxGripParameterClassTestSupport_h
 #define FxGripParameterClassTestSupport_h

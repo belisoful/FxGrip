@@ -1,7 +1,16 @@
-//
-//  FxGripLiveFrame.m
-//  FxGrip
-//
+/*!
+	@file       FxGripLiveFrame.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripLiveFrame
+	@abstract   Implements the immutable published image and its lazy CGImage.
+	@discussion Introduced in FxGrip 0.1.0. A frame table maps each supported Metal pixel format to
+	            its byte layout. The constructors copy pixels from raw bytes, a texture, a CGImage,
+	            or an image buffer, repacking rows tightly. The CGImage is built on first use, with a
+	            float format converted to 8-bit clamped to 0...1. The color space follows the format
+	            unless colorSpaceName overrides it.
+*/
 
 #import "FxGripLiveFrame.h"
 #import "FxGripImageBuffer.h"
@@ -94,6 +103,11 @@ static inline float FxGripLiveFrameComponent(const uint8_t *pixel, NSUInteger in
 }
 
 
+/*!
+	@abstract	One immutable published image: tightly packed pixels with a CGImage built on demand.
+	@discussion	Introduced in FxGrip 0.1.0. The frame owns a copy of its pixels and the format info
+				for its layout. The CGImage is cached after the first build and discarded when the
+				color space name changes. */
 @implementation FxGripLiveFrame
 {
 	const FxGripLiveFrameFormatInfo *_info;
@@ -132,6 +146,11 @@ static inline float FxGripLiveFrameComponent(const uint8_t *pixel, NSUInteger in
 	return self;
 }
 
+/*!
+	@method		frameWithBytes:rowBytes:width:height:pixelFormat:
+	@abstract	Copies pixel rows into a frame, repacking to a tight stride.
+	@return		A frame, or nil for an unsupported format, zero dimensions, a nil source, or a stride
+				shorter than a row. */
 + (nullable instancetype)frameWithBytes:(const void *)pixels
 							   rowBytes:(NSUInteger)rowBytes
 								  width:(NSUInteger)width
@@ -161,6 +180,11 @@ static inline float FxGripLiveFrameComponent(const uint8_t *pixel, NSUInteger in
 	return NARC_AUTORELEASE([[self alloc] initWithPixels:packed width:width height:height info:info]);
 }
 
+/*!
+	@method		frameWithTexture:
+	@abstract	Reads mipmap level 0 of a CPU-readable 2D texture into a frame.
+	@return		A frame, or nil for a private texture, a non-2D texture, or an unsupported format.
+	@discussion	Introduced in FxGrip 0.1.0. The read is synchronous on the calling thread. */
 + (nullable instancetype)frameWithTexture:(id<MTLTexture>)texture
 {
 	const FxGripLiveFrameFormatInfo *info = FxGripLiveFrameInfoForFormat(texture.pixelFormat);
@@ -178,6 +202,7 @@ static inline float FxGripLiveFrameComponent(const uint8_t *pixel, NSUInteger in
 	return NARC_AUTORELEASE([[self alloc] initWithPixels:pixels width:texture.width height:texture.height info:info]);
 }
 
+/*! Draws a CGImage into an RGBA8Unorm premultiplied frame. */
 + (nullable instancetype)frameWithCGImage:(CGImageRef)image
 {
 	if (image == NULL) {
@@ -216,6 +241,11 @@ static MTLPixelFormat FxGripLiveFrameMetalFormatForBuffer(FxGripPixelFormat form
 	}
 }
 
+/*!
+	@method		frameWithImageBuffer:
+	@abstract	Wraps an image buffer's pixels in a frame.
+	@discussion	Introduced in FxGrip 0.1.0. A buffer format that maps to a Metal format directly is
+				used as is; every other format converts to RGBA8U first. */
 + (nullable instancetype)frameWithImageBuffer:(FxGripImageBuffer *)buffer
 {
 	if (buffer == nil) {
@@ -385,6 +415,10 @@ static MTLPixelFormat FxGripLiveFrameMetalFormatForBuffer(FxGripPixelFormat form
 	return image;
 }
 
+/*!
+	@method		CGImage
+	@abstract	Returns the frame drawn as a CGImage, building and caching it on first use.
+	@return		The CGImage owned by the frame, or nil when CoreGraphics rejects the layout. */
 - (nullable CGImageRef)CGImage
 {
 	@synchronized (self) {

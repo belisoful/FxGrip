@@ -1,10 +1,21 @@
-//
-//  FxGripEventModifiers.m
-//  FxGrip
-//
+/*!
+	@file       FxGripEventModifiers.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripEventModifiers
+	@abstract   Implements the modifier-key tests over NSEvent and FxModifierKeys masks.
+	@discussion Introduced in FxGrip 0.1.0. Each test reads a single modifier bit. The NSEvent
+	            variants read modifierFlags, and the FxModifierKeys variants read the host mask.
+*/
 
 #import "FxGripEventModifiers.h"
 
+/*!
+	@abstract	The modifier-key convention for draggable parameter controls.
+	@discussion	Introduced in FxGrip 0.1.0. Option is fine drag, Shift constrains, Command
+				deletes, and Control opens the contextual menu.
+*/
 @implementation FxGripEventModifiers
 
 + (BOOL)isFineDrag:(nonnull NSEvent *)event

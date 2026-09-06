@@ -1,7 +1,16 @@
-//
-//  FxGripPointOptions.h
-//  FxGrip
-//
+/*!
+	@file       FxGripPointOptions.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPointOptions
+	@abstract   The parsed design-time options of a point parameter and its configuration enums.
+	@discussion Introduced in FxGrip 0.1.0. FxGripPointOptions reads a point parameter's
+	            declaration once and answers typed properties for its on-screen control. The
+	            enums name the coordinate mapping, the movement constraint, and the axis divider.
+	            The kFxGripPointKey_* constants name the configuration keys, and the
+	            kFxGripPointDefault* constants are the documented defaults.
+*/
 
 #ifndef FxGripPointOptions_h
 #define FxGripPointOptions_h
@@ -85,7 +94,7 @@ typedef NS_ENUM(NSInteger, FxGripPointDivider) {
 /*!
 	@class      FxGripPointOptions
 	@abstract   The parsed design-time options of a point parameter.
-	@discussion Introduced in FxGrip 1.0. A point parameter's declaration configures the
+	@discussion Introduced in FxGrip 0.1.0. A point parameter's declaration configures the
 				behavior and appearance of its on-screen control: the value range, the
 				coordinate mapping, the control size and color, a pin-with-distance display,
 				the parameter-name label, a mouse-speed modifier, a background image, and a

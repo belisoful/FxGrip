@@ -1,11 +1,23 @@
+/*!
+	@file       FxGripPluginData.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripPluginData
+	@abstract   Implements the typed accessor over one plugin's registration dictionary.
+	@discussion Introduced in FxGrip 0.1.0. Named accessors read and write kProPlugPlugIn_* entries in a
+	            mutable backing store. Any change invalidates the cached data snapshot so the next read
+	            rebuilds it.
+*/
 
 #import "FxGripPluginData.h"
 #import <FxGrip/FxGripTypes.h>
 
 /*!
- Within the mainBundle, the property `FxGripRegisteredPlugins` contains the list of plugin effect classes via `NSString*` (human separated), NSArray, or NSDictionary values.
- */
-
+	@abstract	The mutable model of one plugin's registration dictionary.
+	@discussion	Introduced in FxGrip 0.1.0. The backing dictionary holds the plugin entries under their
+				kProPlugPlugIn_* keys, and data vends an immutable copy.
+*/
 @implementation FxGripPluginData
 {
 	NSMutableDictionary<NSString*, id> *__data;
@@ -212,6 +224,11 @@
 	_data = nil;
 }
 
+/*!
+	@method		validate
+	@abstract	Coerces the backing entries that must hold a specific type.
+	@discussion	Introduced in FxGrip 0.1.0. Protocol names and supported plugins are wrapped in an array
+				when scalar, and a string version is converted to a number. */
 - (void)validate
 {
 	NSArray *protocolNames = __data[kProPlugPlugIn_ProtocolNamesProperty];

@@ -1,7 +1,16 @@
-//
-//  FxGripInferenceBridge.m
-//  FxGrip
-//
+/*!
+	@file       FxGripInferenceBridge.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripInferenceBridge
+	@abstract   Implements the runtime bridge from an InferKit backend to the FxGrip backend protocol.
+	@discussion Introduced in FxGrip 0.1.0. The InferKit request, result, and backend share their
+	            selectors with the FxGrip types, so a private adapter messages the InferKit objects
+	            through the FxGrip declarations while the objects are InferKit instances at runtime.
+	            The class methods probe for the InferKit classes by name and build the adapter only
+	            when they are loaded.
+*/
 
 #import "FxGripInferenceBridge.h"
 #import "FxGripInferenceRequest.h"
@@ -24,6 +33,13 @@ static NSString * const kFxGripInferKitResultClassName  = @"NFKInferenceResult";
 - (instancetype)initWithInferKitBackend:(id)backend requestClass:(Class)requestClass;
 @end
 
+/*!
+	@abstract	Wraps an InferKit backend object behind id<FxGripInferenceBackend>.
+	@discussion	Introduced in FxGrip 0.1.0. The adapter forwards isReady, backendIdentifier, and
+				prepareWithError: to the InferKit backend. It converts an FxGripInferenceRequest to
+				an InferKit request, runs the backend, and wraps the InferKit result's outputs in an
+				FxGripInferenceResult.
+*/
 @implementation FxGripInferenceKitBackendAdapter
 {
 	id _backend;
@@ -56,6 +72,7 @@ static NSString * const kFxGripInferKitResultClassName  = @"NFKInferenceResult";
 	return [_backend backendIdentifier];
 }
 
+/*! Converts the request to an InferKit request, runs the InferKit backend, and wraps its outputs. */
 - (nullable FxGripInferenceResult *)runInferenceForRequest:(FxGripInferenceRequest *)request
 													error:(NSError **)outError
 {
@@ -83,13 +100,21 @@ static NSString * const kFxGripInferKitResultClassName  = @"NFKInferenceResult";
 
 #pragma mark - FxGripInferenceBridge
 
+/*!
+	@abstract	Detects InferKit at runtime and adapts an InferKit backend to the FxGrip backend protocol.
+	@discussion	Introduced in FxGrip 0.1.0. The class methods resolve the InferKit classes by name
+				and build an adapter only when they are loaded. When InferKit is absent, the bridge
+				methods return nil.
+*/
 @implementation FxGripInferenceBridge
 
+/*! The InferKit class names the bridge needs loaded to run. */
 + (NSArray<NSString *> *)requiredInferKitClassNames
 {
 	return @[ kFxGripInferKitRequestClassName, kFxGripInferKitResultClassName ];
 }
 
+/*! The names in classNames with no loaded class, in the original order. */
 + (NSArray<NSString *> *)absentClassNamesIn:(NSArray<NSString *> *)classNames
 {
 	NSMutableArray<NSString *> *absent = [NSMutableArray arrayWithCapacity:classNames.count];
@@ -111,6 +136,7 @@ static NSString * const kFxGripInferKitResultClassName  = @"NFKInferenceResult";
 	return self.missingInferKitClassNames.count == 0;
 }
 
+/*! Wraps an InferKit backend, resolving the InferKit request class by name. nil when unavailable. */
 + (nullable id<FxGripInferenceBackend>)backendBridgingInferKitBackend:(id)inferKitBackend
 {
 	if (![self isInferKitAvailable]) {
@@ -120,6 +146,7 @@ static NSString * const kFxGripInferKitResultClassName  = @"NFKInferenceResult";
 	return [self backendBridgingInferKitBackend:inferKitBackend requestClass:requestClass];
 }
 
+/*! Wraps an InferKit backend with an explicit request class. nil when the backend cannot run one. */
 + (nullable id<FxGripInferenceBackend>)backendBridgingInferKitBackend:(id)inferKitBackend
 														requestClass:(Class)requestClass
 {
@@ -135,6 +162,7 @@ static NSString * const kFxGripInferKitResultClassName  = @"NFKInferenceResult";
 	return NARC_AUTORELEASE(adapter);
 }
 
+/*! Instantiates a no-argument InferKit backend by class name and wraps it. nil on any failure. */
 + (nullable id<FxGripInferenceBackend>)backendWithInferKitBackendClassNamed:(NSString *)className
 {
 	if (![self isInferKitAvailable]) {

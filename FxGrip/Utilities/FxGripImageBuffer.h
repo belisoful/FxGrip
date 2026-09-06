@@ -1,7 +1,16 @@
-//
-//  FxGripImageBuffer.h
-//  FxGrip
-//
+/*!
+	@file       FxGripImageBuffer.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripImageBuffer
+	@abstract   An immutable image buffer that stores its pixels compressed.
+	@discussion Introduced in FxGrip 0.1.0. Pixels compress at initialization and stay compressed
+	            in memory, so archiving writes the compressed bytes with no extra pass. The buffer
+	            converts between pixel formats through a canonical RGBA intermediate and bridges to
+	            and from Metal textures and NSImage previews. Lossless codecs preserve pixels
+	            exactly, and the lossy image codecs reduce them under a quality setting.
+*/
 
 #ifndef FxGripImageBuffer_h
 #define FxGripImageBuffer_h
@@ -16,7 +25,7 @@
 /*!
 	@class      FxGripImageBuffer
 	@abstract   An immutable image buffer that stores its pixels compressed.
-	@discussion Introduced in FxGrip 1.0. Pixels compress at initialization and stay
+	@discussion Introduced in FxGrip 0.1.0. Pixels compress at initialization and stay
 				compressed in memory; encodeWithCoder: writes the compressed bytes
 				directly, so archiving a buffer costs no compression pass. pixelData
 				decompresses on demand and returns tightly-packed rows.

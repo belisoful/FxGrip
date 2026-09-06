@@ -1,11 +1,16 @@
-//
-//  FxGripCurveLUT.m
-//  FxGrip
-//
-//  A CPU port of Metal Forge's MTFCurveLUT builders (MIT licensed, same author). The
-//  math is kept identical — double interior arithmetic, the same slope formulas and
-//  Hermite basis — so a curve evaluated here equals the curve the render applies.
-//
+/*!
+	@file       FxGripCurveLUT.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripCurveLUT
+	@abstract   Implements the monotone cubic LUT builders for the clamped and circular domains.
+	@discussion Introduced in FxGrip 0.1.0. Both builders copy, sort, and deduplicate the control
+	            points, then evaluate a Fritsch-Carlson monotone cubic spline into the output LUT.
+	            The clamped builder holds the end values outside the point range. The periodic builder
+	            treats the x domain as a circle of period 1 and gives a C1-continuous seam at x = 0/1.
+	            Degenerate inputs yield an identity ramp or a constant.
+*/
 
 #import "FxGripCurveLUT.h"
 #import <stdlib.h>

@@ -1,11 +1,12 @@
-//
-//  FxGripParameterClickTests.m
-//  FxGripTests
-//
-//  Unit tests for the standardized button-click dispatch: the synthesized click
-//  selector encoding, the runtime resolution that installs the trampoline, the
-//  parameter-clicked notification payload, and the default action hook.
-//
+/*!
+	@file       FxGripParameterClickTests.m
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripParameterClickTests
+	@abstract   Verifies the standardized button-click dispatch across selector encoding, runtime resolution, notification payload, and the default action hook.
+	@discussion Introduced in FxGrip 0.1.0. The synthesized click selector encodes a parameter ID with a fixed prefix and no argument, and the runtime installs a trampoline method when the selector is resolved. The tests cover selector round-tripping, malformed and null rejection, runtime resolution on the effect base and its subclass, the parameter-clicked notification constants and payload delivery through the priority center and to extensions, and the help parameter's default action hook.
+*/
 
 #import <XCTest/XCTest.h>
 #import <objc/runtime.h>
@@ -83,6 +84,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 
 #pragma mark Selector encode / decode
 
+/*! @abstract A click selector name encodes and decodes each representative parameter ID back to the same value. */
 - (void)testClickSelectorNameRoundTripsForRepresentativeParameterIDs
 {
 	FxParameterId ids[] = { 0, 1, 42, kFxParameterId_InstanceMeta, UINT32_MAX };
@@ -100,6 +102,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 	}
 }
 
+/*! @abstract A click selector name uses the standard prefix and encodes a zero-argument selector. */
 - (void)testClickSelectorNameUsesPrefixAndTakesNoArgument
 {
 	NSArray<NSNumber *> *ids = @[@0u, @1u, @42u, @9995u, @(UINT32_MAX)];
@@ -112,6 +115,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 	}
 }
 
+/*! @abstract Decoding rejects malformed click selectors, including wrong prefix, trailing junk, wrong case, and an out-of-range ID. */
 - (void)testGetParameterIDRejectsMalformedSelectors
 {
 	NSString *prefix = kFxGripClickSelectorPrefix;
@@ -132,6 +136,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 	}
 }
 
+/*! @abstract Decoding rejects a null selector and a null output pointer. */
 - (void)testGetParameterIDRejectsNullSelectorAndNullOutPointer
 {
 	FxParameterId decoded = 0;
@@ -145,12 +150,14 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 
 #pragma mark Runtime resolution
 
+/*! @abstract A synthesized click selector resolves on the effect base at runtime. */
 - (void)testSynthesizedClickSelectorResolvesOnEffectBase
 {
 	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:777]);
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:selector]);
 }
 
+/*! @abstract Resolving a click selector installs a trampoline instance method on the effect base. */
 - (void)testResolvedClickSelectorInstallsTrampolineMethod
 {
 	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:777]);
@@ -158,12 +165,14 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 	XCTAssertTrue(class_getInstanceMethod(FxGripTileableEffect.class, selector) != NULL);
 }
 
+/*! @abstract A non-synthesized selector does not resolve on the effect base. */
 - (void)testNonSynthesizedSelectorsAreNotResolved
 {
 	XCTAssertFalse([FxGripTileableEffect instancesRespondToSelector:NSSelectorFromString(@"clickMyButton")]);
 	XCTAssertFalse([FxGripTileableEffect instancesRespondToSelector:NSSelectorFromString([kFxGripClickSelectorPrefix stringByAppendingString:@"12x"])]);
 }
 
+/*! @abstract A subclass inherits the click selector resolution. */
 - (void)testSubclassInheritsClickSelectorResolution
 {
 	SEL selector = NSSelectorFromString([FxGripParameterUtility clickSelectorNameForParameter:31337]);
@@ -172,6 +181,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 
 #pragma mark Notification payload contract
 
+/*! @abstract The parameter-clicked notification name and ID key are non-empty and distinct from each other and from the parameter-changed constants. */
 - (void)testParameterClickedConstantsAreNonEmptyAndDistinct
 {
 	XCTAssertNotNil(FxGripTileableEffectParameterClickedName);
@@ -196,6 +206,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 	}
 }
 
+/*! @abstract A parameter-clicked notification carries the parameter ID through the priority center to an observer. */
 - (void)testParameterClickedPayloadRoundTripThroughPriorityCenter
 {
 	NSNotificationCenter *center = FxGripClickTestMakePriorityCenter();
@@ -224,6 +235,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 	[center removeObserver:token];
 }
 
+/*! @abstract A parameter-clicked notification reaches an extension's click hook with the parameter ID. */
 - (void)testParameterClickedPayloadDeliveredToExtensionObserver
 {
 	FxGripClickTestStubEffect *effect = [FxGripClickTestStubEffect.alloc init];
@@ -241,6 +253,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 	XCTAssertEqualObjects(ext.lastUserInfo[FxGripTileableEffectParameterClickedIDKey], paramID);
 }
 
+/*! @abstract A parameter-clicked notification is safely ignored by an extension that implements no click hook. */
 - (void)testParameterClickedNotificationIgnoredByExtensionWithoutHook
 {
 	FxGripClickTestStubEffect *effect = [FxGripClickTestStubEffect.alloc init];
@@ -256,6 +269,7 @@ static NSNotificationCenter *FxGripClickTestMakePriorityCenter(void)
 
 #pragma mark Default action hook
 
+/*! @abstract The help parameter responds to the default parameter action selector. */
 - (void)testHelpParameterRespondsToDefaultParameterAction
 {
 	Class helpClass = NSClassFromString(@"FxGripHelpParameter");

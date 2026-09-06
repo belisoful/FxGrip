@@ -1,7 +1,15 @@
-//
-//  FxGripVideoView.h
-//  FxGrip
-//
+/*!
+	@file       FxGripVideoView.h
+	@copyright  Copyright © 2024 Belisoful All rights reserved.
+	@author     belisoful
+	@date       2026-09-06
+	@header     FxGripVideoView
+	@abstract   The configuration keys of a video parameter's value dictionary.
+	@discussion Introduced in FxGrip 0.1.0. The kFxGripVideoKey_* constants name the entries a
+	            video control reads from its value: the URL, the access whitelist, the row
+	            height, and the autoplay and loop flags. An absent whitelist defaults to the
+	            common video-hosting domains. kFxGripVideoDefaultHeight is the fallback row height.
+*/
 
 #ifndef FxGripVideoView_h
 #define FxGripVideoView_h
