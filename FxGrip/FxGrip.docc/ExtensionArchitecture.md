@@ -69,7 +69,7 @@ Three posting patterns cover the API surface:
 
 `NSPriorityNotificationCenter` delivers each notification to observers in ascending priority value: -20 is first, 10 (`FxGripExtensionDefaultPriority`) is the default, 20 is last. `reverse:YES` inverts the order. A post-block, when supplied, runs after each observer.
 
-`FxGripExtensionBase` conforms to `NSNotificationObjectPriorityItem`. `-ncPriority:` returns `extDefaultPriority` for every notification name; an extension overrides it to reorder specific notifications. `FxGripParameterData` is the model: it answers -20 for `FxGripNotifyAPI_ParameterAddName`, -18 for `FxGripTileableEffectAddedToDocumentName`, and -15 for `FxGripTileableEffectFlushName` so its parameter mirror is current before other observers read it. The center queries `ncPriority:` at delivery-sort time, so priorities may change at runtime.
+`FxGripExtensionBase` conforms to `NSNotificationObjectPriorityItem`. `-ncPriority:` returns `extDefaultPriority` for every notification name; an extension overrides it to reorder specific notifications. `FxGripParameterData` is the model: it answers -20 for `FxGripNotifyAPI_ParameterAddName`, -18 for `FxGripTileableEffectAddedToDocumentName`, and -13 for `FxGripTileableEffectFlushName` so its parameter mirror is current before other observers read it. The center queries `ncPriority:` at delivery-sort time, so priorities may change at runtime.
 
 The effect reserves high-priority slots for its own bookkeeping block observers (`FxGripTileableEffect.m`):
 

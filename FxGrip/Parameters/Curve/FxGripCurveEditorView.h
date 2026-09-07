@@ -160,12 +160,14 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 	@discussion Introduced in FxGrip 0.1.0. The domain, role, and background style the
 				editor; the same class serves every mapping. Interactions: click on the
 				curve adds a point; dragging moves it (a linear domain pins the first
-				and last point in x; a circular domain wraps x); holding Control during
+				and last point in x; a circular domain wraps x); holding Option during
 				a drag slows the point to slowDragScale of mouse travel for fine
-				positioning; Option-click on a point deletes it, as do dragging far
-				outside the strip, pressing Delete, and the context menu's Delete
-				Point item; double-click resets to the role's identity. A linear
-				curve's pinned endpoints never delete. Rendering evaluates the curve with the same
+				positioning; holding Shift constrains the drag to one axis;
+				Command-click on a point deletes it, as do dragging far outside the
+				strip, pressing Delete, and the context menu's Delete Point item;
+				Control-click opens the context menu; double-click resets to the role's
+				identity. A linear curve's pinned endpoints never delete. Rendering
+				evaluates the curve with the same
 				Fritsch-Carlson builders the render uses, at view-width resolution, so
 				the drawn curve equals the applied curve.
 
@@ -236,7 +238,7 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 
 /*!
 	@property   slowDragScale
-	@abstract   The fraction of mouse travel a Control-slowed drag applies.
+	@abstract   The fraction of mouse travel an Option-slowed drag applies.
 	@discussion Defaults to kFxGripCurveSlowDragScaleDefault (0.1), which lands the
 				point within half an 8-bit value step per point of travel at the
 				standard strip height. Setting clamps to [0.01, 1.0].

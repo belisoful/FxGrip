@@ -113,8 +113,11 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripToggleParameter.h>
 #import <FxGrip/FxGripAllParameters.h>
 
+#import <FxGrip/FxGripDividerData.h>
+#import <FxGrip/FxGripDividerBox.h>
 #import <FxGrip/FxGripDividerParameter.h>
 #import <FxGrip/FxGripSection.h>
+#import <FxGrip/FxGripSectionData.h>
 #import <FxGrip/FxGripSectionParameter.h>
 #import <FxGrip/FxGripRandom.h>
 #import <FxGrip/FxGripRandomParameter.h>
@@ -189,6 +192,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripAPIAccessing.h>
 #import <FxGrip/FxGripCommonAPI.h>
 #import <FxGrip/FxGripDynamicParameterAPI_v3.h>
+#import <FxGrip/FxGripDynamicParameterAPI_v4.h>
 #import <FxGrip/FxGripParameterInfoAPI_v1.h>
 #import <FxGrip/FxGripParameterBoundsAPI_v1.h>
 #import <FxGrip/FxGripMetaAPI_v1.h>

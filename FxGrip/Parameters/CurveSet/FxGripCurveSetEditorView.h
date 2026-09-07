@@ -50,7 +50,7 @@
 
 /*!
 	@property   slowDragScale
-	@abstract   The Control-slowed drag fraction applied to every strip.
+	@abstract   The Option-slowed drag fraction applied to every strip.
 	@discussion Setting propagates to the existing strips and to strips added later.
 				Each strip clamps to [0.01, 1.0]; the getter reports the clamped value.
 				Defaults to kFxGripCurveSlowDragScaleDefault.

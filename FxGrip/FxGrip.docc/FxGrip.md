@@ -1,50 +1,120 @@
 # ``FxGrip``
 
-FxGrip is a framework for FxPlug praviding advanced features and functionality not built into Apple's implementation. 
+FxGrip is a framework for FxPlug 4 that adds features and functionality beyond Apple's implementation.
 
 ## Overview
 
-There are two primary classes
-	- FxGripTileableEffect
-	- FxGripTileableGenerator
+FxGrip wraps the standard FxPlug host API protocols and adds its own APIs, parameter model, plug-in registrars, and host-integration extensions for Final Cut Pro and Motion plug-ins. It is macOS-only, because FxPlug hosts are macOS applications.
+
+Two base classes anchor the framework:
+
+- ``FxGripTileableEffect-class`` — the effect base, an `FxTileableEffect` that drives the parameter subsystem, the extensions, presets, analysis, and the render pass.
+- ``FxGripTileableGenerator`` — the generator counterpart, for a plug-in that produces an image with no source.
+
+FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, adopts the parameter subsystem through a host, or subclasses the effect base for the whole framework. <doc:Adoption> maps the levels.
 
 ## Topics
 
-There are multiple topics introduced
-
-### Adopting FxGrip
+### Getting started
 
 - <doc:Adoption>
+- <doc:EffectAndGenerator>
 
-### FxGripTileableEffect
+### Core concepts
 
-### Registrars
+- <doc:ExtensionArchitecture>
+- <doc:PluginState>
+- <doc:OutOfBandAccess>
+- <doc:AnalysisPass>
+- <doc:MetaAndTags>
+- <doc:Timing>
+- <doc:ColorAndGamut>
+- <doc:TilingAndGeometry>
+- <doc:Versioning>
 
-### FxGrip API Accessing
+### Parameters
 
-This puts a wrapper around the standard FxPlug API Protocols and adds its own APIs, such as FxGripPresetsAPI_v1 and FxGripParameterTagsAPI_v1.
+- <doc:FxPlugParameters>
+- <doc:StandardValueParameters>
+- <doc:ParameterModel>
+- <doc:ParameterFlags>
 
-### FxGripParameter
-
-### FxCustomParameter
+### Custom parameter controls
 
 - <doc:CustomControls>
-- <doc:WebContent>
-- <doc:ObjectTracking>
+- <doc:CustomParameterData>
+- <doc:Section>
+- <doc:Divider>
+- <doc:Banner>
+- <doc:Capsule>
+- <doc:Status>
+- <doc:Progress>
+- <doc:Switch>
+- <doc:Random>
+- <doc:Curve>
+- <doc:LiveImage>
+- <doc:WebView>
+- <doc:Video>
+- <doc:Analyzer>
+- <doc:TrackingOpacity>
 
-### 3D Space
+### On-screen controls
+
+- <doc:OnScreenControls>
+
+### 3D space
 
 - <doc:Space3D>
 
-### FxGripExtension
+### Object tracking
 
-FxGripAboutMenu
-FxGripDebugMenu
-FxGripGoogleAnalytics
-FxGripI18N
-FxGripInstanceTracker
-FxGripMeta
-FxGripParameterData
-FxGripRegression
+- <doc:ObjectTracking>
 
-- <!--@START_MENU_TOKEN@-->``Symbol``<!--@END_MENU_TOKEN@-->
+### Machine-learning effects
+
+- <doc:Inference>
+
+### Web and video content
+
+- <doc:WebContent>
+
+### Preset system
+
+- <doc:Presets>
+
+### Host APIs and registration
+
+- <doc:APIAccessing>
+- <doc:Registration>
+
+### Extensions
+
+- <doc:ExtensionArchitecture>
+- <doc:ExtensionSystem>
+- <doc:ParameterExtensions>
+- <doc:I18N>
+- <doc:Meta>
+- <doc:ParameterData>
+- <doc:AboutMenu>
+- <doc:DebugMenu>
+- <doc:GoogleAnalytics>
+- <doc:InstanceTracker>
+- <doc:Regression>
+- <doc:Analysis>
+- <doc:MLCache>
+- <doc:Window>
+
+### Utility classes
+
+- <doc:Utilities>
+- <doc:ImageBuffer>
+- <doc:TextAndWatermark>
+- <doc:EventModifiers>
+
+### Primary classes
+
+- ``FxGripTileableEffect-class``
+- ``FxGripTileableGenerator``
+- ``FxGripAPIAccessing-class``
+- ``FxGripEffectHost``
+- ``FxGripPluginHost``

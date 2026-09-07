@@ -190,7 +190,7 @@ key.
     kFxParameterProperty_Id:      @(kMySwitchID),
     kFxParameterProperty_Name:    @"Enabled",
     kFxParameterProperty_Type:    kFxParameterType_Switch,
-    kFxParameterProperty_Default: @{ kCustomAPI_BoolKey: @YES },
+    kFxParameterProperty_Default: @YES,
 }
 ```
 
@@ -452,40 +452,45 @@ beside the slot label.
 
 ## Topics
 
+### The value object
+
+- <doc:CustomParameterData>
+
 ### Structural
 
-- ``FxGripSectionParameter``
-- ``FxGripDividerParameter``
+- <doc:Section>
+- <doc:Divider>
 
 ### Display
 
-- ``FxGripStatusParameter``
-- ``FxGripProgressParameter``
-- ``FxGripBannerParameter``
-- ``FxGripCapsuleParameter``
+- <doc:Status>
+- <doc:Progress>
+- <doc:Banner>
+- <doc:Capsule>
 
 ### Interactive
 
-- ``FxGripSwitchParameter``
-- ``FxGripRandomParameter``
-- ``FxGripPresetsParameter``
+- <doc:Switch>
+- <doc:Random>
+- <doc:Presets>
 
 ### Curve editor
 
-- ``FxGripCurveEditorView``
-- ``FxGripCurveSetEditorView``
-- ``FxGripCurveData``
-- ``FxGripCurveSetData``
+- <doc:Curve>
 
 ### Web and video
 
-- ``FxGripWebViewParameter``
-- ``FxGripVideoViewParameter``
+- <doc:WebView>
+- <doc:Video>
 - <doc:WebContent>
 
 ### Live image
 
-- ``FxGripLiveImageParameter``
-- ``FxGripLiveImageView``
-- ``FxGripLiveFrame``
+- <doc:LiveImage>
+
+### Analysis and tracking
+
+- <doc:Analyzer>
+- <doc:TrackingOpacity>
+- <doc:ObjectTracking>
 ```
