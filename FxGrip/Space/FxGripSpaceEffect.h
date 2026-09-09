@@ -2,24 +2,25 @@
 	@file       FxGripSpaceEffect.h
 	@copyright  Copyright © 2024 Belisoful All rights reserved.
 	@author     belisoful
-	@date       2026-09-06
+	@date       2026-09-09
 	@header     FxGripSpaceEffect
-	@abstract   A tileable-effect template that renders a SceneKit scene through the host 3D camera and lights.
-	@discussion Introduced in FxGrip 0.1.0. This file declares the 3D Space effect template. It captures the
-	            host camera and lights in the state pass, serializes them with velocity samples into
-	            plugin state, and builds a fresh SceneKit scene per render that the space backend draws
-	            into the destination tile. Subclass hooks add per-frame parameters and scene content.
+	@abstract   The engine-neutral base of a 3D Space effect: host camera and light capture, per-frame
+	            decoding, and the full-frame render contract.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the base that every 3D Space effect
+	            template subclasses. It captures the host camera, lights, and view-matrix samples into
+	            plugin state where the host APIs are valid, decodes them for the render pass, and
+	            defines the seams a render engine and a plugin fill in. It imports no render engine.
+	            `FxGripSceneKitEffect` is the shipped SceneKit engine subclass.
 */
 
 #ifndef FxGripSpaceEffect_h
 #define FxGripSpaceEffect_h
 
-#import <SceneKit/SceneKit.h>
+#import <Metal/Metal.h>
 #import <simd/simd.h>
 #import "FxGripTileableEffect.h"
-#import "FxGripSpaceBackend.h"
-#import "FxGripParticleInteraction.h"
 #import "FxGripSpaceMotion.h"
+#import "FxGripParticleInteraction.h"
 
 @class FxImageTile;
 
@@ -27,105 +28,74 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*!
 	@class      FxGripSpaceEffect
-	@abstract   A tileable-effect template that renders a SceneKit scene through the host 3D camera
-				and lights.
-	@discussion Introduced in FxGrip 0.1.0. Captures the host camera and lights in the state pass
-				(where the `Fx3DAPI_v5` and `FxLightingAPI_v3` APIs are valid), serializes them into
-				plugin state along with view-matrix samples one frame on each side for velocity, and
-				at render time builds a SceneKit scene from that state and draws it into the
-				destination tile through the space backend.
+	@abstract   The engine-neutral base of a 3D Space effect template.
+	@discussion Introduced in FxGrip 0.1.0. The base owns the part of a 3D effect that does not
+				depend on a render engine. In the capture pass, where the `Fx3DAPI_v5` and
+				`FxLightingAPI_v3` APIs are valid, it encodes the host camera, the host lights,
+				view-matrix samples one frame on each side for velocity, and the inter-particle force
+				configuration into plugin state. In the render pass it decodes that state through the
+				helpers declared here and hands the render to the engine subclass.
 
 				The host renders frames concurrently on multiple threads, and re-renders and reorders
-				them. The template therefore holds no scene state: `buildSceneWithCoder:...` builds a
-				fresh scene from the per-frame coder on each render, so concurrent renders never share
-				a scene. All per-frame state travels through plugin state, never through the effect.
+				them. The base holds no per-frame state: every value a render needs travels through
+				plugin state, and every helper here is a pure function of the coder.
 
-				A plugin adds its own geometry in `updateSceneContents:fromCoder:atTime:cameraMotion:`,
-				which receives the per-render scene. Expensive `SCNGeometry` and `SCNMaterial` are
-				immutable once built and safe to cache on the plugin and reference from the per-render
-				nodes; only nodes and transforms are created per frame. The built-in content, enabled
-				by `rendersSourceLayerPlane`, places the source tile on a plane at the host layer
-				transform.
+				Two kinds of subclass fill the seams.
 
-				`spaceBackend` defaults to an `FxGripSceneKitMetalBackend`. When no source is present
-				the template renders the scene alone; when the backend cannot render it copies the
-				source unchanged.
+				- An engine subclass, such as `FxGripSceneKitEffect`, overrides
+				  `encodeEngineStateIntoCoder:atTime:error:` to add engine-specific state to the
+				  capture and `renderSceneFromCoder:sourceTile:toTexture:atTime:error:` to draw the
+				  frame. The default render copies the source unchanged.
+				- A plugin subclasses an engine subclass and overrides
+				  `encodeSceneParametersIntoCoder:atTime:error:` plus the engine's apply hook.
 
-				The host reports matrices as `FxMatrix44` (double, row-major). Converting them into the
-				SceneKit column-vector convention and deriving the camera-to-world transform is
-				performed here and is the part of the subsystem that requires verification against a
-				running Final Cut Pro or Motion host.
+				The host reports matrices as `FxMatrix44` (double, row-major). The decode helpers
+				return them in the simd column-vector convention `FxGripSpaceMotion` documents, and
+				`decodeCameraTransform:fromCoder:` already inverts the host view matrix into the
+				camera-to-world transform an engine places its camera with.
 */
 @interface FxGripSpaceEffect : FxGripTileableEffect <FxGripTileableEffectCoderState>
 
-/*! The engine that renders the scene into the tile. Defaults to `defaultSpaceBackend`; setting nil
-	restores that default. The backend is shared across concurrent renders and is thread-safe. */
-@property (nonatomic, strong, null_resettable) id<FxGripSpaceBackend> spaceBackend;
-
-/*! The backend used when none is set. Defaults to an `FxGripSceneKitMetalBackend`. A subclass
-	overrides to change the default engine. */
-- (id<FxGripSpaceBackend>)defaultSpaceBackend;
-
-/*! Places the source tile on a plane at the host layer transform. Defaults to YES. */
+/*! Places the source tile on a plane at the host layer transform. Defaults to YES. The engine
+	subclass honors the flag when it builds the frame. */
 @property (nonatomic, assign) BOOL rendersSourceLayerPlane;
 
 /*!
-	@property   physicsBakeEnabled
-	@abstract   Runs a deterministic physics simulation and persists the bake with the document.
-	@discussion Defaults to NO. Set at setup, before rendering. When set, `defaultSpaceBackend`
-				becomes an `FxGripSceneKitPhysicsBackend` in session-cache mode, and the effect loads an
-				`FxGripPhysicsBake` extension that backs the backend's store with the document, so the
-				simulation fills lazily as frames render and survives a reopen. A custom `spaceBackend`
-				that the plugin set is left in place; the bake applies only to a physics backend.
-*/
-@property (nonatomic, assign) BOOL physicsBakeEnabled;
-
-/*!
 	@property   particleInteraction
-	@abstract   The scene-wide default inter-particle force for the rendered scene.
-	@discussion Introduced in FxGrip 0.1.0. SceneKit computes no force between particles. Setting this
-				gives every particle system in the rendered scene a mutual gravity, electric, or
-				magnetic force, except a system that carries its own `particleInteraction`, which keeps
-				it. Set it in the capture pass, where it is serialized into plugin state; each render
-				decodes it, installs it on the scene, and reconciles the scene's particle systems.
-
-				A force is a particle modifier, and a modifier survives neither an archive nor a copy,
-				so the value here is the durable record and the per-render reconciliation is what makes
-				it live.
+	@abstract   The scene-wide default inter-particle force for the rendered frame.
+	@discussion Introduced in FxGrip 0.1.0. Setting this gives every particle system in the rendered
+				frame a mutual gravity, electric, or magnetic force, except a system that carries its
+				own interaction, which keeps it. Set it in the capture pass, where the base serializes
+				it into plugin state; the engine subclass decodes it each render with
+				`decodeParticleInteractionFromCoder:` and installs it. The value here is the durable
+				record and the per-render installation is what makes it live.
 */
 @property (nonatomic, copy, nullable) FxGripParticleInteraction *particleInteraction;
 
 /*!
 	@property   particleInteractionFields
-	@abstract   Inter-particle forces installed as physics fields, keyed by the name of the node that
-	            carries each one.
-	@discussion Introduced in FxGrip 0.1.0. An entry names a node in the rendered scene and the force
-	            that node's field applies. Each render creates the field, assigns it to the named node,
-	            and binds the particle systems on that node and its descendants as its sources. A field
-	            on a node that also holds the emitters draws from those emitters; a field on the
-	            scene's root node draws from the whole scene.
-
-	            Use this when the force should be a SceneKit field, composing with `halfExtent`,
-	            `scope`, `categoryBitMask`, and reaching rigid bodies. Use `particleInteraction` when
-	            each system should simply act on itself. A system bound to a field is skipped by the
-	            scene-wide default, so the two compose rather than fight over the modifier stage.
-
-	            A physics field's evaluation block survives neither an archive nor a copy, so this
-	            dictionary is the durable record and the per-render reconciliation is what makes it
-	            live. Set it in the capture pass, where it is serialized into plugin state.
+	@abstract   Inter-particle forces installed as fields, keyed by the name of the node that carries
+	            each one.
+	@discussion Introduced in FxGrip 0.1.0. An entry names a node in the rendered frame and the force
+	            that node's field applies. The base serializes the dictionary into plugin state; the
+	            engine subclass decodes it each render with `decodeParticleInteractionFieldsFromCoder:`
+	            and recreates each field on its named node. A system bound to a field is skipped by
+	            the scene-wide default, so the two compose.
 */
 @property (nonatomic, copy, nullable) NSDictionary<NSString *, FxGripParticleInteraction *> *particleInteractionFields;
 
+#pragma mark Capture seams
+
 /*!
 	@method     encodeSceneParametersIntoCoder:atTime:error:
-	@abstract   A subclass hook, run in the capture pass, that serializes the plugin's own per-frame
+	@abstract   A plugin hook, run in the capture pass, that serializes the plugin's own per-frame
 				parameters into plugin state.
-	@discussion The default does nothing and returns YES. FxGrip encodes the host camera and lights,
-				then calls this. A subclass reads its parameters here, where the retrieval API is
-				valid, and encodes the values the render pass needs, then reads them back in
-				`updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:`. This pairs capture
-				with apply so a subclass never overrides `pluginCoder:atTime:quality:error:` and never
-				risks dropping the host camera and light capture.
+	@discussion The default does nothing and returns YES. FxGrip encodes the host camera, lights,
+				interactions, and engine state, then calls this last and returns its result. A
+				plugin reads its parameters here, where the retrieval API is valid, and encodes the
+				values the render pass needs, then reads them back in the engine's apply hook. This
+				pairs capture with apply so a plugin never overrides `pluginCoder:atTime:quality:error:`
+				and never risks dropping the host camera and light capture.
 
 				The coder is created fresh for each render, so this hook carries no shared state and is
 				safe under the host's concurrent per-frame rendering.
@@ -135,66 +105,85 @@ NS_ASSUME_NONNULL_BEGIN
 								 error:(NSError * _Nullable *)error;
 
 /*!
-	@method     updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:
-	@abstract   A subclass hook, called once per render, to add the plugin's nodes to the per-render
-				scene.
-	@discussion The default does nothing. FxGrip has already added the camera, lights, and built-in
-				layer plane to `scene`. `cameraNode` is the host camera node, the scene's point of
-				view; a subclass reads or adjusts it (for example enabling depth of field on
-				`cameraNode.camera` with the computed focus, or driving `motionBlurIntensity` from
-				`cameraMotion`) and parents nodes to it to pin them to the camera. A subclass adds its
-				own geometry, reading the decoded host state from `coder` (the `NSCoder(FxPlug)`
-				decoders) and its own parameters (from `encodeSceneParametersIntoCoder:`). The scene
-				is exclusive to this render; nodes and transforms are created here while cached
-				geometry is reused.
+	@method     encodeEngineStateIntoCoder:atTime:error:
+	@abstract   An engine hook, run in the capture pass after the host state and before the plugin
+				seam, that serializes engine-specific state into plugin state.
+	@discussion The default does nothing and returns YES. An engine subclass overrides it for state
+				that belongs to the engine and not to the plugin, such as an archived authored scene
+				template. Returning NO with an error fails the capture.
 */
-- (void)updateSceneContents:(SCNScene *)scene
-				 cameraNode:(SCNNode *)cameraNode
-				  fromCoder:(NSCoder *)coder
-					 atTime:(CMTime)renderTime
-			   cameraMotion:(FxGripCameraMotion)cameraMotion;
+- (BOOL)encodeEngineStateIntoCoder:(NSCoder *)coder
+							atTime:(CMTime)renderTime
+							 error:(NSError * _Nullable *)error;
+
+#pragma mark Render seam
 
 /*!
-	@method     sceneTemplateNodeAtTime:
-	@abstract   An optional authored content node that FxGrip serializes into plugin state and
-				recreates for each render.
-	@discussion The default returns nil, and the scene is built imperatively in
-				`updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:`. A subclass returns a
-				node subtree, its own content without the camera or lights, to have FxGrip archive it
-				and add an independent copy to each render's scene. The apply hook still runs
-				afterward, so a subclass combines a static authored template with per-frame
-				adjustments (found by name on the recreated copy).
-
-				Recreating from the archive gives each render its own node graph, so this style is
-				concurrency-safe with no per-frame rebuild. FxGrip re-archives the template only when
-				`sceneTemplateVersion` changes, so a static template serializes once. The archived
-				graph is embedded in every frame's plugin state, so this style suits authored or
-				imported scenes with light animation; a parameter-driven scene is cheaper to build
-				imperatively.
+	@method     renderSceneFromCoder:sourceTile:toTexture:atTime:error:
+	@abstract   An engine hook that draws one frame from the decoded plugin state into the
+				destination texture.
+	@discussion The base implementation is the passthrough: it copies `sourceTile` into `texture`
+				with `blitTile:toTexture:error:`, or succeeds with no source. An engine subclass
+				overrides it to build and draw its scene, and calls the base when its renderer cannot
+				run so the source shows unchanged. `renderTime` is the effect's clip time. The
+				destination texture is already resolved and non-nil.
 */
-- (nullable SCNNode *)sceneTemplateNodeAtTime:(CMTime)renderTime;
+- (BOOL)renderSceneFromCoder:(NSCoder *)coder
+				  sourceTile:(nullable FxImageTile *)sourceTile
+				   toTexture:(id<MTLTexture>)texture
+					  atTime:(CMTime)renderTime
+					   error:(NSError * _Nullable *)error;
+
+#pragma mark Decoding the host state
 
 /*!
-	@method     sceneTemplateVersion
-	@abstract   A revision number for the `sceneTemplateNodeAtTime:` content. Defaults to 0.
-	@discussion FxGrip re-archives the template only when this value changes. A subclass returns a
-				larger value after it mutates the authored node so the new content reaches the render.
+	@method     decodeCameraTransform:fromCoder:
+	@abstract   The host camera's camera-to-world transform, the inverse of the encoded view matrix.
+	@discussion Returns NO and leaves `transform` unchanged when the coder holds no view matrix. The
+				result is in the simd column-vector convention, ready for a camera node or entity
+				transform.
 */
-- (NSInteger)sceneTemplateVersion;
+- (BOOL)decodeCameraTransform:(simd_float4x4 *)transform fromCoder:(NSCoder *)coder;
 
 /*!
-	@method     buildSceneWithCoder:sourceTile:atTime:pointOfView:
-	@abstract   Builds a fresh SceneKit scene for one render from the decoded plugin state.
-	@discussion Creates a new `SCNScene`, adds a camera node configured from the host camera (returned
-				through `outPointOfView`), a lights container from the host lights, the built-in layer
-				plane when enabled and a source is present, and calls
-				`updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:`. Each call returns an
-				independent scene, so renders on different threads do not share state.
+	@method     decodeLayerTransform:fromCoder:
+	@abstract   The host layer's model-to-world transform.
+	@discussion Returns NO and leaves `transform` unchanged when the coder holds no model matrix. The
+				result is in the simd column-vector convention. The source layer plane sits at this
+				transform.
 */
-- (SCNScene *)buildSceneWithCoder:(NSCoder *)coder
-					   sourceTile:(nullable FxImageTile *)sourceTile
-						   atTime:(CMTime)renderTime
-					  pointOfView:(SCNNode * _Nullable * _Nullable)outPointOfView;
+- (BOOL)decodeLayerTransform:(simd_float4x4 *)transform fromCoder:(NSCoder *)coder;
+
+/*!
+	@method     cameraMotionFromCoder:
+	@abstract   The camera's linear and angular velocity at the frame, by central difference of the
+				view-matrix samples one frame on each side.
+	@discussion Returns zero motion when either sample is absent, which is the case when the frame
+				duration was unknown at capture. An engine feeds the result to its motion blur.
+*/
+- (FxGripCameraMotion)cameraMotionFromCoder:(NSCoder *)coder;
+
+/*! The scene-wide interaction captured from `particleInteraction`, or nil when none was set. */
+- (nullable FxGripParticleInteraction *)decodeParticleInteractionFromCoder:(NSCoder *)coder;
+
+/*! The field configurations captured from `particleInteractionFields`, or nil when none were set. */
+- (nullable NSDictionary<NSString *, FxGripParticleInteraction *> *)decodeParticleInteractionFieldsFromCoder:(NSCoder *)coder;
+
+#pragma mark Render utilities
+
+/*!
+	@method     blitTile:toTexture:error:
+	@abstract   Copies the source tile's texture into the destination texture, clipped to the smaller
+				of the two.
+	@discussion Uses a pooled command queue from `FxGripMTLDeviceCache` and waits for completion.
+				Succeeds without copying when the source tile has no Metal texture. Returns NO with an
+				error when no command queue is available.
+*/
+- (BOOL)blitTile:(FxImageTile *)sourceTile toTexture:(id<MTLTexture>)texture error:(NSError * _Nullable *)error;
+
+/*! An `FxGripPlugErrorDomain` error with the `kFxGripError_SpaceRenderFailure` code and `reason`
+	as its localized description. */
+- (NSError *)spaceErrorWithReason:(NSString *)reason;
 
 @end
 

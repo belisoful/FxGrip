@@ -1,6 +1,6 @@
 # 3D Space Effects
 
-Render a SceneKit scene through the host's 3D camera and lights into the Metal tile.
+Render a 3D scene through the host's 3D camera and lights into the Metal tile.
 
 ## Overview
 
@@ -9,20 +9,31 @@ SceneKit scene for each frame, and draws it into the destination tile with Metal
 supplies the scene graph, camera, lights, geometry, materials, and the renderer. FxGrip supplies
 the bridge from the FxPlug host into SceneKit and the render driver that targets the tile.
 
-An effect subclasses ``FxGripSpaceEffect``. The template captures the host camera and lights where
-the host APIs are valid, serializes them into plugin state, and at render time builds the scene and
-hands it to the backend. With the built-in layer plane enabled, the source tile appears in the host
-3D scene with no plugin code.
+The subsystem is split at the render engine. ``FxGripSpaceEffect`` is the engine-neutral base: it
+captures the host camera and lights where the host APIs are valid, serializes them into plugin
+state, and decodes them for the render. ``FxGripSceneKitEffect`` is the SceneKit engine subclass:
+at render time it builds the scene from that state and hands it to the backend. A plugin subclasses
+the engine class. With the built-in layer plane enabled, the source tile appears in the host 3D
+scene with no plugin code.
+
+The source folders follow the split. `Space/` holds the base and the engine-neutral parts: camera
+motion, the deterministic simulation store, the inter-particle force configuration, and the Fast
+Multipole Method core. `Space/SceneKit/` holds everything that imports SceneKit. SceneKit is
+deprecated as of WWDC25 in favor of RealityKit; `Space/RealityKit/` is reserved for a RealityKit
+engine subclass built on the same base.
 
 ### The frame
 
 The host runs two passes for each frame.
 
 - Capture pass → the retrieval, `Fx3DAPI_v5`, and `FxLightingAPI_v3` APIs are valid.
-  ``FxGripSpaceEffect`` encodes the camera, the lights, and view-matrix samples one frame on each
-  side into plugin state, then calls the plugin's capture seam.
-- Render pass → the host APIs are invalid and only plugin state is available. The template decodes
-  that state, builds a scene, and renders it into the tile.
+  ``FxGripSpaceEffect`` encodes the camera, the lights, view-matrix samples one frame on each side,
+  and the inter-particle force configuration into plugin state, then calls the engine's capture
+  hook and last the plugin's capture seam.
+- Render pass → the host APIs are invalid and only plugin state is available. The base resolves the
+  destination texture and calls the engine's render hook, which decodes the state, builds a scene,
+  and renders it into the tile. The base's own render hook is the passthrough: the source copied
+  unchanged, which an engine falls back to when its renderer cannot run.
 
 The host renders frames concurrently, out of order, and re-renders them. Plugin state is the only
 per-frame channel that survives this, so every value the render needs travels through it.
@@ -45,14 +56,22 @@ Each call returns an independent scene. Concurrent renders share no scene state.
 
 A plugin contributes through two hooks and touches neither Metal nor the tile.
 
-- `encodeSceneParametersIntoCoder:atTime:error:` runs in the capture pass. A subclass reads its
-  parameters, where the retrieval API is valid, and encodes the values the render needs.
-- `updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:` runs in the render pass. A
-  subclass adds its nodes to the per-render scene, reads its values back from the coder, adjusts
-  `cameraNode` when needed, and uses the supplied camera motion.
+- `encodeSceneParametersIntoCoder:atTime:error:`, on the base, runs in the capture pass. A subclass
+  reads its parameters, where the retrieval API is valid, and encodes the values the render needs.
+- `updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:`, on the SceneKit engine, runs in
+  the render pass. A subclass adds its nodes to the per-render scene, reads its values back from the
+  coder, adjusts `cameraNode` when needed, and uses the supplied camera motion.
 
 A subclass overrides these two hooks. Overriding them keeps the host camera and light capture that
 `pluginCoder:atTime:quality:error:` performs.
+
+An engine contributes through two hooks of its own on the base. `encodeEngineStateIntoCoder:atTime:error:`
+adds engine-specific state to the capture; the SceneKit engine archives the scene template there.
+`renderSceneFromCoder:sourceTile:toTexture:atTime:error:` draws the frame. The base's decode helpers
+serve any engine: `decodeCameraTransform:fromCoder:` returns the camera-to-world transform,
+`decodeLayerTransform:fromCoder:` the layer transform, `cameraMotionFromCoder:` the camera velocity,
+and the two interaction decoders the inter-particle force configuration, each in the simd
+column-vector convention with no reference to a scene graph.
 
 ### Two authoring styles
 
@@ -142,9 +161,10 @@ own, and an ``FxGripParticleSystem`` archives its interaction, so a system in a 
 configured. A modifier does not survive an archive, so the reconciliation reinstalls the force after
 the scene is built.
 
-An ``FxGripSpaceEffect`` carries the whole arrangement for a plugin. Set its `particleInteraction` in
-the capture pass and FxGrip serializes it into plugin state, then each render decodes it onto the
-scene and reconciles every particle system, including one the apply hook just created.
+An ``FxGripSceneKitEffect`` carries the whole arrangement for a plugin. Set the base's
+`particleInteraction` in the capture pass and FxGrip serializes it into plugin state, then each
+render decodes it onto the scene and reconciles every particle system, including one the apply hook
+just created.
 
 ### The force as a physics field
 
@@ -179,8 +199,9 @@ the field controls, spans several systems, and couples rigid bodies to the parti
 reserve the pre-dynamics modifier stage, so a system uses one or the other, never both, and a system
 bound to a field is skipped by the scene-wide default.
 
-An ``FxGripSpaceEffect`` persists both shapes. Its `particleInteraction` is the scene-wide default,
-and its `particleInteractionFields` names the nodes that carry fields and the force each one applies.
+An ``FxGripSceneKitEffect`` persists both shapes. The base's `particleInteraction` is the scene-wide
+default, and its `particleInteractionFields` names the nodes that carry fields and the force each one
+applies.
 A field's evaluation block survives neither an archive nor a copy, so these are the durable record
 and the per-render reconciliation is what makes them live: each render recreates the field on its
 named node and binds the emitters under it.
@@ -194,8 +215,8 @@ expansion channels over the same tree, which multiplies the expansion work but n
 
 The host reports the camera position, no velocity, and no focus distance. FxGrip derives the last
 two. `FxGripSpaceMotion` computes the camera's linear and angular velocity by central difference of
-the view-matrix samples the capture pass stored. The velocity reaches the apply seam as
-`cameraMotion`, which a plugin feeds to `motionBlurIntensity` or its own motion-blur pass. The
+the view-matrix samples the capture pass stored, through the base's `cameraMotionFromCoder:`. The
+velocity reaches the apply seam as `cameraMotion`, which a plugin feeds to `motionBlurIntensity` or its own motion-blur pass. The
 autofocus distance is the distance from the camera to the layer origin, which a plugin sets on
 `cameraNode.camera` with an aperture to drive SceneKit depth of field.
 
@@ -246,8 +267,9 @@ A spinning card that carries the source image and composites in the host 3D scen
 
 ### The backend
 
-``FxGripSpaceBackend`` is the render-driver contract: a readiness flag, an identifier, and one
-method that renders a scene through a point of view into an `id<MTLTexture>`.
+``FxGripSpaceBackend`` is the SceneKit render-driver contract: a readiness flag, an identifier, and
+one method that renders an `SCNScene` through a point of view into an `id<MTLTexture>`. The
+``FxGripSceneKitEffect`` owns the backend; the engine-neutral base has no backend of its own.
 ``FxGripSceneKitMetalBackend`` is the shipped driver. It pools a Metal `SCNRenderer` for each
 device, builds a render pass whose color attachment is the tile texture and whose depth attachment
 comes from the device cache, and draws through a pooled command queue.
@@ -265,6 +287,7 @@ SceneKit light node.
 ### Effect template
 
 - ``FxGripSpaceEffect``
+- ``FxGripSceneKitEffect``
 
 ### The render driver
 

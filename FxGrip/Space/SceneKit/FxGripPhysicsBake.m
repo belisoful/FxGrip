@@ -12,7 +12,7 @@
 */
 
 #import "FxGripPhysicsBake.h"
-#import "FxGripSpaceEffect.h"
+#import "FxGripSceneKitEffect.h"
 #import "FxGripSceneKitPhysicsBackend.h"
 #import "FxGripPhysicsSimulationStore.h"
 #import "FxGripTileableEffect+Extensions.h"
@@ -109,14 +109,14 @@
 /*!
 	@method		installStoreOnPhysicsBackend
 	@abstract	Backs the effect's physics backend with an FxGripFrameData store in session-cache mode.
-	@discussion	Introduced in FxGrip 0.1.0. The install is a no-op unless the effect is an FxGripSpaceEffect
+	@discussion	Introduced in FxGrip 0.1.0. The install is a no-op unless the effect is an FxGripSceneKitEffect
 				whose space backend is an FxGripSceneKitPhysicsBackend. */
 - (void)installStoreOnPhysicsBackend
 {
-	if (![self.effect isKindOfClass:FxGripSpaceEffect.class]) {
+	if (![self.effect isKindOfClass:FxGripSceneKitEffect.class]) {
 		return;
 	}
-	FxGripSpaceEffect *effect = (FxGripSpaceEffect *)self.effect;
+	FxGripSceneKitEffect *effect = (FxGripSceneKitEffect *)self.effect;
 	if (![effect.spaceBackend isKindOfClass:FxGripSceneKitPhysicsBackend.class]) {
 		return;
 	}

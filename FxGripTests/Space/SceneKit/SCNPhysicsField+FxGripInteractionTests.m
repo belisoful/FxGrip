@@ -19,7 +19,7 @@
 #import <FxGrip/SCNParticleSystem+FxGripInteraction.h>
 #import <FxGrip/FxGripParticleSystem.h>
 #import <FxGrip/FxGripSceneKitPhysicsBackend.h>
-#import "../../FxGrip/Space/FxGripInteractionFieldState.h"
+#import "../../../FxGrip/Space/SceneKit/FxGripInteractionFieldState.h"
 
 @interface SCNPhysicsField_FxGripInteractionTests : XCTestCase
 @property (nonatomic, strong) id<MTLDevice> device;

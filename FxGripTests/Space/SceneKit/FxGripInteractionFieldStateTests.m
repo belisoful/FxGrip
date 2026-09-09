@@ -13,7 +13,7 @@
 
 #import <XCTest/XCTest.h>
 #import <simd/simd.h>
-#import "../../FxGrip/Space/FxGripInteractionFieldState.h"
+#import "../../../FxGrip/Space/SceneKit/FxGripInteractionFieldState.h"
 
 // The softened Laplace field of unit sources at one point: Σ (r_j − p) / (|r_j − p|² + ε²)^{3/2}.
 static simd_float3 FxGripTestUnitField(const simd_float3 *sources, NSUInteger count, simd_float3 point, float softening)
