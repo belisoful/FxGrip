@@ -15,6 +15,9 @@
 */
 
 #import "FxGripSpaceEffect.h"
+#import "SCNScene+FxGripInteraction.h"
+#import "SCNPhysicsField+FxGripInteraction.h"
+#import "SCNParticleSystem+FxGripInteraction.h"
 #import "FxGripSceneKitMetalBackend.h"
 #import "FxGripSceneKitPhysicsBackend.h"
 #import "FxGripPhysicsBake.h"
@@ -34,6 +37,8 @@ static NSString * const FxGripSpaceCoderNextKey = @"_fxspace_next";
 
 // The archived scene-template node.
 static NSString * const FxGripSpaceCoderTemplateKey = @"_fxspace_template";
+static NSString * const FxGripSpaceCoderInteractionKey = @"_fxspace_interaction";
+static NSString * const FxGripSpaceCoderInteractionFieldsKey = @"_fxspace_interaction_fields";
 
 /*! Converts a host double, row-major Matrix44Data into a simd column-vector matrix. */
 static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
@@ -161,6 +166,15 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 	id<FxLightingAPI_v3> lighting = self.apiManager.lightingAPIv3;
 	if (lighting != nil) {
 		[coder encodeFxLightingAPI:lighting];
+	}
+
+	FxGripParticleInteraction *interaction = self.particleInteraction;
+	if (interaction != nil) {
+		[coder encodeObject:interaction forKey:FxGripSpaceCoderInteractionKey];
+	}
+	NSDictionary<NSString *, FxGripParticleInteraction *> *interactionFields = self.particleInteractionFields;
+	if (interactionFields.count > 0) {
+		[coder encodeObject:interactionFields forKey:FxGripSpaceCoderInteractionFieldsKey];
 	}
 
 	SCNNode *templateNode = [self sceneTemplateNodeAtTime:renderTime];
@@ -328,6 +342,7 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 
 	FxGripCameraMotion motion = [self cameraMotionFromCoder:coder];
 	[self updateSceneContents:scene cameraNode:cameraNode fromCoder:coder atTime:renderTime cameraMotion:motion];
+	[self applyParticleInteractionToScene:scene fromCoder:coder];
 
 	if (outPointOfView != NULL) {
 		*outPointOfView = cameraNode;
@@ -425,6 +440,65 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 }
 
 /*! @abstract Unarchives the scene-template node subtree from plugin state, or nil when none is stored. */
+/*!
+	@method		applyParticleInteractionToScene:fromCoder:
+	@abstract	Restores the scene-wide default inter-particle force and installs it on the scene.
+	@discussion	Introduced in FxGrip 0.1.0. Runs after the subclass has added its own content, so a
+				system created in updateSceneContents: is reconciled along with one decoded from the
+				template. A system that carries its own interaction keeps it. */
+- (void)applyParticleInteractionToScene:(SCNScene *)scene fromCoder:(NSCoder *)coder
+{
+	// Fields first: a system they bind is then skipped by the scene-wide default.
+	[self installParticleInteractionFieldsInScene:scene fromCoder:coder];
+
+	FxGripParticleInteraction *interaction = nil;
+	@try {
+		interaction = [coder decodeObjectOfClass:FxGripParticleInteraction.class
+										  forKey:FxGripSpaceCoderInteractionKey];
+	} @catch (NSException *exception) {
+		interaction = nil;
+	}
+	if (interaction == nil) {
+		return;
+	}
+	scene.particleInteraction = interaction;
+	[scene fxgrip_reconcileParticleInteractions];
+}
+
+/*!
+	@method		installParticleInteractionFieldsInScene:fromCoder:
+	@abstract	Recreates each declared interaction field on its named node and binds its sources.
+	@discussion	Introduced in FxGrip 0.1.0. A physics field's evaluation block does not survive an
+				archive, so the field is built fresh every render from the decoded configuration. An
+				entry naming a node the scene does not contain is skipped. */
+- (void)installParticleInteractionFieldsInScene:(SCNScene *)scene fromCoder:(NSCoder *)coder
+{
+	NSDictionary<NSString *, FxGripParticleInteraction *> *configurations = nil;
+	@try {
+		configurations = [coder decodeObjectOfClasses:
+						  [NSSet setWithObjects:NSDictionary.class, NSString.class, FxGripParticleInteraction.class, nil]
+											   forKey:FxGripSpaceCoderInteractionFieldsKey];
+	} @catch (NSException *exception) {
+		configurations = nil;
+	}
+	if (configurations.count == 0) {
+		return;
+	}
+	// Sorted, so the fields install in the same order every render whatever the dictionary's own is.
+	for (NSString *name in [configurations.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+		SCNNode *node = [scene.rootNode childNodeWithName:name recursively:YES];
+		if (node == nil && [scene.rootNode.name isEqualToString:name]) {
+			node = scene.rootNode;
+		}
+		if (node == nil) {
+			continue;
+		}
+		SCNPhysicsField *field = [SCNPhysicsField particleInteractionFieldWithInteraction:configurations[name]];
+		node.physicsField = field;
+		[field bindParticleInteractionToParticleSystemsInNode:node];
+	}
+}
+
 - (nullable SCNNode *)templateContentFromCoder:(NSCoder *)coder
 {
 	NSData *archived = nil;

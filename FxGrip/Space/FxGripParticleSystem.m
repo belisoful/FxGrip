@@ -13,8 +13,18 @@
 */
 
 #import "FxGripParticleSystem.h"
+#import "SCNParticleSystem+FxGripInteraction.h"
 #import <simd/simd.h>
 #import <objc/runtime.h>
+
+static NSString * const FxGripParticleSeedKey = @"FxGripParticleSeed";
+static NSString * const FxGripParticleVelocityJitterKey = @"FxGripParticleVelocityJitter";
+static NSString * const FxGripParticleSizeJitterKey = @"FxGripParticleSizeJitter";
+static NSString * const FxGripParticleLifeJitterKey = @"FxGripParticleLifeJitter";
+static NSString * const FxGripParticleAngleJitterKey = @"FxGripParticleAngleJitter";
+static NSString * const FxGripParticleSpreadAngleKey = @"FxGripParticleSpreadAngle";
+static NSString * const FxGripParticleColorJitterKey = @"FxGripParticleColorJitter";
+static NSString * const FxGripParticleInteractionKey = @"FxGripParticleInteraction";
 
 // One reproducible value in [-1, 1] from a particle index, the seed, and a channel, so each varied
 // property draws an independent stream.
@@ -39,6 +49,20 @@ static simd_float3 FxGripParticleRand3(uint32_t index, uint32_t seed, uint32_t c
 static float FxGripClamp01(float value)
 {
 	return value < 0.0f ? 0.0f : (value > 1.0f ? 1.0f : value);
+}
+
+// The spreading angle is a full-cone angle, so its half-angle tangent scales the birth velocity. The
+// tangent diverges as the angle approaches pi, so the effective angle is capped short of the
+// asymptote and a pi spread stays a finite velocity.
+static const double FxGripParticleMaxSpreadAngle = 0.99 * M_PI;
+
+static float FxGripParticleSpreadTangent(CGFloat spreadAngle)
+{
+	if (spreadAngle <= 0.0) {
+		return 0.0f;
+	}
+	double angle = MIN((double)spreadAngle, FxGripParticleMaxSpreadAngle);
+	return tanf((float)(angle * 0.5));
 }
 
 /*!
@@ -83,6 +107,74 @@ static float FxGripClamp01(float value)
 		[self neutralizeSceneKitVariation];
 	}
 	return self;
+}
+
+#pragma mark Coding
+
++ (BOOL)supportsSecureCoding
+{
+	return YES;
+}
+
+/*!
+	@method		initWithCoder:
+	@abstract	Decodes a system and restores its seed, captured variation, and birth block.
+	@param		coder	The decoder.
+	@discussion	Introduced in FxGrip 0.1.0. `SCNParticleSystem` archives the live variation
+				properties, which this class holds at zero, and cannot archive the birth block. The
+				captured magnitudes are decoded after the superclass so a superclass setter call during
+				decode cannot clear them, and the seeded block is reinstalled. */
+- (instancetype)initWithCoder:(NSCoder *)coder
+{
+	self = [super initWithCoder:coder];
+	if (self != nil) {
+		self.seed = (uint32_t)[coder decodeInt64ForKey:FxGripParticleSeedKey];
+		_velocityJitter = [coder decodeDoubleForKey:FxGripParticleVelocityJitterKey];
+		_sizeJitter = [coder decodeDoubleForKey:FxGripParticleSizeJitterKey];
+		_lifeJitter = [coder decodeDoubleForKey:FxGripParticleLifeJitterKey];
+		_angleJitter = [coder decodeDoubleForKey:FxGripParticleAngleJitterKey];
+		_spreadAngle = [coder decodeDoubleForKey:FxGripParticleSpreadAngleKey];
+		NSValue *colorJitter = [coder decodeObjectOfClass:NSValue.class forKey:FxGripParticleColorJitterKey];
+		if (colorJitter != nil) {
+			_colorJitter = colorJitter.SCNVector4Value;
+		}
+		[self installSeededVariation];
+		[self neutralizeSceneKitVariation];
+		FxGripParticleInteraction *interaction = [coder decodeObjectOfClass:FxGripParticleInteraction.class
+																	 forKey:FxGripParticleInteractionKey];
+		if (interaction != nil) {
+			self.particleInteraction = interaction; // reinstalls the force modifier
+		}
+	}
+	return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder
+{
+	[super encodeWithCoder:coder];
+	[coder encodeInt64:self.seed forKey:FxGripParticleSeedKey];
+	[coder encodeDouble:_velocityJitter forKey:FxGripParticleVelocityJitterKey];
+	[coder encodeDouble:_sizeJitter forKey:FxGripParticleSizeJitterKey];
+	[coder encodeDouble:_lifeJitter forKey:FxGripParticleLifeJitterKey];
+	[coder encodeDouble:_angleJitter forKey:FxGripParticleAngleJitterKey];
+	[coder encodeDouble:_spreadAngle forKey:FxGripParticleSpreadAngleKey];
+	[coder encodeObject:[NSValue valueWithSCNVector4:_colorJitter] forKey:FxGripParticleColorJitterKey];
+	[coder encodeObject:self.particleInteraction forKey:FxGripParticleInteractionKey];
+}
+
+/*!
+	@method		copyWithZone:
+	@abstract	Returns a deterministic copy with the seed, captured variation, and birth block intact.
+	@param		zone	Unused.
+	@discussion	Introduced in FxGrip 0.1.0. `SCNParticleSystem` copies its stored properties but does
+				not reinstall the seeded birth block, so a plain copy renders without the seeded
+				variation. The copy is taken through the same secure archive as `initWithCoder:`, which
+				drops the block on encode and reinstalls exactly one on decode. */
+- (id)copyWithZone:(NSZone *)zone
+{
+	NSData *data = [NSKeyedArchiver archivedDataWithRootObject:self requiringSecureCoding:YES error:NULL];
+	FxGripParticleSystem *copy = [NSKeyedUnarchiver unarchivedObjectOfClass:FxGripParticleSystem.class fromData:data error:NULL];
+	return copy;
 }
 
 #pragma mark Drop-in mimicry
@@ -171,7 +263,9 @@ static float FxGripClamp01(float value)
 	@abstract	Installs the birth-event block that applies seeded jitter to new particles.
 	@discussion	Introduced in FxGrip 0.1.0. The block reads the captured variation magnitudes and, for
 				each born particle, adds hashed offsets keyed by an incrementing birth index. Velocity,
-				size, life, color, and angle receive independent hash channels. */
+				size, life, color, and angle receive independent hash channels. The spreading angle
+				scales its velocity offset by the tangent of its half-angle, capped at an angle short of
+				pi so the tangent stays finite. */
 - (void)installSeededVariation
 {
 	__weak typeof(self) weakSelf = self;
@@ -188,7 +282,7 @@ static float FxGripClamp01(float value)
 		float sizeJitter = (float)self->_sizeJitter;
 		float lifeJitter = (float)self->_lifeJitter;
 		float angleJitter = (float)self->_angleJitter;
-		float spreadTangent = self->_spreadAngle > 0.0 ? tanf((float)self->_spreadAngle * 0.5f) : 0.0f;
+		float spreadTangent = FxGripParticleSpreadTangent(self->_spreadAngle);
 		simd_float4 colorJitter = simd_make_float4((float)self->_colorJitter.x, (float)self->_colorJitter.y,
 												   (float)self->_colorJitter.z, (float)self->_colorJitter.w);
 

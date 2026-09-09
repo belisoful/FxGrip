@@ -177,6 +177,11 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripInferenceBridge.h>
 
 #import <FxGrip/FxGripSpaceMotion.h>
+#import <FxGrip/FxGripFMM.h>
+#import <FxGrip/FxGripParticleInteraction.h>
+#import <FxGrip/SCNParticleSystem+FxGripInteraction.h>
+#import <FxGrip/SCNPhysicsField+FxGripInteraction.h>
+#import <FxGrip/SCNScene+FxGripInteraction.h>
 #import <FxGrip/FxGripSpaceBackend.h>
 #import <FxGrip/FxGripSceneKitMetalBackend.h>
 #import <FxGrip/FxGripPhysicsSimulationStore.h>

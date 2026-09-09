@@ -34,9 +34,14 @@ NS_ASSUME_NONNULL_BEGIN
 				without rebuilding it.
 
 				Velocity, size, life-span, color, angle, and spreading-angle variation are reimplemented
-				as seeded jitter, so setting those properties gives reproducible variety. The remaining
+				as seeded jitter, so setting those properties gives reproducible variety. The spreading
+				angle is capped just short of pi, where the half-angle tangent that scales it diverges.
+				The remaining
 				SceneKit variations (angular velocity, mass, bounce, friction, charge, intensity, and
 				image-sequence timing) are neutralized.
+
+				The seed and the captured variation magnitudes archive with the system under
+				`NSSecureCoding`, so a system inside an archived scene template decodes deterministic.
 */
 @interface FxGripParticleSystem : SCNParticleSystem
 

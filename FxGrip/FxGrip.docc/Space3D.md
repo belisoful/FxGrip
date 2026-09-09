@@ -110,9 +110,85 @@ per step. Adding the ``FxGripPhysicsBake`` extension swaps the session store for
 records are a transform per dynamic body per frame and stay inline with no media-folder spill. A
 body is cached by its node name, so name any body to bake.
 
-Particle systems are not made deterministic this way. `SCNParticleSystem` has no random seed, so a
-re-simulation does not reproduce the same frame. A deterministic particle effect uses a stateless
-analytic emitter whose particle positions are a closed-form function of time.
+Particle systems reproduce under the same catch-up. `SCNParticleSystem` has no random seed, so a
+stock system varies its particles differently on every re-simulation. ``FxGripParticleSystem`` is a
+drop-in subclass that holds SceneKit's own variation at zero and reintroduces velocity, size, life
+span, color, angle, and spreading-angle variation from a `seed` keyed by each particle's birth
+index. The physics backend resets every system before the catch-up, so a frame re-emits the same
+particles from the start. The seed and variation archive with the system, so a system inside a
+scene template stays deterministic when decoded. `initWithParticleSystem:` converts an authored or
+loaded system in place. Particles respond to `SCNPhysicsField` and colliders as usual; SceneKit
+computes no particle-to-particle forces.
+
+### Inter-particle forces
+
+SceneKit particles respond to fields and colliders, never to each other, so mutual gravity or a
+Coulomb force between particles is not built in. FxGrip adds it through the ``FxGripParticleInteraction``
+configuration and the `particleInteraction` property the `SCNParticleSystem` category adds. Setting an
+enabled interaction installs a pre-dynamics modifier that, each step, gathers the particles, evaluates
+the force with a Fast Multipole Method in linear time, and adds the acceleration to the velocities.
+
+The forces are a bit field, so they combine. Gravity uses the system's `particleMass`, electric and
+magnetic use its `particleCharge` and the particle velocity. Gravity and electric share one field
+evaluation and differ only in their coupling; magnetic adds the Biot-Savart term, so the electric and
+magnetic bits together are the Lorentz force. The accuracy tier sets the multipole order, and the
+softening length bounds the near force so a tight cluster stays finite.
+
+The force is deterministic: the field is a fixed function of the gathered state, so under the physics
+backend's fixed-step catch-up a frame reproduces. The evaluation is allocation-free once warm, and it
+runs in parallel with a result independent of the thread count. An `SCNScene` may carry a default
+interaction that `fxgrip_reconcileParticleInteractions` applies to every system that has none of its
+own, and an ``FxGripParticleSystem`` archives its interaction, so a system in a scene template stays
+configured. A modifier does not survive an archive, so the reconciliation reinstalls the force after
+the scene is built.
+
+An ``FxGripSpaceEffect`` carries the whole arrangement for a plugin. Set its `particleInteraction` in
+the capture pass and FxGrip serializes it into plugin state, then each render decodes it onto the
+scene and reconciles every particle system, including one the apply hook just created.
+
+### The force as a physics field
+
+The same force is also available as a SceneKit physics field, through the class factory the
+`SCNPhysicsField` category adds. A custom field evaluator receives one target's position, velocity,
+mass, charge, and time, with no reference to the particle collection, so the field alone cannot
+compute a mutual force. The facade pairs it with a companion modifier: the modifier records a bound
+system's particles once per step, and the evaluator queries the expansion built from them. Building
+is linear in the particle count, and a query is a fixed cost per target: the leaf holding the point
+carries the local expansion of the whole far field, so the query is one local evaluation plus the
+near leaves the multipole could not cover.
+
+Create the field with `particleInteractionFieldWithInteraction:`, assign it to a node's
+`physicsField`, and bind its sources with `bindParticleInteractionToParticleSystemsInNode:`, which
+takes every emitter on a node and its descendants. The standard field controls then apply:
+`halfExtent`, `scope`, `categoryBitMask`, and `active` all shape where the force reaches.
+
+Several systems may feed one field, and their particles then attract or repel each other across
+systems. Each system contributes its own `particleMass` and `particleCharge`, so a heavy cloud and a
+light one interact correctly. SceneKit runs every particle modifier before any field evaluation
+within a step, so every bound system is current when the field is queried.
+
+Two behaviors decide how the field couples. SceneKit applies a custom field's vector to a particle
+unchanged and divides it by a rigid body's mass, so the vector is the particle acceleration and a
+body in range feels that vector over its own mass; restrict the field with `categoryBitMask` when
+only particles should respond. The modifier records positions in the system's simulation space while
+the evaluator receives world-space targets, so leave `local` clear on a bound system.
+
+Choose between the two shapes by what the force must reach. The `SCNParticleSystem` property is the
+short path for a system that acts on itself. The field is the SceneKit-idiomatic path, composes with
+the field controls, spans several systems, and couples rigid bodies to the particle cloud. Both
+reserve the pre-dynamics modifier stage, so a system uses one or the other, never both, and a system
+bound to a field is skipped by the scene-wide default.
+
+An ``FxGripSpaceEffect`` persists both shapes. Its `particleInteraction` is the scene-wide default,
+and its `particleInteractionFields` names the nodes that carry fields and the force each one applies.
+A field's evaluation block survives neither an archive nor a copy, so these are the durable record
+and the per-render reconciliation is what makes them live: each render recreates the field on its
+named node and binds the emitters under it.
+
+The accuracy tier is the speed dial. On an M1 Max at twenty thousand particles, the field costs about
+1.6 microseconds per particle per step at Draft, 3.8 at Standard, and 11.3 at Fine, most of it in the
+build the whole system shares rather than in the per-particle query. Magnetic adds three more
+expansion channels over the same tree, which multiplies the expansion work but not the tree.
 
 ### Camera velocity and focus
 
@@ -194,3 +270,13 @@ SceneKit light node.
 
 - ``FxGripSpaceBackend``
 - ``FxGripSceneKitMetalBackend``
+
+### Deterministic simulation
+
+- ``FxGripSceneKitPhysicsBackend``
+- ``FxGripPhysicsBake``
+- ``FxGripParticleSystem``
+
+### Inter-particle forces
+
+- ``FxGripParticleInteraction``

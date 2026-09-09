@@ -18,6 +18,7 @@
 #import <simd/simd.h>
 #import "FxGripTileableEffect.h"
 #import "FxGripSpaceBackend.h"
+#import "FxGripParticleInteraction.h"
 #import "FxGripSpaceMotion.h"
 
 @class FxImageTile;
@@ -78,6 +79,42 @@ NS_ASSUME_NONNULL_BEGIN
 				that the plugin set is left in place; the bake applies only to a physics backend.
 */
 @property (nonatomic, assign) BOOL physicsBakeEnabled;
+
+/*!
+	@property   particleInteraction
+	@abstract   The scene-wide default inter-particle force for the rendered scene.
+	@discussion Introduced in FxGrip 0.1.0. SceneKit computes no force between particles. Setting this
+				gives every particle system in the rendered scene a mutual gravity, electric, or
+				magnetic force, except a system that carries its own `particleInteraction`, which keeps
+				it. Set it in the capture pass, where it is serialized into plugin state; each render
+				decodes it, installs it on the scene, and reconciles the scene's particle systems.
+
+				A force is a particle modifier, and a modifier survives neither an archive nor a copy,
+				so the value here is the durable record and the per-render reconciliation is what makes
+				it live.
+*/
+@property (nonatomic, copy, nullable) FxGripParticleInteraction *particleInteraction;
+
+/*!
+	@property   particleInteractionFields
+	@abstract   Inter-particle forces installed as physics fields, keyed by the name of the node that
+	            carries each one.
+	@discussion Introduced in FxGrip 0.1.0. An entry names a node in the rendered scene and the force
+	            that node's field applies. Each render creates the field, assigns it to the named node,
+	            and binds the particle systems on that node and its descendants as its sources. A field
+	            on a node that also holds the emitters draws from those emitters; a field on the
+	            scene's root node draws from the whole scene.
+
+	            Use this when the force should be a SceneKit field, composing with `halfExtent`,
+	            `scope`, `categoryBitMask`, and reaching rigid bodies. Use `particleInteraction` when
+	            each system should simply act on itself. A system bound to a field is skipped by the
+	            scene-wide default, so the two compose rather than fight over the modifier stage.
+
+	            A physics field's evaluation block survives neither an archive nor a copy, so this
+	            dictionary is the durable record and the per-render reconciliation is what makes it
+	            live. Set it in the capture pass, where it is serialized into plugin state.
+*/
+@property (nonatomic, copy, nullable) NSDictionary<NSString *, FxGripParticleInteraction *> *particleInteractionFields;
 
 /*!
 	@method     encodeSceneParametersIntoCoder:atTime:error:

@@ -70,6 +70,44 @@
 		CE5573F52D1B715000A2B063 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		CE5573F72D1B715000A2B063 /* PluginManager.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PluginManager.framework; path = /Library/Developer/Frameworks/PluginManager.framework; sourceTree = "<absolute>"; };
 		CE5CE7A100000000000000B2 /* SceneKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SceneKit.framework; path = System/Library/Frameworks/SceneKit.framework; sourceTree = SDKROOT; };
+		CE5D6EFD3050BEBA00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D6F1A3050BEBA00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D6F3B3050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D6F693050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D6F8A3050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D6FAA3050BEBA00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D6FCD3050BEBA00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D6FF43050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D70143050BEBA00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D70353050BEBA00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D70523050BEBA00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D70733050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D70A13050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D70C23050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D70E23050BEBA00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D71053050BEBA00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D712C3050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D714C3050BEBA00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D716D3050BEBA00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D718A3050BEBA00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D71AB3050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D71D93050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D71FA3050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D721A3050BEBA00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D723D3050BEBA00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D72643050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D72843050BEBA00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D72AA3050BEBA00FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5D72CB3050BEBA00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D72E83050BEBA00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D73093050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D73373050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D73583050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D73783050BEBA00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D739B3050BEBA00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D73C23050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D73E23050BEBA00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D74083050BEBA00FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
 		CE5D79DA2D2E639300C8515A /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
 		CE5D79F52D2E639300C8515A /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
 		CE5D7A142D2E639300C8515A /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
@@ -78,6 +116,158 @@
 		CE5D7A852D2E639300C8515A /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
 		CE5D7AAC2D2E639300C8515A /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
 		CE5D7ACA2D2E639300C8515A /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D7DAE3051064E00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D7DCB3051064E00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D7DEC3051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D7E1A3051064E00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D7E3B3051064E00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D7E5B3051064E00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D7E7E3051064E00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D7EA53051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D7EC53051064E00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D7EE63051064E00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D7F033051064E00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D7F243051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D7F523051064E00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D7F733051064E00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D7F933051064E00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D7FB63051064E00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D7FDD3051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D7FFD3051064E00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D801E3051064E00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D803B3051064E00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D805C3051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D808A3051064E00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D80AB3051064E00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D80CB3051064E00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D80EE3051064E00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D81153051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D81353051064E00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D815B3051064E00FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5D817C3051064E00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D81993051064E00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D81BA3051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D81E83051064E00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D82093051064E00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D82293051064E00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D824C3051064E00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D82733051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D82933051064E00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D82B93051064E00FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5D8CA530513B4400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D8CC230513B4400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D8CE330513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D8D1130513B4400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D8D3230513B4400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D8D5230513B4400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D8D7530513B4400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D8D9C30513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D8DBC30513B4400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D8DDD30513B4400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D8DFA30513B4400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D8E1B30513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D8E4930513B4400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D8E6A30513B4400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D8E8A30513B4400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D8EAD30513B4400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D8ED430513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D8EF430513B4400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D8F1530513B4400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D8F3230513B4400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D8F5330513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D8F8130513B4400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D8FA230513B4400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D8FC230513B4400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D8FE530513B4400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D900C30513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D902C30513B4400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D905230513B4400FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5D907330513B4400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D909030513B4400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D90B130513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D90DF30513B4400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D910030513B4400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D912030513B4400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D914330513B4400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D916A30513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D918A30513B4400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D91B030513B4400FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5D9BC83051431900FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D9BE53051431900FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D9C063051431900FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D9C343051431900FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D9C553051431900FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D9C753051431900FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D9C983051431900FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D9CBF3051431900FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D9CDF3051431900FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D9D003051431900FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D9D1D3051431900FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D9D3E3051431900FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D9D6C3051431900FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D9D8D3051431900FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D9DAD3051431900FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D9DD03051431900FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D9DF73051431900FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D9E173051431900FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D9E383051431900FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D9E553051431900FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D9E763051431900FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5D9EA43051431900FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5D9EC53051431900FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5D9EE53051431900FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5D9F083051431900FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5D9F2F3051431900FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5D9F4F3051431900FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5D9F753051431900FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5D9F963051431900FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5D9FB33051431900FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5D9FD43051431900FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DA0023051431900FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DA0233051431900FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DA0433051431900FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DA0663051431900FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DA08D3051431900FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DA0AD3051431900FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DA0D33051431900FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5DAB1C30514C9400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DAB3930514C9400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DAB5A30514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DAB8830514C9400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DABA930514C9400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DABC930514C9400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DABEC30514C9400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DAC1330514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DAC3330514C9400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DAC5430514C9400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DAC7130514C9400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DAC9230514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DACC030514C9400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DACE130514C9400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DAD0130514C9400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DAD2430514C9400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DAD4B30514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DAD6B30514C9400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DAD8C30514C9400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DADA930514C9400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DADCA30514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DADF830514C9400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DAE1930514C9400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DAE3930514C9400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DAE5C30514C9400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DAE8330514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DAEA330514C9400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DAEC930514C9400FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5DAEEA30514C9400FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DAF0730514C9400FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DAF2830514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DAF5630514C9400FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DAF7730514C9400FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DAF9730514C9400FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DAFBA30514C9400FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DAFE130514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DB00130514C9400FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DB02730514C9400FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
 		CE7AB5BA2D224DC0001A7395 /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
 		CE7AB5D52D224DC0001A7395 /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
 		CE7AB5F42D224DC0001A7395 /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
@@ -1287,6 +1477,8 @@
 				Parameters/Video/FxGripVideoViewParameter.h,
 				Parameters/WebView/FxGripWebView.h,
 				Parameters/WebView/FxGripWebViewParameter.h,
+				Space/FxGripFMM.h,
+				Space/FxGripParticleInteraction.h,
 				Space/FxGripParticleSystem.h,
 				Space/FxGripPhysicsBake.h,
 				Space/FxGripPhysicsSimulationStore.h,
@@ -1297,6 +1489,9 @@
 				Space/FxGripSpaceMotion.h,
 				"Space/SCNCamera+FxGrip.h",
 				"Space/SCNLight+FxGrip.h",
+				"Space/SCNParticleSystem+FxGripInteraction.h",
+				"Space/SCNPhysicsField+FxGripInteraction.h",
+				"Space/SCNScene+FxGripInteraction.h",
 				Tracking/FxGripObjectTracker.h,
 				Utilities/FxGripColorGamut.h,
 				Utilities/FxGripEffectHost.h,
@@ -1445,6 +1640,272 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		CE5D74303050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74323050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74343050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74363050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74383050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D743A3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D743C3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D743E3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74403050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74423050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74443050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74463050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74483050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D744A3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D744C3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D744E3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74503050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74523050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74543050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74563050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74583050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D745A3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D745C3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D745E3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74603050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74623050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74643050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74663050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74683050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D746A3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D746C3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D746E3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74703050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74723050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74743050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74763050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D74783050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D747A3050BEBA00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		CE5D7AD32D2E639300C8515A /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -1495,6 +1956,1070 @@
 			sourceTree = "<group>";
 		};
 		CE5D7AE12D2E639300C8515A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82E13051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82E33051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82E53051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82E73051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82E93051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82EB3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82ED3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82EF3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82F13051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82F33051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82F53051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82F73051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82F93051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82FB3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82FD3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D82FF3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83013051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83033051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83053051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83073051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83093051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D830B3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D830D3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D830F3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83113051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83133051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83153051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83173051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83193051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D831B3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D831D3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D831F3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83213051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83233051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83253051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83273051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D83293051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D832B3051064E00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91D830513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91DA30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91DC30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91DE30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91E030513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91E230513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91E430513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91E630513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91E830513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91EA30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91EC30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91EE30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91F030513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91F230513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91F430513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91F630513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91F830513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91FA30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91FC30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D91FE30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920030513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920230513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920430513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920630513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920830513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920A30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920C30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D920E30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921030513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921230513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921430513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921630513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921830513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921A30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921C30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D921E30513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D922030513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5D922230513B4400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA0FB3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA0FD3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA0FF3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1013051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1033051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1053051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1073051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1093051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA10B3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA10D3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA10F3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1113051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1133051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1153051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1173051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1193051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA11B3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA11D3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA11F3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1213051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1233051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1253051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1273051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1293051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA12B3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA12D3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA12F3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1313051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1333051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1353051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1373051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1393051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA13B3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA13D3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA13F3051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1413051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1433051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DA1453051431900FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05030514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05230514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05430514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05630514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05830514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05A30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05C30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB05E30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06030514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06230514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06430514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06630514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06830514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06A30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06C30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB06E30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07030514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07230514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07430514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07630514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07830514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07A30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07C30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB07E30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08030514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08230514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08430514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08630514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08830514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08A30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08C30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB08E30514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB09030514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB09230514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB09430514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB09630514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB09830514C9400FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DB09A30514C9400FC480C /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -9019,8 +10544,16 @@
 					ProjectRef = CEF02AB0304A8C65008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74723050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D716D3050BEBA00FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF02661304826CD008A6AB6 /* Products */;
 					ProjectRef = CEF02503304826CD008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74643050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D70353050BEBA00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CCD4304643F1008A6AB6 /* Products */;
@@ -9035,6 +10568,10 @@
 					ProjectRef = CEF08B72304CACC7008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83093051064E00FC480C /* Products */;
+					ProjectRef = CE5D7DAE3051064E00FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF04B32304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF0470D304BB9AB008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
@@ -9047,8 +10584,16 @@
 					ProjectRef = CEF0D4293048ECB5008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA12D3051431900FC480C /* Products */;
+					ProjectRef = CE5D9BC83051431900FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF08FB4304CACC7008A6AB6 /* Products */;
 					ProjectRef = CEF08CAA304CACC7008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA0FF3051431900FC480C /* Products */;
+					ProjectRef = CE5D9D003051431900FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF08F9C304CACC7008A6AB6 /* Products */;
@@ -9061,6 +10606,10 @@
 				{
 					ProductGroup = CEB3B95C3044FC2C00156E47 /* Products */;
 					ProjectRef = CEB3B8013044FC2C00156E47 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB09A30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAC5430514C9400FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3E12F3045398300156E47 /* Products */;
@@ -9081,6 +10630,10 @@
 				{
 					ProductGroup = CEF0D6C23048ECB5008A6AB6 /* Products */;
 					ProjectRef = CEF0D5613048ECB5008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91E630513B4400FC480C /* Products */;
+					ProjectRef = CE5D8F1530513B4400FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB39DA7303BA48200156E47 /* Products */;
@@ -9107,6 +10660,10 @@
 					ProjectRef = CEB3B6C93044FC2C00156E47 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB09630514C9400FC480C /* Products */;
+					ProjectRef = CE5DAB1C30514C9400FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0D5743047A3B9008A6AB6 /* Products */;
 					ProjectRef = CEF0D3ED3047A3B9008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
@@ -9125,6 +10682,10 @@
 				{
 					ProductGroup = CEF03A183048B47D008A6AB6 /* Products */;
 					ProjectRef = CEF037663048B47D008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D83053051064E00FC480C /* Products */;
+					ProjectRef = CE5D801E3051064E00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0F835304817E4008A6AB6 /* Products */;
@@ -9149,6 +10710,10 @@
 				{
 					ProductGroup = CEF0268B304826CD008A6AB6 /* Products */;
 					ProjectRef = CEF023CB304826CD008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA10F3051431900FC480C /* Products */;
+					ProjectRef = CE5D9F963051431900FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF030363048276B008A6AB6 /* Products */;
@@ -9207,8 +10772,16 @@
 					ProjectRef = CEF049A3304BB9AB008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91FE30513B4400FC480C /* Products */;
+					ProjectRef = CE5D907330513B4400FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF058CB304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF053A6304BBB9A008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D83153051064E00FC480C /* Products */;
+					ProjectRef = CE5D817C3051064E00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF02287304A579C008A6AB6 /* Products */;
@@ -9239,8 +10812,16 @@
 					ProjectRef = CEF01D5A304A579C008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91F630513B4400FC480C /* Products */;
+					ProjectRef = CE5D8CA530513B4400FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D09330452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CCB230452DDA00156E47 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82E33051064E00FC480C /* Products */;
+					ProjectRef = CE5D7EE63051064E00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF01557304A54AB008A6AB6 /* Products */;
@@ -9335,6 +10916,10 @@
 					ProjectRef = CEF02D803048276B008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA12B3051431900FC480C /* Products */;
+					ProjectRef = CE5D9E383051431900FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CC503048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0C98F3048E552008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
@@ -9383,6 +10968,10 @@
 					ProjectRef = CEF0190130481DBE008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB05230514C9400FC480C /* Products */;
+					ProjectRef = CE5DAD8C30514C9400FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF01CC930481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01B7130481DBE008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
@@ -9407,12 +10996,24 @@
 					ProjectRef = CEF05774304BBB9A008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91DC30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8DDD30513B4400FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0156F304A54AB008A6AB6 /* Products */;
 					ProjectRef = CEF0129E304A54AB008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF00BC8304A09D1008A6AB6 /* Products */;
 					ProjectRef = CEF00B7F304A09D1008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB06430514C9400FC480C /* Products */;
+					ProjectRef = CE5DAEEA30514C9400FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74623050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D72CB3050BEBA00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0F76030492ABF008A6AB6 /* Products */;
@@ -9429,6 +11030,10 @@
 				{
 					ProductGroup = CEF0F77C30492ABF008A6AB6 /* Products */;
 					ProjectRef = CEF0F4C330492ABF008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74403050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6EFD3050BEBA00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3B1153044FB6A00156E47 /* Products */;
@@ -9475,6 +11080,10 @@
 					ProjectRef = CEF0EC9B304811C3008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D746A3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D70523050BEBA00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0D5643047A3B9008A6AB6 /* Products */;
 					ProjectRef = CEF0D19A3047A3B9008A6AB6 /* FxBrightness.xcodeproj */;
 				},
@@ -9485,6 +11094,14 @@
 				{
 					ProductGroup = CEF04B0E304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF045F2304BB9AB008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB08E30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAC7130514C9400FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB05C30514C9400FC480C /* Products */;
+					ProjectRef = CE5DADA930514C9400FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3D8EE30452F7000156E47 /* Products */;
@@ -9543,6 +11160,10 @@
 					ProjectRef = CEF00006304818EE008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA11F3051431900FC480C /* Products */;
+					ProjectRef = CE5D9D1D3051431900FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0F77630492ABF008A6AB6 /* Products */;
 					ProjectRef = CEF0F4E030492ABF008A6AB6 /* FxBrightness.xcodeproj */;
 				},
@@ -9575,6 +11196,10 @@
 					ProjectRef = CEF0472A304BB9AB008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1393051431900FC480C /* Products */;
+					ProjectRef = CE5D9E553051431900FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0AE0A3048E424008A6AB6 /* Products */;
 					ProjectRef = CEF0AA5C3048E424008A6AB6 /* FxBrightness.xcodeproj */;
 				},
@@ -9603,6 +11228,10 @@
 					ProjectRef = CEF0013A30493263008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83253051064E00FC480C /* Products */;
+					ProjectRef = CE5D7F033051064E00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0F75830492ABF008A6AB6 /* Products */;
 					ProjectRef = CEF0F61830492ABF008A6AB6 /* FxBrightness.xcodeproj */;
 				},
@@ -9611,8 +11240,20 @@
 					ProjectRef = CEF01183304A54AB008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D831B3051064E00FC480C /* Products */;
+					ProjectRef = CE5D81993051064E00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF090763048E31C008A6AB6 /* Products */;
 					ProjectRef = CEF08DE83048E31C008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D920630513B4400FC480C /* Products */;
+					ProjectRef = CE5D8F3230513B4400FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB07E30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAB3930514C9400FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0F845304817E4008A6AB6 /* Products */;
@@ -9647,6 +11288,10 @@
 					ProjectRef = CEF07029304CA611008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74343050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D72E83050BEBA00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF03D59304A8F79008A6AB6 /* Products */;
 					ProjectRef = CEF03ABB304A8F79008A6AB6 /* FxBrightness.xcodeproj */;
 				},
@@ -9667,6 +11312,10 @@
 					ProjectRef = CEF0F46C304817E4008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83073051064E00FC480C /* Products */;
+					ProjectRef = CE5D803B3051064E00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D08930452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CCCF30452DDA00156E47 /* FxBrightness.xcodeproj */;
 				},
@@ -9681,6 +11330,10 @@
 				{
 					ProductGroup = CEF0D6D23048ECB5008A6AB6 /* Products */;
 					ProjectRef = CEF0D30E3048ECB5008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D744E3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D718A3050BEBA00FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF04AFE304BB9AB008A6AB6 /* Products */;
@@ -9705,6 +11358,10 @@
 				{
 					ProductGroup = CEF0F81B304817E4008A6AB6 /* Products */;
 					ProjectRef = CEF0F5A4304817E4008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D921230513B4400FC480C /* Products */;
+					ProjectRef = CE5D8DFA30513B4400FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0EF28304811C3008A6AB6 /* Products */;
@@ -9747,8 +11404,16 @@
 					ProjectRef = CEF05C733048B97B008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83213051064E00FC480C /* Products */;
+					ProjectRef = CE5D7DCB3051064E00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF00A8D30481C08008A6AB6 /* Products */;
 					ProjectRef = CEF006E230481C08008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91F030513B4400FC480C /* Products */;
+					ProjectRef = CE5D8CC230513B4400FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0601A3048B97B008A6AB6 /* Products */;
@@ -9767,8 +11432,20 @@
 					ProjectRef = CEF02C05304A8C65008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1133051431900FC480C /* Products */;
+					ProjectRef = CE5D9FB33051431900FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CCBA304643F1008A6AB6 /* Products */;
 					ProjectRef = CEF0C8FA304643F1008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74483050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6F1A3050BEBA00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D921A30513B4400FC480C /* Products */;
+					ProjectRef = CE5D909030513B4400FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF022A1304A579C008A6AB6 /* Products */;
@@ -9835,6 +11512,10 @@
 					ProjectRef = CEF054FB304BBB9A008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1233051431900FC480C /* Products */;
+					ProjectRef = CE5D9BE53051431900FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF01579304A54AB008A6AB6 /* Products */;
 					ProjectRef = CEF01419304A54AB008A6AB6 /* FxBrightness.xcodeproj */;
 				},
@@ -9853,6 +11534,10 @@
 				{
 					ProductGroup = CEF02FE1304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02ACD304A8C65008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB08630514C9400FC480C /* Products */;
+					ProjectRef = CE5DAF0730514C9400FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0EC7430492A3A008A6AB6 /* Products */;
@@ -9919,8 +11604,24 @@
 					ProjectRef = CEF0F5C5304817E4008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74703050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6F3B3050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF002A430493263008A6AB6 /* Products */;
 					ProjectRef = CEF0FEEB30493263008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74543050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D73093050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D746C3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D71AB3050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB05430514C9400FC480C /* Products */;
+					ProjectRef = CE5DAF2830514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0266D304826CD008A6AB6 /* Products */;
@@ -9949,6 +11650,10 @@
 				{
 					ProductGroup = CEB3B11F3044FB6A00156E47 /* Products */;
 					ProjectRef = CEB3AFFC3044FB6A00156E47 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA13B3051431900FC480C /* Products */;
+					ProjectRef = CE5D9FD43051431900FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CC2A3048E552008A6AB6 /* Products */;
@@ -10171,6 +11876,10 @@
 					ProjectRef = CEF0F6FD304817E4008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1113051431900FC480C /* Products */;
+					ProjectRef = CE5D9E763051431900FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF00AB130481C08008A6AB6 /* Products */;
 					ProjectRef = CEF0097330481C08008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
@@ -10183,6 +11892,10 @@
 					ProjectRef = CEF0704A304CA611008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB06C30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAC9230514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF060483048B97B008A6AB6 /* Products */;
 					ProjectRef = CEF05F043048B97B008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
@@ -10193,6 +11906,10 @@
 				{
 					ProductGroup = CEF02FEF304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02C26304A8C65008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB05A30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAB5A30514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0EC6630492A3A008A6AB6 /* Products */;
@@ -10213,6 +11930,10 @@
 				{
 					ProductGroup = CEF0D6E03048ECB5008A6AB6 /* Products */;
 					ProjectRef = CEF0D4673048ECB5008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D921C30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8F5330513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF03A143048B47D008A6AB6 /* Products */;
@@ -10241,6 +11962,10 @@
 				{
 					ProductGroup = CEF0E6233047F98D008A6AB6 /* Products */;
 					ProjectRef = CEF0E50C3047F98D008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D83273051064E00FC480C /* Products */;
+					ProjectRef = CE5D7DEC3051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF03A223048B47D008A6AB6 /* Products */;
@@ -10275,8 +12000,16 @@
 					ProjectRef = CEF00027304818EE008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D82E93051064E00FC480C /* Products */;
+					ProjectRef = CE5D81BA3051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF04B22304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF049E1304BB9AB008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D745E3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D70733050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF00AB330481C08008A6AB6 /* Products */;
@@ -10293,6 +12026,10 @@
 				{
 					ProductGroup = CEF030323048276B008A6AB6 /* Products */;
 					ProjectRef = CEF02C863048276B008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82E73051064E00FC480C /* Products */;
+					ProjectRef = CE5D7F243051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3B97A3044FC2C00156E47 /* Products */;
@@ -10323,6 +12060,10 @@
 					ProjectRef = CEB3E0083045398300156E47 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D831F3051064E00FC480C /* Products */;
+					ProjectRef = CE5D805C3051064E00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF022B3304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF01D98304A579C008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
@@ -10343,12 +12084,28 @@
 					ProjectRef = CEF0EDF4304811C3008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91E230513B4400FC480C /* Products */;
+					ProjectRef = CE5D90B130513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA13D3051431900FC480C /* Products */;
+					ProjectRef = CE5D9D3E3051431900FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA0FB3051431900FC480C /* Products */;
+					ProjectRef = CE5D9C063051431900FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D07530452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CCF030452DDA00156E47 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CC243048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0C9CD3048E552008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91DE30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8E1B30513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0029430493263008A6AB6 /* Products */;
@@ -10359,12 +12116,24 @@
 					ProjectRef = CEF02AEE304A8C65008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D921030513B4400FC480C /* Products */;
+					ProjectRef = CE5D8CE330513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF08F8C304CACC7008A6AB6 /* Products */;
 					ProjectRef = CEF08BB0304CACC7008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB06A30514C9400FC480C /* Products */;
+					ProjectRef = CE5DADCA30514C9400FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB39DCB303BA48200156E47 /* Products */;
 					ProjectRef = CEB39C84303BA48200156E47 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB06030514C9400FC480C /* Products */;
+					ProjectRef = CE5DACC030514C9400FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0743A304CA611008A6AB6 /* Products */;
@@ -10383,6 +12152,10 @@
 					ProjectRef = CEF0E089304927A3008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83193051064E00FC480C /* Products */;
+					ProjectRef = CE5D81E83051064E00FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF022AD304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF01EFE304A579C008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -10397,6 +12170,10 @@
 				{
 					ProductGroup = CEB3B96A3044FC2C00156E47 /* Products */;
 					ProjectRef = CEB3B7353044FC2C00156E47 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D920030513B4400FC480C /* Products */;
+					ProjectRef = CE5D90DF30513B4400FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CE7AB6C72D224DC1001A7395 /* Products */;
@@ -10483,6 +12260,10 @@
 					ProjectRef = CEF05412304BBB9A008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1373051431900FC480C /* Products */;
+					ProjectRef = CE5DA0023051431900FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0F77830492ABF008A6AB6 /* Products */;
 					ProjectRef = CEF0F3F730492ABF008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -10511,12 +12292,24 @@
 					ProjectRef = CEF011D2304A54AB008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74783050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D73373050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF01CD730481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF0196D30481DBE008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0908A3048E31C008A6AB6 /* Products */;
 					ProjectRef = CEF08E373048E31C008A6AB6 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB07630514C9400FC480C /* Products */;
+					ProjectRef = CE5DAB8830514C9400FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82FB3051064E00FC480C /* Products */;
+					ProjectRef = CE5D808A3051064E00FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF08F7A304CACC7008A6AB6 /* Products */;
@@ -10527,8 +12320,16 @@
 					ProjectRef = CEF0ECEA304811C3008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83233051064E00FC480C /* Products */;
+					ProjectRef = CE5D7F523051064E00FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF058D7304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF057E0304BBB9A008A6AB6 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91D830513B4400FC480C /* Products */;
+					ProjectRef = CE5D8E4930513B4400FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF060303048B97B008A6AB6 /* Products */;
@@ -10551,6 +12352,10 @@
 					ProjectRef = CEF0DF51304927A3008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB07430514C9400FC480C /* Products */;
+					ProjectRef = CE5DADF830514C9400FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF04B12304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF04779304BB9AB008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -10559,8 +12364,16 @@
 					ProjectRef = CEF0390A3048B47D008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1293051431900FC480C /* Products */;
+					ProjectRef = CE5D9EA43051431900FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CCB2304643F1008A6AB6 /* Products */;
 					ProjectRef = CEF0C949304643F1008A6AB6 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB09430514C9400FC480C /* Products */;
+					ProjectRef = CE5DAF5630514C9400FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0029A30493263008A6AB6 /* Products */;
@@ -10597,6 +12410,10 @@
 				{
 					ProductGroup = CEF00A8F30481C08008A6AB6 /* Products */;
 					ProjectRef = CEF009A130481C08008A6AB6 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82FF3051064E00FC480C /* Products */;
+					ProjectRef = CE5D7E1A3051064E00FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF01CDD30481DBE008A6AB6 /* Products */;
@@ -10655,6 +12472,10 @@
 					ProjectRef = CEF0D35D3048ECB5008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91EA30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8D1130513B4400FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0D6EA3048ECB5008A6AB6 /* Products */;
 					ProjectRef = CEF0D4953048ECB5008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -10687,6 +12508,10 @@
 					ProjectRef = CEF0C8C33048E552008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74563050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D71D93050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0E6513047F98D008A6AB6 /* Products */;
 					ProjectRef = CEF0E2CA3047F98D008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -10707,6 +12532,10 @@
 					ProjectRef = CEF05682304BBB9A008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74323050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D70A13050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF030263048276B008A6AB6 /* Products */;
 					ProjectRef = CEF02F243048276B008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -10717,6 +12546,10 @@
 				{
 					ProductGroup = CEF0CC203048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0C9FB3048E552008A6AB6 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91EE30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8F8130513B4400FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0AE143048E424008A6AB6 /* Products */;
@@ -10779,6 +12612,10 @@
 					ProjectRef = CEF0E4023047F98D008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1093051431900FC480C /* Products */;
+					ProjectRef = CE5D9C343051431900FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0D6D03048ECB5008A6AB6 /* Products */;
 					ProjectRef = CEF0D5CD3048ECB5008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -10807,12 +12644,20 @@
 					ProjectRef = CEF0F66730492ABF008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1453051431900FC480C /* Products */;
+					ProjectRef = CE5D9D6C3051431900FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3B9663044FC2C00156E47 /* Products */;
 					ProjectRef = CEB3B86D3044FC2C00156E47 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3D07B30452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CE5630452DDA00156E47 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74383050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6F693050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0E6333047F98D008A6AB6 /* Products */;
@@ -10833,6 +12678,10 @@
 				{
 					ProductGroup = CEF022B7304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF02057304A579C008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D921E30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8D3230513B4400FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0D54A3047A3B9008A6AB6 /* Products */;
@@ -10857,6 +12706,10 @@
 				{
 					ProductGroup = CEF01CCD30481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01AC630481DBE008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82F93051064E00FC480C /* Products */;
+					ProjectRef = CE5D7E3B3051064E00FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0E62D3047F98D008A6AB6 /* Products */;
@@ -10907,12 +12760,28 @@
 					ProjectRef = CEF08E583048E31C008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91FC30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8E6A30513B4400FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D83033051064E00FC480C /* Products */;
+					ProjectRef = CE5D80AB3051064E00FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CC423048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0CA1C3048E552008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB09230514C9400FC480C /* Products */;
+					ProjectRef = CE5DAE1930514C9400FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0AE223048E424008A6AB6 /* Products */;
 					ProjectRef = CEF0AACC3048E424008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB08430514C9400FC480C /* Products */;
+					ProjectRef = CE5DAF7730514C9400FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF03A0E3048B47D008A6AB6 /* Products */;
@@ -10945,6 +12814,10 @@
 				{
 					ProductGroup = CEF0EF0C304811C3008A6AB6 /* Products */;
 					ProjectRef = CEF0EBD3304811C3008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1433051431900FC480C /* Products */;
+					ProjectRef = CE5D9C553051431900FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0F78430492ABF008A6AB6 /* Products */;
@@ -10995,6 +12868,10 @@
 					ProjectRef = CEF00C1B304A09D2008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1353051431900FC480C /* Products */;
+					ProjectRef = CE5D9D8D3051431900FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF030103048276B008A6AB6 /* Products */;
 					ProjectRef = CEF02E0D3048276B008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
@@ -11009,6 +12886,10 @@
 				{
 					ProductGroup = CEF0016B304818EE008A6AB6 /* Products */;
 					ProjectRef = CEF0FF3E304818EE008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB06830514C9400FC480C /* Products */;
+					ProjectRef = CE5DACE130514C9400FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF01569304A54AB008A6AB6 /* Products */;
@@ -11037,6 +12918,10 @@
 				{
 					ProductGroup = CEF0741E304CA611008A6AB6 /* Products */;
 					ProjectRef = CEF07099304CA611008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82E13051064E00FC480C /* Products */;
+					ProjectRef = CE5D82093051064E00FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0E194304927A3008A6AB6 /* Products */;
@@ -11079,6 +12964,10 @@
 					ProjectRef = CEF038BB304A8F79008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74503050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D73583050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF04B3E304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF04A30304BB9AB008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
@@ -11115,6 +13004,10 @@
 					ProjectRef = CEF0DF72304927A3008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D743C3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6F8A3050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3B9543044FC2C00156E47 /* Products */;
 					ProjectRef = CEB3B88E3044FC2C00156E47 /* FxGradientCheckerboard.xcodeproj */;
 				},
@@ -11131,8 +13024,16 @@
 					ProjectRef = CEF0556B304BBB9A008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74583050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D70C23050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB39DC1303BA48200156E47 /* Products */;
 					ProjectRef = CEB39A63303BA48200156E47 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82F73051064E00FC480C /* Products */;
+					ProjectRef = CE5D7F733051064E00FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF08F82304CACC7008A6AB6 /* Products */;
@@ -11175,6 +13076,18 @@
 					ProjectRef = CEF02C75304A8C65008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91FA30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8FA230513B4400FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1073051431900FC480C /* Products */;
+					ProjectRef = CE5DA0233051431900FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB06230514C9400FC480C /* Products */;
+					ProjectRef = CE5DABA930514C9400FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0AE2C3048E424008A6AB6 /* Products */;
 					ProjectRef = CEF0AC043048E424008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
@@ -11185,6 +13098,10 @@
 				{
 					ProductGroup = CEF058F7304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF05433304BBB9A008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91F430513B4400FC480C /* Products */;
+					ProjectRef = CE5D910030513B4400FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CE7AB85C2D224DFB001A7395 /* Products */;
@@ -11231,6 +13148,10 @@
 					ProjectRef = CEF0088A30481C08008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA0FD3051431900FC480C /* Products */;
+					ProjectRef = CE5D9EC53051431900FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF01CF330481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01BFE30481DBE008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
@@ -11245,6 +13166,10 @@
 				{
 					ProductGroup = CEF03D77304A8F79008A6AB6 /* Products */;
 					ProjectRef = CEF039F3304A8F79008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D744C3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D71FA3050BEBA00FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF00AA730481C08008A6AB6 /* Products */;
@@ -11309,6 +13234,10 @@
 				{
 					ProductGroup = CEF01CEF30481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF019AE30481DBE008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D922230513B4400FC480C /* Products */;
+					ProjectRef = CE5D8E8A30513B4400FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF00AB930481C08008A6AB6 /* Products */;
@@ -11383,6 +13312,10 @@
 					ProjectRef = CE5D7A852D2E639300C8515A /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74523050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6FAA3050BEBA00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF01CE930481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01AE630481DBE008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
@@ -11397,6 +13330,10 @@
 				{
 					ProductGroup = CEF0266B304826CD008A6AB6 /* Products */;
 					ProjectRef = CEF02478304826CD008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82EB3051064E00FC480C /* Products */;
+					ProjectRef = CE5D7E5B3051064E00FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0EF0A304811C3008A6AB6 /* Products */;
@@ -11439,6 +13376,10 @@
 					ProjectRef = CEF0FF5E304818EE008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D920C30513B4400FC480C /* Products */;
+					ProjectRef = CE5D912030513B4400FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF058E5304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF05453304BBB9A008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
@@ -11461,6 +13402,10 @@
 				{
 					ProductGroup = CEF0CC343048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0C9043048E552008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1053051431900FC480C /* Products */;
+					ProjectRef = CE5D9EE53051431900FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0EC7030492A3A008A6AB6 /* Products */;
@@ -11487,6 +13432,10 @@
 					ProjectRef = CEF056C3304BBB9A008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D922030513B4400FC480C /* Products */;
+					ProjectRef = CE5D8D5230513B4400FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CE7ABAC72D229149001A7395 /* Products */;
 					ProjectRef = CE7ABA702D229149001A7395 /* FxPictureInPicture.xcodeproj */;
 				},
@@ -11503,8 +13452,16 @@
 					ProjectRef = CEF0F6A830492ABF008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74603050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D73783050BEBA00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D09730452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CE9730452DDA00156E47 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB09030514C9400FC480C /* Products */;
+					ProjectRef = CE5DAE3930514C9400FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF02FD5304A8C65008A6AB6 /* Products */;
@@ -11531,6 +13488,10 @@
 					ProjectRef = CEF05D033048B97B008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA10D3051431900FC480C /* Products */;
+					ProjectRef = CE5D9DAD3051431900FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF04B38304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF04A50304BB9AB008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
@@ -11555,12 +13516,20 @@
 					ProjectRef = CE7AB6E52D224DC1001A7395 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB05E30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAF9730514C9400FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D0AB30452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CFCF30452DDA00156E47 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CC483048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0CB743048E552008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB07030514C9400FC480C /* Products */;
+					ProjectRef = CE5DABC930514C9400FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0E6533047F98D008A6AB6 /* Products */;
@@ -11611,6 +13580,14 @@
 					ProjectRef = CEF02077304A579C008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA11B3051431900FC480C /* Products */;
+					ProjectRef = CE5DA0433051431900FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D747A3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D70E23050BEBA00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0E18C304927A3008A6AB6 /* Products */;
 					ProjectRef = CEF0DE5A304927A3008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
@@ -11625,6 +13602,10 @@
 				{
 					ProductGroup = CEF0D6DA3048ECB5008A6AB6 /* Products */;
 					ProjectRef = CEF0D39E3048ECB5008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74763050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D721A3050BEBA00FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB39DA9303BA48200156E47 /* Products */;
@@ -11651,8 +13632,16 @@
 					ProjectRef = CEF05821304BBB9A008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91E830513B4400FC480C /* Products */;
+					ProjectRef = CE5D8FC230513B4400FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF00C3D304A09D2008A6AB6 /* Products */;
 					ProjectRef = CEF00C3C304A09D2008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D830D3051064E00FC480C /* Products */;
+					ProjectRef = CE5D80CB3051064E00FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF01593304A54AB008A6AB6 /* Products */;
@@ -11679,12 +13668,20 @@
 					ProjectRef = CEF038DB304A8F79008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB07830514C9400FC480C /* Products */;
+					ProjectRef = CE5DAD0130514C9400FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CCA2304643F1008A6AB6 /* Products */;
 					ProjectRef = CEF0C98A304643F1008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF058F5304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF0558B304BBB9A008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82EF3051064E00FC480C /* Products */;
+					ProjectRef = CE5D82293051064E00FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0E186304927A3008A6AB6 /* Products */;
@@ -11711,12 +13708,20 @@
 					ProjectRef = CEF021D5304A579C008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83113051064E00FC480C /* Products */;
+					ProjectRef = CE5D7F933051064E00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0F817304817E4008A6AB6 /* Products */;
 					ProjectRef = CEF0F634304817E4008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0302C3048276B008A6AB6 /* Products */;
 					ProjectRef = CEF02E2D3048276B008A6AB6 /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1253051431900FC480C /* Products */;
+					ProjectRef = CE5D9C753051431900FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3D8DE30452F7000156E47 /* Products */;
@@ -11763,6 +13768,14 @@
 					ProjectRef = CEF038FE304A8F79008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA10B3051431900FC480C /* Products */;
+					ProjectRef = CE5DA0663051431900FC480C /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1033051431900FC480C /* Products */;
+					ProjectRef = CE5D9F083051431900FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF02297304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF01E2A304A579C008A6AB6 /* FxShape.xcodeproj */;
 				},
@@ -11795,6 +13808,18 @@
 					ProjectRef = CEF0249B304826CD008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D82F53051064E00FC480C /* Products */;
+					ProjectRef = CE5D80EE3051064E00FC480C /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D921630513B4400FC480C /* Products */;
+					ProjectRef = CE5D8FE530513B4400FC480C /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74683050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6FCD3050BEBA00FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF090583048E31C008A6AB6 /* Products */;
 					ProjectRef = CEF08FD33048E31C008A6AB6 /* FxShape.xcodeproj */;
 				},
@@ -11813,6 +13838,10 @@
 				{
 					ProductGroup = CEF0742A304CA611008A6AB6 /* Products */;
 					ProjectRef = CEF06FA4304CA611008A6AB6 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D831D3051064E00FC480C /* Products */;
+					ProjectRef = CE5D7FB63051064E00FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF030343048276B008A6AB6 /* Products */;
@@ -11837,6 +13866,10 @@
 				{
 					ProductGroup = CEF04B0C304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF04A73304BB9AB008A6AB6 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA12F3051431900FC480C /* Products */;
+					ProjectRef = CE5D9C983051431900FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3B98A3044FC2C00156E47 /* Products */;
@@ -11895,6 +13928,10 @@
 					ProjectRef = CEF08D633048E31C008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D920830513B4400FC480C /* Products */;
+					ProjectRef = CE5D914330513B4400FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0F77E30492ABF008A6AB6 /* Products */;
 					ProjectRef = CEF0F59330492ABF008A6AB6 /* FxShape.xcodeproj */;
 				},
@@ -11951,6 +13988,10 @@
 					ProjectRef = CEF0F6CB30492ABF008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB06E30514C9400FC480C /* Products */;
+					ProjectRef = CE5DABEC30514C9400FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF00AAB30481C08008A6AB6 /* Products */;
 					ProjectRef = CEF00A0530481C08008A6AB6 /* FxShape.xcodeproj */;
 				},
@@ -11963,8 +14004,16 @@
 					ProjectRef = CEF0C9AD304643F1008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D743E3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D71053050BEBA00FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB39DC3303BA48200156E47 /* Products */;
 					ProjectRef = CEB39AA6303BA48200156E47 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1153051431900FC480C /* Products */;
+					ProjectRef = CE5D9DD03051431900FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF060343048B97B008A6AB6 /* Products */;
@@ -11973,6 +14022,10 @@
 				{
 					ProductGroup = CEF058FB304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF055AE304BBB9A008A6AB6 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D920E30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8EAD30513B4400FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF03007304A8C65008A6AB6 /* Products */;
@@ -12007,6 +14060,14 @@
 					ProjectRef = CEF0D4F93048ECB5008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74743050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D739B3050BEBA00FC480C /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB08830514C9400FC480C /* Products */;
+					ProjectRef = CE5DAE5C30514C9400FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB39DBF303BA48200156E47 /* Products */;
 					ProjectRef = CEB39D16303BA48200156E47 /* FxShape.xcodeproj */;
 				},
@@ -12033,6 +14094,10 @@
 				{
 					ProductGroup = CEF01CC730481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01B0930481DBE008A6AB6 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D83173051064E00FC480C /* Products */;
+					ProjectRef = CE5D7E7E3051064E00FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0E19C304927A3008A6AB6 /* Products */;
@@ -12111,6 +14176,10 @@
 					ProjectRef = CEF0396E3048B47D008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB05830514C9400FC480C /* Products */;
+					ProjectRef = CE5DAFBA30514C9400FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0EF0E304811C3008A6AB6 /* Products */;
 					ProjectRef = CEF0ED4E304811C3008A6AB6 /* FxShape.xcodeproj */;
 				},
@@ -12135,12 +14204,28 @@
 					ProjectRef = CEF07372304CA611008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D746E3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D723D3050BEBA00FC480C /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91E430513B4400FC480C /* Products */;
+					ProjectRef = CE5D8D7530513B4400FC480C /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB07230514C9400FC480C /* Products */;
+					ProjectRef = CE5DAD2430514C9400FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF03017304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02F4E304A8C65008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF058FD304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF05476304BBB9A008A6AB6 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D83293051064E00FC480C /* Products */;
+					ProjectRef = CE5D824C3051064E00FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF04B0A304BB9AB008A6AB6 /* Products */;
@@ -12183,6 +14268,14 @@
 					ProjectRef = CEF025FA304826CD008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74423050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D712C3050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB08230514C9400FC480C /* Products */;
+					ProjectRef = CE5DAD4B30514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3B1413044FB6A00156E47 /* Products */;
 					ProjectRef = CEB3AF7D3044FB6A00156E47 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -12193,6 +14286,10 @@
 				{
 					ProductGroup = CEF01599304A54AB008A6AB6 /* Products */;
 					ProjectRef = CEF014F3304A54AB008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB07A30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAFE130514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF03D91304A8F79008A6AB6 /* Products */;
@@ -12215,12 +14312,20 @@
 					ProjectRef = CEF000E0304818EE008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB09830514C9400FC480C /* Products */;
+					ProjectRef = CE5DAC1330514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D0A530452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CDA930452DDA00156E47 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF022B9304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF01F89304A579C008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D83133051064E00FC480C /* Products */;
+					ProjectRef = CE5D81153051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF08F70304CACC7008A6AB6 /* Products */;
@@ -12255,6 +14360,10 @@
 					ProjectRef = CEF08C69304CACC7008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D832B3051064E00FC480C /* Products */;
+					ProjectRef = CE5D7EA53051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0E6293047F98D008A6AB6 /* Products */;
 					ProjectRef = CEF0E48D3047F98D008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -12275,6 +14384,10 @@
 					ProjectRef = CEB3D01930452DDA00156E47 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D82F13051064E00FC480C /* Products */;
+					ProjectRef = CE5D7FDD3051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CCAE304643F1008A6AB6 /* Products */;
 					ProjectRef = CEF0CB0C304643F1008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -12293,6 +14406,10 @@
 				{
 					ProductGroup = CEF01565304A54AB008A6AB6 /* Products */;
 					ProjectRef = CEF01125304A54AB008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1173051431900FC480C /* Products */;
+					ProjectRef = CE5D9CBF3051431900FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3E1273045398300156E47 /* Products */;
@@ -12359,6 +14476,10 @@
 					ProjectRef = CEF02F75304A8C65008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D745C3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D6FF43050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF01CF530481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01B3030481DBE008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -12375,12 +14496,24 @@
 					ProjectRef = CEF02FAF3048276B008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA11D3051431900FC480C /* Products */;
+					ProjectRef = CE5D9DF73051431900FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0906A3048E31C008A6AB6 /* Products */;
 					ProjectRef = CEF08EC23048E31C008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74303050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D73C23050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF03A1A3048B47D008A6AB6 /* Products */;
 					ProjectRef = CEF0385D3048B47D008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91F230513B4400FC480C /* Products */;
+					ProjectRef = CE5D8D9C30513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0AE0C3048E424008A6AB6 /* Products */;
@@ -12405,6 +14538,10 @@
 				{
 					ProductGroup = CEF058EF304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF0549D304BBB9A008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D830B3051064E00FC480C /* Products */;
+					ProjectRef = CE5D82733051064E00FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3B12F3044FB6A00156E47 /* Products */;
@@ -12447,6 +14584,10 @@
 					ProjectRef = CEF07399304CA611008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1213051431900FC480C /* Products */;
+					ProjectRef = CE5D9F2F3051431900FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D8D030452F7000156E47 /* Products */;
 					ProjectRef = CEB3D72630452F7000156E47 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -12461,6 +14602,10 @@
 				{
 					ProductGroup = CEF00AA130481C08008A6AB6 /* Products */;
 					ProjectRef = CEF008F430481C08008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91F830513B4400FC480C /* Products */;
+					ProjectRef = CE5D916A30513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF030183048276B008A6AB6 /* Products */;
@@ -12499,6 +14644,10 @@
 					ProjectRef = CEF0D3AC3047A3B9008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D920430513B4400FC480C /* Products */;
+					ProjectRef = CE5D8ED430513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB39D9F303BA48200156E47 /* Products */;
 					ProjectRef = CEB39C05303BA48200156E47 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -12507,8 +14656,16 @@
 					ProjectRef = CEF05D4D3048B97B008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91E030513B4400FC480C /* Products */;
+					ProjectRef = CE5D900C30513B4400FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0F78030492ABF008A6AB6 /* Products */;
 					ProjectRef = CEF0F6F230492ABF008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB07C30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAE8330514C9400FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF090823048E31C008A6AB6 /* Products */;
@@ -12571,6 +14728,10 @@
 					ProjectRef = CEB3DF893045398300156E47 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA1333051431900FC480C /* Products */;
+					ProjectRef = CE5DA08D3051431900FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF02FF1304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02CDF304A8C65008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -12601,6 +14762,10 @@
 				{
 					ProductGroup = CEF0742C304CA611008A6AB6 /* Products */;
 					ProjectRef = CEF07103304CA611008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74463050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D72643050BEBA00FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0D6BC3048ECB5008A6AB6 /* Products */;
@@ -12647,6 +14812,10 @@
 					ProjectRef = CEF05FDD3048B97B008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D82E53051064E00FC480C /* Products */;
+					ProjectRef = CE5D82933051064E00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D8BE30452F7000156E47 /* Products */;
 					ProjectRef = CEB3D60E30452F7000156E47 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -12679,6 +14848,10 @@
 					ProjectRef = CEF03945304A8F79008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB05630514C9400FC480C /* Products */;
+					ProjectRef = CE5DB00130514C9400FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF02FFD304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02E37304A8C65008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -12689,6 +14862,10 @@
 				{
 					ProductGroup = CEF0CC223048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0CBDE3048E552008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D82F33051064E00FC480C /* Products */;
+					ProjectRef = CE5D7FFD3051064E00FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF02675304826CD008A6AB6 /* Products */;
@@ -12795,6 +14972,14 @@
 					ProjectRef = CEF07123304CA611008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D82FD3051064E00FC480C /* Products */;
+					ProjectRef = CE5D81353051064E00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74443050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D70143050BEBA00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CE7ABAC32D229149001A7395 /* Products */;
 					ProjectRef = CE7ABAB52D229149001A7395 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -12805,6 +14990,10 @@
 				{
 					ProductGroup = CEF08F8E304CACC7008A6AB6 /* Products */;
 					ProjectRef = CEF08F1F304CACC7008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1013051431900FC480C /* Products */;
+					ProjectRef = CE5DA0AD3051431900FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CCD6304643F1008A6AB6 /* Products */;
@@ -12825,6 +15014,14 @@
 				{
 					ProductGroup = CEF0229D304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF01E71304A579C008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D74663050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D714C3050BEBA00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D921430513B4400FC480C /* Products */;
+					ProjectRef = CE5D8DBC30513B4400FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF07414304CA611008A6AB6 /* Products */;
@@ -12871,6 +15068,10 @@
 					ProjectRef = CEF0223F304A579C008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D83013051064E00FC480C /* Products */;
+					ProjectRef = CE5D7EC53051064E00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF03D6B304A8F79008A6AB6 /* Products */;
 					ProjectRef = CEF03D13304A8F79008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -12907,6 +15108,10 @@
 					ProjectRef = CEB3B9183044FC2C00156E47 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D74363050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D73E23050BEBA00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CCC6304643F1008A6AB6 /* Products */;
 					ProjectRef = CEF0CC64304643F1008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -12917,6 +15122,10 @@
 				{
 					ProductGroup = CEF0027230493263008A6AB6 /* Products */;
 					ProjectRef = CEF0FFC430493263008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1313051431900FC480C /* Products */;
+					ProjectRef = CE5D9E173051431900FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3E1393045398300156E47 /* Products */;
@@ -12939,12 +15148,20 @@
 					ProjectRef = CEF0091430481C08008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB08C30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAD6B30514C9400FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0029630493263008A6AB6 /* Products */;
 					ProjectRef = CEF0023430493263008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CCD0304643F1008A6AB6 /* Products */;
 					ProjectRef = CEF0C9F4304643F1008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB08A30514C9400FC480C /* Products */;
+					ProjectRef = CE5DAEA330514C9400FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF058E1304BBB9A008A6AB6 /* Products */;
@@ -12977,6 +15194,10 @@
 				{
 					ProductGroup = CEF03D5D304A8F79008A6AB6 /* Products */;
 					ProjectRef = CEF03BB5304A8F79008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D745A3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D72843050BEBA00FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF01CF130481DBE008A6AB6 /* Products */;
@@ -13015,6 +15236,10 @@
 					ProjectRef = CEF05EA53048B97B008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D920A30513B4400FC480C /* Products */;
+					ProjectRef = CE5D8EF430513B4400FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D09130452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CDC930452DDA00156E47 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -13039,6 +15264,10 @@
 					ProjectRef = CEF046EC304BB9AB008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DB06630514C9400FC480C /* Products */;
+					ProjectRef = CE5DAC3330514C9400FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF07446304CA611008A6AB6 /* Products */;
 					ProjectRef = CEF073B9304CA611008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -13049,6 +15278,10 @@
 				{
 					ProductGroup = CEF0AE283048E424008A6AB6 /* Products */;
 					ProjectRef = CEF0ADC63048E424008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D921830513B4400FC480C /* Products */;
+					ProjectRef = CE5D902C30513B4400FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0AE103048E424008A6AB6 /* Products */;
@@ -13067,6 +15300,14 @@
 					ProjectRef = CEB39D5D303BA48200156E47 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DA13F3051431900FC480C /* Products */;
+					ProjectRef = CE5D9F4F3051431900FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1273051431900FC480C /* Products */;
+					ProjectRef = CE5D9CDF3051431900FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0028830493263008A6AB6 /* Products */;
 					ProjectRef = CEF000FC30493263008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -13081,6 +15322,10 @@
 				{
 					ProductGroup = CEF03A083048B47D008A6AB6 /* Products */;
 					ProjectRef = CEF039B53048B47D008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D920230513B4400FC480C /* Products */;
+					ProjectRef = CE5D918A30513B4400FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF00151304818EE008A6AB6 /* Products */;
@@ -13115,6 +15360,14 @@
 					ProjectRef = CEF013DB304A54AB008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D744A3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D72AA3050BEBA00FC480C /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D743A3050BEBA00FC480C /* Products */;
+					ProjectRef = CE5D74083050BEBA00FC480C /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF02677304826CD008A6AB6 /* Products */;
 					ProjectRef = CEF02640304826CD008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
@@ -13137,6 +15390,10 @@
 				{
 					ProductGroup = CEF022C9304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF02107304A579C008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB05030514C9400FC480C /* Products */;
+					ProjectRef = CE5DB02730514C9400FC480C /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0741A304CA611008A6AB6 /* Products */;
@@ -13163,6 +15420,10 @@
 					ProjectRef = CEF04AE0304BB9AB008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D830F3051064E00FC480C /* Products */;
+					ProjectRef = CE5D82B93051064E00FC480C /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF04B2A304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF04982304BB9AB008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
@@ -13173,6 +15434,10 @@
 				{
 					ProductGroup = CEF039FC3048B47D008A6AB6 /* Products */;
 					ProjectRef = CEF039DB3048B47D008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1193051431900FC480C /* Products */;
+					ProjectRef = CE5D9F753051431900FC480C /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF00D07304A09D4008A6AB6 /* Products */;
@@ -13207,12 +15472,20 @@
 					ProjectRef = CEF058B1304BBB9A008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D91DA30513B4400FC480C /* Products */;
+					ProjectRef = CE5D905230513B4400FC480C /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF03009304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02E5D304A8C65008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0EF2E304811C3008A6AB6 /* Products */;
 					ProjectRef = CEF0EEF3304811C3008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DB08030514C9400FC480C /* Products */;
+					ProjectRef = CE5DAEC930514C9400FC480C /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0D6DE3048ECB5008A6AB6 /* Products */;
@@ -13231,8 +15504,16 @@
 					ProjectRef = CEF00A7230481C08008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5D82ED3051064E00FC480C /* Products */;
+					ProjectRef = CE5D815B3051064E00FC480C /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF02299304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF02265304A579C008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5D91EC30513B4400FC480C /* Products */;
+					ProjectRef = CE5D91B030513B4400FC480C /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0027630493263008A6AB6 /* Products */;
@@ -13249,6 +15530,10 @@
 				{
 					ProductGroup = CEF0EC5830492A3A008A6AB6 /* Products */;
 					ProjectRef = CEF0EC3830492A3A008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DA1413051431900FC480C /* Products */;
+					ProjectRef = CE5DA0D33051431900FC480C /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0158D304A54AB008A6AB6 /* Products */;

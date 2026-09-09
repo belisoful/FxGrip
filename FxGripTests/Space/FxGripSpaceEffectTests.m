@@ -13,6 +13,10 @@
 #import <FxGrip/FxGripSpaceEffect.h>
 #import <FxGrip/FxGripSpaceBackend.h>
 #import <FxGrip/FxGripSceneKitPhysicsBackend.h>
+#import <FxGrip/FxGripParticleInteraction.h>
+#import <FxGrip/SCNParticleSystem+FxGripInteraction.h>
+#import <FxGrip/SCNScene+FxGripInteraction.h>
+#import <FxGrip/SCNPhysicsField+FxGripInteraction.h>
 
 #pragma mark - Stub backend
 
@@ -60,6 +64,31 @@
 {
 	self.applyCalled = YES;
 	self.receivedCameraNode = cameraNode;
+}
+@end
+
+#pragma mark - Emitter subclass
+
+// Adds one particle system in the apply hook, so the scene-wide interaction has a system to reach.
+@interface FxGripSpaceEmitterEffect : FxGripSpaceEffect
+@property (nonatomic, strong) SCNParticleSystem *emittedSystem;
+@property (nonatomic, strong) SCNNode *emitterNode;
+@property (nonatomic, strong, nullable) FxGripParticleInteraction *systemInteraction;
+@end
+
+@implementation FxGripSpaceEmitterEffect
+- (void)updateSceneContents:(SCNScene *)scene
+				 cameraNode:(SCNNode *)cameraNode
+				  fromCoder:(NSCoder *)coder
+					 atTime:(CMTime)renderTime
+			   cameraMotion:(FxGripCameraMotion)cameraMotion
+{
+	self.emittedSystem = [SCNParticleSystem particleSystem];
+	self.emittedSystem.particleInteraction = self.systemInteraction;
+	self.emitterNode = [SCNNode node];
+	self.emitterNode.name = @"emitter";
+	[self.emitterNode addParticleSystem:self.emittedSystem];
+	[scene.rootNode addChildNode:self.emitterNode];
 }
 @end
 
@@ -234,6 +263,115 @@
 	XCTAssertNotNil(recreated, @"the authored template is recreated in the render scene");
 	XCTAssertNotEqual(recreated, content, @"the recreated node is an independent copy");
 	XCTAssertNotNil([scene.rootNode childNodeWithName:@"box" recursively:YES], @"the child geometry survived");
+}
+
+#pragma mark Scene-wide particle interaction
+
+// Runs the capture pass on `effect` and returns a decoder over the plugin state it produced.
+- (NSCoder *)decoderForCaptureOfEffect:(FxGripSpaceEffect *)effect
+{
+	NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
+	NSError *error = nil;
+	XCTAssertTrue([effect pluginCoder:archiver atTime:kCMTimeZero quality:(FxQuality)kFxQuality_HIGH error:&error], @"%@", error);
+	[archiver finishEncoding];
+	NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:archiver.encodedData error:nil];
+	decoder.requiresSecureCoding = NO;
+	return decoder;
+}
+
+/*! @abstract The scene-wide interaction travels through plugin state and reaches the rendered scene. */
+- (void)testParticleInteractionRoundTripsIntoTheRenderedScene
+{
+	FxGripSpaceEmitterEffect *effect = [FxGripSpaceEmitterEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripParticleInteraction *interaction = [FxGripParticleInteraction gravityWithStrength:1.5];
+	interaction.softening = 0.3;
+	effect.particleInteraction = interaction;
+	XCTAssertEqualWithAccuracy(effect.particleInteraction.gravityStrength, 1.5, 1e-9);
+
+	SCNNode *pov = nil;
+	SCNScene *scene = [effect buildSceneWithCoder:[self decoderForCaptureOfEffect:effect]
+									   sourceTile:nil atTime:kCMTimeZero pointOfView:&pov];
+	XCTAssertNotNil(scene.particleInteraction, @"the scene carries the decoded default");
+	XCTAssertEqualWithAccuracy(scene.particleInteraction.gravityStrength, 1.5, 1e-9);
+	XCTAssertNotNil(effect.emittedSystem.particleInteraction, @"the reconciliation reached the emitter");
+	XCTAssertEqualWithAccuracy(effect.emittedSystem.particleInteraction.softening, 0.3, 1e-9);
+}
+
+/*! @abstract An effect with no interaction leaves the scene and its particle systems untouched. */
+- (void)testNoParticleInteractionLeavesTheSceneBare
+{
+	FxGripSpaceEmitterEffect *effect = [FxGripSpaceEmitterEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	XCTAssertNil(effect.particleInteraction);
+
+	SCNNode *pov = nil;
+	SCNScene *scene = [effect buildSceneWithCoder:[self decoderForCaptureOfEffect:effect]
+									   sourceTile:nil atTime:kCMTimeZero pointOfView:&pov];
+	XCTAssertNil(scene.particleInteraction);
+	XCTAssertNil(effect.emittedSystem.particleInteraction);
+}
+
+/*! @abstract A system that carries its own interaction keeps it against the scene-wide default. */
+- (void)testSystemInteractionOverridesTheSceneDefault
+{
+	FxGripSpaceEmitterEffect *effect = [FxGripSpaceEmitterEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	effect.particleInteraction = [FxGripParticleInteraction gravityWithStrength:1.5];
+	FxGripParticleInteraction *own = [FxGripParticleInteraction gravityWithStrength:9.0];
+	effect.systemInteraction = own;
+
+	SCNNode *pov = nil;
+	SCNScene *scene = [effect buildSceneWithCoder:[self decoderForCaptureOfEffect:effect]
+									   sourceTile:nil atTime:kCMTimeZero pointOfView:&pov];
+	XCTAssertEqualWithAccuracy(scene.particleInteraction.gravityStrength, 1.5, 1e-9);
+	XCTAssertEqualWithAccuracy(effect.emittedSystem.particleInteraction.gravityStrength, 9.0, 1e-9);
+}
+
+/*! @abstract A declared interaction field is recreated each render on its named node, with its sources bound. */
+- (void)testParticleInteractionFieldIsInstalledOnItsNamedNode
+{
+	FxGripSpaceEmitterEffect *effect = [FxGripSpaceEmitterEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripParticleInteraction *interaction = [FxGripParticleInteraction gravityWithStrength:2.0];
+	effect.particleInteractionFields = @{ @"emitter": interaction };
+
+	SCNNode *pov = nil;
+	SCNScene *scene = [effect buildSceneWithCoder:[self decoderForCaptureOfEffect:effect]
+									   sourceTile:nil atTime:kCMTimeZero pointOfView:&pov];
+	XCTAssertNotNil(scene);
+	SCNPhysicsField *field = effect.emitterNode.physicsField;
+	XCTAssertNotNil(field, @"the named node carries a field");
+	XCTAssertEqualWithAccuracy(field.particleInteraction.gravityStrength, 2.0, 1e-9);
+	XCTAssertEqual(effect.emittedSystem.boundInteractionField, field, @"the emitter feeds the field");
+	XCTAssertTrue(effect.emittedSystem.affectedByPhysicsFields);
+}
+
+/*! @abstract A field entry naming a node the scene does not contain is skipped. */
+- (void)testUnknownFieldNodeNameIsSkipped
+{
+	FxGripSpaceEmitterEffect *effect = [FxGripSpaceEmitterEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	effect.particleInteractionFields = @{ @"nosuchnode": [FxGripParticleInteraction gravityWithStrength:2.0] };
+
+	SCNNode *pov = nil;
+	SCNScene *scene = [effect buildSceneWithCoder:[self decoderForCaptureOfEffect:effect]
+									   sourceTile:nil atTime:kCMTimeZero pointOfView:&pov];
+	XCTAssertNotNil(scene);
+	XCTAssertNil(effect.emitterNode.physicsField);
+	XCTAssertNil(effect.emittedSystem.boundInteractionField);
+}
+
+/*! @abstract A system bound to a field is left alone by the scene-wide default. */
+- (void)testFieldBoundSystemIsSkippedByTheSceneDefault
+{
+	FxGripSpaceEmitterEffect *effect = [FxGripSpaceEmitterEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	effect.particleInteractionFields = @{ @"emitter": [FxGripParticleInteraction gravityWithStrength:2.0] };
+	effect.particleInteraction = [FxGripParticleInteraction gravityWithStrength:7.0];
+
+	SCNNode *pov = nil;
+	SCNScene *scene = [effect buildSceneWithCoder:[self decoderForCaptureOfEffect:effect]
+									   sourceTile:nil atTime:kCMTimeZero pointOfView:&pov];
+	XCTAssertEqualWithAccuracy(scene.particleInteraction.gravityStrength, 7.0, 1e-9,
+							   @"the scene still carries its default");
+	XCTAssertNotNil(effect.emittedSystem.boundInteractionField);
+	XCTAssertNil(effect.emittedSystem.particleInteraction,
+				 @"the default does not displace the field's force");
 }
 
 @end
