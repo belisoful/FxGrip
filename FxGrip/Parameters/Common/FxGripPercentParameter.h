@@ -11,7 +11,7 @@
 #ifndef FxGripPercentParameter_h
 #define FxGripPercentParameter_h
 
-#import "FxGripFloatParameter.h"
+#import <FxGrip/FxGripFloatParameter.h>
 
 
 /*!

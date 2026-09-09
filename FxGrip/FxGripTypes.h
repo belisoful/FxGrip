@@ -18,7 +18,7 @@
 
 #define kFxGripLibraryActivator true
 
-#import "FxPlug/FxPlugSDK.h"
+#import <FxPlug/FxPlugSDK.h>
 //#import <FxPlug/FxPlugSDK.h>
 //#import <FxPlug/FxTypes.h>
 #import <simd/simd.h>

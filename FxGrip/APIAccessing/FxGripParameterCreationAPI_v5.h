@@ -15,7 +15,7 @@
 #define FxGripParameterCreationAPI_v5_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripCommonAPI.h"
+#import <FxGrip/FxGripCommonAPI.h>
 
 /*!
 	@class		FxGripParameterCreationAPI_v5

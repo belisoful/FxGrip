@@ -16,8 +16,8 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreMedia/CoreMedia.h>
-#import "FxGripExtension.h"
-#import "FxGripEffectHost.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripEffectHost.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

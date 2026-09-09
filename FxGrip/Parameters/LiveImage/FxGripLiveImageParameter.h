@@ -20,9 +20,9 @@
 #import <AppKit/AppKit.h>
 #import <Metal/Metal.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripCustomParameter.h"
-#import "FxGripCustomViewDataDelegate.h"
-#import "FxGripLiveFrame.h"
+#import <FxGrip/FxGripCustomParameter.h>
+#import <FxGrip/FxGripCustomViewDataDelegate.h>
+#import <FxGrip/FxGripLiveFrame.h>
 
 @class FxGripImageBuffer;
 

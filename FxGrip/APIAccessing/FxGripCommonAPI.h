@@ -16,7 +16,7 @@
 
 #import <FxPlug/FxPlugSDK.h>
 
-#import "FxGripEffectHost.h"
+#import <FxGrip/FxGripEffectHost.h>
 
 /*!
 	@class		FxGripCommonAPI

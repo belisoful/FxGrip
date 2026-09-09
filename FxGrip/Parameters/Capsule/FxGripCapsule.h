@@ -16,7 +16,7 @@
 #define FxGripCapsule_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 // A capsule badge carries its text under the string key, its point size under the float
 // key, and its fill color under the RGBA key. The text color and corner radius carry

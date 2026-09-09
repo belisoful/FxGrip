@@ -15,8 +15,8 @@
 #ifndef FxGripObjectTrackerParameter_h
 #define FxGripObjectTrackerParameter_h
 
-#import "FxGripCustomParameter.h"
-#import "FxGripObjectTrackerData.h"
+#import <FxGrip/FxGripCustomParameter.h>
+#import <FxGrip/FxGripObjectTrackerData.h>
 #import <CoreImage/CoreImage.h>
 
 // Design-time configuration keys read from the parameter dictionary's default value.

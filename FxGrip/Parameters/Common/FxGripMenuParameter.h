@@ -11,7 +11,7 @@
 #ifndef FxGripMenuParameter_h
 #define FxGripMenuParameter_h
 
-#import "FxGripIntParameter.h"
+#import <FxGrip/FxGripIntParameter.h>
 
 
 /*!

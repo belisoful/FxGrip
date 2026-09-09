@@ -14,9 +14,9 @@
 #ifndef FxGripMeta_h
 #define FxGripMeta_h
 
-#import "FxGripCustomExtension.h"
-#import "FxGripMetaManager.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripCustomExtension.h>
+#import <FxGrip/FxGripMetaManager.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@class      FxGripMeta

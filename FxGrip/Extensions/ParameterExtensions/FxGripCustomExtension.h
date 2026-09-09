@@ -14,8 +14,8 @@
 #ifndef FxGripCustomExtension_h
 #define FxGripCustomExtension_h
 
-#import "FxGripParameterExtension.h"
-#import "FxGripCustomParameter.h"
+#import <FxGrip/FxGripParameterExtension.h>
+#import <FxGrip/FxGripCustomParameter.h>
 
 /*!
 	@class		FxGripCustomExtension

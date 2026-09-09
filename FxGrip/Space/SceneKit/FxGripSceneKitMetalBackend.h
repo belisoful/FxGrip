@@ -15,7 +15,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "FxGripSpaceBackend.h"
+#import <FxGrip/FxGripSpaceBackend.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

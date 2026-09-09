@@ -15,7 +15,7 @@
 #ifndef FxGripTileableEffect_Parameters_h
 #define FxGripTileableEffect_Parameters_h
 
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 
 /*!

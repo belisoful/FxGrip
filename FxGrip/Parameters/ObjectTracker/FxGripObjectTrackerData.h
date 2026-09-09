@@ -18,7 +18,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
-#import "FxGripObjectTracker.h"
+#import <FxGrip/FxGripObjectTracker.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

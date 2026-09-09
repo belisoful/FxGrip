@@ -20,7 +20,7 @@
 #import <FxPlug/FxPlugSDK.h>
 //#import "FxGripParameterFlags.h"
 #import <FxGrip/FxGripTypes.h>
-#import "FxGripEffectHost.h"
+#import <FxGrip/FxGripEffectHost.h>
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 //#import "NSCoder+FxPlug.h"
 

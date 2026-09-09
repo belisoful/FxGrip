@@ -41,7 +41,7 @@
 #define SCNPhysicsField_FxGripInteraction_h
 
 #import <SceneKit/SceneKit.h>
-#import "FxGripParticleInteraction.h"
+#import <FxGrip/FxGripParticleInteraction.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

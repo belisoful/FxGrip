@@ -1,0 +1,32 @@
+// Clang modules for Apple's FxPlug 4 SDK, which ships no module map of its own.
+//
+// Swift reaches Objective-C only through modules, so FxGrip's public headers, which
+// import <FxPlug/FxPlugSDK.h>, stay invisible to Swift until FxPlug is a module.
+// Targets that build or import the FxGrip module pass this file to clang with
+// -fmodule-map-file, directly or as -Xcc from Swift.
+//
+// The umbrella paths are absolute because the FxPlug SDK installs outside the
+// repository, at the location AGENTS.md requires. Both frameworks are declared here
+// rather than found by search order: the copies under /Library/Developer/Frameworks
+// carry no headers, and the copy of PluginManager inside the FxPlug SDK carries no
+// module map, so neither location is modular on its own. Keep
+// /Library/Developer/Frameworks out of FRAMEWORK_SEARCH_PATHS, because its
+// PluginManager advertises a module map whose umbrella header is absent, which
+// would collide with the declaration below.
+//
+// Both are declared [system] so Apple's headers report no warnings into this
+// project's builds, matching how an SDK-provided module map behaves.
+
+module FxPlug [system] {
+	umbrella header "/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/FxPlug.framework/Headers/FxPlugSDK.h"
+	export *
+
+	module * { export * }
+}
+
+module PluginManager [system] {
+	umbrella header "/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/PluginManager.framework/Headers/PluginManager.h"
+	export *
+
+	module * { export * }
+}

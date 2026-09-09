@@ -15,9 +15,9 @@
 #ifndef FxGripParameterData_h
 #define FxGripParameterData_h
 
-#import "FxGripCustomExtension.h"
+#import <FxGrip/FxGripCustomExtension.h>
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 // Record keys. These alias the parameter property keys the notification payloads carry,
 // so the stored records and the accessors name the same entries.

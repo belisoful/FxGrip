@@ -15,8 +15,8 @@
 #ifndef FxGripI18N_h
 #define FxGripI18N_h
 
-#import "FxGripExtension.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@class		FxGripI18N

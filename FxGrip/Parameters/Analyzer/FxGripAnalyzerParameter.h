@@ -15,7 +15,7 @@
 #ifndef FxGripAnalyzerParameter_h
 #define FxGripAnalyzerParameter_h
 
-#import "FxGripPushButtonParameter.h"
+#import <FxGrip/FxGripPushButtonParameter.h>
 
 // The button's location key selects the analysis image path (GPU is the default). The
 // backward key runs the pass in reverse. The title key reuses the push-button title key.

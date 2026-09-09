@@ -21,6 +21,20 @@
                ReferencedContainer = "container:FxGrip.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A00AA766D1763322A1473626"
+               BuildableName = "FxGripRealityKit.framework"
+               BlueprintName = "FxGripRealityKit"
+               ReferencedContainer = "container:FxGrip.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -38,6 +52,17 @@
                BlueprintIdentifier = "CEA524D12D221BEF00302F8F"
                BuildableName = "FxGripTests.xctest"
                BlueprintName = "FxGripTests"
+               ReferencedContainer = "container:FxGrip.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B1CDD8D4C0992849EE0E74DD"
+               BuildableName = "FxGripRealityKitTests.xctest"
+               BlueprintName = "FxGripRealityKitTests"
                ReferencedContainer = "container:FxGrip.xcodeproj">
             </BuildableReference>
          </TestableReference>

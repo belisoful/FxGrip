@@ -18,8 +18,8 @@
 #define FxGripMLImageEffect_h
 
 #import <Metal/Metal.h>
-#import "FxGripTileableEffect.h"
-#import "FxGripInferenceBackend.h"
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripInferenceBackend.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

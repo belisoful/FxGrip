@@ -17,11 +17,11 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripParameter.h"
-#import "FxGripExtension.h"
+#import <FxGrip/FxGripParameter.h>
+#import <FxGrip/FxGripExtension.h>
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 // This is the extension key for the main FxTileableEffect class if it were to implement the FxGripExtension Protocol
 

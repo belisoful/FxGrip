@@ -15,10 +15,10 @@
 #define FxGripOSCPathPart_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripOnScreenControl.h"
-#import "FxGripOSCPart.h"
-#import "FxGripPathData.h"
-#import "FxGripPathGeometry.h"
+#import <FxGrip/FxGripOnScreenControl.h>
+#import <FxGrip/FxGripOSCPart.h>
+#import <FxGrip/FxGripPathData.h>
+#import <FxGrip/FxGripPathGeometry.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

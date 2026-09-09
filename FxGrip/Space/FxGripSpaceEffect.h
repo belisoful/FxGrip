@@ -10,7 +10,9 @@
 	            template subclasses. It captures the host camera, lights, and view-matrix samples into
 	            plugin state where the host APIs are valid, decodes them for the render pass, and
 	            defines the seams a render engine and a plugin fill in. It imports no render engine.
-	            `FxGripSceneKitEffect` is the shipped SceneKit engine subclass.
+	            `FxGripSceneKitEffect` is the shipped SceneKit engine subclass. `FxGripRealityKitEffect`,
+	            in the separate `FxGripRealityKit` framework, is the RealityKit engine subclass, which is
+	            written in Swift because RealityKit publishes no Objective-C interface.
 */
 
 #ifndef FxGripSpaceEffect_h
@@ -18,9 +20,9 @@
 
 #import <Metal/Metal.h>
 #import <simd/simd.h>
-#import "FxGripTileableEffect.h"
-#import "FxGripSpaceMotion.h"
-#import "FxGripParticleInteraction.h"
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripSpaceMotion.h>
+#import <FxGrip/FxGripParticleInteraction.h>
 
 @class FxImageTile;
 
@@ -42,7 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 				Two kinds of subclass fill the seams.
 
-				- An engine subclass, such as `FxGripSceneKitEffect`, overrides
+				- An engine subclass, such as `FxGripSceneKitEffect` in Objective-C or
+				  `FxGripRealityKitEffect` in Swift, overrides
 				  `encodeEngineStateIntoCoder:atTime:error:` to add engine-specific state to the
 				  capture and `renderSceneFromCoder:sourceTile:toTexture:atTime:error:` to draw the
 				  frame. The default render copies the source unchanged.

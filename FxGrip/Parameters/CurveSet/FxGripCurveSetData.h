@@ -13,8 +13,8 @@
 #ifndef FxGripCurveSetData_h
 #define FxGripCurveSetData_h
 
-#import "FxGripInterpolatingDictionary.h"
-#import "FxGripCurveData.h"
+#import <FxGrip/FxGripInterpolatingDictionary.h>
+#import <FxGrip/FxGripCurveData.h>
 
 /*!
 	@class      FxGripCurveSetData

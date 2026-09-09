@@ -17,8 +17,8 @@
 #define FxGripCurveEditorView_h
 
 #import <AppKit/AppKit.h>
-#import "FxGripCurveData.h"
-#import "FxGripCustomViewDataDelegate.h"
+#import <FxGrip/FxGripCurveData.h>
+#import <FxGrip/FxGripCustomViewDataDelegate.h>
 
 @class FxGripCurveEditorView;
 

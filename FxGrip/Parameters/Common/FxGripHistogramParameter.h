@@ -11,7 +11,7 @@
 #ifndef FxGripHistogramParameter_h
 #define FxGripHistogramParameter_h
 
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripParameter.h>
 
 
 /*!

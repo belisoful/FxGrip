@@ -18,7 +18,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*! Change-watch flag for the input start time. */
 #define kWatchInputStartTime	(1 << 0)

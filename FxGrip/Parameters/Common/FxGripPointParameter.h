@@ -11,8 +11,8 @@
 #ifndef FxGripPointParameter_h
 #define FxGripPointParameter_h
 
-#import "FxGripParameter.h"
-#import "FxGripPointOptions.h"
+#import <FxGrip/FxGripParameter.h>
+#import <FxGrip/FxGripPointOptions.h>
 
 
 /*!

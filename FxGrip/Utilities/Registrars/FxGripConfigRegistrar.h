@@ -14,7 +14,7 @@
 #ifndef FxGripConfigRegistrar_h
 #define FxGripConfigRegistrar_h
 
-#import "FxGripStaticRegistrar.h"
+#import <FxGrip/FxGripStaticRegistrar.h>
 
 /*!
 	@class		FxGripConfigRegistrar

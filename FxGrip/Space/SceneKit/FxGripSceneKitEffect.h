@@ -16,8 +16,8 @@
 #define FxGripSceneKitEffect_h
 
 #import <SceneKit/SceneKit.h>
-#import "FxGripSpaceEffect.h"
-#import "FxGripSpaceBackend.h"
+#import <FxGrip/FxGripSpaceEffect.h>
+#import <FxGrip/FxGripSpaceBackend.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

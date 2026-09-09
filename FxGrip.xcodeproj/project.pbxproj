@@ -7,8 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0263108DD08480F44075035F /* FxGrip.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEA524C92D221BEF00302F8F /* FxGrip.framework */; };
+		64E79D0BDF4C1952BC43F3A7 /* FxGrip.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEA524C92D221BEF00302F8F /* FxGrip.framework */; };
+		80C1044458CDF43382B20791 /* FxGripRealityKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5BBA7C46443E9EF59D953C6C /* FxGripRealityKit.framework */; };
+		9A3AD16E4B3C61CDD750A3E3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 846C6DC4DB42654C0E737FAC /* Cocoa.framework */; };
+		B328C8665E79EBFF6151640D /* FxGrip.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CEA524C92D221BEF00302F8F /* FxGrip.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B47E444E5D8E2D9772AFF8E8 /* FxGripRealityKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5BBA7C46443E9EF59D953C6C /* FxGripRealityKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BE00000000000000000000A2 /* BEFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; };
 		BE00000000000000000000A3 /* BEFoundation.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BE00000000000000000000A1 /* BEFoundation.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CB6E93481D0A29A7FE33CF66 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 846C6DC4DB42654C0E737FAC /* Cocoa.framework */; };
 		CE1B5E032D87F0FD003CA9FF /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5E022D87F0FD003CA9FF /* CoreMedia.framework */; };
 		CE1B5E052D87F11F003CA9FF /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1B5E042D87F11F003CA9FF /* Metal.framework */; };
 		CE1B5E062D87F1D6003CA9FF /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE5573F32D1B715000A2B063 /* AppKit.framework */; platformFilters = (macos, ); };
@@ -24,12 +31,33 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		2CFFFA60A4807C7642B1452D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CE5573DA2D1B715000A2B063 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CEA524C82D221BEF00302F8F;
+			remoteInfo = FxGrip;
+		};
+		AA674B6160D585824257CE2C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CE5573DA2D1B715000A2B063 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CEA524C82D221BEF00302F8F;
+			remoteInfo = FxGrip;
+		};
 		CEA524D42D221BEF00302F8F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CE5573DA2D1B715000A2B063 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CEA524C82D221BEF00302F8F;
 			remoteInfo = FxGrip;
+		};
+		E606B560B0242C612AEDB7EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CE5573DA2D1B715000A2B063 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00AA766D1763322A1473626;
+			remoteInfo = FxGripRealityKit;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -56,9 +84,24 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EBE2236069199C6E5C90BB1B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				B328C8665E79EBFF6151640D /* FxGrip.framework in Embed Frameworks */,
+				B47E444E5D8E2D9772AFF8E8 /* FxGripRealityKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0423BD78E22D39D533674AB0 /* FxGripRealityKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FxGripRealityKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5BBA7C46443E9EF59D953C6C /* FxGripRealityKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FxGripRealityKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		846C6DC4DB42654C0E737FAC /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		BE00000000000000000000A1 /* BEFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BEFoundation.framework; path = Frameworks/BEFoundation.framework; sourceTree = "<group>"; };
 		CE1B5D5B2D8735BC003CA9FF /* FxPlug.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FxPlug.framework; path = /Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/FxPlug.framework; sourceTree = "<absolute>"; };
 		CE1B5E022D87F0FD003CA9FF /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -306,6 +349,44 @@
 		CE5DBFA630515ED800FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
 		CE5DBFC630515ED800FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
 		CE5DBFEC30515ED800FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5DD9593051ED6C00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DD9763051ED6C00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DD9973051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DD9C53051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DD9E63051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DDA063051ED6C00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DDA293051ED6C00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DDA503051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DDA703051ED6C00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DDA913051ED6C00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DDAAE3051ED6C00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DDACF3051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DDAFD3051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DDB1E3051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DDB3E3051ED6C00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DDB613051ED6C00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DDB883051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DDBA83051ED6C00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DDBC93051ED6C00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DDBE63051ED6C00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DDC073051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DDC353051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DDC563051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DDC763051ED6C00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DDC993051ED6C00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DDCC03051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DDCE03051ED6C00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DDD063051ED6C00FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
+		CE5DDD273051ED6C00FC480C /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
+		CE5DDD443051ED6C00FC480C /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
+		CE5DDD653051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
+		CE5DDD933051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxDynamicRegistration.xcodeproj; sourceTree = "<group>"; };
+		CE5DDDB43051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxGradientCheckerboard.xcodeproj; sourceTree = "<group>"; };
+		CE5DDDD43051ED6C00FC480C /* FxPictureInPicture.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxPictureInPicture.xcodeproj; sourceTree = "<group>"; };
+		CE5DDDF73051ED6C00FC480C /* FxShape.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxShape.xcodeproj; sourceTree = "<group>"; };
+		CE5DDE1E3051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxSimpleColorCorrector.xcodeproj; sourceTree = "<group>"; };
+		CE5DDE3E3051ED6C00FC480C /* FxTemporalBlur.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTemporalBlur.xcodeproj; sourceTree = "<group>"; };
+		CE5DDE643051ED6C00FC480C /* FxTimeCodeGenerator.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxTimeCodeGenerator.xcodeproj; sourceTree = "<group>"; };
 		CE7AB5BA2D224DC0001A7395 /* Fx3DBox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Fx3DBox.xcodeproj; sourceTree = "<group>"; };
 		CE7AB5D52D224DC0001A7395 /* FxBrightness.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightness.xcodeproj; sourceTree = "<group>"; };
 		CE7AB5F42D224DC0001A7395 /* FxBrightnessAnalysis.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FxBrightnessAnalysis.xcodeproj; sourceTree = "<group>"; };
@@ -1578,6 +1659,21 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		0DA064BD331B89BBE8F1D3A3 /* FxGripRealityKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FxGripRealityKit;
+			sourceTree = "<group>";
+		};
+		1A0E5A9D2B354A2DDE84D082 /* FxGripRealityKitTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FxGripRealityKitTests;
+			sourceTree = "<group>";
+		};
+		3424C124E9847190ADC01014 /* Modules */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Modules;
+			sourceTree = "<group>";
+		};
 		CEA524CA2D221BEF00302F8F /* FxGrip */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -1604,6 +1700,16 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		801A3BCEF9E0559779E826E8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB6E93481D0A29A7FE33CF66 /* Cocoa.framework in Frameworks */,
+				0263108DD08480F44075035F /* FxGrip.framework in Frameworks */,
+				80C1044458CDF43382B20791 /* FxGripRealityKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CEA524C62D221BEF00302F8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -1629,9 +1735,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D92C299B0F8D9EA1D14E8F05 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A3AD16E4B3C61CDD750A3E3 /* Cocoa.framework in Frameworks */,
+				64E79D0BDF4C1952BC43F3A7 /* FxGrip.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		067A1A25B8A714BA4E556EAC /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				846C6DC4DB42654C0E737FAC /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
 		CE5573D92D1B715000A2B063 = {
 			isa = PBXGroup;
 			children = (
@@ -1647,6 +1770,9 @@
 				CEA524D62D221BEF00302F8F /* FxGripTests */,
 				CE5573E42D1B715000A2B063 /* Frameworks */,
 				CE5573E32D1B715000A2B063 /* Products */,
+				3424C124E9847190ADC01014 /* Modules */,
+				0DA064BD331B89BBE8F1D3A3 /* FxGripRealityKit */,
+				1A0E5A9D2B354A2DDE84D082 /* FxGripRealityKitTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -1655,6 +1781,8 @@
 			children = (
 				CEA524C92D221BEF00302F8F /* FxGrip.framework */,
 				CEA524D22D221BEF00302F8F /* FxGripTests.xctest */,
+				5BBA7C46443E9EF59D953C6C /* FxGripRealityKit.framework */,
+				0423BD78E22D39D533674AB0 /* FxGripRealityKitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1675,6 +1803,7 @@
 				CE5573F52D1B715000A2B063 /* Accelerate.framework */,
 				CE5573F72D1B715000A2B063 /* PluginManager.framework */,
 				CE1B5D5B2D8735BC003CA9FF /* FxPlug.framework */,
+				067A1A25B8A714BA4E556EAC /* OS X */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -3325,6 +3454,272 @@
 			sourceTree = "<group>";
 		};
 		CE5DC05F30515ED800FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE8E3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE903051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE923051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE943051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE963051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE983051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE9A3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE9C3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDE9E3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEA03051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEA23051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEA43051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEA63051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEA83051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEAA3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEAC3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEAE3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEB03051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEB23051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEB43051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEB63051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEB83051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEBA3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEBC3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEBE3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEC03051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEC23051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEC43051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEC63051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDEC83051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDECA3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDECC3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDECE3051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDED03051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDED23051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDED43051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDED63051ED6C00FC480C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE5DDED83051ED6C00FC480C /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -10740,6 +11135,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		CD437BD67AC6F91AF158D328 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CEA524C42D221BEF00302F8F /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -10750,6 +11152,51 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		A00AA766D1763322A1473626 /* FxGripRealityKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EB84CE43BBB25930A25CE221 /* Build configuration list for PBXNativeTarget "FxGripRealityKit" */;
+			buildPhases = (
+				CD437BD67AC6F91AF158D328 /* Headers */,
+				AE7F447D466624573FC8B490 /* Sources */,
+				D92C299B0F8D9EA1D14E8F05 /* Frameworks */,
+				6A9B95F134BBE50C30F3A454 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EE754B1F9070B0E9109EAAB9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0DA064BD331B89BBE8F1D3A3 /* FxGripRealityKit */,
+			);
+			name = FxGripRealityKit;
+			productName = FxGripRealityKit;
+			productReference = 5BBA7C46443E9EF59D953C6C /* FxGripRealityKit.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		B1CDD8D4C0992849EE0E74DD /* FxGripRealityKitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C7FB4148A429124ACE65C51 /* Build configuration list for PBXNativeTarget "FxGripRealityKitTests" */;
+			buildPhases = (
+				BC2554BFEFDED9CF618DD65A /* Sources */,
+				801A3BCEF9E0559779E826E8 /* Frameworks */,
+				AFDCA6FF173BF813A82954B2 /* Resources */,
+				EBE2236069199C6E5C90BB1B /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9666D6A906F1FC3D99F79A2C /* PBXTargetDependency */,
+				5EE9351DF04B2CDED3457FE2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				1A0E5A9D2B354A2DDE84D082 /* FxGripRealityKitTests */,
+			);
+			name = FxGripRealityKitTests;
+			productName = FxGripRealityKitTests;
+			productReference = 0423BD78E22D39D533674AB0 /* FxGripRealityKitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		CEA524C82D221BEF00302F8F /* FxGrip */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CEA524DB2D221BEF00302F8F /* Build configuration list for PBXNativeTarget "FxGrip" */;
@@ -10768,8 +11215,6 @@
 				CEA524CA2D221BEF00302F8F /* FxGrip */,
 			);
 			name = FxGrip;
-			packageProductDependencies = (
-			);
 			productName = FxGrip;
 			productReference = CEA524C92D221BEF00302F8F /* FxGrip.framework */;
 			productType = "com.apple.product-type.framework";
@@ -10792,8 +11237,6 @@
 				CEA524D62D221BEF00302F8F /* FxGripTests */,
 			);
 			name = FxGripTests;
-			packageProductDependencies = (
-			);
 			productName = FxGripTests;
 			productReference = CEA524D22D221BEF00302F8F /* FxGripTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -11029,6 +11472,10 @@
 					ProjectRef = CEF02EB83048276B008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEA43051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DD9593051ED6C00FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0158B304A54AB008A6AB6 /* Products */;
 					ProjectRef = CEF01166304A54AB008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
@@ -11197,6 +11644,10 @@
 					ProjectRef = CEF0389E3048B47D008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDE963051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDD273051ED6C00FC480C /* Fx3DBox.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0014D304818EE008A6AB6 /* Products */;
 					ProjectRef = CEF0FFE9304818EE008A6AB6 /* Fx3DBox.xcodeproj */;
 				},
@@ -11207,6 +11658,10 @@
 				{
 					ProductGroup = CEF07436304CA611008A6AB6 /* Products */;
 					ProjectRef = CEF06ED4304CA611008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEB23051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDBC93051ED6C00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0028E30493263008A6AB6 /* Products */;
@@ -11379,6 +11834,10 @@
 				{
 					ProductGroup = CEF04B20304BB9AB008A6AB6 /* Products */;
 					ProjectRef = CEF04845304BB9AB008A6AB6 /* Fx3DBox.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEAE3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDA913051ED6C00FC480C /* Fx3DBox.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CCBE304643F1008A6AB6 /* Products */;
@@ -11621,6 +12080,10 @@
 					ProjectRef = CEF07029304CA611008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDECA3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DD9763051ED6C00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D74343050BEBA00FC480C /* Products */;
 					ProjectRef = CE5D72E83050BEBA00FC480C /* FxBrightness.xcodeproj */;
 				},
@@ -11753,6 +12216,10 @@
 					ProjectRef = CEF05DAB3048B97B008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEBA3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDAAE3051ED6C00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF03D8D304A8F79008A6AB6 /* Products */;
 					ProjectRef = CEF03983304A8F79008A6AB6 /* FxBrightness.xcodeproj */;
 				},
@@ -11881,6 +12348,10 @@
 					ProjectRef = CEF0E8A830492A3A008A6AB6 /* FxBrightness.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEBE3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDBE63051ED6C00FC480C /* FxBrightness.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3B97E3044FC2C00156E47 /* Products */;
 					ProjectRef = CEB3B5AE3044FC2C00156E47 /* FxBrightness.xcodeproj */;
 				},
@@ -11899,6 +12370,10 @@
 				{
 					ProductGroup = CEF0300C3048276B008A6AB6 /* Products */;
 					ProjectRef = CEF02C653048276B008A6AB6 /* FxBrightness.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEB03051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDD443051ED6C00FC480C /* FxBrightness.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3B1213044FB6A00156E47 /* Products */;
@@ -11943,6 +12418,10 @@
 				{
 					ProductGroup = CE5D74703050BEBA00FC480C /* Products */;
 					ProjectRef = CE5D6F3B3050BEBA00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDED43051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDD653051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF002A430493263008A6AB6 /* Products */;
@@ -12277,6 +12756,10 @@
 					ProjectRef = CEF0D4673048ECB5008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDE9C3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDACF3051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D921C30513B4400FC480C /* Products */;
 					ProjectRef = CE5D8F5330513B4400FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
@@ -12335,6 +12818,10 @@
 				{
 					ProductGroup = CEF02285304A579C008A6AB6 /* Products */;
 					ProjectRef = CEF01ED0304A579C008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEAA3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDC073051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0CC263048E552008A6AB6 /* Products */;
@@ -12453,6 +12940,10 @@
 					ProjectRef = CEB3CCF030452DDA00156E47 /* FxBrightnessAnalysis.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDED63051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DD9973051ED6C00FC480C /* FxBrightnessAnalysis.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CC243048E552008A6AB6 /* Products */;
 					ProjectRef = CEF0C9CD3048E552008A6AB6 /* FxBrightnessAnalysis.xcodeproj */;
 				},
@@ -12515,6 +13006,10 @@
 				{
 					ProductGroup = CEF08F92304CACC7008A6AB6 /* Products */;
 					ProjectRef = CEF08BDE304CACC7008A6AB6 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEC83051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DD9C53051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB39D99303BA48200156E47 /* Products */;
@@ -12653,6 +13148,10 @@
 					ProjectRef = CEF011D2304A54AB008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDE903051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDD933051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D74783050BEBA00FC480C /* Products */;
 					ProjectRef = CE5D73373050BEBA00FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -12737,6 +13236,10 @@
 					ProjectRef = CEF0C949304643F1008A6AB6 /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEB63051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDAFD3051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5DB09430514C9400FC480C /* Products */;
 					ProjectRef = CE5DAF5630514C9400FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
@@ -12783,6 +13286,10 @@
 				{
 					ProductGroup = CEF01CDD30481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01AA530481DBE008A6AB6 /* FxDynamicRegistration.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDECE3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDC353051ED6C00FC480C /* FxDynamicRegistration.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF090643048E31C008A6AB6 /* Products */;
@@ -13137,6 +13644,10 @@
 					ProjectRef = CE5D8E6A30513B4400FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEC63051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDDB43051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D83033051064E00FC480C /* Products */;
 					ProjectRef = CE5D80AB3051064E00FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
@@ -13295,6 +13806,10 @@
 				{
 					ProductGroup = CEF02FF5304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02DAD304A8C65008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDE923051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDC563051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0741E304CA611008A6AB6 /* Products */;
@@ -13537,6 +14052,10 @@
 					ProjectRef = CE5D9EC53051431900FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDE8E3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDB1E3051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF01CF330481DBE008A6AB6 /* Products */;
 					ProjectRef = CEF01BFE30481DBE008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
 				},
@@ -13547,6 +14066,10 @@
 				{
 					ProductGroup = CEF002A830493263008A6AB6 /* Products */;
 					ProjectRef = CEF001AA30493263008A6AB6 /* FxGradientCheckerboard.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEC03051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DD9E63051ED6C00FC480C /* FxGradientCheckerboard.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF03D77304A8F79008A6AB6 /* Products */;
@@ -13717,6 +14240,10 @@
 					ProjectRef = CEF02478304826CD008A6AB6 /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDECC3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDC763051ED6C00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D82EB3051064E00FC480C /* Products */;
 					ProjectRef = CE5D7E5B3051064E00FC480C /* FxPictureInPicture.xcodeproj */;
 				},
@@ -13825,6 +14352,10 @@
 					ProjectRef = CE5D8D5230513B4400FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEBC3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDB3E3051ED6C00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CE7ABAC72D229149001A7395 /* Products */;
 					ProjectRef = CE7ABA702D229149001A7395 /* FxPictureInPicture.xcodeproj */;
 				},
@@ -13909,6 +14440,10 @@
 					ProjectRef = CE5DAF9730514C9400FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEC43051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDA063051ED6C00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3D0AB30452DDA00156E47 /* Products */;
 					ProjectRef = CEB3CFCF30452DDA00156E47 /* FxPictureInPicture.xcodeproj */;
 				},
@@ -13983,6 +14518,10 @@
 				{
 					ProductGroup = CE5D747A3050BEBA00FC480C /* Products */;
 					ProjectRef = CE5D70E23050BEBA00FC480C /* FxPictureInPicture.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEB43051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDDD43051ED6C00FC480C /* FxPictureInPicture.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0E18C304927A3008A6AB6 /* Products */;
@@ -14249,6 +14788,10 @@
 					ProjectRef = CEF02D183048276B008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEA23051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDDF73051ED6C00FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF058CD304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF056E6304BBB9A008A6AB6 /* FxShape.xcodeproj */;
 				},
@@ -14355,6 +14898,10 @@
 				{
 					ProductGroup = CEF05911304BBB9A008A6AB6 /* Products */;
 					ProjectRef = CEF05844304BBB9A008A6AB6 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDE943051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDC993051ED6C00FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF03D9D304A8F79008A6AB6 /* Products */;
@@ -14489,6 +15036,10 @@
 					ProjectRef = CEF0EE86304811C3008A6AB6 /* FxShape.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEA03051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDA293051ED6C00FC480C /* FxShape.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0AE363048E424008A6AB6 /* Products */;
 					ProjectRef = CEF0AC473048E424008A6AB6 /* FxShape.xcodeproj */;
 				},
@@ -14595,6 +15146,10 @@
 				{
 					ProductGroup = CEF08F8A304CACC7008A6AB6 /* Products */;
 					ProjectRef = CEF08ED8304CACC7008A6AB6 /* FxShape.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEC23051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDB613051ED6C00FC480C /* FxShape.xcodeproj */;
 				},
 				{
 					ProductGroup = CEB3D8C830452F7000156E47 /* Products */;
@@ -14757,6 +15312,10 @@
 					ProjectRef = CEF0570D304BBB9A008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDED03051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDA503051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0159D304A54AB008A6AB6 /* Products */;
 					ProjectRef = CEF0125D304A54AB008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -14869,6 +15428,10 @@
 					ProjectRef = CEF0723B304CA611008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDE983051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDB883051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF02687304826CD008A6AB6 /* Products */;
 					ProjectRef = CEF0238A304826CD008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -14899,6 +15462,10 @@
 				{
 					ProductGroup = CEF02FE3304A8C65008A6AB6 /* Products */;
 					ProjectRef = CEF02F75304A8C65008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDE9A3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDCC03051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
 					ProductGroup = CE5D745C3050BEBA00FC480C /* Products */;
@@ -15177,6 +15744,10 @@
 					ProjectRef = CEF02E773048276B008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEA83051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDE1E3051ED6C00FC480C /* FxSimpleColorCorrector.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF0CCAA304643F1008A6AB6 /* Products */;
 					ProjectRef = CEF0C9D4304643F1008A6AB6 /* FxSimpleColorCorrector.xcodeproj */;
 				},
@@ -15391,6 +15962,10 @@
 				{
 					ProductGroup = CEF02667304826CD008A6AB6 /* Products */;
 					ProjectRef = CEF024E2304826CD008A6AB6 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDEAC3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDBA83051ED6C00FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF0D5603047A3B9008A6AB6 /* Products */;
@@ -15617,6 +16192,10 @@
 					ProjectRef = CEF0D5403048ECB5008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDE9E3051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDE3E3051ED6C00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CEF03A263048B47D008A6AB6 /* Products */;
 					ProjectRef = CEF0387D3048B47D008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
@@ -15637,6 +16216,10 @@
 					ProjectRef = CEF03BB5304A8F79008A6AB6 /* FxTemporalBlur.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEA63051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDCE03051ED6C00FC480C /* FxTemporalBlur.xcodeproj */;
+				},
+				{
 					ProductGroup = CE5D745A3050BEBA00FC480C /* Products */;
 					ProjectRef = CE5D72843050BEBA00FC480C /* FxTemporalBlur.xcodeproj */;
 				},
@@ -15647,6 +16230,10 @@
 				{
 					ProductGroup = CEB3B1293044FB6A00156E47 /* Products */;
 					ProjectRef = CEB3B0D53044FB6A00156E47 /* FxTemporalBlur.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDED23051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDA703051ED6C00FC480C /* FxTemporalBlur.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF08F7E304CACC7008A6AB6 /* Products */;
@@ -15825,6 +16412,10 @@
 					ProjectRef = CEF02FBB304A8C65008A6AB6 /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
+					ProductGroup = CE5DDEB83051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDD063051ED6C00FC480C /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
 					ProductGroup = CEB3E1433045398300156E47 /* Products */;
 					ProjectRef = CEB3E1073045398300156E47 /* FxTimeCodeGenerator.xcodeproj */;
 				},
@@ -15899,6 +16490,10 @@
 				{
 					ProductGroup = CEB3B1133044FB6A00156E47 /* Products */;
 					ProjectRef = CEB3B0FB3044FB6A00156E47 /* FxTimeCodeGenerator.xcodeproj */;
+				},
+				{
+					ProductGroup = CE5DDED83051ED6C00FC480C /* Products */;
+					ProjectRef = CE5DDE643051ED6C00FC480C /* FxTimeCodeGenerator.xcodeproj */;
 				},
 				{
 					ProductGroup = CEF01CFB30481DBE008A6AB6 /* Products */;
@@ -16009,11 +16604,27 @@
 			targets = (
 				CEA524C82D221BEF00302F8F /* FxGrip */,
 				CEA524D12D221BEF00302F8F /* FxGripTests */,
+				A00AA766D1763322A1473626 /* FxGripRealityKit */,
+				B1CDD8D4C0992849EE0E74DD /* FxGripRealityKitTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		6A9B95F134BBE50C30F3A454 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFDCA6FF173BF813A82954B2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CEA524C72D221BEF00302F8F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -16032,6 +16643,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AE7F447D466624573FC8B490 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC2554BFEFDED9CF618DD65A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CEA524C52D221BEF00302F8F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -16049,14 +16674,150 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		5EE9351DF04B2CDED3457FE2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = FxGrip;
+			target = CEA524C82D221BEF00302F8F /* FxGrip */;
+			targetProxy = 2CFFFA60A4807C7642B1452D /* PBXContainerItemProxy */;
+		};
+		9666D6A906F1FC3D99F79A2C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = FxGripRealityKit;
+			target = A00AA766D1763322A1473626 /* FxGripRealityKit */;
+			targetProxy = E606B560B0242C612AEDB7EA /* PBXContainerItemProxy */;
+		};
 		CEA524D52D221BEF00302F8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = CEA524C82D221BEF00302F8F /* FxGrip */;
 			targetProxy = CEA524D42D221BEF00302F8F /* PBXContainerItemProxy */;
 		};
+		EE754B1F9070B0E9109EAAB9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = FxGrip;
+			target = CEA524C82D221BEF00302F8F /* FxGrip */;
+			targetProxy = AA674B6160D585824257CE2C /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		059383B0B5EBD3136E461C26 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(PROJECT_DIR)/Modules/FxPlug/module.modulemap";
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGripRealityKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5;
+			};
+			name = Release;
+		};
+		547ECB3622A703936512DF21 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(PROJECT_DIR)/Modules/FxPlug/module.modulemap";
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGripRealityKit;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_INSTALL_OBJC_HEADER = YES;
+				SWIFT_VERSION = 5;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		7E3B099EC86719E436488035 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(PROJECT_DIR)/Modules/FxPlug/module.modulemap";
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGripRealityKit;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_INSTALL_OBJC_HEADER = YES;
+				SWIFT_VERSION = 5;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		C036E0A636DF563AB881717B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(PROJECT_DIR)/Modules/FxPlug/module.modulemap";
+				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGripRealityKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5;
+			};
+			name = Debug;
+		};
 		CE55742B2D1B715000A2B063 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -16206,7 +16967,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEFINES_MODULE = NO;
+				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -16258,6 +17019,7 @@
 					"-weak_framework",
 					FxFactory,
 				);
+				OTHER_MODULE_VERIFIER_FLAGS = "-- -F/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks -F$(PROJECT_DIR)/Frameworks -fmodule-map-file=$(PROJECT_DIR)/Modules/FxPlug/module.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGrip;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -16275,7 +17037,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEFINES_MODULE = NO;
+				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -16327,6 +17089,7 @@
 					"-weak_framework",
 					FxFactory,
 				);
+				OTHER_MODULE_VERIFIER_FLAGS = "-- -F/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks -F$(PROJECT_DIR)/Frameworks -fmodule-map-file=$(PROJECT_DIR)/Modules/FxPlug/module.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.belisoful.FxGrip;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -16389,6 +17152,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5C7FB4148A429124ACE65C51 /* Build configuration list for PBXNativeTarget "FxGripRealityKitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				059383B0B5EBD3136E461C26 /* Release */,
+				C036E0A636DF563AB881717B /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		CE5573DD2D1B715000A2B063 /* Build configuration list for PBXProject "FxGrip" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -16412,6 +17184,15 @@
 			buildConfigurations = (
 				CEA524DF2D221BEF00302F8F /* Debug */,
 				CEA524E02D221BEF00302F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EB84CE43BBB25930A25CE221 /* Build configuration list for PBXNativeTarget "FxGripRealityKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				547ECB3622A703936512DF21 /* Release */,
+				7E3B099EC86719E436488035 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -11,7 +11,7 @@
 #ifndef FxGripCustomParameter_h
 #define FxGripCustomParameter_h
 
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripParameter.h>
 
 /*!
 	@protocol	FxGripCustomParameter

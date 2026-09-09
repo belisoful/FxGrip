@@ -16,7 +16,7 @@
 #define FxGripBanner_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 // A banner carries its title under the string key, its title point size under the float
 // key, and its background color under the RGBA key. The subtitle, text color, and corner

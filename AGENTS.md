@@ -6,10 +6,16 @@
 
 The framework is **macOS-only** (FxPlug hosts are macOS applications). Two primary base classes are `FxGripTileableEffect` and `FxGripTileableGenerator` (see `FxGrip/FxGrip.docc`).
 
+FxGrip itself is Objective-C. One companion framework, **`FxGripRealityKit`**, is **Swift-only**, because RealityKit publishes no Objective-C interface. See "Swift-only: FxGripRealityKit" below.
+
 ## Build & Test Commands
 
+The `FxGrip` scheme builds and tests every target: the `FxGrip` framework, `FxGripTests`, the
+Swift `FxGripRealityKit` framework, and `FxGripRealityKitTests`. The four commands below cover all
+of them, so the Full Check stays at four commands.
+
 ```bash
-# Build the framework (macOS)
+# Build all targets (macOS)
 xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destination 'platform=macOS' build
 
 # Run unit tests (macOS, arm64 native) — uses FxGrip.xctestplan
@@ -40,6 +46,7 @@ Code is commit-ready only when every check below passes.
 - **PluginManager.framework** — linked from `/Library/Developer/Frameworks/` (installed by the FxPlug SDK / Pro Apps).
 - **Deployment target** — macOS 13.5 (framework target); build with a current Xcode.
 - **No private Apple APIs** — plugins that ship this framework must not call private methods in Apple's APIs; FxPlug hosts (Final Cut Pro, Motion) run plugins out-of-process and Apple validates behavior.
+- **FxPlug ships no clang module map.** `Modules/FxPlug/module.modulemap` supplies one for both `FxPlug` and `PluginManager`, using absolute paths into the SDK. The `FxGrip` target defines a module (`DEFINES_MODULE = YES`) so Swift can import it, and passes this file to the module verifier through `OTHER_MODULE_VERIFIER_FLAGS`. Keep `/Library/Developer/Frameworks` out of `FRAMEWORK_SEARCH_PATHS`: its `FxPlug.framework` and `PluginManager.framework` carry no headers and would shadow the SDK copies.
 
 ## Project Structure
 
@@ -51,6 +58,9 @@ Code is commit-ready only when every check below passes.
   - `Extensions/` — host-integration extensions (`FxGripAboutMenu`, `FxGripDebugMenu`, `FxGripFactory`, `FxGripGoogleAnalytics`, `FxGripI18N`, `FxGripInstanceTracker`, `FxGripMeta`, `FxGripParameterData`, `FxGripRegression`)
   - `Utilities/` — `FxGripMTLDeviceCache`, `FxGripParameterUtility`, `FxGripPluginInfo`
   - `Resources/`, `FxGrip.docc/` — resources and DocC catalog
+- `FxGripRealityKit/` — **Swift-only** RealityKit render engine for the 3D Space subsystem (separate framework target, macOS 15.0 floor, own DocC catalog)
+- `FxGripRealityKitTests/` — Swift XCTest unit tests for that framework (synchronized group)
+- `Modules/FxPlug/module.modulemap` — repo-owned clang module map for Apple's FxPlug SDK and PluginManager, which ship none; required for any Swift target that imports FxGrip
 - `FxGripTests/` — XCTest unit tests (synchronized group: files added to this folder are compiled automatically)
 - `FxGrip.xcodeproj/` — Xcode project file (targets: `FxGrip` framework, `FxGripTests` unit-test bundle)
 - `FxGrip.xctestplan` — Test plan configuration (parallelizable)
@@ -72,6 +82,29 @@ Code is commit-ready only when every check below passes.
 - Document the introducing version on new public methods and classes.
 - **Category methods on Apple classes must not reuse Apple method names.** Apple attaches private same-named categories at runtime, and duplicate resolution is undefined. Public: descriptive non-Apple names; private helpers should avoid the "common name" or prefix with "fxg_". Verify the selector at runtime, not just in headers.
 - Versioned API classes (`*API_v3` … `*API_v6`) mirror FxPlug protocol versions; add a new versioned class rather than changing the semantics of a shipped one.
+
+## Swift-only: FxGripRealityKit
+
+`FxGripRealityKit` is the one Swift target in the project. It exists because RealityKit publishes no
+Objective-C interface: `RealityFoundation` ships a Swift module, and the `.h` files inside
+`RealityKit.framework` are Metal shader headers. A RealityKit engine cannot be written in
+Objective-C, so it is not a port of the SceneKit engine and does not mirror its architecture.
+
+- **Scope** — Swift is confined to this framework and its tests. FxGrip stays Objective-C, and a
+  plugin that requires Objective-C subclasses `FxGripSceneKitEffect` instead.
+- **Deployment floor** — macOS 15.0, for `RealityRenderer`. FxGrip's own floor stays at 13.5, so
+  linking `FxGripRealityKit` raises a plugin's floor. The target's floor makes `@available` gating
+  unnecessary inside the module.
+- **Objective-C exposure** — only the effect class is `@objc`, so a host registrar instantiates it by
+  name. The rest of the API is Swift-native.
+- **Main actor** — `RealityRenderer` and the entity graph are `@MainActor`. The host renders frames
+  concurrently on many threads, so RealityKit work is scheduled onto the main actor and the render
+  thread waits for it. Never touch a RealityKit type off the main actor.
+- **Documentation** — Swift uses `///` doc comments, which DocC reads. The file-header block keeps the
+  `/*! @file ... */` form the Objective-C sources use. The Documentation Style rules below apply
+  unchanged.
+- **Module map** — the target passes `Modules/FxPlug/module.modulemap` to the clang importer through
+  `OTHER_SWIFT_FLAGS`. A new Swift target that imports FxGrip needs the same flag.
 
 ## Code Comments
 
@@ -112,7 +145,10 @@ Prefer subject–verb–object declaratives, and bullet lists of `condition → 
 1. Add .h and .m files to the appropriate `FxGrip/` subfolder (synchronized groups: the files are picked up automatically)
 2. Add a corresponding test file to `FxGripTests/` (also synchronized — compiled automatically)
 3. Mark new public headers `Public` in the target's build phases when they are part of the framework API
-4. Add the public header to the umbrella `FxGrip.h`
+4. Add the public header to the umbrella `FxGrip.h`. Every `Public` header must appear there, or the module verifier fails.
+5. Inside a framework header, import with angle brackets (`#import <FxGrip/FxGripTypes.h>`), never quotes. Quoted includes fail the module verifier.
+
+Swift files go in `FxGripRealityKit/`, tests in `FxGripRealityKitTests/` (both synchronized). They have no umbrella header and no public-header marking.
 
 ## Key Dependencies
 
@@ -121,6 +157,7 @@ Prefer subject–verb–object declaratives, and bullet lists of `condition → 
 - BEFoundation.framework (vendored, `Frameworks/`)
 - Foundation.framework / AppKit.framework / Cocoa.framework
 - CoreMedia.framework, CoreImage.framework, Metal.framework, Accelerate.framework, WebKit.framework
+- RealityKit.framework / RealityFoundation (Swift-only, `FxGripRealityKit` target, macOS 15.0+)
 - XCTest.framework (for tests)
 
 ## Safeguards (Anti-Patterns)

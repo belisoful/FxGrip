@@ -15,8 +15,8 @@
 #define FxGripWebViewParameter_h
 
 #import <AppKit/AppKit.h>
-#import "FxGripCustomParameter.h"
-#import "FxGripCustomViewDataDelegate.h"
+#import <FxGrip/FxGripCustomParameter.h>
+#import <FxGrip/FxGripCustomViewDataDelegate.h>
 
 /*!
 	@class      FxGripWebPageView

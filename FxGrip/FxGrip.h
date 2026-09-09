@@ -41,6 +41,9 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 // FxGripFxFactory is not published: its implementation is excluded from the target and
 // its header imports the third-party FxFactory SDK, so a client without that SDK could
 // not compile the umbrella. Re-publish only with a working, ported implementation.
+#import <FxGrip/FxGripAboutMenu.h>
+#import <FxGrip/FxGripDebugMenu.h>
+#import <FxGrip/FxGripGoogleAnalytics.h>
 #import <FxGrip/FxGripI18N.h>
 #import <FxGrip/FxGripInstanceTracker.h>
 #import <FxGrip/FxGripMeta.h>
@@ -204,6 +207,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripMetaAPI_v1.h>
 #import <FxGrip/FxGripParameterCreationAPI_v5.h>
 #import <FxGrip/FxGripParameterCreationAPI_v6.h>
+#import <FxGrip/FxGripParameterGroupingAPI_v1.h>
 #import <FxGrip/FxGripParameterRetrievalAPI_v6.h>
 #import <FxGrip/FxGripParameterRetrievalAPI_v7.h>
 #import <FxGrip/FxGripParameterSettingAPI_v5.h>

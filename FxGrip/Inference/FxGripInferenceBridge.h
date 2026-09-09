@@ -17,7 +17,7 @@
 #define FxGripInferenceBridge_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripInferenceBackend.h"
+#import <FxGrip/FxGripInferenceBackend.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

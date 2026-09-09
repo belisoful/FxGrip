@@ -17,8 +17,8 @@
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
 #import <Metal/Metal.h>
-#import "FxGripAPIAccessing.h"
-#import "FxGripOSCShaderTypes.h"
+#import <FxGrip/FxGripAPIAccessing.h>
+#import <FxGrip/FxGripOSCShaderTypes.h>
 
 @class FxGripOSCPart;
 

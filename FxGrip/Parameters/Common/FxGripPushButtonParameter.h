@@ -11,7 +11,7 @@
 #ifndef FxGripPushButtonParameter_h
 #define FxGripPushButtonParameter_h
 
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripParameter.h>
 
 
 /*!

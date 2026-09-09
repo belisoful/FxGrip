@@ -16,7 +16,7 @@
 #ifndef FxGripMLVideoEffect_h
 #define FxGripMLVideoEffect_h
 
-#import "FxGripMLImageEffect.h"
+#import <FxGrip/FxGripMLImageEffect.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

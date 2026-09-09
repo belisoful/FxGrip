@@ -14,7 +14,7 @@
 #define FxGripTileableEffect_PluginProperties_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@abstract	The category reporting whether the effect properties come from the Info.plist.

@@ -16,8 +16,8 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripCustomDataClasses.h"
-#import "FxGripMutableParameter.h"
+#import <FxGrip/FxGripCustomDataClasses.h>
+#import <FxGrip/FxGripMutableParameter.h>
 
 
 /*!

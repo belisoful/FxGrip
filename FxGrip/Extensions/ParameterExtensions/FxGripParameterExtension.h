@@ -15,8 +15,8 @@
 #ifndef FxGripParameterExtension_h
 #define FxGripParameterExtension_h
 
-#import "FxGripExtension.h"
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripParameter.h>
 
 
 /*!

@@ -19,7 +19,7 @@
 	#define kProPlugPlugInX_FxRegisteredPlugins_Property		@"FxGripRegisteredPlugins"
 #endif
 
-#import "FxGripStaticRegistrar.h"
+#import <FxGrip/FxGripStaticRegistrar.h>
 
 /*!
 	@class		FxGripClassRegistrar

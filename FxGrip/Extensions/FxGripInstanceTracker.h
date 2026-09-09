@@ -16,9 +16,9 @@
 #ifndef FxGripInstanceTracker_h
 #define FxGripInstanceTracker_h
 
-#import "FxGripTypes.h"
-#import "FxGripExtension.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTypes.h>
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*! The plugin property key that opts an effect into instance tracking. */
 #define kInstanceTrackerKey @"instanceTracker"

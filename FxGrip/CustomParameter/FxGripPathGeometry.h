@@ -17,7 +17,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripPathData.h"
+#import <FxGrip/FxGripPathData.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

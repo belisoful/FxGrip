@@ -14,6 +14,10 @@
 #ifndef FxGripRegisteredPlugin_h
 #define FxGripRegisteredPlugin_h
 
+#import <Foundation/Foundation.h>
+
+@protocol FxGripRegisteringGroups;
+
 /*!
 	@protocol	FxGripRegisteredPlugin
 	@abstract	Marks a class as a plugin the registrar discovers and registers by runtime introspection.

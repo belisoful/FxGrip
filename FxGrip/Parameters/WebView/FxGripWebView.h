@@ -15,7 +15,7 @@
 #define FxGripWebView_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 // A web-view control carries the URL to load under the string key. The access whitelist
 // is an array of glob patterns under a dedicated key; a nil or absent whitelist defaults

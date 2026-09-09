@@ -13,8 +13,8 @@
 #ifndef FxGripToggleExtension_h
 #define FxGripToggleExtension_h
 
-#import "FxGripParameterExtension.h"
-#import "FxGripToggleParameter.h"
+#import <FxGrip/FxGripParameterExtension.h>
+#import <FxGrip/FxGripToggleParameter.h>
 
 
 /*!

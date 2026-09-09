@@ -17,8 +17,8 @@
 #define FxGripPresetsAPI_v1_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripPreset.h"
-#import "FxGripCommonAPI.h"
+#import <FxGrip/FxGripPreset.h>
+#import <FxGrip/FxGripCommonAPI.h>
 
 @class BEPathWatcher;
 

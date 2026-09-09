@@ -16,8 +16,8 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#import "FxGripCustomViewDataDelegate.h"
-#import "FxGripDividerParameter.h"
+#import <FxGrip/FxGripCustomViewDataDelegate.h>
+#import <FxGrip/FxGripDividerParameter.h>
 
 /*!
 	@class		FxGripDividerBox

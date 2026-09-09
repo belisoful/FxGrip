@@ -11,7 +11,7 @@
 #ifndef FxGripGradientParameter_h
 #define FxGripGradientParameter_h
 
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripParameter.h>
 #import <FxPlug/FxTypes.h>
 
 

@@ -15,7 +15,7 @@
 #define FxGripVideoView_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 // A video control carries the URL to play under the string key. The access whitelist is an
 // array of glob patterns under a dedicated key; a nil or absent whitelist defaults to the

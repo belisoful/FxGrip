@@ -15,7 +15,7 @@
 #ifndef FxGripInterpolatingDictionary_h
 #define FxGripInterpolatingDictionary_h
 
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 /*! Key prefix that excludes an entry from interpolation. */
 #define kInterpolatingDictionaryNonePrefix @"_"

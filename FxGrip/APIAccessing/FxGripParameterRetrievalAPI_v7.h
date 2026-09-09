@@ -14,7 +14,7 @@
 #define FxGripParameterRetrievalAPI_v7_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripParameterRetrievalAPI_v6.h"
+#import <FxGrip/FxGripParameterRetrievalAPI_v6.h>
 
 /*!
 	@interface  FxGripParameterRetrievalAPI_v7

@@ -18,7 +18,7 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <Metal/Metal.h>
-#import "FxGripOnScreenControl.h"
+#import <FxGrip/FxGripOnScreenControl.h>
 
 /*!
 	@enum       FxGripOSCShapeOptions

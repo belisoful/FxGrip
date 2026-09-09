@@ -23,8 +23,8 @@
 #import <FxGrip/FxGripParameterInfoAPI_v1.h>
 #import <FxGrip/FxGripParameterBoundsAPI_v1.h>
 #import <FxGrip/FxGripMetaAPI_v1.h>
-#import "FxGripParameterTagsAPI_v1.h"
-#import "FxGripAPINotifications.h"
+#import <FxGrip/FxGripParameterTagsAPI_v1.h>
+#import <FxGrip/FxGripAPINotifications.h>
 
 
 @class FxGripTileableEffect;

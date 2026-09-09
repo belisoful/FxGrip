@@ -17,8 +17,8 @@
 #ifndef FxGripGoogleAnalytics_h
 #define FxGripGoogleAnalytics_h
 
-#import "FxGripExtension.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*! The notification-name prefix that marks an event as Google Analytics telemetry. */
 #define kFxGripGoogleAnalyticsNotificationPrefix 		(@"GA")

@@ -15,7 +15,7 @@
 #define FxGripTileableEffect_OOBParameterAccess_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@abstract	The category that starts an out-of-band parameter access context.

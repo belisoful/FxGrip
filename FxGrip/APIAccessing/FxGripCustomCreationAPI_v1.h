@@ -18,7 +18,7 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripEffectHost.h"
+#import <FxGrip/FxGripEffectHost.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

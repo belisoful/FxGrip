@@ -17,7 +17,7 @@
 #define FxGripCurveData_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripCurveLUT.h"
+#import <FxGrip/FxGripCurveLUT.h>
 
 /*!
 	@enum       FxGripCurveDomain

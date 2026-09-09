@@ -11,7 +11,7 @@
 #ifndef FxGripImageRefParameter_h
 #define FxGripImageRefParameter_h
 
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripParameter.h>
 
 
 /*!

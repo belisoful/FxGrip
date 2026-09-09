@@ -16,7 +16,7 @@
 #define FxGripOOBParameterAccess_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@class		FxGripOOBParameterAccess

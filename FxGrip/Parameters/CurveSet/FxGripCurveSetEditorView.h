@@ -15,10 +15,10 @@
 #define FxGripCurveSetEditorView_h
 
 #import <AppKit/AppKit.h>
-#import "FxGripCurveEditorView.h"
-#import "FxGripEffectHost.h"
-#import "FxGripCurveSetData.h"
-#import "FxGripTypes.h"
+#import <FxGrip/FxGripCurveEditorView.h>
+#import <FxGrip/FxGripEffectHost.h>
+#import <FxGrip/FxGripCurveSetData.h>
+#import <FxGrip/FxGripTypes.h>
 
 @protocol FxGripTileableEffect;
 

@@ -11,7 +11,7 @@
 #ifndef FxGripAngleParameter_h
 #define FxGripAngleParameter_h
 
-#import "FxGripFloatParameter.h"
+#import <FxGrip/FxGripFloatParameter.h>
 
 
 /*!

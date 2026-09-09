@@ -16,7 +16,7 @@
 
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
-#import "FxGripCommonAPI.h"
+#import <FxGrip/FxGripCommonAPI.h>
 
 /*!
 	@protocol   FxGripMetaAPI_v1

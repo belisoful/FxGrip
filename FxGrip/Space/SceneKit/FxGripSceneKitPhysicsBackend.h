@@ -13,8 +13,8 @@
 #ifndef FxGripSceneKitPhysicsBackend_h
 #define FxGripSceneKitPhysicsBackend_h
 
-#import "FxGripSceneKitMetalBackend.h"
-#import "FxGripPhysicsSimulationStore.h"
+#import <FxGrip/FxGripSceneKitMetalBackend.h>
+#import <FxGrip/FxGripPhysicsSimulationStore.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

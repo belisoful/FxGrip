@@ -19,8 +19,8 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripCustomDataClasses.h"
-#import "FxGripMutableParameter.h"
+#import <FxGrip/FxGripCustomDataClasses.h>
+#import <FxGrip/FxGripMutableParameter.h>
 
 //These are keys that respond to the parameter Get__Value in the API for the parameter.
 //	  FxGrip overrides the get/set to read these values when attempting to access the normal

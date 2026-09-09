@@ -16,9 +16,9 @@
 #define FxGripParameterGroupingAPI_v1_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripTypes.h"
-#import "FxGripCommonAPI.h"
-#import "FxGripParameterInfoAPI_v1.h"
+#import <FxGrip/FxGripTypes.h>
+#import <FxGrip/FxGripCommonAPI.h>
+#import <FxGrip/FxGripParameterInfoAPI_v1.h>
 
 
 #define FxPlugRootGroupID 0

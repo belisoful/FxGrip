@@ -57,7 +57,7 @@
 
 
 
-#import "FxGripEffectHost.h"
+#import <FxGrip/FxGripEffectHost.h>
 
 /*!
 	@protocol	FxGripTileableEffect

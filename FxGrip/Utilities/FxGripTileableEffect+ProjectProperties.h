@@ -15,7 +15,7 @@
 #define FxGripTileableEffect_ProjectProperties_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@abstract	The category exposing the host project's attributes to the effect.

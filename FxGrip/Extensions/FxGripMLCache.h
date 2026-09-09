@@ -13,9 +13,9 @@
 #ifndef FxGripMLCache_h
 #define FxGripMLCache_h
 
-#import "FxGripCustomExtension.h"
-#import "FxGripFrameData.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripCustomExtension.h>
+#import <FxGrip/FxGripFrameData.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@class      FxGripMLCache

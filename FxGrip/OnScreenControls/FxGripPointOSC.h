@@ -14,9 +14,9 @@
 #define FxGripPointOSC_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripOnScreenControl.h"
-#import "FxGripOSCPart.h"
-#import "FxGripPointOptions.h"
+#import <FxGrip/FxGripOnScreenControl.h>
+#import <FxGrip/FxGripOSCPart.h>
+#import <FxGrip/FxGripPointOptions.h>
 
 /*!
 	@class      FxGripOSCRichPointHandlePart

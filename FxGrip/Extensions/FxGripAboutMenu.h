@@ -16,8 +16,8 @@
 #ifndef FxGripAboutMenu_h
 #define FxGripAboutMenu_h
 
-#import "FxGripExtension.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*! The registry key under which the effect stores the About menu extension. */
 extern NSString*	const _Nonnull FxGripAboutMenuExtensionKey;

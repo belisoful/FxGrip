@@ -17,7 +17,7 @@
 
 #import <Foundation/Foundation.h>
 #import <simd/simd.h>
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@abstract	The category exposing the effect's working gamut and color-space conversions.

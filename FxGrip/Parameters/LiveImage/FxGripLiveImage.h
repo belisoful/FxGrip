@@ -15,7 +15,7 @@
 #define FxGripLiveImage_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 // A live image control's value carries only its configuration; the pixels it shows are
 // published in-process and never reach the host document. The labels array names each

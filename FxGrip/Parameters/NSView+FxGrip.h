@@ -15,7 +15,7 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit//NSView.h>
-#import "FxGripTypes.h"
+#import <FxGrip/FxGripTypes.h>
 
 /*!
 	@abstract	The category that associates a parameter ID with an NSView.

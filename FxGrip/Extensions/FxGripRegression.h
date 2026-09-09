@@ -13,8 +13,8 @@
 #ifndef FxGripRegression_h
 #define FxGripRegression_h
 
-#import "FxGripExtension.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*!
 	@class		FxGripRegression

@@ -19,8 +19,8 @@ scene with no plugin code.
 The source folders follow the split. `Space/` holds the base and the engine-neutral parts: camera
 motion, the deterministic simulation store, the inter-particle force configuration, and the Fast
 Multipole Method core. `Space/SceneKit/` holds everything that imports SceneKit. SceneKit is
-deprecated as of WWDC25 in favor of RealityKit; `Space/RealityKit/` is reserved for a RealityKit
-engine subclass built on the same base.
+deprecated as of WWDC25 in favor of RealityKit, and the RealityKit engine lives outside this
+framework, in the `FxGripRealityKit` module described below.
 
 ### The frame
 
@@ -264,6 +264,27 @@ A spinning card that carries the source image and composites in the host 3D scen
 }
 @end
 ```
+
+### The RealityKit engine, Swift only
+
+``FxGripSpaceEffect`` is engine-neutral, and a second engine subclasses it. That engine is
+`FxGripRealityKitEffect`, in the separate `FxGripRealityKit` framework, and it is written in Swift.
+
+RealityKit publishes no Objective-C interface. `RealityFoundation` ships a Swift module, and the
+headers inside `RealityKit.framework` are Metal shader headers. An Objective-C RealityKit engine is
+therefore not possible, and a plugin that subclasses `FxGripRealityKitEffect` is a Swift plugin. A
+plugin that requires Objective-C subclasses ``FxGripSceneKitEffect``, which loses nothing outside
+that module.
+
+The RealityKit engine requires macOS 15, the release that introduced `RealityRenderer`, which is the
+only offscreen render path RealityKit offers. FxGrip runs on macOS 13.5, so linking the RealityKit
+module raises a plugin's floor to macOS 15.
+
+Swift reaches Objective-C through clang modules, so FxGrip defines a module and the repository
+carries `Modules/FxPlug/module.modulemap` for Apple's FxPlug SDK, which ships none. A Swift target
+that imports FxGrip passes that file to the clang importer.
+
+The `FxGripRealityKit` documentation covers the engine itself.
 
 ### The backend
 

@@ -17,7 +17,7 @@
 #define FxGripSection_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 /*!
 	@enum       FxGripSectionTransform

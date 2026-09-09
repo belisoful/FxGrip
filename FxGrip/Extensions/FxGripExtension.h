@@ -17,8 +17,8 @@
 #define FxGripExtension_h
 
 #import <BEFoundation/NSPriorityNotificationCenter.h>
-#import "FxGripTypes.h"
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripTypes.h>
+#import <FxGrip/FxGripParameter.h>
 //#import "FxGripCustomParameter.h"
 
 //#import "NSCoder+AtIndex.h"

@@ -15,7 +15,7 @@
 #ifndef FxGripPresetsParameter_h
 #define FxGripPresetsParameter_h
 
-#import "FxGripMenuParameter.h"
+#import <FxGrip/FxGripMenuParameter.h>
 
 /*! The menu entry that records the default state and applies no preset. */
 #define kFxPresetsMenuEntry_Default		@"Default"

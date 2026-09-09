@@ -11,7 +11,7 @@
 #ifndef FxGripColorParameter_h
 #define FxGripColorParameter_h
 
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripParameter.h>
 
 
 /*!

@@ -15,8 +15,8 @@
 
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripCustomViewDataDelegate.h"
-#import "FxGripEffectHost.h"
+#import <FxGrip/FxGripCustomViewDataDelegate.h>
+#import <FxGrip/FxGripEffectHost.h>
 
 @protocol FxGripTileableEffect;
 

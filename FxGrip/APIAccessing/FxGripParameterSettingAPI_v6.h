@@ -16,7 +16,7 @@
 #define FxGripParameterSettingAPI_v6_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripParameterSettingAPI_v5.h"
+#import <FxGrip/FxGripParameterSettingAPI_v5.h>
 
 /*!
 	@class		FxGripParameterSettingAPI_v6

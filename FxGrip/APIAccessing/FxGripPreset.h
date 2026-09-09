@@ -16,7 +16,7 @@
 #define FxGripPreset_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripTypes.h"
+#import <FxGrip/FxGripTypes.h>
 
 /*! The system-key names for a preset's fields. Written to and read from the file form. */
 #define kFxPresetProperty_CreatedByParameterId @"createdByParameterId"

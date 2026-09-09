@@ -14,8 +14,8 @@
 #ifndef FxGripDynamicRegistrar_h
 #define FxGripDynamicRegistrar_h
 
-#import "FxGripStaticRegistrar.h"
-#import "FxGripRegisteredPlugin.h"
+#import <FxGrip/FxGripStaticRegistrar.h>
+#import <FxGrip/FxGripRegisteredPlugin.h>
 
 
 /*!

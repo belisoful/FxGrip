@@ -14,7 +14,7 @@
 #ifndef FxGripDividerParameter_h
 #define FxGripDividerParameter_h
 
-#import "FxGripCustomParameter.h"
+#import <FxGrip/FxGripCustomParameter.h>
 
 /*! The drawn height of the divider line, in view points. */
 #define kFxGripBoxDividerHeight (1)

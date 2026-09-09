@@ -14,7 +14,7 @@
 #ifndef FxGripFrameData_h
 #define FxGripFrameData_h
 
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 // Reserved header keys, exempt from record enumeration.
 #define kFxGripFrameDataKey_InstanceUUID	@"__instanceUUID"

@@ -15,7 +15,7 @@
 #ifndef FxGripTrackingOpacityParameter_h
 #define FxGripTrackingOpacityParameter_h
 
-#import "FxGripPercentParameter.h"
+#import <FxGrip/FxGripPercentParameter.h>
 
 /*! The value the framework drives the slider to while an analysis pass runs. */
 #define kFxGripTrackingOpacityAnalyzing	(0.0)

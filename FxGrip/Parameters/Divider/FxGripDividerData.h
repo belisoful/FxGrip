@@ -18,10 +18,10 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripCustomDataClasses.h"
-#import "FxGripMutableParameter.h"
-#import "FxGripCustomViewData.h"
-#import "FxGripDividerParameter.h"
+#import <FxGrip/FxGripCustomDataClasses.h>
+#import <FxGrip/FxGripMutableParameter.h>
+#import <FxGrip/FxGripCustomViewData.h>
+#import <FxGrip/FxGripDividerParameter.h>
 
 /*!
 	@class      FxGripDividerData

@@ -18,7 +18,7 @@
 #import <Foundation/Foundation.h>
 #import <FxPlug/FxPlugSDK.h>
 #import <FxGrip/FxGripTypes.h>
-#import "FxGripCustomDataClasses.h"
+#import <FxGrip/FxGripCustomDataClasses.h>
 
 @class FxGripTileableEffect;
 

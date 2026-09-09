@@ -15,8 +15,8 @@
 #define FxGripWindow_h
 
 #import <AppKit/AppKit.h>
-#import "FxGripExtension.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

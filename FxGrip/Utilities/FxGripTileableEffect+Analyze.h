@@ -16,9 +16,9 @@
 #define FxGripTileableEffect_Analyze_h
 
 #import <FxPlug/FxPlugSDK.h>
-#import "FxGripTileableEffect.h"
-#import "FxGripFrameData.h"
-#import "FxGripObjectTrackerData.h"
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripFrameData.h>
+#import <FxGrip/FxGripObjectTrackerData.h>
 
 /*!
 	@abstract   The frame-analysis pass and its per-frame storage.

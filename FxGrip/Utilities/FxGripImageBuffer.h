@@ -18,7 +18,7 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <Metal/Metal.h>
-#import "FxGripImageCompression.h"
+#import <FxGrip/FxGripImageCompression.h>
 
 #define kFxGripImageBufferDefaultQuality	(0.75f)
 

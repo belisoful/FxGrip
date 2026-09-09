@@ -18,7 +18,7 @@
 #define NSDictionary_FxGripTileableEffect_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripTypes.h"
+#import <FxGrip/FxGripTypes.h>
 #import <BEFoundation/NSString+BExtension.h>
 
 @protocol FxParameterFactory;

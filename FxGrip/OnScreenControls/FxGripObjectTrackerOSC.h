@@ -14,8 +14,8 @@
 #define FxGripObjectTrackerOSC_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripOnScreenControl.h"
-#import "FxGripOSCPart.h"
+#import <FxGrip/FxGripOnScreenControl.h>
+#import <FxGrip/FxGripOSCPart.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -11,7 +11,7 @@
 #ifndef FxGripToggleParameter_h
 #define FxGripToggleParameter_h
 
-#import "FxGripParameter.h"
+#import <FxGrip/FxGripParameter.h>
 
 /*!
 	@protocol	FxGripToggleParameter

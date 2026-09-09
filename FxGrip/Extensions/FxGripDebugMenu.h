@@ -16,8 +16,8 @@
 #ifndef FxGripDebugMenu_h
 #define FxGripDebugMenu_h
 
-#import "FxGripExtension.h"
-#import "FxGripTileableEffect.h"
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 /*! The registry key under which the effect stores the debug menu extension. */
 extern NSString*	const _Nonnull FxGripDebugMenuExtensionKey;

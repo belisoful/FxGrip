@@ -14,7 +14,7 @@
 #define FxGripRandom_h
 
 #import <Foundation/Foundation.h>
-#import "FxGripDictionary.h"
+#import <FxGrip/FxGripDictionary.h>
 
 /*! The value dictionary key carrying the current integer. */
 #define kFxGripRandomKey_Value		kCustomAPI_IntKey
