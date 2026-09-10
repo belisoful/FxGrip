@@ -18,7 +18,7 @@
 #import "FxGrip_ARC.h"
 
 /*!
-	@abstract	The shipped FxGripSpaceBackend: a Metal SCNRenderer driving a scene into a tile texture.
+	@abstract	The shipped FxGripSceneKitBackend: a Metal SCNRenderer driving a scene into a tile texture.
 	@discussion	Introduced in FxGrip 0.1.0. The renderer pool and command queue are keyed by Metal device.
 */
 @implementation FxGripSceneKitMetalBackend

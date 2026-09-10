@@ -35,7 +35,7 @@ static NSString * const FxGripSceneKitCoderTemplateKey = @"_fxspace_template";
 */
 @implementation FxGripSceneKitEffect
 {
-	id<FxGripSpaceBackend> _spaceBackend;
+	id<FxGripSceneKitBackend> _spaceBackend;
 	BOOL _userSetBackend;
 
 	// Versioned cache of the archived scene template, so a static template serializes once.
@@ -67,13 +67,13 @@ static NSString * const FxGripSceneKitCoderTemplateKey = @"_fxspace_template";
 
 // The backend is set at setup, not per frame, and the getter never mutates, so concurrent renders
 // read a stable, thread-safe backend.
-- (id<FxGripSpaceBackend>)spaceBackend
+- (id<FxGripSceneKitBackend>)spaceBackend
 {
 	return _spaceBackend;
 }
 
 /*! @abstract The backend used when none is set: a physics backend when physicsBakeEnabled, otherwise the Metal backend. */
-- (id<FxGripSpaceBackend>)defaultSpaceBackend
+- (id<FxGripSceneKitBackend>)defaultSpaceBackend
 {
 	if (self.physicsBakeEnabled) {
 		return [FxGripSceneKitPhysicsBackend backend];
@@ -82,10 +82,10 @@ static NSString * const FxGripSceneKitCoderTemplateKey = @"_fxspace_template";
 }
 
 /*! @abstract Sets the render backend, recording that the plugin set it; nil restores the default backend. */
-- (void)setSpaceBackend:(nullable id<FxGripSpaceBackend>)spaceBackend
+- (void)setSpaceBackend:(nullable id<FxGripSceneKitBackend>)spaceBackend
 {
 	_userSetBackend = (spaceBackend != nil);
-	id<FxGripSpaceBackend> replacement = spaceBackend ?: [self defaultSpaceBackend];
+	id<FxGripSceneKitBackend> replacement = spaceBackend ?: [self defaultSpaceBackend];
 	if (_spaceBackend != replacement) {
 		NARC_RELEASE(_spaceBackend);
 		_spaceBackend = NARC_RETAIN(replacement);
@@ -104,6 +104,22 @@ static NSString * const FxGripSceneKitCoderTemplateKey = @"_fxspace_template";
 		NARC_RELEASE(_spaceBackend);
 		_spaceBackend = NARC_RETAIN([self defaultSpaceBackend]);
 	}
+}
+
+/*!
+	@method		installPhysicsSimulationStore:
+	@abstract	Backs the SceneKit physics backend with the store and switches it to session-cache mode.
+	@discussion	Introduced in FxGrip 0.1.0. Returns NO when the installed backend does not simulate,
+				which leaves the bake inert. */
+- (BOOL)installPhysicsSimulationStore:(id<FxGripPhysicsSimulationStore>)store
+{
+	if (![self.spaceBackend isKindOfClass:FxGripSceneKitPhysicsBackend.class]) {
+		return NO;
+	}
+	FxGripSceneKitPhysicsBackend *backend = (FxGripSceneKitPhysicsBackend *)self.spaceBackend;
+	backend.simulationStore = store;
+	backend.simulationMode = FxGripPhysicsSimulationModeSessionCache;
+	return YES;
 }
 
 /*! @abstract Adds the physics-bake extension to the loaded set when physicsBakeEnabled. */
@@ -182,7 +198,7 @@ static NSString * const FxGripSceneKitCoderTemplateKey = @"_fxspace_template";
 					  atTime:(CMTime)renderTime
 					   error:(NSError * _Nullable *)outError
 {
-	id<FxGripSpaceBackend> backend = self.spaceBackend;
+	id<FxGripSceneKitBackend> backend = self.spaceBackend;
 	if (!backend.isReady) {
 		return [super renderSceneFromCoder:coder sourceTile:sourceTile toTexture:texture atTime:renderTime error:outError];
 	}

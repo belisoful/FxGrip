@@ -11,8 +11,9 @@
 #import <XCTest/XCTest.h>
 #import <SceneKit/SceneKit.h>
 #import <FxGrip/FxGripSceneKitEffect.h>
-#import <FxGrip/FxGripSpaceBackend.h>
+#import <FxGrip/FxGripSceneKitBackend.h>
 #import <FxGrip/FxGripSceneKitPhysicsBackend.h>
+#import <FxGrip/FxGripPhysicsSimulationStore.h>
 #import <FxGrip/FxGripParticleInteraction.h>
 #import <FxGrip/SCNParticleSystem+FxGripInteraction.h>
 #import <FxGrip/SCNScene+FxGripInteraction.h>
@@ -20,7 +21,7 @@
 
 #pragma mark - Stub backend
 
-@interface FxGripSpaceStubBackend : NSObject <FxGripSpaceBackend>
+@interface FxGripSpaceStubBackend : NSObject <FxGripSceneKitBackend>
 @end
 
 @implementation FxGripSpaceStubBackend
@@ -206,6 +207,28 @@
 }
 
 /*! @abstract Enabling physics bake leaves a plugin's own explicitly set backend in place. */
+/*! @abstract The engine-neutral store seam installs on a physics backend and switches it to
+	session-cache mode, which is how FxGripPhysicsBake reaches the engine without naming it. */
+- (void)testInstallingASimulationStoreReachesThePhysicsBackend
+{
+	self.effect.physicsBakeEnabled = YES;
+	FxGripPhysicsMemoryStore *store = [FxGripPhysicsMemoryStore.alloc init];
+
+	XCTAssertTrue([self.effect installPhysicsSimulationStore:store]);
+
+	FxGripSceneKitPhysicsBackend *backend = (FxGripSceneKitPhysicsBackend *)self.effect.spaceBackend;
+	XCTAssertEqualObjects(backend.simulationStore, store);
+	XCTAssertEqual(backend.simulationMode, FxGripPhysicsSimulationModeSessionCache);
+}
+
+/*! @abstract A backend that does not simulate refuses the store, which leaves the bake inert. */
+- (void)testInstallingASimulationStoreRefusesOnAPlainBackend
+{
+	XCTAssertFalse(self.effect.physicsBakeEnabled);
+	FxGripPhysicsMemoryStore *store = [FxGripPhysicsMemoryStore.alloc init];
+	XCTAssertFalse([self.effect installPhysicsSimulationStore:store]);
+}
+
 - (void)testEnablingPhysicsBakeKeepsAUserSetBackend
 {
 	FxGripSpaceStubBackend *stub = [FxGripSpaceStubBackend.alloc init];

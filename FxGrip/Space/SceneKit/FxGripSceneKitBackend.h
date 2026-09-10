@@ -1,17 +1,18 @@
 /*!
-	@file       FxGripSpaceBackend.h
+	@file       FxGripSceneKitBackend.h
 	@copyright  Copyright © 2024 Belisoful All rights reserved.
 	@author     belisoful
-	@date       2026-09-06
-	@header     FxGripSpaceBackend
-	@abstract   The render-engine seam for the 3D Space subsystem.
-	@discussion Introduced in FxGrip 0.1.0. This file declares the protocol a render engine adopts to draw
-	            a SceneKit scene into an FxPlug tile's Metal texture. The seam keeps the engine swappable
-	            and mockable in tests.
+	@date       2026-09-09
+	@header     FxGripSceneKitBackend
+	@abstract   The render-driver seam of the SceneKit engine.
+	@discussion Introduced in FxGrip 0.1.0. This file declares the protocol a render driver adopts to draw
+	            a SceneKit scene into an FxPlug tile's Metal texture. The seam keeps the driver swappable
+	            and mockable in tests. Its RealityKit counterpart is `FxGripRealityKitBackend`, in the
+	            Swift `FxGripRealityKit` framework.
 */
 
-#ifndef FxGripSpaceBackend_h
-#define FxGripSpaceBackend_h
+#ifndef FxGripSceneKitBackend_h
+#define FxGripSceneKitBackend_h
 
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
@@ -20,7 +21,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /*!
-	@protocol   FxGripSpaceBackend
+	@protocol   FxGripSceneKitBackend
 	@abstract   Renders a SceneKit scene into a Metal texture for the 3D Space subsystem.
 	@discussion Introduced in FxGrip 0.1.0. The subsystem builds the scene with SceneKit and hands it,
 				with a point-of-view node, to a backend that draws it into the destination tile's
@@ -31,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 				`atTime` is the render time in seconds, sampled for SceneKit animations and actions.
 				The FxPlug host reports time as a `CMTime`; the effect converts it.
 */
-@protocol FxGripSpaceBackend <NSObject>
+@protocol FxGripSceneKitBackend <NSObject>
 
 /*! YES when the backend can render. */
 @property (nonatomic, readonly) BOOL isReady;
@@ -56,4 +57,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 NS_ASSUME_NONNULL_END
 
-#endif /* FxGripSpaceBackend_h */
+#endif /* FxGripSceneKitBackend_h */

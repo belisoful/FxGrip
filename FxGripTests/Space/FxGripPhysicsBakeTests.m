@@ -5,12 +5,12 @@
 	@date       2026-09-06
 	@header     FxGripPhysicsBakeTests
 	@abstract   Tests for FxGripPhysicsBake, the space-effect extension that owns the physics-bake parameter and frame-data store.
-	@discussion Introduced in FxGrip 0.1.0. The tests confirm the extension exposes the physics-bake parameter id and a frame-data store, and that FxGripSceneKitEffect vends the extension from its factory while reporting its absence until a subclass adds it.
+	@discussion Introduced in FxGrip 0.1.0. The tests confirm the extension exposes the physics-bake parameter id and a frame-data store, and that a space effect vends the extension from its factory while reporting its absence until a subclass adds it. The extension names no render engine, so the tests exercise it through the engine-neutral base.
 */
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripPhysicsBake.h>
-#import <FxGrip/FxGripSceneKitEffect.h>
+#import <FxGrip/FxGripSpaceEffect.h>
 #import <FxGrip/FxGripFrameData.h>
 #import <FxGrip/FxGripTypes.h>
 
@@ -30,7 +30,7 @@
 /*! @abstract A space effect reports no physics bake until -newPhysicsBakeExtension vends an extension carrying the physics-bake parameter id. */
 - (void)testEffectFactoryAndPresenceFlag
 {
-	FxGripSceneKitEffect *effect = [FxGripSceneKitEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxGripSpaceEffect *effect = [FxGripSpaceEffect.alloc initWithAPIManager:(id _Nonnull)nil];
 	XCTAssertFalse(effect.hasPhysicsBake, @"the extension is not loaded until a subclass adds it");
 
 	FxGripPhysicsBake *bake = [effect newPhysicsBakeExtension];

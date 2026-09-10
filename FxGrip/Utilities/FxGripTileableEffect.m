@@ -98,6 +98,12 @@
 //	@required
 //---------------------------------------------------------
 
+/*! @abstract Constructs an effect with no host, which is what a bare `init` means here. */
+- (nullable instancetype)init
+{
+	return [self initWithAPIManager:nil];
+}
+
 /*!
 	@method		initWithAPIManager:
 	@abstract	Creates the effect, reads its plugin identity and properties, and installs the framework observers.
@@ -109,6 +115,7 @@
 				flush, policy, group, and remove notifications, then installs the extensions and
 				posts the init notification. The observer blocks capture self weakly so the
 				notification center does not keep the effect alive. */
+
 - (nullable instancetype)initWithAPIManager:(id<PROAPIAccessing>)apiManager;
 {
     self = [super init];

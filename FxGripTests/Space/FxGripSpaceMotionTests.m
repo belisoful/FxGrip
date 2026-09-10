@@ -148,6 +148,38 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 #pragma mark Guards
 
 /*! @abstract A zero or negative time step yields zero linear and angular velocity for every estimator. */
+/*! @abstract The shortest-arc rotation carries the source direction onto the target direction. */
+- (void)testRotationFromToCarriesOneDirectionOntoTheOther
+{
+	simd_float3 from = simd_make_float3(0.0f, 0.0f, -1.0f);
+	simd_float3 to = simd_normalize(simd_make_float3(1.0f, 1.0f, 0.0f));
+
+	simd_float3 rotated = simd_act(FxGripRotationFromTo(from, to), from);
+
+	XCTAssertEqualWithAccuracy(rotated.x, to.x, 1e-5);
+	XCTAssertEqualWithAccuracy(rotated.y, to.y, 1e-5);
+	XCTAssertEqualWithAccuracy(rotated.z, to.z, 1e-5);
+}
+
+/*! @abstract A parallel pair rotates by nothing, and a degenerate input returns the identity. */
+- (void)testRotationFromToIsIdentityForParallelAndDegenerateInput
+{
+	simd_float3 axis = simd_make_float3(0.0f, 0.0f, -1.0f);
+	XCTAssertEqualWithAccuracy(simd_angle(FxGripRotationFromTo(axis, axis)), 0.0f, 1e-5);
+	XCTAssertEqualWithAccuracy(simd_angle(FxGripRotationFromTo(simd_make_float3(0.0f, 0.0f, 0.0f), axis)), 0.0f, 1e-5);
+}
+
+/*! @abstract An antiparallel pair turns a half circle and still lands on the target direction. */
+- (void)testRotationFromToHandlesTheAntiparallelCase
+{
+	simd_float3 from = simd_make_float3(0.0f, 0.0f, -1.0f);
+	simd_float3 to = simd_make_float3(0.0f, 0.0f, 1.0f);
+
+	simd_float3 rotated = simd_act(FxGripRotationFromTo(from, to), from);
+
+	XCTAssertEqualWithAccuracy(rotated.z, 1.0f, 1e-5);
+}
+
 - (void)testNonPositiveDtYieldsZeroMotion
 {
 	simd_float4x4 a = TransformWithTranslation(0.0f, 0.0f, 0.0f);

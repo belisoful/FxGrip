@@ -18,15 +18,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/*! How the physics backend supplies each frame's simulated state. */
-typedef NS_ENUM(NSInteger, FxGripPhysicsSimulationMode) {
-	/*! Catch-up simulate from the start to the frame on every render. Deterministic, no storage. */
-	FxGripPhysicsSimulationModeRecompute = 0,
-	/*! Memoize each simulated step's body transforms and replay them on a later render of the same
-		or an earlier step, so the simulation runs once per step for the session. */
-	FxGripPhysicsSimulationModeSessionCache = 1,
-};
-
 /*!
 	@class      FxGripSceneKitPhysicsBackend
 	@abstract   An `FxGripSceneKitMetalBackend` that advances SceneKit physics deterministically by

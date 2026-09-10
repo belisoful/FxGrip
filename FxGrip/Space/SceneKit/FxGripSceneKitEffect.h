@@ -17,7 +17,7 @@
 
 #import <SceneKit/SceneKit.h>
 #import <FxGrip/FxGripSpaceEffect.h>
-#import <FxGrip/FxGripSpaceBackend.h>
+#import <FxGrip/FxGripSceneKitBackend.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -61,11 +61,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*! The engine that renders the scene into the tile. Defaults to `defaultSpaceBackend`; setting nil
 	restores that default. The backend is shared across concurrent renders and is thread-safe. */
-@property (nonatomic, strong, null_resettable) id<FxGripSpaceBackend> spaceBackend;
+@property (nonatomic, strong, null_resettable) id<FxGripSceneKitBackend> spaceBackend;
 
 /*! The backend used when none is set. Defaults to an `FxGripSceneKitMetalBackend`. A subclass
 	overrides to change the default engine. */
-- (id<FxGripSpaceBackend>)defaultSpaceBackend;
+- (id<FxGripSceneKitBackend>)defaultSpaceBackend;
 
 /*!
 	@property   physicsBakeEnabled

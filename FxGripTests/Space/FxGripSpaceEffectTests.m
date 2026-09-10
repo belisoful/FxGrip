@@ -14,7 +14,9 @@
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripSpaceEffect.h>
 #import <FxGrip/FxGripParticleInteraction.h>
+#import <FxGrip/FxGripPhysicsSimulationStore.h>
 #import <FxGrip/FxGripErrors.h>
+#import <FxGrip/NSCoder+FxPlug.h>
 
 #pragma mark - Hook subclass
 
@@ -153,7 +155,36 @@
 
 	XCTAssertFalse([self.effect decodeCameraTransform:&transform fromCoder:decoder]);
 	XCTAssertFalse([self.effect decodeLayerTransform:&transform fromCoder:decoder]);
+	XCTAssertFalse([self.effect decodeProjectionMatrix:&transform fromCoder:decoder]);
 	XCTAssertEqual(transform.columns[3].x, 5.0f, @"an absent matrix leaves the output unchanged");
+}
+
+/*! @abstract The projection decoder returns the host matrix transposed into the simd column-vector
+	convention, which is what an engine installs on its camera. */
+- (void)testProjectionMatrixDecodesFromHostRowMajorIntoColumns
+{
+	NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+	// Row-major, the layout the host reports and Matrix44Data stores.
+	Matrix44Data stored = {
+		{  1.0,  2.0,  3.0,  4.0 },
+		{  5.0,  6.0,  7.0,  8.0 },
+		{  9.0, 10.0, 11.0, 12.0 },
+		{ 13.0, 14.0, 15.0, 16.0 }
+	};
+	[archiver encodeMatrix44Data:&stored
+						  forKey:[FxGrip3DCoderCurrentTimeKey stringByAppendingString:FxGrip3DCoderProjectionMatrixKey]];
+	[archiver finishEncoding];
+	NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:archiver.encodedData error:nil];
+	decoder.requiresSecureCoding = NO;
+
+	simd_float4x4 projection = matrix_identity_float4x4;
+	XCTAssertTrue([self.effect decodeProjectionMatrix:&projection fromCoder:decoder]);
+
+	// Row 0 of the host matrix becomes column 0 in simd.
+	XCTAssertEqual(projection.columns[0].x, 1.0f);
+	XCTAssertEqual(projection.columns[0].y, 2.0f);
+	XCTAssertEqual(projection.columns[3].w, 16.0f);
+	XCTAssertEqual(projection.columns[1].x, 5.0f);
 }
 
 /*! @abstract Without the view-matrix samples the camera motion is zero. */
@@ -163,6 +194,14 @@
 	FxGripCameraMotion motion = [self.effect cameraMotionFromCoder:decoder];
 	XCTAssertEqual(simd_length(motion.linearVelocity), 0.0f);
 	XCTAssertEqual(simd_length(motion.angularVelocity), 0.0f);
+}
+
+/*! @abstract The engine-neutral store seam refuses on the base, which owns no render engine, so a
+	physics bake loaded onto a bare space effect stays inert. */
+- (void)testInstallingASimulationStoreRefusesOnTheBase
+{
+	FxGripPhysicsMemoryStore *store = [FxGripPhysicsMemoryStore.alloc init];
+	XCTAssertFalse([self.effect installPhysicsSimulationStore:store]);
 }
 
 /*! @abstract The space error carries the space-render code and the reason. */

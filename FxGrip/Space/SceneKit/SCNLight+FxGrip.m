@@ -11,6 +11,7 @@
 */
 
 #import "SCNLight+FxGrip.h"
+#import <FxGrip/FxGripSpaceMotion.h>
 #import <simd/simd.h>
 
 /*! Maps an FxLightType to the matching SCNLightType, defaulting to omni. */
@@ -23,34 +24,6 @@ static SCNLightType FxGripSCNLightType(FxLightType type)
 		case kFxLightType_Spot:        return SCNLightTypeSpot;
 		default:                       return SCNLightTypeOmni;
 	}
-}
-
-// A rotation carrying `from` onto `to`. Both are normalized; antiparallel inputs pick an arbitrary
-// perpendicular axis, and (near-)parallel inputs return the identity.
-static simd_quatf FxGripRotationFromTo(simd_float3 from, simd_float3 to)
-{
-	simd_quatf identity = simd_quaternion(0.0f, simd_make_float3(0.0f, 1.0f, 0.0f));
-
-	if (simd_length(from) < 1e-6f || simd_length(to) < 1e-6f) {
-		return identity;
-	}
-
-	simd_float3 f = simd_normalize(from);
-	simd_float3 t = simd_normalize(to);
-	float d = simd_dot(f, t);
-
-	if (d >= 1.0f - 1e-6f) {
-		return identity;
-	}
-	if (d <= -1.0f + 1e-6f) {
-		simd_float3 axis = simd_cross(simd_make_float3(1.0f, 0.0f, 0.0f), f);
-		if (simd_length(axis) < 1e-6f) {
-			axis = simd_cross(simd_make_float3(0.0f, 1.0f, 0.0f), f);
-		}
-		return simd_quaternion((float)M_PI, simd_normalize(axis));
-	}
-
-	return simd_quaternion(acosf(d), simd_normalize(simd_cross(f, t)));
 }
 
 /*!

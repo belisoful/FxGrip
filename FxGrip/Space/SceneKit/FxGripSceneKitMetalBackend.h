@@ -5,7 +5,7 @@
 	@date       2026-09-06
 	@header     FxGripSceneKitMetalBackend
 	@abstract   The shipped 3D Space backend that draws a SceneKit scene into a Metal tile texture.
-	@discussion Introduced in FxGrip 0.1.0. This file declares the FxGripSpaceBackend implementation built
+	@discussion Introduced in FxGrip 0.1.0. This file declares the FxGripSceneKitBackend implementation built
 	            on a pooled Metal SCNRenderer, and the subclass hook a stateful backend overrides to
 	            advance a simulation before the draw.
 */
@@ -15,13 +15,13 @@
 
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import <FxGrip/FxGripSpaceBackend.h>
+#import <FxGrip/FxGripSceneKitBackend.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 /*!
 	@class      FxGripSceneKitMetalBackend
-	@abstract   The shipped `FxGripSpaceBackend`: a Metal `SCNRenderer` driving a scene into a tile
+	@abstract   The shipped `FxGripSceneKitBackend`: a Metal `SCNRenderer` driving a scene into a tile
 				texture.
 	@discussion Introduced in FxGrip 0.1.0. Holds one `SCNRenderer` per Metal device, builds a render
 				pass whose color attachment is the destination texture and whose depth attachment
@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 				obtained from `FxGripMTLDeviceCache`, matching the device that owns the destination
 				texture.
 */
-@interface FxGripSceneKitMetalBackend : NSObject <FxGripSpaceBackend>
+@interface FxGripSceneKitMetalBackend : NSObject <FxGripSceneKitBackend>
 
 /*! A new backend. */
 + (instancetype)backend;

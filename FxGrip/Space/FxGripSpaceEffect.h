@@ -23,6 +23,7 @@
 #import <FxGrip/FxGripTileableEffect.h>
 #import <FxGrip/FxGripSpaceMotion.h>
 #import <FxGrip/FxGripParticleInteraction.h>
+#import <FxGrip/FxGripPhysicsSimulationStore.h>
 
 @class FxImageTile;
 
@@ -119,6 +120,21 @@ NS_ASSUME_NONNULL_BEGIN
 							atTime:(CMTime)renderTime
 							 error:(NSError * _Nullable *)error;
 
+#pragma mark Deterministic simulation
+
+/*!
+	@method     installPhysicsSimulationStore:
+	@abstract   An engine hook that backs the render engine's deterministic simulation with a store.
+	@discussion Introduced in FxGrip 0.1.0. The base returns NO, because it owns no render engine. An
+				engine subclass whose backend simulates physics overrides it, installs `store` on that
+				backend, switches the backend to session-cache mode, and returns YES.
+
+				`FxGripPhysicsBake` calls this when it loads, so the simulation fills lazily as frames
+				render and persists with the document. Returning NO leaves the bake inert, which is
+				what happens when the plugin installed a backend that does not simulate.
+*/
+- (BOOL)installPhysicsSimulationStore:(id<FxGripPhysicsSimulationStore>)store;
+
 #pragma mark Render seam
 
 /*!
@@ -156,6 +172,16 @@ NS_ASSUME_NONNULL_BEGIN
 				transform.
 */
 - (BOOL)decodeLayerTransform:(simd_float4x4 *)transform fromCoder:(NSCoder *)coder;
+
+/*!
+	@method     decodeProjectionMatrix:fromCoder:
+	@abstract   The host camera's projection matrix, in the Metal clip convention.
+	@discussion Returns NO and leaves `matrix` unchanged when the coder holds no projection matrix.
+				The capture pass stores what `Fx3DAPI_v5` reports through `metalProjectionMatrixAtTime:`,
+				so the depth range is [0, 1] and the matrix suits a Metal or RealityKit camera directly.
+				A SceneKit camera expects [-1, 1] and builds its projection from the frustum instead.
+*/
+- (BOOL)decodeProjectionMatrix:(simd_float4x4 *)matrix fromCoder:(NSCoder *)coder;
 
 /*!
 	@method     cameraMotionFromCoder:

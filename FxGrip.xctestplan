@@ -1,29 +1,33 @@
 {
-  "configurations": [
+  "configurations" : [
     {
-      "id": "0F1A6A17-0FD4-43EA-AFF5-4214F39AC0C6",
-      "name": "Test Scheme Action",
-      "options": {}
+      "id" : "0F1A6A17-0FD4-43EA-AFF5-4214F39AC0C6",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
     }
   ],
-  "defaultOptions": {},
-  "testTargets": [
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
     {
-      "parallelizable": true,
-      "target": {
-        "containerPath": "container:FxGrip.xcodeproj",
-        "identifier": "CEA524D12D221BEF00302F8F",
-        "name": "FxGripTests"
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FxGrip.xcodeproj",
+        "identifier" : "CEA524D12D221BEF00302F8F",
+        "name" : "FxGripTests"
       }
     },
     {
-      "parallelizable": true,
-      "target": {
-        "containerPath": "container:FxGrip.xcodeproj",
-        "identifier": "B1CDD8D4C0992849EE0E74DD",
-        "name": "FxGripRealityKitTests"
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FxGrip.xcodeproj",
+        "identifier" : "B1CDD8D4C0992849EE0E74DD",
+        "name" : "FxGripRealityKitTests"
       }
     }
   ],
-  "version": 1
+  "version" : 1
 }

@@ -264,6 +264,19 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 	NSMutableDictionary<id, Class> *__typeToClassMap;
 }
 
+/*!
+	@method		initWithAPIManager:
+	@abstract	The designated initializer, which the FxPlug host calls with its API manager.
+	@discussion	Introduced in FxGrip 0.1.0. The host owns the effect's lifetime and constructs it
+				through this initializer. Declaring it designated is what lets a subclass in another
+				language inherit it correctly: a Swift subclass that adds stored properties has its
+				property defaults applied only when the initializer it inherits is designated.
+*/
+- (nullable instancetype)initWithAPIManager:(nullable id<PROAPIAccessing>)apiManager NS_DESIGNATED_INITIALIZER;
+
+/*! Constructs an effect with no host, by delegating to `initWithAPIManager:` with a nil manager. */
+- (nullable instancetype)init;
+
 /*! The host-API accessor the effect uses to reach FxPlug host services. */
 @property (readonly, nonnull) id<FxGripAPIAccessing> apiManager;
 

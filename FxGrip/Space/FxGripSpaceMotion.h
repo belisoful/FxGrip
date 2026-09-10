@@ -52,6 +52,12 @@ simd_quatf FxGripTransformOrientation(simd_float4x4 transform);
 	scaled by radians per second. Zero when `seconds` is not positive or the rotation is negligible. */
 simd_float3 FxGripAngularVelocity(simd_quatf from, simd_quatf to, float seconds);
 
+/*! The shortest-arc rotation carrying `from` onto `to`. Both are normalized first. A zero-length
+	input or a (near-)parallel pair returns the identity; an antiparallel pair turns a half circle
+	about an arbitrary perpendicular axis. A render engine uses it to aim a light or an object along
+	a direction the host reports. */
+simd_quatf FxGripRotationFromTo(simd_float3 from, simd_float3 to);
+
 /*! Central-difference motion from two samples `dt` seconds on each side of the center: `previous` at
 	t-dt and `next` at t+dt, so the pair spans 2·dt. Zero motion when `dt` is not positive. */
 FxGripCameraMotion FxGripCameraMotionCentral(simd_float4x4 previous, simd_float4x4 next, float dt);

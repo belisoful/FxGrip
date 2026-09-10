@@ -14,6 +14,7 @@
 
 #import "FxGripParticleSystem.h"
 #import "SCNParticleSystem+FxGripInteraction.h"
+#import "FxGripParticleRand.h"
 #import <simd/simd.h>
 #import <objc/runtime.h>
 
@@ -26,43 +27,9 @@ static NSString * const FxGripParticleSpreadAngleKey = @"FxGripParticleSpreadAng
 static NSString * const FxGripParticleColorJitterKey = @"FxGripParticleColorJitter";
 static NSString * const FxGripParticleInteractionKey = @"FxGripParticleInteraction";
 
-// One reproducible value in [-1, 1] from a particle index, the seed, and a channel, so each varied
-// property draws an independent stream.
-static float FxGripParticleRand(uint32_t index, uint32_t seed, uint32_t channel)
-{
-	uint32_t h = index * 747796405u + seed * 2891336453u + (channel + 1u) * 2246822519u;
-	h ^= h >> 16;
-	h *= 2246822519u;
-	h ^= h >> 13;
-	h *= 3266489917u;
-	h ^= h >> 16;
-	return ((float)h / 2147483647.5f) - 1.0f;
-}
-
-static simd_float3 FxGripParticleRand3(uint32_t index, uint32_t seed, uint32_t channel)
-{
-	return simd_make_float3(FxGripParticleRand(index, seed, channel),
-							FxGripParticleRand(index, seed, channel + 1),
-							FxGripParticleRand(index, seed, channel + 2));
-}
-
 static float FxGripClamp01(float value)
 {
 	return value < 0.0f ? 0.0f : (value > 1.0f ? 1.0f : value);
-}
-
-// The spreading angle is a full-cone angle, so its half-angle tangent scales the birth velocity. The
-// tangent diverges as the angle approaches pi, so the effective angle is capped short of the
-// asymptote and a pi spread stays a finite velocity.
-static const double FxGripParticleMaxSpreadAngle = 0.99 * M_PI;
-
-static float FxGripParticleSpreadTangent(CGFloat spreadAngle)
-{
-	if (spreadAngle <= 0.0) {
-		return 0.0f;
-	}
-	double angle = MIN((double)spreadAngle, FxGripParticleMaxSpreadAngle);
-	return tanf((float)(angle * 0.5));
 }
 
 /*!

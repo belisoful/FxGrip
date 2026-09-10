@@ -105,6 +105,11 @@ Objective-C, so it is not a port of the SceneKit engine and does not mirror its 
   unchanged.
 - **Module map** — the target passes `Modules/FxPlug/module.modulemap` to the clang importer through
   `OTHER_SWIFT_FLAGS`. A new Swift target that imports FxGrip needs the same flag.
+- **Designated initializer** — `FxGripTileableEffect` declares `initWithAPIManager:` with
+  `NS_DESIGNATED_INITIALIZER`. Keep it that way. Swift applies a subclass's stored-property defaults
+  only when the initializer it inherits is declared on the class; without the declaration every
+  stored property in a Swift subclass reads as zeroed memory, and an object-typed one crashes the
+  first code that touches it. `FxGripRealityKitEffectTests` covers this.
 
 ## Code Comments
 
@@ -148,7 +153,7 @@ Prefer subject–verb–object declaratives, and bullet lists of `condition → 
 4. Add the public header to the umbrella `FxGrip.h`. Every `Public` header must appear there, or the module verifier fails.
 5. Inside a framework header, import with angle brackets (`#import <FxGrip/FxGripTypes.h>`), never quotes. Quoted includes fail the module verifier.
 
-Swift files go in `FxGripRealityKit/`, tests in `FxGripRealityKitTests/` (both synchronized). They have no umbrella header and no public-header marking.
+Swift files go in `FxGripRealityKit/`, tests in `FxGripRealityKitTests/` (both synchronized). They have no umbrella header and no public-header marking. A `.metal` file in `FxGripRealityKit/` compiles into the framework's `default.metallib`, loaded with `makeDefaultLibrary(bundle:)`.
 
 ## Key Dependencies
 

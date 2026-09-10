@@ -129,15 +129,23 @@ per step. Adding the ``FxGripPhysicsBake`` extension swaps the session store for
 records are a transform per dynamic body per frame and stay inline with no media-folder spill. A
 body is cached by its node name, so name any body to bake.
 
+The store and the mode are engine-neutral. ``FxGripPhysicsSimulationStore``,
+``FxGripPhysicsMemoryStore``, ``FxGripPhysicsFrameDataStore``, and the simulation mode live beside
+the base and serve either engine. ``FxGripPhysicsBake`` names no engine: it hands its store to
+`installPhysicsSimulationStore:` on ``FxGripSpaceEffect``, which each engine implements for its own
+backend. The base refuses, and an engine whose backend does not simulate refuses too, which leaves
+the bake inert rather than failing.
+
 Particle systems reproduce under the same catch-up. `SCNParticleSystem` has no random seed, so a
 stock system varies its particles differently on every re-simulation. ``FxGripParticleSystem`` is a
 drop-in subclass that holds SceneKit's own variation at zero and reintroduces velocity, size, life
 span, color, angle, and spreading-angle variation from a `seed` keyed by each particle's birth
-index. The physics backend resets every system before the catch-up, so a frame re-emits the same
-particles from the start. The seed and variation archive with the system, so a system inside a
-scene template stays deterministic when decoded. `initWithParticleSystem:` converts an authored or
-loaded system in place. Particles respond to `SCNPhysicsField` and colliders as usual; SceneKit
-computes no particle-to-particle forces.
+index through `FxGripParticleRand`, the engine-neutral variation function the RealityKit engine's
+particle system shares. The physics backend resets every system before the catch-up, so a frame
+re-emits the same particles from the start. The seed and variation archive with the system, so a
+system inside a scene template stays deterministic when decoded. `initWithParticleSystem:` converts
+an authored or loaded system in place. Particles respond to `SCNPhysicsField` and colliders as
+usual; SceneKit computes no particle-to-particle forces.
 
 ### Inter-particle forces
 
@@ -284,18 +292,23 @@ Swift reaches Objective-C through clang modules, so FxGrip defines a module and 
 carries `Modules/FxPlug/module.modulemap` for Apple's FxPlug SDK, which ships none. A Swift target
 that imports FxGrip passes that file to the clang importer.
 
-The `FxGripRealityKit` documentation covers the engine itself.
+The engine inherits the whole engine-neutral base, including the inter-particle force
+configuration, which it applies to particle systems it simulates itself, because RealityKit's own
+particle emitter has no seed and exposes no per-particle state. Camera motion blur and depth of
+field, which SceneKit provides on `SCNCamera`, are a Metal pass over the drawn tile in that engine,
+driven by the same camera velocity and autofocus distance. The `FxGripRealityKit` documentation
+covers the engine itself.
 
 ### The backend
 
-``FxGripSpaceBackend`` is the SceneKit render-driver contract: a readiness flag, an identifier, and
+``FxGripSceneKitBackend`` is the SceneKit render-driver contract: a readiness flag, an identifier, and
 one method that renders an `SCNScene` through a point of view into an `id<MTLTexture>`. The
 ``FxGripSceneKitEffect`` owns the backend; the engine-neutral base has no backend of its own.
 ``FxGripSceneKitMetalBackend`` is the shipped driver. It pools a Metal `SCNRenderer` for each
 device, builds a render pass whose color attachment is the tile texture and whose depth attachment
 comes from the device cache, and draws through a pooled command queue.
 
-A plugin that needs a render pipeline beyond SceneKit implements ``FxGripSpaceBackend`` and installs
+A plugin that needs a render pipeline beyond SceneKit implements ``FxGripSceneKitBackend`` and installs
 it through `spaceBackend`. Customization inside SceneKit uses `SCNTechnique` on the scene and
 `SCNProgram` or shader modifiers on a material, set on the scene objects in the apply seam.
 
@@ -312,7 +325,7 @@ SceneKit light node.
 
 ### The render driver
 
-- ``FxGripSpaceBackend``
+- ``FxGripSceneKitBackend``
 - ``FxGripSceneKitMetalBackend``
 
 ### Deterministic simulation
@@ -320,6 +333,9 @@ SceneKit light node.
 - ``FxGripSceneKitPhysicsBackend``
 - ``FxGripPhysicsBake``
 - ``FxGripParticleSystem``
+- ``FxGripPhysicsSimulationStore``
+- ``FxGripPhysicsMemoryStore``
+- ``FxGripPhysicsFrameDataStore``
 
 ### Inter-particle forces
 

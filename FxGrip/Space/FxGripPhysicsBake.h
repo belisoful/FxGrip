@@ -24,11 +24,16 @@
 				document.
 	@discussion Introduced in FxGrip 0.1.0. Registers the hidden Physics Bake custom parameter
 				(`kFxParameterId_PhysicsBake`) whose value is an `FxGripFrameData`, loads it from the
-				document when the effect is added, and installs an `FxGripFrameData`-backed store on
-				the effect's `FxGripSceneKitPhysicsBackend` in session-cache mode. The catch-up
-				simulation then fills the store lazily as frames render, and the bake survives a
-				reopen. The records are small (a body transform per dynamic body per frame), so they
-				stay inline in the parameter with no media-folder spill.
+				document when the effect is added, and hands an `FxGripFrameData`-backed store to the
+				effect's `installPhysicsSimulationStore:`. The catch-up simulation then fills the
+				store lazily as frames render, and the bake survives a reopen. The records are small
+				(a body transform per dynamic body per frame), so they stay inline in the parameter
+				with no media-folder spill.
+
+				The extension names no render engine. Each 3D Space engine implements
+				`installPhysicsSimulationStore:` for its own backend, so the same bake serves the
+				SceneKit engine and the RealityKit one. An engine whose backend does not simulate
+				refuses the store, which leaves the bake inert.
 
 				A space effect opts in by adding this extension in `loadExtensions`
 				(`newPhysicsBakeExtension`). Without it, a physics backend uses its default in-memory

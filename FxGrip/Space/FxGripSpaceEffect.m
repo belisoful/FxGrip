@@ -166,6 +166,12 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 								error:outError];
 }
 
+/*! @abstract The base owns no render engine, so no store is installed. */
+- (BOOL)installPhysicsSimulationStore:(id<FxGripPhysicsSimulationStore>)store
+{
+	return NO;
+}
+
 /*! @abstract The passthrough render: the source copied unchanged, or success with no source. */
 - (BOOL)renderSceneFromCoder:(NSCoder *)coder
 				  sourceTile:(nullable FxImageTile *)sourceTile
@@ -199,6 +205,16 @@ static simd_float4x4 FxGripMatrixFromCoderData(Matrix44Data *data)
 		return NO;
 	}
 	*transform = FxGripMatrixFromCoderData(modelData);
+	return YES;
+}
+
+- (BOOL)decodeProjectionMatrix:(simd_float4x4 *)matrix fromCoder:(NSCoder *)coder
+{
+	Matrix44Data *projectionData = [coder decodeFx3DProjectionMatrixData];
+	if (projectionData == NULL) {
+		return NO;
+	}
+	*matrix = FxGripMatrixFromCoderData(projectionData);
 	return YES;
 }
 

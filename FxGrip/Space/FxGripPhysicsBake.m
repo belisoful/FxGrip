@@ -12,8 +12,7 @@
 */
 
 #import "FxGripPhysicsBake.h"
-#import "FxGripSceneKitEffect.h"
-#import "FxGripSceneKitPhysicsBackend.h"
+#import "FxGripSpaceEffect.h"
 #import "FxGripPhysicsSimulationStore.h"
 #import "FxGripTileableEffect+Extensions.h"
 #import "FxGripTileableEffect+Notifications.h"
@@ -108,21 +107,18 @@
 
 /*!
 	@method		installStoreOnPhysicsBackend
-	@abstract	Backs the effect's physics backend with an FxGripFrameData store in session-cache mode.
-	@discussion	Introduced in FxGrip 0.1.0. The install is a no-op unless the effect is an FxGripSceneKitEffect
-				whose space backend is an FxGripSceneKitPhysicsBackend. */
+	@abstract	Backs the effect's render engine with an FxGripFrameData store.
+	@discussion	Introduced in FxGrip 0.1.0. The extension names no render engine. It hands the store to
+				`installPhysicsSimulationStore:`, which every 3D Space engine implements for its own
+				backend, and an engine whose backend does not simulate leaves the bake inert. */
 - (void)installStoreOnPhysicsBackend
 {
-	if (![self.effect isKindOfClass:FxGripSceneKitEffect.class]) {
+	if (![self.effect isKindOfClass:FxGripSpaceEffect.class]) {
 		return;
 	}
-	FxGripSceneKitEffect *effect = (FxGripSceneKitEffect *)self.effect;
-	if (![effect.spaceBackend isKindOfClass:FxGripSceneKitPhysicsBackend.class]) {
-		return;
-	}
-	FxGripSceneKitPhysicsBackend *backend = (FxGripSceneKitPhysicsBackend *)effect.spaceBackend;
-	backend.simulationStore = [[FxGripPhysicsFrameDataStore alloc] initWithFrameData:self.frameData];
-	backend.simulationMode = FxGripPhysicsSimulationModeSessionCache;
+	FxGripSpaceEffect *effect = (FxGripSpaceEffect *)self.effect;
+	FxGripPhysicsFrameDataStore *store = [[FxGripPhysicsFrameDataStore alloc] initWithFrameData:self.frameData];
+	[effect installPhysicsSimulationStore:store];
 }
 
 @end
