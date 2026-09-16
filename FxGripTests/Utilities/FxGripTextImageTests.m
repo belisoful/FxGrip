@@ -41,7 +41,8 @@ typedef void *(*FxGripTextImageTestCreateDevice)(void);
 /*! @abstract A nil device returns no texture. */
 - (void)testNilDeviceMakesNoTexture
 {
-	XCTAssertNil([FxGripTextImage textureForText:@"Frame 01" fontSize:24.0 color:simd_make_float4(1, 1, 1, 1) device:nil]);
+	id<MTLDevice> noDevice = nil;
+	XCTAssertNil([FxGripTextImage textureForText:@"Frame 01" fontSize:24.0 color:simd_make_float4(1, 1, 1, 1) device:noDevice]);
 }
 
 /*! @abstract Rasterized text produces an sRGB RGBA8 texture wider and taller than eight pixels. */

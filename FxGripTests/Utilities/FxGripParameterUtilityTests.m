@@ -641,4 +641,328 @@ static NSDictionary *FxGripTPRenamePreset(NSString *name)
 	XCTAssertNoThrow([FxGripParameterUtility applyTargetPresetDefaults:nil pluginPresets:nil]);
 }
 
+
+#pragma mark - Type Maps
+
+/*! @abstract typeParameters is the inverse of parameterTypes. */
+- (void)testTypeParametersInvertsTheTypeMap
+{
+	NSDictionary<NSString *, NSNumber *> *types = FxGripParameterUtility.parameterTypes;
+	NSDictionary<NSNumber *, NSString *> *inverse = FxGripParameterUtility.typeParameters;
+
+	XCTAssertEqual(inverse.count, types.count);
+	for (NSString *name in types) {
+		XCTAssertEqualObjects(inverse[types[name]], name);
+	}
+	XCTAssertTrue(inverse == FxGripParameterUtility.typeParameters);
+}
+
+/*! @abstract parameterTypeString: names a known type and is nil for an unknown one. */
+- (void)testParameterTypeStringNamesKnownTypesOnly
+{
+	XCTAssertEqualObjects([FxGripParameterUtility parameterTypeString:FxParameterType_Float], kFxParameterType_Float);
+	XCTAssertEqualObjects([FxGripParameterUtility parameterTypeString:FxParameterType_Section], kFxParameterType_Section);
+	XCTAssertNil([FxGripParameterUtility parameterTypeString:FxParameterType_None]);
+}
+
+/*! @abstract parameterTypeFromString: maps a name in any case, decodes an unknown four-character name as its FourCC, and is None otherwise. */
+- (void)testParameterTypeFromStringMapsNamesAndFourCharacterCodes
+{
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:@"FLOAT"], FxParameterType_Float);
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:@"zzzz"], (FxParameterType)'zzzz');
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:@"unknown"], FxParameterType_None);
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:nil], FxParameterType_None);
+}
+
+#pragma mark - Flag Conversion
+
+/*! @abstract convertToFlag: names a single-bit flag and is nil for zero or a multi-bit mask. */
+- (void)testConvertToFlagNamesASingleBitOnly
+{
+	XCTAssertEqualObjects([FxGripParameterUtility convertToFlag:kFxParameterFlag_HIDDEN], kParameterFlagString_HIDDEN);
+	XCTAssertNil([FxGripParameterUtility convertToFlag:kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED]);
+	XCTAssertNil([FxGripParameterUtility convertToFlag:0]);
+}
+
+/*! @abstract convertToFlags: names every bit set in a mask. */
+- (void)testConvertToFlagsNamesEveryBit
+{
+	NSArray *names = [FxGripParameterUtility convertToFlags:kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED | kFxParameterFlag_DONT_SAVE];
+
+	XCTAssertEqual(names.count, 3u);
+	XCTAssertTrue([names containsObject:kParameterFlagString_HIDDEN]);
+	XCTAssertTrue([names containsObject:kParameterFlagString_DISABLED]);
+	XCTAssertTrue([names containsObject:kParameterFlagString_DONT_SAVE]);
+	XCTAssertEqualObjects([FxGripParameterUtility convertToFlags:0], @[]);
+}
+
+/*! @abstract convertFlag: maps a flag name to its bit and an unknown or nil name to the default. */
+- (void)testConvertFlagMapsNamesToBits
+{
+	XCTAssertEqual([FxGripParameterUtility convertFlag:kParameterFlagString_DISABLED], (FxParameterFlags)kFxParameterFlag_DISABLED);
+	XCTAssertEqual([FxGripParameterUtility convertFlag:@"no such flag"], (FxParameterFlags)kFxParameterFlag_DEFAULT);
+	XCTAssertEqual([FxGripParameterUtility convertFlag:nil], (FxParameterFlags)kFxParameterFlag_DEFAULT);
+}
+
+/*! @abstract convertFlags: folds a divided string, an array, and a dictionary's values into one mask. */
+- (void)testConvertFlagsFoldsStringsArraysAndDictionaryValues
+{
+	FxParameterFlags expected = kFxParameterFlag_HIDDEN | kFxParameterFlag_DISABLED;
+
+	XCTAssertEqual([FxGripParameterUtility convertFlags:@"hidden, disabled"], expected);
+	XCTAssertEqual(([FxGripParameterUtility convertFlags:@[kParameterFlagString_HIDDEN, kParameterFlagString_DISABLED]]), expected);
+	XCTAssertEqual(([FxGripParameterUtility convertFlags:@{ @"a": kParameterFlagString_HIDDEN, @"b": kParameterFlagString_DISABLED }]), expected);
+}
+
+/*! @abstract convertFlags: is the default for nil, an unsupported type, and unknown names. */
+- (void)testConvertFlagsIsTheDefaultForUnusableInput
+{
+	XCTAssertEqual([FxGripParameterUtility convertFlags:nil], (FxParameterFlags)kFxParameterFlag_DEFAULT);
+	XCTAssertEqual([FxGripParameterUtility convertFlags:@42], (FxParameterFlags)kFxParameterFlag_DEFAULT);
+	XCTAssertEqual([FxGripParameterUtility convertFlags:@"nothing known"], (FxParameterFlags)kFxParameterFlag_DEFAULT);
+}
+
+#pragma mark - Flattening
+
+/*! @abstract Flattening a nil list does not throw. */
+- (void)testFlattenNilListIsANoOp
+{
+	XCTAssertNoThrow([FxGripParameterUtility flattenDictionaryParameters:nil]);
+}
+
+/*! @abstract A group's array of children unfolds after the group, each stamped with the group as parent. */
+- (void)testFlattenUnfoldsAGroupsChildrenAfterTheGroup
+{
+	NSMutableDictionary *childA = FxGripTPConfig(11, @(FxParameterType_Float));
+	NSMutableDictionary *childB = FxGripTPConfig(12, @(FxParameterType_Float));
+	childB[kFxParameterProperty_ParentId] = @99;
+	NSMutableDictionary *group = FxGripTPConfig(1, @(FxParameterType_Group));
+	group[kFxParameterProperty_GroupParameters] = @[childA, childB];
+	NSMutableDictionary *trailing = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[group, trailing]);
+
+	[FxGripParameterUtility flattenDictionaryParameters:parameters];
+
+	XCTAssertEqualObjects(parameters, (@[group, childA, childB, trailing]));
+	XCTAssertNil(group[kFxParameterProperty_GroupParameters]);
+	XCTAssertEqualObjects(childA[kFxParameterProperty_ParentId], @1);
+	XCTAssertEqualObjects(childB[kFxParameterProperty_ParentId], @99);
+}
+
+/*! @abstract A group's dictionary of children unfolds its values. */
+- (void)testFlattenUnfoldsAGroupsDictionaryOfChildren
+{
+	NSMutableDictionary *child = FxGripTPConfig(11, @(FxParameterType_Float));
+	NSMutableDictionary *group = FxGripTPConfig(1, kFxParameterType_Group);
+	group[kFxParameterProperty_GroupParameters] = @{ @"only": child };
+	NSMutableArray *parameters = FxGripTPList(@[group]);
+
+	[FxGripParameterUtility flattenDictionaryParameters:parameters];
+
+	XCTAssertEqualObjects(parameters, (@[group, child]));
+	XCTAssertEqualObjects(child[kFxParameterProperty_ParentId], @1);
+}
+
+/*! @abstract Nested groups flatten fully, with each child stamped by its immediate group. */
+- (void)testFlattenUnfoldsNestedGroups
+{
+	NSMutableDictionary *leaf = FxGripTPConfig(21, @(FxParameterType_Float));
+	NSMutableDictionary *inner = FxGripTPConfig(2, @(FxParameterType_Group));
+	inner[kFxParameterProperty_GroupParameters] = @[leaf];
+	NSMutableDictionary *outer = FxGripTPConfig(1, @(FxParameterType_Group));
+	outer[kFxParameterProperty_GroupParameters] = @[inner];
+	NSMutableArray *parameters = FxGripTPList(@[outer]);
+
+	[FxGripParameterUtility flattenDictionaryParameters:parameters];
+
+	XCTAssertEqualObjects(parameters, (@[outer, inner, leaf]));
+	XCTAssertEqualObjects(inner[kFxParameterProperty_ParentId], @1);
+	XCTAssertEqualObjects(leaf[kFxParameterProperty_ParentId], @2);
+}
+
+/*! @abstract A group whose children entry is neither an array nor a dictionary is left as declared. */
+- (void)testFlattenLeavesAGroupWithAnUnusableChildrenEntry
+{
+	NSMutableDictionary *group = FxGripTPConfig(1, @(FxParameterType_Group));
+	group[kFxParameterProperty_GroupParameters] = @"not children";
+	NSMutableDictionary *empty = FxGripTPConfig(3, @(FxParameterType_Group));
+	NSMutableArray *parameters = FxGripTPList(@[group, empty]);
+
+	[FxGripParameterUtility flattenDictionaryParameters:parameters];
+
+	XCTAssertEqualObjects(parameters, (@[group, empty]));
+	XCTAssertEqualObjects(group[kFxParameterProperty_GroupParameters], @"not children");
+}
+
+#pragma mark - Target Preset Edge Cases
+
+/*! @abstract A driver whose type is neither a number nor a string applies nothing. */
+- (void)testDriverWithAnUnusableTypeIsIgnored
+{
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @[@"menu"], @0, @[FxGripTPRenamePreset(@"ignored")]),
+		target
+	]);
+
+	[FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil];
+
+	XCTAssertEqualObjects(target[kFxParameterProperty_Name], @"declared");
+}
+
+/*! @abstract A driver without a target-preset entry applies nothing. */
+- (void)testDriverWithoutADefinitionIsIgnored
+{
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableDictionary *driver = FxGripTPConfig(1, @(FxParameterType_Menu));
+	driver[kFxParameterProperty_Default] = @0;
+	NSMutableArray *parameters = FxGripTPList(@[driver, target]);
+
+	[FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil];
+
+	XCTAssertEqualObjects(target[kFxParameterProperty_Name], @"declared");
+}
+
+/*! @abstract Immutable entries in the list are skipped as drivers and as targets, and a string id still dispatches. */
+- (void)testImmutableEntriesAreSkippedAndStringIdsDispatch
+{
+	NSDictionary *immutableTarget = @{ kFxParameterProperty_Id: @2, kFxParameterProperty_Type: @(FxParameterType_Float),
+									   kFxParameterProperty_Name: @"declared" };
+	NSDictionary *immutableDriver = @{ kFxParameterProperty_Id: @5, kFxParameterProperty_Type: @(FxParameterType_Menu),
+									   kFxParameterProperty_Default: @0,
+									   kFxParameterProperty_TargetPreset: @[FxGripTPRenamePreset(@"fromImmutable")] };
+	NSMutableDictionary *stringIdTarget = FxGripTPConfig(3, @(FxParameterType_Float));
+	stringIdTarget[kFxParameterProperty_Id] = @"3";
+	NSMutableDictionary *unkeyed = FxGripTPConfig(4, @(FxParameterType_Float));
+	[unkeyed removeObjectForKey:kFxParameterProperty_Id];
+	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetNames: @{ @2: @"changed", @3: @"byStringId" } };
+	NSMutableArray *parameters = FxGripTPList(@[
+		(id)immutableDriver, (id)immutableTarget, stringIdTarget, unkeyed,
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset])
+	]);
+
+	XCTAssertNoThrow([FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil]);
+
+	XCTAssertEqualObjects(immutableTarget[kFxParameterProperty_Name], @"declared");
+	XCTAssertEqualObjects(stringIdTarget[kFxParameterProperty_Name], @"byStringId");
+}
+
+/*! @abstract A flags or tags entry that is neither a string nor an array leaves the target unchanged. */
+- (void)testStringSpecOfAnUnusableTypeIsIgnored
+{
+	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @17 },
+							  kFxParameterProperty_TargetPresetTags: @{ @2: @{ @"no": @"tags" } } };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	target[kFxParameterProperty_Flags] = @[@"hidden"];
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+		target
+	]);
+
+	[FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil];
+
+	XCTAssertEqualObjects(target[kFxParameterProperty_Flags], @[@"hidden"]);
+	XCTAssertNil(target[kFxParameterProperty_Tags]);
+}
+
+/*! @abstract A flags spec skips empty, sign-only, and non-string entries and replaces a non-collection existing value. */
+- (void)testStringSpecSkipsUnusableEntries
+{
+	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetFlags: @{ @2: @[@"", @"+", @"-", @7, @"hidden"] } };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	target[kFxParameterProperty_Flags] = @42;
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+		target
+	]);
+
+	[FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil];
+
+	XCTAssertEqualObjects(target[kFxParameterProperty_Flags], @[@"hidden"]);
+}
+
+/*! @abstract A color or point value that is not a dictionary leaves the target unchanged. */
+- (void)testValuesSectionIgnoresANonDictionaryColorOrPointValue
+{
+	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{ @2: @1.0, @3: @1.0, @4: @"point" } };
+	NSMutableDictionary *rgb = FxGripTPConfig(2, @(FxParameterType_RGB));
+	NSMutableDictionary *rgba = FxGripTPConfig(3, @(FxParameterType_RGBA));
+	rgba[kFxParameterProperty_Alpha] = @0.5;
+	NSMutableDictionary *point = FxGripTPConfig(4, @(FxParameterType_Point));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+		rgb, rgba, point
+	]);
+
+	[FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil];
+
+	XCTAssertNil(rgb[kFxParameterProperty_Red]);
+	XCTAssertNil(rgb[kFxParameterProperty_Default]);
+	XCTAssertEqualObjects(rgba[kFxParameterProperty_Alpha], @0.5);
+	XCTAssertNil(rgba[kFxParameterProperty_Default]);
+	XCTAssertNil(point[kFxParameterProperty_X]);
+	XCTAssertNil(point[kFxParameterProperty_Default]);
+}
+
+/*! @abstract A Custom target with a dictionary default takes a non-dictionary preset value as its new default. */
+- (void)testValuesSectionReplacesACustomDefaultWithANonDictionaryValue
+{
+	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @{ @2: @"replacement" } };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Custom));
+	target[kFxParameterProperty_Default] = @{ @"declared": @YES };
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+		target
+	]);
+
+	[FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil];
+
+	XCTAssertEqualObjects(target[kFxParameterProperty_Default], @"replacement");
+}
+
+/*! @abstract A values section that is not a dictionary applies nothing. */
+- (void)testValuesSectionOfAnUnusableTypeIsIgnored
+{
+	NSDictionary *preset = @{ kFxParameterProperty_TargetPresetValues: @[@1, @2] };
+	NSMutableDictionary *target = FxGripTPConfig(2, @(FxParameterType_Float));
+	NSMutableArray *parameters = FxGripTPList(@[
+		FxGripTPDriver(1, @(FxParameterType_Menu), @0, @[preset]),
+		target
+	]);
+
+	[FxGripParameterUtility applyTargetPresetDefaults:parameters pluginPresets:nil];
+
+	XCTAssertNil(target[kFxParameterProperty_Default]);
+}
+
+#pragma mark - Click Selectors
+
+/*! @abstract The click selector name is the prefix followed by the decimal parameter ID and decodes back to it. */
+- (void)testClickSelectorRoundTripsTheParameterID
+{
+	NSString *name = [FxGripParameterUtility clickSelectorNameForParameter:4321];
+	FxParameterId decoded = 0;
+
+	XCTAssertEqualObjects(name, [kFxGripClickSelectorPrefix stringByAppendingString:@"4321"]);
+	XCTAssertTrue([FxGripParameterUtility getParameterID:&decoded fromClickSelector:NSSelectorFromString(name)]);
+	XCTAssertEqual(decoded, 4321u);
+}
+
+/*! @abstract Decoding rejects a nil selector, a nil result pointer, a foreign selector, a bare prefix, non-digits, and an out-of-range value. */
+- (void)testClickSelectorDecodingRejectsEveryOtherForm
+{
+	FxParameterId decoded = 0;
+
+	XCTAssertFalse([FxGripParameterUtility getParameterID:&decoded fromClickSelector:NULL]);
+	FxParameterId *noParameterID = NULL;
+	XCTAssertFalse([FxGripParameterUtility getParameterID:noParameterID fromClickSelector:@selector(description)]);
+	XCTAssertFalse([FxGripParameterUtility getParameterID:&decoded fromClickSelector:@selector(description)]);
+	XCTAssertFalse([FxGripParameterUtility getParameterID:&decoded fromClickSelector:NSSelectorFromString(kFxGripClickSelectorPrefix)]);
+	XCTAssertFalse([FxGripParameterUtility getParameterID:&decoded
+											fromClickSelector:NSSelectorFromString([kFxGripClickSelectorPrefix stringByAppendingString:@"12x"])]);
+	XCTAssertFalse([FxGripParameterUtility getParameterID:&decoded
+											fromClickSelector:NSSelectorFromString([kFxGripClickSelectorPrefix stringByAppendingString:@"99999999999"])]);
+}
+
+
 @end

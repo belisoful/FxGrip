@@ -12,6 +12,8 @@
 #import "FxGrip/FxGripStaticRegistrar.h"
 #import <FxPlug/FxTypes.h>
 #import <FxGrip/FxGripTypes.h>
+#import "FxGrip/FxGripRegisteredPlugin.h"
+#import "FxGrip/FxGripPluginGroupData.h"
 
 #define kGroup1UUID	@"56962728-AB95-42C5-95D0-6308A002746A"
 #define kGroup1Name	@"Group 1 Name"
@@ -74,6 +76,145 @@
 @end
 @implementation StaticRegistrarTestClass
 @end
+
+#define kRefPluginAUUID		@"D1D1D1D1-0000-4000-8000-0000000000A1"
+#define kRefPluginBUUID		@"D2D2D2D2-0000-4000-8000-0000000000B2"
+#define kHookPluginUUID		@"D3D3D3D3-0000-4000-8000-0000000000C3"
+
+#define kStaticRegistrarHookErrorCode	4242
+
+@interface StaticRegistrarRefPluginA : NSObject <FxGripRegisteredPlugin>
+@end
+@implementation StaticRegistrarRefPluginA
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
+{
+	return @{
+		kProPlugPlugIn_UuidProperty: kRefPluginAUUID,
+		kProPlugPlugIn_ClassNameProperty: NSStringFromClass(self),
+		kProPlugPlugIn_DisplayNameProperty: @"Reference Plugin A",
+		kProPlugPlugIn_GroupUUIDProperty: kGroup1UUID,
+		kProPlugPlugIn_ProtocolNamesProperty: @[],
+		kProPlugPlugIn_InfoStringProperty: @"",
+		kProPlugPlugIn_VersionProperty: @1000
+	};
+}
++ (NSString *)groupName
+{
+	return kGroup1Name;
+}
+@end
+
+@interface StaticRegistrarRefPluginB : NSObject <FxGripRegisteredPlugin>
+@end
+@implementation StaticRegistrarRefPluginB
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
+{
+	return @{
+		kProPlugPlugInList_Property: @[@{
+			kProPlugPlugIn_UuidProperty: kRefPluginBUUID,
+			kProPlugPlugIn_ClassNameProperty: NSStringFromClass(self),
+			kProPlugPlugIn_DisplayNameProperty: @"Reference Plugin B",
+			kProPlugPlugIn_GroupUUIDProperty: kGroup2UUID,
+			kProPlugPlugIn_ProtocolNamesProperty: @[],
+			kProPlugPlugIn_InfoStringProperty: @"",
+			kProPlugPlugIn_VersionProperty: @1000
+		}],
+		kProPlugPlugIn_GroupList_Property: @{
+			kProPlugPlugInX_RegGroupUUIDProperty: kGroup2UUID,
+			kProPlugPlugInX_RegGroupNameProperty: kGroup2Name
+		}
+	};
+}
+@end
+
+/*! A registrar whose hooks supply one plugin and one group. */
+@interface StaticRegistrarHooksSubclass : FxGripStaticRegistrar
++ (NSDictionary *)hookPlugin;
++ (NSDictionary *)hookGroup;
+@end
+@implementation StaticRegistrarHooksSubclass
++ (NSDictionary *)hookPlugin
+{
+	return @{
+		kProPlugPlugIn_UuidProperty: kHookPluginUUID,
+		kProPlugPlugIn_ClassNameProperty: NSStringFromClass(StaticRegistrarTestClass.class),
+		kProPlugPlugIn_DisplayNameProperty: @"Hook Plugin",
+		kProPlugPlugIn_GroupUUIDProperty: kGroup1UUID,
+		kProPlugPlugIn_ProtocolNamesProperty: @[],
+		kProPlugPlugIn_InfoStringProperty: @"",
+		kProPlugPlugIn_VersionProperty: @1000
+	};
+}
++ (NSDictionary *)hookGroup
+{
+	return @{kProPlugPlugInX_RegGroupUUIDProperty: kGroup1UUID,
+			 kProPlugPlugInX_RegGroupNameProperty: kGroup1Name};
+}
+- (NSArray *)plugInsWithError:(NSError **)error
+{
+	return @[self.class.hookPlugin];
+}
+- (NSArray *)plugInGroupsWithError:(NSError **)error
+{
+	return @[self.class.hookGroup];
+}
+@end
+
+/*! A registrar whose group hook reports an error. */
+@interface StaticRegistrarGroupErrorSubclass : StaticRegistrarHooksSubclass
+@end
+@implementation StaticRegistrarGroupErrorSubclass
+- (NSArray *)plugInGroupsWithError:(NSError **)error
+{
+	*error = [NSError errorWithDomain:FxGripPlugErrorDomain code:kStaticRegistrarHookErrorCode userInfo:nil];
+	return nil;
+}
+@end
+
+/*! A registrar whose plugin hook reports an error. */
+@interface StaticRegistrarPluginErrorSubclass : FxGripStaticRegistrar
+@end
+@implementation StaticRegistrarPluginErrorSubclass
+- (NSArray *)plugInsWithError:(NSError **)error
+{
+	*error = [NSError errorWithDomain:FxGripPlugErrorDomain code:kStaticRegistrarHookErrorCode userInfo:nil];
+	return nil;
+}
+@end
+
+/*! A registrar whose group hook returns a dictionary of groups. */
+@interface StaticRegistrarGroupsDictionarySubclass : StaticRegistrarHooksSubclass
+@end
+@implementation StaticRegistrarGroupsDictionarySubclass
+- (id)plugInGroupsWithError:(NSError **)error
+{
+	return @{ @"one": @{kProPlugPlugInX_RegGroupUUIDProperty: kGroup1UUID,
+						kProPlugPlugInX_RegGroupNameProperty: kGroup1Name},
+			  @"two": @{kProPlugPlugInX_RegGroupUUIDProperty: kGroup2UUID,
+						kProPlugPlugInX_RegGroupNameProperty: kGroup2Name} };
+}
+@end
+
+/*! A registrar whose plugInReferences answers whatever the test stages. */
+@interface StaticRegistrarReferencesSubclass : FxGripStaticRegistrar
+@property (class, nonatomic, strong, nullable) id references;
+@end
+@implementation StaticRegistrarReferencesSubclass
+static id gStaticRegistrarReferences = nil;
++ (id)references
+{
+	return gStaticRegistrarReferences;
+}
++ (void)setReferences:(id)references
+{
+	gStaticRegistrarReferences = references;
+}
+- (id)plugInReferences
+{
+	return self.class.references;
+}
+@end
+
 
 
 
@@ -360,10 +501,12 @@
 /*! @abstract -registerGroupUUID:groupName: with a nil UUID or nil name registers nothing and does not throw. */
 - (void)testRegisterGroupUUID_NilArguments_DoNotRegisterOrCrash {
 	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	NSString *noGroupUUID = nil;
+	NSString *noGroupName = nil;
 
-	XCTAssertNoThrow([registrar registerGroupUUID:nil groupName:kGroup1Name]);
-	XCTAssertNoThrow([registrar registerGroupUUID:kGroup1UUID groupName:nil]);
-	XCTAssertNoThrow([registrar registerGroupUUID:nil groupName:nil]);
+	XCTAssertNoThrow([registrar registerGroupUUID:noGroupUUID groupName:kGroup1Name]);
+	XCTAssertNoThrow([registrar registerGroupUUID:kGroup1UUID groupName:noGroupName]);
+	XCTAssertNoThrow([registrar registerGroupUUID:noGroupUUID groupName:noGroupName]);
 
 	XCTAssertFalse([registrar containsGroupUUID:kGroup1UUID]);
 }
@@ -377,5 +520,324 @@
     }];
 }
  */
+
+
+#pragma mark Subclass hooks
+
+/*! @abstract The deprecated requestedProtocolsWithError: returns nil and leaves the error untouched. */
+- (void)testRequestedProtocolsWithError_ReturnsNil {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	NSError *error = nil;
+
+	XCTAssertNil([registrar requestedProtocolsWithError:&error]);
+	XCTAssertNil(error);
+}
+
+/*! @abstract A subclass supplying plugins and groups through the hooks has both registered, and the groups freeze after the first read. */
+- (void)testRegisteredPlugInGroups_SubclassHooks_RegistersAndFreezesTheGroups {
+	StaticRegistrarHooksSubclass *registrar = [StaticRegistrarHooksSubclass.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqualObjects(groups, @[[StaticRegistrarHooksSubclass hookGroup]]);
+	XCTAssertTrue(groups == [registrar registeredPlugInGroupsWithError:&error]);
+	XCTAssertTrue([registrar containsPluginUUID:kHookPluginUUID] == NO);
+	XCTAssertFalse([registrar containsGroupUUID:kGroup1UUID]);
+
+	[registrar registerGroupUUID:kGroup2UUID groupName:kGroup2Name];
+	XCTAssertEqualObjects([registrar registeredPlugInGroupsWithError:&error], @[[StaticRegistrarHooksSubclass hookGroup]]);
+}
+
+/*! @abstract A group hook that reports an error yields nil groups and that error. */
+- (void)testRegisteredPlugInGroups_GroupHookError_PropagatesTheError {
+	StaticRegistrarGroupErrorSubclass *registrar = [StaticRegistrarGroupErrorSubclass.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(groups);
+	XCTAssertEqual(error.code, kStaticRegistrarHookErrorCode);
+	XCTAssertTrue([registrar containsPluginUUID:kHookPluginUUID] == NO);
+}
+
+/*! @abstract A plugin hook that reports an error yields nil plugins and that error instead of the no-plugins error. */
+- (void)testRegisteredPlugIns_PluginHookError_PropagatesTheError {
+	StaticRegistrarPluginErrorSubclass *registrar = [StaticRegistrarPluginErrorSubclass.alloc init];
+	NSError *error = nil;
+
+	NSArray *plugins = [registrar registeredPlugInsWithError:&error];
+
+	XCTAssertNil(plugins);
+	XCTAssertEqual(error.code, kStaticRegistrarHookErrorCode);
+}
+
+/*! @abstract A group hook returning a dictionary of groups registers each value. */
+- (void)testRegisteredPlugInGroups_DictionaryHook_RegistersEachValue {
+	StaticRegistrarGroupsDictionarySubclass *registrar = [StaticRegistrarGroupsDictionarySubclass.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqual(groups.count, 2u);
+	NSArray *uuids = [groups valueForKey:kProPlugPlugInX_RegGroupUUIDProperty];
+	XCTAssertTrue([uuids containsObject:kGroup1UUID]);
+	XCTAssertTrue([uuids containsObject:kGroup2UUID]);
+}
+
+#pragma mark plugInReferences
+
+/*! @abstract A human-divided string of class names registers each named class. */
+- (void)testRegisteredPlugIns_ReferencesString_RegistersEachNamedClass {
+	StaticRegistrarReferencesSubclass.references = [NSString stringWithFormat:@"%@, %@",
+		NSStringFromClass(StaticRegistrarRefPluginA.class), NSStringFromClass(StaticRegistrarRefPluginB.class)];
+	StaticRegistrarReferencesSubclass *registrar = [StaticRegistrarReferencesSubclass.alloc init];
+	NSError *error = nil;
+
+	NSArray *plugins = [registrar registeredPlugInsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertNotNil([self plugin:kRefPluginAUUID inArray:plugins]);
+	XCTAssertNotNil([self plugin:kRefPluginBUUID inArray:plugins]);
+}
+
+/*! @abstract A dictionary of class references registers its values. */
+- (void)testRegisteredPlugIns_ReferencesDictionary_RegistersTheValues {
+	StaticRegistrarReferencesSubclass.references = @{ @"first": StaticRegistrarRefPluginA.class };
+	StaticRegistrarReferencesSubclass *registrar = [StaticRegistrarReferencesSubclass.alloc init];
+	NSError *error = nil;
+
+	NSArray *plugins = [registrar registeredPlugInsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqual(plugins.count, 1u);
+	XCTAssertNotNil([self plugin:kRefPluginAUUID inArray:plugins]);
+}
+
+/*! @abstract A single class reference registers that class. */
+- (void)testRegisteredPlugIns_ReferencesSingleClass_RegistersTheClass {
+	StaticRegistrarReferencesSubclass.references = StaticRegistrarRefPluginA.class;
+	StaticRegistrarReferencesSubclass *registrar = [StaticRegistrarReferencesSubclass.alloc init];
+	NSError *error = nil;
+
+	NSArray *plugins = [registrar registeredPlugInsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqual(plugins.count, 1u);
+	XCTAssertEqualObjects(plugins.firstObject[kProPlugPlugIn_UuidProperty], kRefPluginAUUID);
+}
+
+/*! @abstract A reference naming no loaded class is skipped and the registrar reports no plugins. */
+- (void)testRegisteredPlugIns_ReferencesUnknownName_IsSkipped {
+	StaticRegistrarReferencesSubclass.references = @[@"FxGripStaticRegistrarNoSuchPlugin"];
+	StaticRegistrarReferencesSubclass *registrar = [StaticRegistrarReferencesSubclass.alloc init];
+	NSError *error = nil;
+
+	XCTAssertNil([registrar registeredPlugInsWithError:&error]);
+	XCTAssertEqual(error.code, kFxGripError_NoConfigPlugins);
+}
+
+#pragma mark registerPluginClass: and registerPlugin: forms
+
+/*! @abstract A class whose information carries plugin and group lists registers both. */
+- (void)testRegisterPluginClass_ListWithGroups_RegistersPluginsAndGroups {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertTrue([registrar registerPluginClass:StaticRegistrarRefPluginB.class]);
+
+	XCTAssertTrue([registrar containsPluginUUID:kRefPluginBUUID]);
+	XCTAssertTrue([registrar containsGroupUUID:kGroup2UUID]);
+}
+
+/*! @abstract registerPlugin: with a class argument forwards to class registration. */
+- (void)testRegisterPlugin_ClassArgument_ForwardsToClassRegistration {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertTrue([registrar registerPlugin:(id)StaticRegistrarRefPluginA.class]);
+	XCTAssertTrue([registrar containsPluginUUID:kRefPluginAUUID]);
+}
+
+/*! @abstract registerPlugin: rejects an argument that is neither a class nor a dictionary. */
+- (void)testRegisterPlugin_NonDictionaryArgument_IsRejected {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertFalse([registrar registerPlugin:(id)@"not a plugin"]);
+	XCTAssertFalse([registrar registerPlugin:(id)@42]);
+}
+
+/*! @abstract A plugin carrying a group name and group UUID registers the group and stores the record without the name. */
+- (void)testRegisterPlugin_GroupNameWithGroupUUID_RegistersTheGroupAndStripsTheName {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID
+															  extra:@{kProPlugPlugInX_RegGroupNameProperty: kGroup1Name}]]);
+	XCTAssertTrue([registrar containsGroupUUID:kGroup1UUID]);
+
+	NSError *error = nil;
+	NSArray *plugins = [registrar registeredPlugInsWithError:&error];
+	NSDictionary *record = [self plugin:kConsumerAUUID inArray:plugins];
+	XCTAssertNil(record[kProPlugPlugInX_RegGroupNameProperty]);
+	XCTAssertEqualObjects([registrar registeredPlugInGroupsWithError:&error],
+						  (@[@{kProPlugPlugInX_RegGroupUUIDProperty: kGroup1UUID, kProPlugPlugInX_RegGroupNameProperty: kGroup1Name}]));
+}
+
+/*! @abstract A plugin carrying a group name but no group UUID registers neither the group nor the plugin. */
+- (void)testRegisterPlugin_GroupNameWithoutGroupUUID_RegistersNothing {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	NSMutableDictionary *plugin = [[self validPluginUUID:kConsumerAUUID
+												   extra:@{kProPlugPlugInX_RegGroupNameProperty: kGroup1Name}] mutableCopy];
+	[plugin removeObjectForKey:kProPlugPlugIn_GroupUUIDProperty];
+
+	XCTAssertFalse([registrar registerPlugin:plugin]);
+	XCTAssertFalse([registrar containsGroupUUID:kGroup1UUID]);
+	XCTAssertFalse([registrar containsPluginUUID:kConsumerAUUID]);
+}
+
+/*! @abstract A plugin without a class name is rejected. */
+- (void)testRegisterPlugin_MissingClassName_IsRejected {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	NSMutableDictionary *plugin = [[self validPluginUUID:kConsumerAUUID extra:@{}] mutableCopy];
+	[plugin removeObjectForKey:kProPlugPlugIn_ClassNameProperty];
+	plugin[kProPlugPlugIn_ProtocolNamesProperty] = @"FxFilter";
+	plugin[kProPlugPlugIn_VersionProperty] = @"1000";
+
+	XCTAssertFalse([registrar registerPlugin:plugin]);
+	XCTAssertFalse([registrar containsPluginUUID:kConsumerAUUID]);
+}
+
+/*! @abstract A plugin offered after registration closes is rejected. */
+- (void)testRegisterPlugin_AfterRegistrationCloses_IsRejected {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID extra:@{}]]);
+	NSError *error = nil;
+	XCTAssertEqual([registrar registeredPlugInsWithError:&error].count, 1u);
+
+	XCTAssertFalse([registrar registerPlugin:[self validPluginUUID:kConsumerBUUID extra:@{}]]);
+	XCTAssertFalse([registrar containsPluginUUID:kConsumerBUUID]);
+	XCTAssertEqual([registrar registeredPlugInsWithError:&error].count, 1u);
+}
+
+/*! @abstract registerPlugins: registers the values of a dictionary that is not itself a plugin. */
+- (void)testRegisterPlugins_DictionaryOfPlugins_RegistersTheValues {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	[registrar registerPlugins:(id)@{ @"a": [self validPluginUUID:kConsumerAUUID extra:@{}],
+									  @"b": [self validPluginUUID:kConsumerBUUID extra:@{}] }];
+
+	XCTAssertTrue([registrar containsPluginUUID:kConsumerAUUID]);
+	XCTAssertTrue([registrar containsPluginUUID:kConsumerBUUID]);
+}
+
+/*! @abstract registerPlugins: registers a single plugin dictionary that carries a class name. */
+- (void)testRegisterPlugins_SinglePluginDictionary_Registers {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	[registrar registerPlugins:(id)[self validPluginUUID:kConsumerAUUID extra:@{}]];
+
+	XCTAssertTrue([registrar containsPluginUUID:kConsumerAUUID]);
+}
+
+/*! @abstract registerPlugins: with nil registers nothing and does not throw. */
+- (void)testRegisterPlugins_Nil_IsANoOp {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertNoThrow([registrar registerPlugins:nil]);
+	XCTAssertFalse([registrar containsPluginUUID:kConsumerAUUID]);
+}
+
+/*! @abstract The frozen plugin array is cached and holds immutable records. */
+- (void)testRegisteredPlugIns_SecondCallReturnsTheCachedImmutableArray {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID extra:@{}]]);
+	NSError *error = nil;
+
+	NSArray *first = [registrar registeredPlugInsWithError:&error];
+	NSArray *second = [registrar registeredPlugInsWithError:&error];
+
+	XCTAssertTrue(first == second);
+	XCTAssertFalse([first isKindOfClass:NSMutableArray.class]);
+	XCTAssertFalse([first.firstObject isKindOfClass:NSMutableDictionary.class]);
+	XCTAssertFalse([registrar containsPluginUUID:kConsumerAUUID]);
+}
+
+/*! @abstract An OSC directive given as a dictionary links the consumer to each of its values. */
+- (void)testRegisteredPlugIns_OSCDictionaryDirective_MovesToSupportedPlugins {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kOSCPluginUUID extra:@{}]]);
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID
+															  extra:@{kProPlugPlugInX_OSCUUIDsProperty: @{ @"control": kOSCPluginUUID }}]]);
+
+	NSError *error = nil;
+	NSArray *plugIns = [registrar registeredPlugInsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqualObjects([self plugin:kOSCPluginUUID inArray:plugIns][kProPlugPlugIn_SupportedPluginsProperty], @[kConsumerAUUID]);
+	XCTAssertNil([self plugin:kConsumerAUUID inArray:plugIns][kProPlugPlugInX_OSCUUIDsProperty]);
+}
+
+#pragma mark registerGroups: forms
+
+/*! @abstract registerGroups: with nil registers nothing and does not throw. */
+- (void)testRegisterGroups_Nil_IsANoOp {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	XCTAssertNoThrow([registrar registerGroups:nil]);
+	XCTAssertFalse([registrar containsGroupUUID:kGroup1UUID]);
+}
+
+/*! @abstract registerGroups: with one group dictionary registers that group. */
+- (void)testRegisterGroups_SingleGroupDictionary_Registers {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	[registrar registerGroups:@{kProPlugPlugInX_RegGroupUUIDProperty: kGroup1UUID,
+								kProPlugPlugInX_RegGroupNameProperty: kGroup1Name}];
+
+	XCTAssertTrue([registrar containsGroupUUID:kGroup1UUID]);
+}
+
+/*! @abstract registerGroups: with a dictionary of groups registers each value. */
+- (void)testRegisterGroups_DictionaryOfGroups_RegistersTheValues {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+
+	[registrar registerGroups:@{ @"one": @{kProPlugPlugInX_RegGroupUUIDProperty: kGroup1UUID,
+										   kProPlugPlugInX_RegGroupNameProperty: kGroup1Name},
+								 @"two": @{kProPlugPlugInX_RegGroupUUIDProperty: kGroup2UUID,
+										   kProPlugPlugInX_RegGroupNameProperty: kGroup2Name} }];
+
+	XCTAssertTrue([registrar containsGroupUUID:kGroup1UUID]);
+	XCTAssertTrue([registrar containsGroupUUID:kGroup2UUID]);
+}
+
+/*! @abstract registerGroups: with an array registers each entry, including FxGripPluginGroupData instances. */
+- (void)testRegisterGroups_Array_RegistersEachEntry {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	FxGripPluginGroupData *groupData = [FxGripPluginGroupData.alloc initWithGroupUUID:kGroup2UUID groupName:kGroup2Name];
+
+	[registrar registerGroups:@[ @{kProPlugPlugInX_RegGroupUUIDProperty: kGroup1UUID,
+								   kProPlugPlugInX_RegGroupNameProperty: kGroup1Name},
+								 groupData ]];
+
+	XCTAssertTrue([registrar containsGroupUUID:kGroup1UUID]);
+	XCTAssertTrue([registrar containsGroupUUID:kGroup2UUID]);
+}
+
+/*! @abstract Registering a group UUID again with a different name replaces the stored name. */
+- (void)testRegisterGroupUUID_DifferentName_ReplacesTheName {
+	FxGripStaticRegistrar *registrar = [FxGripStaticRegistrar.alloc init];
+	XCTAssertTrue([registrar registerPlugin:[self validPluginUUID:kConsumerAUUID extra:@{}]]);
+
+	[registrar registerGroupUUID:kGroup1UUID groupName:@"Old Name"];
+	[registrar registerGroupUUID:kGroup1UUID groupName:kGroup1Name];
+
+	NSError *error = nil;
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+	XCTAssertNil(error);
+	XCTAssertEqual(groups.count, 1u);
+	XCTAssertEqualObjects(groups.firstObject[kProPlugPlugInX_RegGroupNameProperty], kGroup1Name);
+}
+
 
 @end

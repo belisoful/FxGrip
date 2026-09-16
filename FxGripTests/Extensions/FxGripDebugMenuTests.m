@@ -50,6 +50,8 @@ typedef NS_ENUM(NSUInteger, FxGripDebugTestMenuItem) {
 						  atTime:(CMTime)time
 						   error:(NSError * _Nullable * _Nullable)error;
 - (NSArray<NSString *> * _Nonnull)debugMenuItems:(BOOL)unhide;
+// FxGripDebugCommand is private to the implementation; the None command is zero.
+- (NSUInteger)commandForSelection:(NSInteger)selection;
 @end
 
 @interface FxGripAboutMenu (FxGripAboutMenuTestAccess)
@@ -326,6 +328,13 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 @end
 
 #pragma mark - Debug menu tests
+
+/*! A real effect, for the debug-menu extension factory. */
+@interface FxGripDebugTestPlainEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripDebugTestPlainEffect
+@end
 
 @interface FxGripDebugMenuTests : XCTestCase
 @property (nonatomic, strong) FxGripDebugMenu *extension;
@@ -881,6 +890,96 @@ static NSMutableDictionary *FxGripDebugTestPluginProperties(BOOL debugMenu, BOOL
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(allowsDebugFeatures)]);
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(pluginDebugMenuEnabled)]);
 	XCTAssertTrue([FxGripTileableEffect instancesRespondToSelector:@selector(pluginDebugActivatorEnabled)]);
+}
+
+/*! @abstract The effect's debug-menu factory builds a debug menu extension. */
+- (void)testTheEffectBuildsItsDebugMenuExtension
+{
+	FxGripDebugTestPlainEffect *effect = [FxGripDebugTestPlainEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertTrue([[effect newDebugMenuExtension] isKindOfClass:FxGripDebugMenu.class]);
+}
+
+#pragma mark Notification priority
+
+/*! @abstract The debug-mode flags transform runs after the flag-cache restore, and other notifications keep the default priority. */
+- (void)testTheFlagsReadRunsAfterTheFlagCacheRestore
+{
+	XCTAssertEqual([self.extension ncPriority:FxGripNotifyAPI_ParameterGetFlagsName],
+				   FxGripExtensionDefaultPriority + 2,
+				   @"the transform reads the bits the flag cache restores at the default priority");
+	XCTAssertEqual([self.extension ncPriority:FxGripNotifyAPI_ParameterSetFlagsPreName],
+				   FxGripExtensionDefaultPriority);
+	XCTAssertEqual([self.extension ncPriority:nil], FxGripExtensionDefaultPriority);
+}
+
+#pragma mark Guards
+
+/*! @abstract The flags handlers leave a payload whose flags are not a number alone. */
+- (void)testTheFlagsHandlersIgnoreANonNumericFlagsPayload
+{
+	NSMutableDictionary *parameter = @{kFxParameterProperty_Flags: @"not a number"}.mutableCopy;
+	NSDictionary *userInfo = @{FxGripNotifyAPI_ParameterKey: parameter};
+	NSNotification *note = [NSNotification notificationWithName:FxGripNotifyAPI_ParameterGetFlagsName
+														object:self.effect
+													  userInfo:userInfo];
+
+	[self.extension extAPIParameterGetFlags:note];
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Flags], @"not a number");
+
+	[self.extension extAPIParameterSetFlagsPre:note];
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Flags], @"not a number");
+}
+
+/*! @abstract An activator change whose value cannot be read leaves the debug menu's visibility alone. */
+- (void)testAnUnreadableActivatorLeavesTheMenuVisibilityAlone
+{
+	[self setDebugMenu:NO activator:YES];
+	self.getAPI.boolReadSucceeds = NO;
+
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
+														object:self.effect
+													  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @(kFxParameterId_DebugActivator)}];
+	[self.extension extParameterChanged:note];
+
+	XCTAssertNil(self.setAPIv5.flags[@(kFxParameterId_DebugMenu)], @"no visibility was written");
+}
+
+/*! @abstract An activator change carrying a time reads the activator at that time and reveals the menu. */
+- (void)testAnActivatorChangeCarryingATimeRevealsTheMenu
+{
+	[self setDebugMenu:NO activator:YES];
+	self.getAPI.boolValues[@(kFxParameterId_DebugActivator)] = @YES;
+	self.getAPI.flags[@(kFxParameterId_DebugMenu)] = @(kFxParameterFlag_HIDDEN);
+	CMTime time = (CMTime){.value = 12, .timescale = 30, .flags = kCMTimeFlags_Valid, .epoch = 0};
+	NSDictionary *timeDictionary = (__bridge_transfer NSDictionary *)CMTimeCopyAsDictionary(time, kCFAllocatorDefault);
+
+	NSNotification *note = [NSNotification notificationWithName:FxGripTileableEffectParameterChangedName
+														object:self.effect
+													  userInfo:@{FxGripTileableEffectParameterChangedIDKey: @(kFxParameterId_DebugActivator),
+																 FxGripTileableEffectParameterChangedAtTimeKey: timeDictionary}];
+	[self.extension extParameterChanged:note];
+
+	FxParameterFlags written = self.setAPIv5.flags[@(kFxParameterId_DebugMenu)].unsignedIntValue;
+	XCTAssertEqual(written & kFxParameterFlag_HIDDEN, (FxParameterFlags)0, @"the activator revealed the menu");
+}
+
+/*! @abstract A reveal whose current flags cannot be read reports failure and writes nothing. */
+- (void)testARevealStopsWhenTheCurrentFlagsCannotBeRead
+{
+	self.getAPI.flagsReadSucceeds = NO;
+
+	XCTAssertFalse([self.extension setDebugMenuShown:YES atTime:FxGripDebugTestZeroTime()]);
+	XCTAssertNil(self.setAPIv5.flags[@(kFxParameterId_DebugMenu)]);
+}
+
+/*! @abstract A menu selection outside the layout resolves to no command. */
+- (void)testASelectionOutsideTheLayoutResolvesToNoCommand
+{
+	[self setDebugMenu:YES activator:NO];
+
+	XCTAssertEqual([self.extension commandForSelection:-1], (NSUInteger)0);
+	XCTAssertEqual([self.extension commandForSelection:9999], (NSUInteger)0);
 }
 
 @end

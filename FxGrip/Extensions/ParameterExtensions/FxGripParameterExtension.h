@@ -55,7 +55,7 @@
 	NSError*				_error;
 	NSMutableDictionary*	_data;
 }
-- (instancetype _Nullable)init;
+- (nonnull instancetype)init;
 
 
 //FxGripParameterLirary

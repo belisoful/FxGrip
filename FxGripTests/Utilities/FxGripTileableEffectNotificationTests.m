@@ -220,4 +220,32 @@ static CMTime FxGripNotifTestMakeTime(int64_t value, int32_t timescale)
 	}
 }
 
+#pragma mark UserInfo payload accessors
+
+/*! @abstract Each payload accessor reads the value stored under its own notification key, and nothing when it is absent. */
+- (void)testThePayloadAccessorsReadTheirOwnKeys
+{
+	id apiManager = [NSObject new];
+	NSMutableDictionary *properties = [NSMutableDictionary dictionaryWithDictionary:@{@"probe": @1}];
+	NSMutableArray *parameters = [NSMutableArray arrayWithObject:NSMutableDictionary.new];
+	NSCoder *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+	NSDictionary *userInfo = @{
+		FxGripTileableEffectInitAPIManagerKey: apiManager,
+		FxGripTileableEffectPropertiesKey: properties,
+		FxGripTileableEffectParametersKey: parameters,
+		FxGripTileableEffectPluginStateCoderKey: coder,
+	};
+
+	XCTAssertEqualObjects((id)userInfo.fxApiManager, apiManager);
+	XCTAssertEqualObjects(userInfo.fxEffectProperties, properties);
+	XCTAssertEqualObjects(userInfo.fxEffectParameters, parameters);
+	XCTAssertEqualObjects(userInfo.fxCoder, coder);
+
+	NSDictionary *empty = @{};
+	XCTAssertNil((id)empty.fxApiManager);
+	XCTAssertNil(empty.fxEffectProperties);
+	XCTAssertNil(empty.fxEffectParameters);
+	XCTAssertNil(empty.fxCoder);
+}
+
 @end

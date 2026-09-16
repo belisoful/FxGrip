@@ -153,7 +153,7 @@
 		   parameterFlags:(FxParameterFlags)flags
 {
 	return [self addParameterOfClass:FxGripSwitchParameter.class name:name parameterID:parameterID
-							   flags:flags defaultValue:@{ kCustomAPI_BoolKey: @(defaultValue) }];
+							   flags:flags defaultValue:@(defaultValue)];
 }
 
 - (BOOL)addRandomWithName:(NSString *)name

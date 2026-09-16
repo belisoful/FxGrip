@@ -270,12 +270,20 @@ NSString * const FxGrip3DCoderCurrentTimeKey = @"_";
 
 - (FxMatrix44*)decodeFxMatrix44:(NSString *)key
 {
-	return [FxMatrix44.alloc initWithMatrix44Data:*[self decodeMatrix44Data:key]];
+	Matrix44Data *data = [self decodeMatrix44Data:key];
+	if (data == NULL) {
+		return nil;
+	}
+	return [FxMatrix44.alloc initWithMatrix44Data:*data];
 }
 
 - (FxMatrix44*)decodeFxColorMatrix44:(NSString *)key
 {
-	return [FxMatrix44.alloc initWithColorMatrix44Data:*[self decodeMatrix44Data:key]];
+	Matrix44Data *data = [self decodeMatrix44Data:key];
+	if (data == NULL) {
+		return nil;
+	}
+	return [FxMatrix44.alloc initWithColorMatrix44Data:*data];
 }
 
 

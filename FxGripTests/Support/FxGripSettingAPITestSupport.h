@@ -90,14 +90,14 @@ BOOL FxGripSettingTestTimesEqual(CMTime lhs, CMTime rhs);
 	wrapper-construction helpers the version-specific test cases share.
 */
 @interface FxGripSettingAPITestCase : XCTestCase
-@property (nonatomic, strong) FxGripSettingTestStubEffect *effect;
-@property (nonatomic, strong) FxGripSettingTestStubAPI *hostAPI;
-@property (nonatomic, strong) FxGripSettingTestDynamicAPI *dynamicAPI;
-@property (nonatomic, strong) FxGripSettingTestRetrievalAPI *retrievalAPI;
-@property (nonatomic, strong) FxGripSettingTestCustomValue *customValue;
-@property (nonatomic, strong) NSMutableArray<NSNotification *> *posted;
+@property (nonatomic, strong, nullable) FxGripSettingTestStubEffect *effect;
+@property (nonatomic, strong, nullable) FxGripSettingTestStubAPI *hostAPI;
+@property (nonatomic, strong, nullable) FxGripSettingTestDynamicAPI *dynamicAPI;
+@property (nonatomic, strong, nullable) FxGripSettingTestRetrievalAPI *retrievalAPI;
+@property (nonatomic, strong, nullable) FxGripSettingTestCustomValue *customValue;
+@property (nonatomic, strong, nullable) NSMutableArray<NSNotification *> *posted;
 // The notifier holds its observers weakly, so every token is retained for the test.
-@property (nonatomic, strong) NSMutableArray *observerTokens;
+@property (nonatomic, strong, nullable) NSMutableArray *observerTokens;
 
 - (NSArray<NSNotificationName> *)recordedNotificationNames;
 - (void)observeName:(NSNotificationName)name usingBlock:(void (^)(NSNotification *notification))block;

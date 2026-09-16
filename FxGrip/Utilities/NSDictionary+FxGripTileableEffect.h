@@ -195,8 +195,8 @@
 - (NSNumber*_Nullable) parameterDefaultX;
 /*! The point default's Y, read from a Y key or the default's second component; 0 when absent. */
 - (NSNumber*_Nullable) parameterDefaultY;
-/*! The menu items; an empty array for a Menu or Capsule with none. */
-- (NSArray<NSString*>*_Nullable) parameterMenuItems;
+/*! The menu items: strings for a popup, or FxTaggedMenuEntry objects for a tagged popup; an empty array for a Menu or Capsule with none. */
+- (NSArray*_Nullable) parameterMenuItems;
 
 /*! The gradient sample count. */
 -(NSNumber*_Nullable) parameterGradientSamples;

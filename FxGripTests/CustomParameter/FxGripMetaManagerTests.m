@@ -9,7 +9,6 @@
 */
 
 #import <XCTest/XCTest.h>
-#import <dlfcn.h>
 #import <FxPlug/FxTypes.h>
 #import "FxGrip/FxGripTypes.h"
 #import "FxGrip/FxGripMetaManager.h"
@@ -19,14 +18,13 @@ static const FxParameterId kParamB = 202;
 static const FxParameterId kParamMissing = 909;
 
 /*!
-	The test bundle does not link FxPlug.framework, and FxPlug is weak-linked by FxGrip, so
-	the constant is read from the loaded images. Outside an FxPlug host the symbol is absent
-	and FxGripErrors.h substitutes FxGripPlugErrorDomain.
+	FxGripErrors.h selects the host's FxPlugErrorDomain only inside an FxPlug host, where
+	FxBaseEffect exists. The FxPlugStub test framework supplies the symbol without the host,
+	so the FxGrip constant applies; the helper reads the same macro the framework uses.
 */
 static NSString *FxGripTestsExpectedErrorDomain(void)
 {
-	NSString * __unsafe_unretained *domain = (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "FxPlugErrorDomain");
-	return domain ? *domain : FxGripPlugErrorDomainConstant;
+	return FxGripPlugErrorDomain;
 }
 
 

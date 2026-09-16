@@ -9,16 +9,19 @@
 */
 
 #import <XCTest/XCTest.h>
-#import <dlfcn.h>
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripErrors.h>
 #import <FxGrip/FxGripTileableEffect.h>
 #import <FxGrip/FxGripImageCompression.h>
 
+/*!
+	FxGripErrors.h selects the host's FxPlugErrorDomain only inside an FxPlug host, where
+	FxBaseEffect exists. The FxPlugStub test framework supplies the symbol without the host,
+	so the FxGrip constant applies; the helper reads the same macro the framework uses.
+*/
 static NSString *FxGripRenderPathExpectedErrorDomain(void)
 {
-	NSString * __unsafe_unretained *domain = (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "FxPlugErrorDomain");
-	return domain ? *domain : FxGripPlugErrorDomainConstant;
+	return FxGripPlugErrorDomain;
 }
 
 static CMTime FxGripRenderPathTime(int64_t value, int32_t timescale)

@@ -16,6 +16,7 @@
 #import <FxGrip/FxGripRGBParameter.h>
 #import <FxGrip/FxGripFloatParameter.h>
 #import <FxGrip/FxGripStringParameter.h>
+#import <FxGrip/FxGripParameter.h>
 
 // -setRGBAValue:atTime: is implemented but absent from the public header.
 @interface FxGripRGBParameter (FxGripRGBParameterTests)
@@ -243,6 +244,61 @@ static const double kRGBTestGamma = 2.2;
 		[FxGripStringParameter.alloc initWithDictionary:config effect:(id)self.effect];
 
 	XCTAssertFalse(parameter.validate);
+}
+
+
+#pragma mark Retrieval failures
+
+/*! @abstract A refused component read records the retrieval error. */
+- (void)testRGBValueAtTimeReportsARefusedComponentRead
+{
+	FxGripRGBParameter *parameter = [self makeRGBParameter];
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+
+	[parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertNotNil(parameter.error);
+	XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
+}
+
+/*! @abstract A refused companion alpha read records the retrieval error. */
+- (void)testRGBValueAtTimeReportsARefusedAlphaRead
+{
+	FxGripRGBParameter *parameter = [self makeRGBParameter];
+	parameter.alphaParameter = kRGBTestAlphaParameter;
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+
+	[parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertNotNil(parameter.error);
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads.firstObject[@"accessor"], @"float");
+}
+
+/*! @abstract A refused companion alpha read while writing records the retrieval error and still writes the components. */
+- (void)testRGBWritingWithARefusedAlphaReadStillWritesTheComponents
+{
+	FxGripRGBParameter *parameter = [self makeRGBParameter];
+	parameter.alphaParameter = kRGBTestAlphaParameter;
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+	FxGripColor color = { .red = 0.1, .green = 0.2, .blue = 0.3, .alpha = 0.4 };
+
+	[parameter setRGBAValue:&color atTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertNotNil(parameter.error);
+	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"accessor"], @"rgb");
+}
+
+#pragma mark Null writes
+
+/*! @abstract A null color performs no write, through either setter. */
+- (void)testRGBANullColorWritesNothing
+{
+	FxGripRGBParameter *parameter = [self makeRGBParameter];
+
+	[parameter setValue:NULL atTime:FxGripParamClassTestTime(0, 1)];
+	[parameter setRGBAValue:NULL atTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.writes, @[]);
 }
 
 @end

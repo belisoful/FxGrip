@@ -100,6 +100,46 @@
 - (BOOL)getXValue:(double *)x YValue:(double *)y;
 - (BOOL)setXValue:(double)x YValue:(double)y;
 
+- (BOOL)getHistogramBlackIn:(double *)blackIn
+				   blackOut:(double *)blackOut
+					whiteIn:(double *)whiteIn
+				   whiteOut:(double *)whiteOut
+					  gamma:(double *)gamma
+				 forChannel:(FxHistogramChannel)channel;
+
+- (BOOL)setHistogramBlackIn:(double)blackIn
+				   blackOut:(double)blackOut
+					whiteIn:(double)whiteIn
+				   whiteOut:(double)whiteOut
+					  gamma:(double)gamma
+				 forChannel:(FxHistogramChannel)channel;
+
+@end
+
+/*! A coder without keyed coding, which is the branch NSKeyedArchiver never reaches. */
+@interface FxGripSectionTestSequentialCoder : NSCoder
+@property (nonatomic, strong, nullable) id propertyList;
+@property (nonatomic, assign) NSUInteger encodeCount;
+@end
+
+@implementation FxGripSectionTestSequentialCoder
+
+- (BOOL)allowsKeyedCoding
+{
+	return NO;
+}
+
+- (void)encodePropertyList:(id)aPropertyList
+{
+	self.propertyList = aPropertyList;
+	self.encodeCount += 1;
+}
+
+- (id)decodePropertyList
+{
+	return self.propertyList;
+}
+
 @end
 
 
@@ -714,6 +754,199 @@
 	XCTAssertTrue([exemptKeys containsObject:kCustomAPI_ExemptKeysKey]);
 	XCTAssertTrue([exemptKeys containsObject:kCustomAPI_LastChangedKey]);
 	XCTAssertEqualObjects([self.section objectForKey:kCustomAPI_ExemptKeysKey], exemptKeys);
+}
+
+
+#pragma mark - Sequential coding
+
+/*! @abstract A coder without keyed coding round-trips the backing dictionary as a property list. */
+- (void)testASequentialCoderRoundTripsTheBackingDictionary
+{
+	[self.section setObject:@"Title" forKey:@"label"];
+	[self.section setObject:@(3) forKey:@"weight"];
+	FxGripSectionTestSequentialCoder *coder = [FxGripSectionTestSequentialCoder.alloc init];
+
+	[self.section encodeWithCoder:coder];
+	FxGripSectionData *decoded = [FxGripSectionData.alloc initWithCoder:coder];
+
+	XCTAssertEqual(coder.encodeCount, 1u, @"the property-list branch encoded once");
+	XCTAssertEqualObjects(decoded.data, self.section.data);
+	XCTAssertNotEqual(decoded.data, self.section.data, @"the decoded dictionary is its own copy");
+}
+
+/*! @abstract A sequential coder holding something other than a dictionary decodes to an empty section. */
+- (void)testASequentialCoderWithoutADictionaryDecodesAnEmptySection
+{
+	FxGripSectionTestSequentialCoder *coder = [FxGripSectionTestSequentialCoder.alloc init];
+	coder.propertyList = @[@"not a dictionary"];
+
+	FxGripSectionData *decoded = [FxGripSectionData.alloc initWithCoder:coder];
+
+	XCTAssertNotNil(decoded.data);
+	XCTAssertEqual(decoded.count, 0u);
+}
+
+#pragma mark - Identity
+
+/*! @abstract A section is equal to itself without comparing its contents. */
+- (void)testASectionIsEqualToItself
+{
+	[self.section setObject:@"Title" forKey:@"label"];
+
+	XCTAssertTrue([self.section isEqual:self.section]);
+}
+
+#pragma mark - Exempt keys
+
+/*! @abstract An immutable array of exempt keys is read as a mutable list carrying the reserved keys. */
+- (void)testAnImmutableExemptKeyListIsCoercedToAMutableOne
+{
+	[self.section setObject:@[@"custom"] forKey:kCustomAPI_ExemptKeysKey];
+
+	NSMutableArray *keys = self.section.exemptKeys;
+
+	XCTAssertTrue([keys isKindOfClass:NSMutableArray.class]);
+	XCTAssertTrue([keys containsObject:@"custom"]);
+	XCTAssertTrue([keys containsObject:kCustomAPI_ExemptKeysKey]);
+	XCTAssertTrue([keys containsObject:kCustomAPI_LastChangedKey]);
+}
+
+/*! @abstract A single value stored under the exempt-keys key becomes the first entry of the list. */
+- (void)testASingleExemptKeyValueBecomesTheFirstEntry
+{
+	[self.section setObject:@"onlyOne" forKey:kCustomAPI_ExemptKeysKey];
+
+	NSMutableArray *keys = self.section.exemptKeys;
+
+	XCTAssertEqualObjects(keys.firstObject, @"onlyOne");
+	XCTAssertEqual(keys.count, 3u);
+	XCTAssertTrue([keys containsObject:kCustomAPI_ExemptKeysKey]);
+	XCTAssertTrue([keys containsObject:kCustomAPI_LastChangedKey]);
+}
+
+#pragma mark - Histogram channels
+
+/*! Writes four distinct channels through the keyed setter so each read is distinguishable. */
+- (void)stageFourHistogramChannels
+{
+	self.section.locked = NO;
+	FxHistogramChannel channels[4] = {kFxHistogramChannel_Red, kFxHistogramChannel_Green,
+									  kFxHistogramChannel_Blue, kFxHistogramChannel_Alpha};
+	for (int index = 0; index < 4; index++) {
+		double base = index + 1;
+		[self.section setHistogramBlackIn:base * 0.1
+								 blackOut:base * 0.2
+								  whiteIn:base * 0.3
+								 whiteOut:base * 0.4
+									gamma:base
+							   forChannel:channels[index]
+								   forKey:kCustomAPI_HistogramKey];
+	}
+}
+
+/*! @abstract The RGB channel reads the mean of the three color channels. */
+- (void)testTheRGBChannelReadsTheMeanOfTheColorChannels
+{
+	[self stageFourHistogramChannels];
+	double blackIn = 0, blackOut = 0, whiteIn = 0, whiteOut = 0, gamma = 0;
+
+	XCTAssertTrue([self.section getHistogramBlackIn:&blackIn blackOut:&blackOut whiteIn:&whiteIn
+										   whiteOut:&whiteOut gamma:&gamma
+										 forChannel:kFxHistogramChannel_RGB
+											 forKey:kCustomAPI_HistogramKey]);
+
+	XCTAssertEqualWithAccuracy(blackIn, (0.1 + 0.2 + 0.3) / 3.0, 1e-12);
+	XCTAssertEqualWithAccuracy(blackOut, (0.2 + 0.4 + 0.6) / 3.0, 1e-12);
+	XCTAssertEqualWithAccuracy(whiteIn, (0.3 + 0.6 + 0.9) / 3.0, 1e-12);
+	XCTAssertEqualWithAccuracy(whiteOut, (0.4 + 0.8 + 1.2) / 3.0, 1e-12);
+	XCTAssertEqualWithAccuracy(gamma, (1.0 + 2.0 + 3.0) / 3.0, 1e-12);
+}
+
+/*! @abstract A channel the stored array cannot answer reads the neutral levels. */
+- (void)testAnUnavailableChannelReadsTheNeutralLevels
+{
+	[self.section setObject:[NSMutableArray arrayWithObject:@[@(0.5), @(0.5), @(0.5), @(0.5), @(0.5)]]
+					 forKey:@"oneChannel"];
+	double blackIn = -1, blackOut = -1, whiteIn = -1, whiteOut = -1, gamma = -1;
+
+	XCTAssertTrue([self.section getHistogramBlackIn:&blackIn blackOut:&blackOut whiteIn:&whiteIn
+										   whiteOut:&whiteOut gamma:&gamma
+										 forChannel:kFxHistogramChannel_Alpha
+											 forKey:@"oneChannel"]);
+
+	XCTAssertEqualWithAccuracy(blackIn, 0.0, 1e-12);
+	XCTAssertEqualWithAccuracy(blackOut, 0.0, 1e-12);
+	XCTAssertEqualWithAccuracy(whiteIn, 1.0, 1e-12);
+	XCTAssertEqualWithAccuracy(whiteOut, 1.0, 1e-12);
+	XCTAssertEqualWithAccuracy(gamma, 1.0, 1e-12);
+}
+
+/*! @abstract A channel entry that is not a mutable array is replaced with one before the levels are written. */
+- (void)testAMalformedChannelEntryIsReplacedBeforeWriting
+{
+	NSMutableArray *histogram = [NSMutableArray arrayWithObjects:@"malformed",
+								 [NSMutableArray arrayWithObjects:@0, @0, @1, @1, @1, nil],
+								 [NSMutableArray arrayWithObjects:@0, @0, @1, @1, @1, nil],
+								 [NSMutableArray arrayWithObjects:@0, @0, @1, @1, @1, nil], nil];
+	[self.section setObject:histogram forKey:@"histogram"];
+
+	XCTAssertTrue([self.section setHistogramBlackIn:0.25 blackOut:0.5 whiteIn:0.75 whiteOut:0.9 gamma:2.0
+										 forChannel:kFxHistogramChannel_Red
+											 forKey:@"histogram"]);
+
+	double blackIn = 0, blackOut = 0, whiteIn = 0, whiteOut = 0, gamma = 0;
+	[self.section getHistogramBlackIn:&blackIn blackOut:&blackOut whiteIn:&whiteIn whiteOut:&whiteOut
+								gamma:&gamma forChannel:kFxHistogramChannel_Red forKey:@"histogram"];
+	XCTAssertEqualWithAccuracy(blackIn, 0.25, 1e-12);
+	XCTAssertEqualWithAccuracy(gamma, 2.0, 1e-12);
+}
+
+#pragma mark - Histogram default key
+
+/*! @abstract The default histogram accessors read and write the reserved histogram key. */
+- (void)testTheDefaultHistogramAccessorsUseTheReservedKey
+{
+	self.section.locked = NO;
+
+	XCTAssertTrue([self.section setHistogramBlackIn:0.1 blackOut:0.2 whiteIn:0.8 whiteOut:0.9 gamma:1.5
+										 forChannel:kFxHistogramChannel_Green]);
+
+	XCTAssertNotNil([self.section objectForKey:kCustomAPI_HistogramKey]);
+	double blackIn = 0, blackOut = 0, whiteIn = 0, whiteOut = 0, gamma = 0;
+	XCTAssertTrue([self.section getHistogramBlackIn:&blackIn blackOut:&blackOut whiteIn:&whiteIn
+										   whiteOut:&whiteOut gamma:&gamma
+										 forChannel:kFxHistogramChannel_Green]);
+	XCTAssertEqualWithAccuracy(blackIn, 0.1, 1e-12);
+	XCTAssertEqualWithAccuracy(gamma, 1.5, 1e-12);
+}
+
+/*! @abstract A locked section refuses to create the reserved histogram key. */
+- (void)testALockedSectionRefusesToCreateTheReservedHistogramKey
+{
+	XCTAssertTrue(self.section.isLocked);
+
+	XCTAssertFalse([self.section setHistogramBlackIn:0.1 blackOut:0.2 whiteIn:0.8 whiteOut:0.9 gamma:1.5
+										  forChannel:kFxHistogramChannel_Red]);
+
+	XCTAssertNil([self.section objectForKey:kCustomAPI_HistogramKey]);
+}
+
+/*! @abstract A locked section still updates the reserved histogram key once it exists. */
+- (void)testALockedSectionStillUpdatesAnExistingHistogram
+{
+	self.section.locked = NO;
+	[self.section setHistogramBlackIn:0.1 blackOut:0.2 whiteIn:0.8 whiteOut:0.9 gamma:1.5
+						   forChannel:kFxHistogramChannel_Red];
+	self.section.locked = YES;
+
+	XCTAssertTrue([self.section setHistogramBlackIn:0.3 blackOut:0.4 whiteIn:0.5 whiteOut:0.6 gamma:2.5
+										 forChannel:kFxHistogramChannel_Red]);
+
+	double blackIn = 0, blackOut = 0, whiteIn = 0, whiteOut = 0, gamma = 0;
+	[self.section getHistogramBlackIn:&blackIn blackOut:&blackOut whiteIn:&whiteIn whiteOut:&whiteOut
+								gamma:&gamma forChannel:kFxHistogramChannel_Red];
+	XCTAssertEqualWithAccuracy(blackIn, 0.3, 1e-12);
+	XCTAssertEqualWithAccuracy(gamma, 2.5, 1e-12);
 }
 
 @end

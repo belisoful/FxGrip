@@ -17,6 +17,48 @@
 
 static const FxParameterId kImageRefTestParameter = 51;
 
+/*! Stands in for the host's FxTimingAPI_v5, which the shared manager double does not carry. */
+@interface FxGripImageRefTestTimingAPIv5 : NSObject
+@property (nonatomic, assign) BOOL dropFrame;
+@property (nonatomic, strong) NSMutableArray<NSDictionary *> *queries;
+@end
+
+@implementation FxGripImageRefTestTimingAPIv5
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_queries = NSMutableArray.new;
+	}
+	return self;
+}
+
+- (BOOL)isInputDropFrame:(FxImageTileRequestSource)source parameterID:(UInt32)parameterID
+{
+	[self.queries addObject:@{@"source": @(source), @"id": @(parameterID)}];
+	return self.dropFrame;
+}
+
+@end
+
+@interface FxGripImageRefTestAPIManager : FxGripParamClassTestAPIManager
+@property (nonatomic, strong, nullable) FxGripImageRefTestTimingAPIv5 *timingAPIv5;
+@end
+
+@implementation FxGripImageRefTestAPIManager
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_timingAPIv5 = [FxGripImageRefTestTimingAPIv5.alloc init];
+	}
+	return self;
+}
+
+@end
+
 @interface FxGripImageRefParameterTests : XCTestCase
 @property (nonatomic, strong) FxGripParamClassTestEffect *effect;
 @end
@@ -116,6 +158,33 @@ static const FxParameterId kImageRefTestParameter = 51;
 
 	XCTAssertEqual(duration.value, (int64_t)90);
 	XCTAssertEqualObjects(self.effect.apiManager.timingAPIv4.queries.lastObject[@"accessor"], @"duration");
+}
+
+
+/*! @abstract The drop-frame accessor asks FxTimingAPI_v5 about the parameter's input. */
+- (void)testImageReferenceDropFrameComesFromTheV5TimingAPI
+{
+	FxGripImageRefTestAPIManager *manager = [FxGripImageRefTestAPIManager.alloc init];
+	self.effect.apiManager = manager;
+	FxGripImageRefParameter *parameter = [self makeImageRefParameter];
+	manager.timingAPIv5.dropFrame = YES;
+
+	XCTAssertTrue(parameter.isDropFrame);
+
+	XCTAssertEqualObjects(manager.timingAPIv5.queries.lastObject,
+						  (@{@"source": @(kFxImageTileRequestSourceParameter),
+							 @"id": @(kImageRefTestParameter)}));
+}
+
+/*! @abstract A host without FxTimingAPI_v5 reports no drop-frame timecode. */
+- (void)testImageReferenceDropFrameIsFalseWithoutTheV5TimingAPI
+{
+	FxGripImageRefTestAPIManager *manager = [FxGripImageRefTestAPIManager.alloc init];
+	manager.timingAPIv5 = nil;
+	self.effect.apiManager = manager;
+	FxGripImageRefParameter *parameter = [self makeImageRefParameter];
+
+	XCTAssertFalse(parameter.isDropFrame);
 }
 
 @end

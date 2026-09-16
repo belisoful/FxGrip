@@ -10,6 +10,9 @@
 
 #import <XCTest/XCTest.h>
 #import <Metal/Metal.h>
+#import <objc/runtime.h>
+#import <CoreVideo/CoreVideo.h>
+#import "FxPlugStub.h"
 #import <FxGrip/FxGripMTLDeviceCache.h>
 
 static NSString * const kInUseKey = @"InUse";
@@ -63,6 +66,36 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 
 @end
 
+/*! A library stand-in that answers one member the library cache does not implement itself. */
+@interface FxGripExtraMemberLibrary : NSObject
+@property (nonatomic, strong) id<MTLLibrary> target;
+- (NSString *)fxgExtraLibraryMember;
+@end
+
+@implementation FxGripExtraMemberLibrary
+
+- (NSString *)fxgExtraLibraryMember
+{
+	return @"forwarded";
+}
+
+- (id)forwardingTargetForSelector:(SEL)selector
+{
+	return self.target;
+}
+
+- (BOOL)respondsToSelector:(SEL)selector
+{
+	return [super respondsToSelector:selector] || [self.target respondsToSelector:selector];
+}
+
+@end
+
+/*! The cache item implements a bounds-sized depth texture that no header declares. */
+@interface FxGripMTLDeviceCacheItem (FxGripMTLDeviceCacheTests)
+- (nullable id<MTLTexture>)depthTexture:(FxRect)bounds;
+@end
+
 @interface FxGripMTLDeviceCacheTests : XCTestCase
 @property (nonatomic, strong) id<MTLDevice> device;
 @property (nonatomic, strong) NSString *pluginID;
@@ -96,6 +129,12 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	[item.commandQueueCacheLock unlock];
 	XCTAssertNotNil(inUse, @"queue is not pooled by the item");
 	return inUse.boolValue;
+}
+
+/*! The cache's item list. The cache holds it in an ivar with no accessor. */
+- (NSArray<FxGripMTLDeviceCacheItem *> *)cachedItems
+{
+	return [(id)FxGripMTLDeviceCache.deviceCache valueForKey:@"deviceCaches"];
 }
 
 - (id<MTLLibrary>)frameworkLibrary
@@ -300,8 +339,10 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 /*! @abstract Initializing a library cache with a nil library or a nil device returns nil. */
 - (void)testLibraryCacheInitWithNilIsNil
 {
-	XCTAssertNil([[FxGripMTLLibraryCache alloc] initWithLibrary:nil]);
-	XCTAssertNil([[FxGripMTLLibraryCache alloc] initWithDevice:nil]);
+	id<MTLLibrary> noLibrary = nil;
+	id<MTLDevice> noDevice = nil;
+	XCTAssertNil([[FxGripMTLLibraryCache alloc] initWithLibrary:noLibrary]);
+	XCTAssertNil([[FxGripMTLLibraryCache alloc] initWithDevice:noDevice]);
 }
 
 
@@ -528,7 +569,8 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertEqual(texture.width, 64u);
 	XCTAssertEqual(texture.height, 48u);
 	XCTAssertEqual(texture.pixelFormat, MTLPixelFormatDepth32Float);
-	XCTAssertNil([FxGripMTLDeviceCache depthTexture:bounds forDevice:nil]);
+	id<MTLDevice> noDevice = nil;
+	XCTAssertNil([FxGripMTLDeviceCache depthTexture:bounds forDevice:noDevice]);
 }
 
 #pragma mark Device removal
@@ -544,5 +586,467 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 	XCTAssertNotNil(after);
 	XCTAssertFalse(before == after, @"the removed item was handed out again");
 }
+
+#pragma mark Pixel format for a tile
+
+/*! @abstract Every supported IOSurface format maps to its Metal format, and an unrecognized one falls back to RGBA16Float. */
+- (void)testPixelFormatForAnImageTileMapsEverySupportedSurfaceFormat
+{
+	NSArray<NSNumber *> *surfaceFormats = @[
+		@(kCVPixelFormatType_32BGRA), @(kCVPixelFormatType_32RGBA), @(kCVPixelFormatType_64RGBALE),
+		@(kCVPixelFormatType_64RGBAHalf), @(kCVPixelFormatType_128RGBAFloat),
+	];
+	NSArray<NSNumber *> *metalFormats = @[
+		@(MTLPixelFormatBGRA8Unorm), @(MTLPixelFormatRGBA8Unorm), @(MTLPixelFormatRGBA16Unorm),
+		@(MTLPixelFormatRGBA16Float), @(MTLPixelFormatRGBA32Float),
+	];
+
+	for (NSUInteger index = 0; index < surfaceFormats.count; index++) {
+		FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }
+													 pixelFormat:surfaceFormats[index].unsignedIntValue
+														  device:nil];
+		XCTAssertEqual([FxGripMTLDeviceCache MTLPixelFormatForImageTile:tile],
+					   (MTLPixelFormat)metalFormats[index].unsignedIntegerValue,
+					   @"format %@", surfaceFormats[index]);
+	}
+
+	FxImageTile *surfaceless = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }];
+	XCTAssertEqual([FxGripMTLDeviceCache MTLPixelFormatForImageTile:surfaceless], MTLPixelFormatRGBA16Float);
+}
+
+#pragma mark Command queues for a tile
+
+/*! @abstract A tile checks out a pooled queue from the item keyed by its registry ID and surface format. */
+- (void)testCommandQueueForAnImageTileUsesTheTilesDeviceAndFormat
+{
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }
+												 pixelFormat:kCVPixelFormatType_32BGRA
+													  device:self.device];
+
+	id<MTLCommandQueue> queue = [FxGripMTLDeviceCache commandQueueForImageTile:tile pluginID:self.pluginID];
+
+	FxGripMTLDeviceCacheItem *item = [FxGripMTLDeviceCache.deviceCache deviceWithRegistryID:self.device.registryID
+																			   pixelFormat:MTLPixelFormatBGRA8Unorm
+																			   andPluginID:self.pluginID];
+	XCTAssertNotNil(queue);
+	XCTAssertEqual(queue.device, self.device);
+	XCTAssertTrue([item containsCommandQueue:queue], @"the queue comes from the item keyed by the tile's format");
+	XCTAssertTrue([self item:item marksQueueInUse:queue]);
+
+	[FxGripMTLDeviceCache returnCommandQueue:queue];
+	XCTAssertFalse([self item:item marksQueueInUse:queue]);
+}
+
+/*! @abstract The plugin-less command queue accessor keys the item by the default plugin ID. */
+- (void)testCommandQueueForAnImageTileDefaultsThePluginID
+{
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }
+												 pixelFormat:kCVPixelFormatType_64RGBAHalf
+													  device:self.device];
+
+	id<MTLCommandQueue> queue = [FxGripMTLDeviceCache commandQueueForImageTile:tile];
+
+	FxGripMTLDeviceCacheItem *item = [FxGripMTLDeviceCache.deviceCache deviceWithRegistryID:self.device.registryID
+																			   pixelFormat:MTLPixelFormatRGBA16Float];
+	XCTAssertNotNil(queue);
+	XCTAssertNil(item.pluginID);
+	XCTAssertTrue([item containsCommandQueue:queue]);
+	[FxGripMTLDeviceCache returnCommandQueue:queue];
+}
+
+/*! @abstract A scoped command queue for a tile wraps a pooled queue and returns it when the wrapper is released. */
+- (void)testScopedCommandQueueForAnImageTileReturnsItsQueueOnDealloc
+{
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }
+												 pixelFormat:kCVPixelFormatType_32BGRA
+													  device:self.device];
+	FxGripMTLDeviceCacheItem *item = [FxGripMTLDeviceCache.deviceCache deviceWithRegistryID:self.device.registryID
+																			   pixelFormat:MTLPixelFormatBGRA8Unorm
+																			   andPluginID:self.pluginID];
+	id<MTLCommandQueue> wrapped = nil;
+	@autoreleasepool {
+		FxGripMTLCommandQueue *scoped = [FxGripMTLDeviceCache scopedCommandQueueForImageTile:tile pluginID:self.pluginID];
+		XCTAssertNotNil(scoped);
+		wrapped = scoped.queue;
+		XCTAssertTrue([self item:item marksQueueInUse:wrapped]);
+	}
+
+	XCTAssertFalse([self item:item marksQueueInUse:wrapped], @"the wrapper returns its queue to the pool");
+}
+
+/*! @abstract The plugin-less scoped accessor keys the item by the default plugin ID. */
+- (void)testScopedCommandQueueForAnImageTileDefaultsThePluginID
+{
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }
+												 pixelFormat:kCVPixelFormatType_64RGBAHalf
+													  device:self.device];
+
+	@autoreleasepool {
+		FxGripMTLCommandQueue *scoped = [FxGripMTLDeviceCache scopedCommandQueueForImageTile:tile];
+		XCTAssertNotNil(scoped);
+		XCTAssertEqual(scoped.device, self.device);
+	}
+}
+
+#pragma mark Command queue forwarding
+
+/*! @abstract Every MTLCommandQueue message on the wrapper reaches the pooled queue. */
+- (void)testTheScopedQueueForwardsEveryCommandQueueMessage
+{
+	FxGripMTLCommandQueue *scoped = [FxGripMTLCommandQueue.alloc initWithDeviceCacheItem:self.item];
+	XCTAssertNotNil(scoped);
+
+	scoped.label = @"FxGripScopedQueue";
+	XCTAssertEqualObjects(scoped.label, @"FxGripScopedQueue");
+	XCTAssertEqualObjects(scoped.queue.label, @"FxGripScopedQueue");
+	XCTAssertEqual(scoped.device, self.device);
+
+	XCTAssertNotNil([scoped commandBuffer]);
+	MTLCommandBufferDescriptor *descriptor = MTLCommandBufferDescriptor.new;
+	XCTAssertNotNil([scoped commandBufferWithDescriptor:descriptor]);
+	XCTAssertNotNil([scoped commandBufferWithUnretainedReferences]);
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+	XCTAssertNoThrow([scoped insertDebugCaptureBoundary]);
+#pragma clang diagnostic pop
+
+	if (@available(macOS 15.0, *)) {
+		MTLResidencySetDescriptor *residencyDescriptor = MTLResidencySetDescriptor.new;
+		NSError *error = nil;
+		id<MTLResidencySet> residencySet = [self.device newResidencySetWithDescriptor:residencyDescriptor error:&error];
+		XCTAssertNotNil(residencySet, @"%@", error);
+		id<MTLResidencySet> sets[1] = { residencySet };
+
+		XCTAssertNoThrow([scoped addResidencySet:residencySet]);
+		XCTAssertNoThrow([scoped removeResidencySet:residencySet]);
+		XCTAssertNoThrow([scoped addResidencySets:sets count:1]);
+		XCTAssertNoThrow([scoped removeResidencySets:sets count:1]);
+	}
+}
+
+#pragma mark Device notifications
+
+/*! @abstract A device-added notification installs a default cache item for the device. */
+- (void)testDeviceAddedNotificationInstallsADefaultItem
+{
+	NSUInteger before = [self cachedItems].count;
+
+	[NSNotificationCenter.defaultCenter postNotificationName:MTLDeviceWasAddedNotification object:self.device];
+
+	NSArray<FxGripMTLDeviceCacheItem *> *items = [self cachedItems];
+	XCTAssertEqual(items.count, before + 1);
+	XCTAssertEqual(items.lastObject.gpuDevice.registryID, self.device.registryID);
+	XCTAssertEqual(items.lastObject.pixelFormat, MTLPixelFormatRGBA16Float);
+	XCTAssertNil(items.lastObject.pluginID);
+}
+
+/*! @abstract A device-added notification carrying no device installs nothing. */
+- (void)testDeviceAddedNotificationWithoutADeviceInstallsNothing
+{
+	NSUInteger before = [self cachedItems].count;
+
+	[NSNotificationCenter.defaultCenter postNotificationName:MTLDeviceWasAddedNotification object:nil];
+
+	XCTAssertEqual([self cachedItems].count, before);
+}
+
+/*! @abstract The device-was-removed notification is accepted and changes nothing; the removal request does the dropping. */
+- (void)testDeviceWasRemovedNotificationKeepsTheCache
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+
+	[NSNotificationCenter.defaultCenter postNotificationName:MTLDeviceWasRemovedNotification object:self.device];
+
+	XCTAssertTrue([[self cachedItems] containsObject:item]);
+}
+
+#pragma mark Library cache for a device
+
+/*! @abstract The library cache for a device is memoized, so the same cache answers a repeat lookup. */
+- (void)testLibraryCacheForADeviceIsMemoized
+{
+	FxGripMTLLibraryCache *first = [FxGripMTLDeviceCache libraryCacheForDevice:self.device];
+	FxGripMTLLibraryCache *second = [FxGripMTLDeviceCache libraryCacheForDevice:self.device];
+	FxGripMTLLibraryCache *byRegistryID = [FxGripMTLDeviceCache libraryCacheForRegistryID:self.device.registryID];
+
+	XCTAssertEqual(first, second, @"one library cache is kept per device");
+	XCTAssertEqual(first, byRegistryID);
+	// A device whose default library is unavailable in the test process caches nothing;
+	// the memoization above holds either way.
+	if (first != nil) {
+		XCTAssertNotNil(first.library);
+		XCTAssertEqual(first.device.registryID, self.device.registryID);
+	}
+}
+
+#pragma mark Library cache pass-through
+
+/*! @abstract The library cache forwards label, type, and install name to the wrapped library. */
+- (void)testLibraryCacheForwardsTheLibraryProperties
+{
+	id<MTLLibrary> library = self.frameworkLibrary;
+	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:library];
+
+	cache.label = @"FxGripCachedLibrary";
+
+	XCTAssertEqualObjects(cache.label, @"FxGripCachedLibrary");
+	XCTAssertEqualObjects(library.label, @"FxGripCachedLibrary");
+	XCTAssertEqual(cache.type, library.type);
+	XCTAssertEqualObjects(cache.installName, library.installName);
+}
+
+/*! @abstract The constant-values function accessor memoizes its result and reports an unknown name as an error. */
+- (void)testConstantValuesFunctionIsMemoizedAndReportsAMissingName
+{
+	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:self.frameworkLibrary];
+	NSString *name = [self firstFunctionNameIn:cache];
+	NSError *error = nil;
+
+	id<MTLFunction> first = [cache newFunctionWithName:name constantValues:nil error:&error];
+	id<MTLFunction> second = [cache newFunctionWithName:name constantValues:nil error:&error];
+
+	XCTAssertNotNil(first, @"%@", error);
+	XCTAssertTrue(first == second, @"the function is served from the cache on the second request");
+	XCTAssertEqual(cache.functionCache.count, 1u);
+
+	NSError *missingError = nil;
+	XCTAssertNil([cache newFunctionWithName:@"fxGripDoesNotExist" constantValues:nil error:&missingError]);
+	XCTAssertNotNil(missingError);
+	XCTAssertEqual(cache.functionCache.count, 1u);
+}
+
+/*! @abstract The descriptor function accessor memoizes by name and serves a later descriptor request from the cache. */
+- (void)testDescriptorFunctionIsMemoizedAcrossBothAccessors
+{
+	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:self.frameworkLibrary];
+	NSString *name = [self firstFunctionNameIn:cache];
+	MTLFunctionDescriptor *descriptor = MTLFunctionDescriptor.functionDescriptor;
+	descriptor.name = name;
+	NSError *error = nil;
+
+	id<MTLFunction> first = [cache newFunctionWithDescriptor:descriptor error:&error];
+	id<MTLFunction> second = [cache newFunctionWithDescriptor:descriptor error:&error];
+	XCTAssertNotNil(first, @"%@", error);
+	XCTAssertTrue(first == second);
+
+	XCTestExpectation *cached = [self expectationWithDescription:@"cached descriptor load"];
+	[cache newFunctionWithDescriptor:descriptor completionHandler:^(id<MTLFunction> function, NSError *handlerError) {
+		XCTAssertTrue(function == first, @"a cached name answers its handler without recompiling");
+		XCTAssertNil(handlerError);
+		[cached fulfill];
+	}];
+	[self waitForExpectations:@[cached] timeout:5.0];
+}
+
+/*! @abstract An intersection-function request for a name the library does not declare reports an error and caches nothing. */
+- (void)testIntersectionFunctionForAMissingNameReportsAnError
+{
+	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:self.frameworkLibrary];
+	MTLIntersectionFunctionDescriptor *descriptor = MTLIntersectionFunctionDescriptor.new;
+	descriptor.name = @"fxGripDoesNotIntersect";
+	NSError *error = nil;
+
+	XCTAssertNil([cache newIntersectionFunctionWithDescriptor:descriptor error:&error]);
+	XCTAssertNotNil(error);
+	XCTAssertEqual(cache.functionCache.count, 0u);
+
+	XCTestExpectation *done = [self expectationWithDescription:@"async intersection load"];
+	[cache newIntersectionFunctionWithDescriptor:descriptor completionHandler:^(id<MTLFunction> function, NSError *handlerError) {
+		XCTAssertNil(function);
+		XCTAssertNotNil(handlerError);
+		[done fulfill];
+	}];
+	[self waitForExpectations:@[done] timeout:10.0];
+	XCTAssertEqual(cache.functionCache.count, 0u);
+}
+
+#pragma mark Library cache conformance
+
+/*! @abstract The library cache answers reflection for a function exactly as the wrapped library does. */
+- (void)testTheLibraryCacheAnswersReflectionLikeTheWrappedLibrary
+{
+	if (@available(macOS 26.0, *)) {
+		id<MTLLibrary> library = self.frameworkLibrary;
+		XCTSkipIf(library == nil, @"No Metal device.");
+		FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:library];
+		NSString *name = library.functionNames.firstObject;
+		XCTAssertNotNil(name);
+
+		MTLFunctionReflection *expected = [library reflectionForFunctionWithName:name];
+		MTLFunctionReflection *reflection = [cache reflectionForFunctionWithName:name];
+
+		XCTAssertEqual(reflection == nil, expected == nil);
+		XCTAssertEqual(reflection.bindings.count, expected.bindings.count);
+		XCTAssertNil([cache reflectionForFunctionWithName:@"fxgNoSuchFunction"]);
+	} else {
+		XCTSkip(@"reflectionForFunctionWithName: requires macOS 26.");
+	}
+}
+
+/*! @abstract A member the library cache does not implement reaches the wrapped library. */
+- (void)testAnUnimplementedMemberIsForwardedToTheWrappedLibrary
+{
+	id<MTLLibrary> library = self.frameworkLibrary;
+	XCTSkipIf(library == nil, @"No Metal device.");
+	FxGripExtraMemberLibrary *wrapped = [FxGripExtraMemberLibrary.alloc init];
+	wrapped.target = library;
+	FxGripMTLLibraryCache *cache = [[FxGripMTLLibraryCache alloc] initWithLibrary:(id<MTLLibrary>)wrapped];
+
+	XCTAssertTrue([cache respondsToSelector:@selector(fxgExtraLibraryMember)]);
+	XCTAssertEqualObjects([(id)cache fxgExtraLibraryMember], @"forwarded");
+	XCTAssertFalse([cache respondsToSelector:NSSelectorFromString(@"fxgNoLibraryMember")]);
+	XCTAssertTrue([cache respondsToSelector:@selector(functionNames)], @"implemented members still answer");
+}
+
+/*! @abstract The library cache implements every required MTLLibrary member itself, so none depends on forwarding. */
+- (void)testTheLibraryCacheImplementsEveryRequiredLibraryMember
+{
+	unsigned int count = 0;
+	struct objc_method_description *required = protocol_copyMethodDescriptionList(@protocol(MTLLibrary), YES, YES, &count);
+	NSMutableArray<NSString *> *missing = NSMutableArray.new;
+	for (unsigned int index = 0; index < count; index++) {
+		if (!class_getInstanceMethod(FxGripMTLLibraryCache.class, required[index].name)) {
+			[missing addObject:NSStringFromSelector(required[index].name)];
+		}
+	}
+	free(required);
+
+	XCTAssertEqualObjects(missing, @[], @"a newer SDK added required MTLLibrary members");
+}
+
+#pragma mark Cache item
+
+/*! @abstract A cache item refuses to build without a device. */
+- (void)testCacheItemWithoutADeviceIsNil
+{
+	id<MTLDevice> noDevice = nil;
+	XCTAssertNil([[FxGripMTLDeviceCacheItem alloc] initWithDevice:noDevice
+													 pixelFormat:MTLPixelFormatRGBA16Float
+													 andPluginID:self.pluginID]);
+}
+
+/*! @abstract The item's default library and its library cache are memoized together. */
+- (void)testTheItemMemoizesItsDefaultLibraryAndCache
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+
+	id<MTLLibrary> library = item.defaultLibrary;
+	FxGripMTLLibraryCache *cache = item.defaultLibraryCache;
+
+	XCTAssertEqual(item.defaultLibrary, library);
+	XCTAssertEqual(item.defaultLibraryCache, cache);
+	// The test process has no main-bundle default library, so both resolve to nil there.
+	XCTAssertEqual(cache != nil, library != nil, @"the library cache exists exactly when the library does");
+}
+
+/*! @abstract The item reports the device's texture limits. */
+- (void)testTheItemReportsItsTextureLimits
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+	BOOL isEarlyAppleGPU = [self.device supportsFamily:MTLGPUFamilyApple1] || [self.device supportsFamily:MTLGPUFamilyApple2];
+	unsigned int expectedWidth = isEarlyAppleGPU ? 8192 : 16384;
+
+	XCTAssertEqual(item.max1DTextureWidth, expectedWidth);
+	XCTAssertEqual(item.max2DTextureWidth, expectedWidth);
+	XCTAssertEqual(item.maxCubeMapTextureWidth, expectedWidth);
+	XCTAssertEqual(item.max3DTextureWidth, 2048u);
+	XCTAssertEqual(item.maxTexturePixels, expectedWidth * expectedWidth);
+}
+
+/*! @abstract The item's depth texture matches the requested bounds. */
+- (void)testTheItemBuildsADepthTextureForBounds
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+
+	id<MTLTexture> texture = [item depthTexture:(FxRect){ .left = 4, .bottom = 6, .right = 36, .top = 22 }];
+
+	XCTAssertEqual(texture.width, 32u);
+	XCTAssertEqual(texture.height, 16u);
+	XCTAssertEqual(texture.pixelFormat, MTLPixelFormatDepth32Float);
+}
+
+#pragma mark Pipeline state variants
+
+/*! @abstract The shader-name convenience accessors resolve through the item's own default library, which the test process lacks. */
+- (void)testTheShaderNameAccessorsUseTheItemsDefaultLibrary
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+	XCTAssertNil(item.defaultLibraryCache, @"the test process has no main-bundle default library");
+
+	XCTAssertNil([item pipelineStateWithVertexShader:@"fxGripOSCVertexShader" fragmentShader:@"fxGripOSCFragmentShader"]);
+	XCTAssertNil([item pipelineStateWithVertexShader:@"fxGripOSCVertexShader"
+									  fragmentShader:@"fxGripOSCFragmentShader"
+									  constantValues:MTLFunctionConstantValues.new]);
+	XCTAssertNil([item pipelineStateWithVertexShader:@"fxGripOSCVertexShader"
+									  fragmentShader:@"fxGripOSCFragmentShader"
+									  constantValues:nil
+								   specializedFormat:@"%@_srgb"]);
+	XCTAssertEqual(item.pipelineStates.count, 0u);
+}
+
+/*! @abstract A specialized format renames both functions, so the specialized pair caches apart from the plain pair. */
+- (void)testASpecializedFormatRenamesBothFunctions
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+	id<MTLLibrary> library = self.frameworkLibrary;
+
+	id<MTLRenderPipelineState> specialized = [item pipelineStateWithLibrary:library
+															  vertexShader:@"fxGripOSCVertexShader"
+															fragmentShader:@"fxGripOSCFragmentShader"
+															constantValues:MTLFunctionConstantValues.new
+														 specializedFormat:@"%@_fxGripSpecialized"];
+	id<MTLRenderPipelineState> plain = [item pipelineStateWithLibrary:library
+														vertexShader:@"fxGripOSCVertexShader"
+													  fragmentShader:@"fxGripOSCFragmentShader"
+													  constantValues:nil];
+
+	XCTAssertNotNil(specialized);
+	XCTAssertNotNil(plain);
+	XCTAssertFalse(specialized == plain, @"the specialized names key their own cache entry");
+	XCTAssertEqual(item.pipelineStates.count, 2u);
+	XCTAssertNotNil(item.pipelineStates[@"fxGripOSCVertexShader_fxGripSpecialized:fxGripOSCFragmentShader_fxGripSpecialized"]);
+}
+
+/*! @abstract A pipeline state built from function descriptors is cached under the descriptor names. */
+- (void)testAPipelineStateFromDescriptorsIsCachedByName
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+	MTLFunctionDescriptor *vertexDescriptor = MTLFunctionDescriptor.functionDescriptor;
+	MTLFunctionDescriptor *fragmentDescriptor = MTLFunctionDescriptor.functionDescriptor;
+	vertexDescriptor.name = @"fxGripOSCVertexShader";
+	fragmentDescriptor.name = @"fxGripOSCFragmentShader";
+
+	id<MTLRenderPipelineState> viaDefaultLibrary = [item pipelineStateWithVertexDescriptor:vertexDescriptor
+																	   fragmentDescriptor:fragmentDescriptor];
+	id<MTLRenderPipelineState> first = [item pipelineStateWithLibrary:self.frameworkLibrary
+													vertexDescriptor:vertexDescriptor
+												  fragmentDescriptor:fragmentDescriptor];
+	id<MTLRenderPipelineState> second = [item pipelineStateWithLibrary:self.frameworkLibrary
+													 vertexDescriptor:vertexDescriptor
+												   fragmentDescriptor:fragmentDescriptor];
+
+	XCTAssertNil(viaDefaultLibrary, @"the test process has no main-bundle default library");
+	XCTAssertNotNil(first);
+	XCTAssertTrue(first == second);
+	XCTAssertEqual(item.pipelineStates.count, 1u);
+}
+
+/*! @abstract A descriptor with no function name yields no pipeline state. */
+- (void)testAPipelineStateFromANamelessDescriptorIsNil
+{
+	FxGripMTLDeviceCacheItem *item = self.item;
+	MTLFunctionDescriptor *named = MTLFunctionDescriptor.functionDescriptor;
+	named.name = @"fxGripOSCVertexShader";
+
+	XCTAssertNil([item pipelineStateWithLibrary:self.frameworkLibrary
+							   vertexDescriptor:MTLFunctionDescriptor.functionDescriptor
+							 fragmentDescriptor:named]);
+	XCTAssertNil([item pipelineStateWithLibrary:self.frameworkLibrary
+							   vertexDescriptor:named
+							 fragmentDescriptor:MTLFunctionDescriptor.functionDescriptor]);
+	XCTAssertEqual(item.pipelineStates.count, 0u);
+}
+
 
 @end

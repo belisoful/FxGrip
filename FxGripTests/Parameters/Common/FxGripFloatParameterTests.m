@@ -14,6 +14,7 @@
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripFloatParameter.h>
+#import <FxGrip/FxGripParameter.h>
 
 static const FxParameterId kFloatTestParameter = 21;
 
@@ -46,6 +47,12 @@ static const FxParameterId kFloatTestParameter = 21;
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kFloatTestParameter, type, @"Amount", extra);
 	return [parameterClass addParameter:config toEffect:(id)self.effect];
+}
+
+- (FxGripFloatParameter *)makeFloatParameter
+{
+	NSDictionary *config = FxGripParamClassTestConfig(kFloatTestParameter, kFxParameterType_Float, @"Amount", nil);
+	return [FxGripFloatParameter.alloc initWithDictionary:config effect:(id)self.effect];
 }
 
 #pragma mark Type identity
@@ -185,6 +192,46 @@ static const FxParameterId kFloatTestParameter = 21;
 	XCTAssertEqualObjects(self.call[@"id"], @((UInt32)kFxParameterId_None));
 	XCTAssertEqualObjects(self.call[@"default"], @0.0, @"the declared default is unreachable");
 	XCTAssertEqualObjects(self.call[@"flags"], @(kFxParameterFlag_INVALID));
+}
+
+
+#pragma mark Values
+
+/*! @abstract -valueAtTime: answers the staged host value and asks for its own parameter and time. */
+- (void)testFloatValueAtTimeReadsTheHostValue
+{
+	FxGripFloatParameter *parameter = [self makeFloatParameter];
+	self.effect.apiManager.paramGetAPIv6.floatValue = 0.75;
+
+	XCTAssertEqualWithAccuracy([parameter valueAtTime:FxGripParamClassTestTime(5, 30)], 0.75, 1e-12);
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"float");
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @5);
+	XCTAssertNil(parameter.error);
+}
+
+/*! @abstract A refused read records the retrieval error. */
+- (void)testFloatValueAtTimeReportsARefusedRead
+{
+	FxGripFloatParameter *parameter = [self makeFloatParameter];
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+
+	[parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertNotNil(parameter.error);
+	XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
+}
+
+/*! @abstract -setValue:atTime: writes the double to its own parameter at the given time. */
+- (void)testFloatSetValueWritesTheDoubleAtTheGivenTime
+{
+	FxGripFloatParameter *parameter = [self makeFloatParameter];
+
+	[parameter setValue:0.25 atTime:FxGripParamClassTestTime(6, 24)];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite,
+						  (@{@"accessor": @"float", @"id": @(kFloatTestParameter),
+							 @"value": @(0.25), @"timevalue": @(6)}));
 }
 
 @end

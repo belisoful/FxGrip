@@ -87,14 +87,16 @@
 	FxGripWatermarkConfiguration *configuration = [FxGripWatermarkConfiguration configurationWithText:@"WATERMARK"];
 	configuration.style = style;
 	FxGripWatermark *watermark = [FxGripWatermark watermarkWithConfiguration:configuration];
-	return [watermark watermarkImageForSize:size device:nil];
+	id<MTLDevice> noDevice = nil;
+	return [watermark watermarkImageForSize:size device:noDevice];
 }
 
 /*! @abstract A watermark with empty text produces no image. */
 - (void)testEmptyTextMakesNoImage
 {
 	FxGripWatermark *watermark = [FxGripWatermark watermarkWithConfiguration:[[FxGripWatermarkConfiguration alloc] init]];
-	XCTAssertNil([watermark watermarkImageForSize:CGSizeMake(640, 480) device:nil]);
+	id<MTLDevice> noDevice = nil;
+	XCTAssertNil([watermark watermarkImageForSize:CGSizeMake(640, 480) device:noDevice]);
 }
 
 /*! @abstract A zero size produces no image. */

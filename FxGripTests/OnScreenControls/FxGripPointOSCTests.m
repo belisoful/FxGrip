@@ -5,7 +5,7 @@
 	@date       2026-09-06
 	@header     FxGripPointOSCTests
 	@abstract   Verifies the FxGripPointOSC composite control, its parts, and the point parameter option parse.
-	@discussion Introduced in FxGrip 0.1.0. A stub OSC API maps canvas to object space by a uniform scale of 100 over 200 x 100 input bounds, and a stub setting API records every parameter write. The tests cover part composition from options, plain and pinned handle hit geometry, the drag pipeline with mouse-speed, axis, distance, and range constraints, the thick divider acting as a control, the hover-gated name label, and the point parameter parsing its options.
+	@discussion Introduced in FxGrip 0.1.0. A stub OSC API maps canvas to object space by a uniform scale of 100 over 200 x 100 input bounds, and a stub setting API records every parameter write. The tests cover part composition from options, plain and pinned handle hit geometry, the drag pipeline with mouse-speed, axis, distance, and range constraints, the thick divider acting as a control, the hover-gated name label, and the point parameter parsing its options. A live Metal render pass from FxGripOSCMetalTestPass draws the handle, the pin stem, the divider band, the background image, and the label, and the rendered pixels are read back and asserted.
 */
 
 #import <XCTest/XCTest.h>
@@ -13,6 +13,13 @@
 #import <FxGrip/FxGripPointOSC.h>
 #import <FxGrip/FxGripPointParameter.h>
 #import "FxGripParameterClassTestSupport.h"
+#import "FxGripOSCMetalTestSupport.h"
+
+/*! The background part's private image and texture resolution. */
+@interface FxGripOSCPointBackgroundPart (FxGripPointTesting)
+- (nullable NSImage *)image;
+- (nullable id<MTLTexture>)textureForDevice:(nonnull id<MTLDevice>)device;
+@end
 
 static const double kPointOSCCanvasPerObject = 100.0;
 static const FxParameterId kPointOSCParameter = 7;
@@ -25,9 +32,19 @@ static CMTime FxGripPointOSCTestTime(void)
 #pragma mark - API stubs
 
 @interface FxGripPointOSCTestOSCAPI : NSObject
+@property (nonatomic, assign) NSRect stagedInputBounds;
 @end
 
 @implementation FxGripPointOSCTestOSCAPI
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_stagedInputBounds = NSMakeRect(0, 0, 200, 100);
+	}
+	return self;
+}
 
 - (void)setCursor:(NSCursor *)newCursor
 {
@@ -54,7 +71,7 @@ static CMTime FxGripPointOSCTestTime(void)
 
 - (NSRect)inputBounds
 {
-	return NSMakeRect(0, 0, 200, 100);
+	return self.stagedInputBounds;
 }
 
 @end
@@ -545,6 +562,402 @@ static CMTime FxGripPointOSCTestTime(void)
 	XCTAssertNotNil(parameter.options);
 	XCTAssertEqual(parameter.options.constraint, FxGripPointConstraintVertical);
 	XCTAssertTrue(parameter.options.displayAsPin);
+}
+
+
+#pragma mark Drawing
+
+/*! Binds `name` to a live render pass, or skips the test when the machine has no Metal device. */
+#define FxGripPointBeginPass(name, canvasSizeValue) \
+	FxGripOSCMetalTestPass *name = [FxGripOSCMetalTestPass passWithCanvasSize:(canvasSizeValue)]; \
+	if (name == nil) { \
+		XCTSkip(@"no Metal device is available for the on-screen control render pass"); \
+	}
+
+/*! The greatest alpha within one pixel of a canvas point, so a rasterized line counts as ink. */
+- (float)inkNear:(CGPoint)canvasPoint inPass:(FxGripOSCMetalTestPass *)pass
+{
+	float best = 0.0f;
+	for (int dy = -1; dy <= 1; dy++) {
+		for (int dx = -1; dx <= 1; dx++) {
+			simd_float4 color = [pass colorAtCanvasPoint:CGPointMake(canvasPoint.x + dx, canvasPoint.y + dy)];
+			best = MAX(best, color.w);
+		}
+	}
+	return best;
+}
+
+/*! The sample with the greatest alpha within one pixel of a canvas point. */
+- (simd_float4)colorNear:(CGPoint)canvasPoint inPass:(FxGripOSCMetalTestPass *)pass
+{
+	simd_float4 best = (simd_float4){ 0.0f, 0.0f, 0.0f, 0.0f };
+	for (int dy = -1; dy <= 1; dy++) {
+		for (int dx = -1; dx <= 1; dx++) {
+			simd_float4 color = [pass colorAtCanvasPoint:CGPointMake(canvasPoint.x + dx, canvasPoint.y + dy)];
+			if (color.w > best.w) {
+				best = color;
+			}
+		}
+	}
+	return best;
+}
+
+/*! Draws one part into a live pass and finishes it. */
+- (void)drawPart:(FxGripOSCPart *)part inPass:(FxGripOSCMetalTestPass *)pass selected:(BOOL)selected
+{
+	[part drawSelected:selected
+			canvasSize:pass.canvasSize
+		commandEncoder:pass.commandEncoder
+				atTime:FxGripPointOSCTestTime()];
+	[pass finish];
+}
+
+/*! Adds one rich handle bound to the staged point, with the given configuration. */
+- (FxGripOSCRichPointHandlePart *)addRichHandleWith:(nullable NSDictionary *)config
+{
+	[self stagePoint:NSMakePoint(0.4, 0.4)];
+	FxGripOSCRichPointHandlePart *part = [FxGripOSCRichPointHandlePart partWithID:1
+																	 parameterID:kPointOSCParameter
+																		 options:[self optionsWith:config]];
+	[self.control addPart:part];
+	return part;
+}
+
+/*! @abstract The rich handle fills its square at the parameter's position, in the selected fill when active. */
+- (void)testTheRichHandleFillsItsSquareAtTheParameterPosition
+{
+	FxGripOSCRichPointHandlePart *part = [self addRichHandleWith:nil];
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:YES];
+	XCTAssertEqualWithAccuracy([pass colorAtCanvasPoint:CGPointMake(40.0, 40.0)].w,
+							   kFxGripOSCSelectedFillColor.w, 0.02);
+	XCTAssertEqualWithAccuracy([pass colorAtCanvasPoint:CGPointMake(60.0, 60.0)].w, 0.0, 0.01);
+}
+
+/*! @abstract A pinned handle strokes a stem from the parameter's position out to the offset handle. */
+- (void)testAPinnedHandleStrokesAStemToItsOffsetSquare
+{
+	FxGripOSCRichPointHandlePart *part = [self addRichHandleWith:@{
+		kFxGripPointKey_PinDistance : @20.0,
+		kFxGripPointKey_PinAngle : @90.0,
+	}];
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:NO];
+	XCTAssertGreaterThan([self inkNear:CGPointMake(40.0, 50.0) inPass:pass], 0.5f, @"the pin stem");
+	XCTAssertEqualWithAccuracy([pass colorAtCanvasPoint:CGPointMake(40.0, 60.0)].w,
+							   kFxGripOSCUnselectedFillColor.w, 0.02, @"the handle at the pin tip");
+}
+
+/*! @abstract A handle with a control color fills and outlines in that color. */
+- (void)testAHandleWithAControlColorDrawsInThatColor
+{
+	FxGripOSCRichPointHandlePart *part = [self addRichHandleWith:@{
+		kFxGripPointKey_ControlColor : (@[@1.0, @0.0, @0.0]),
+		kFxGripPointKey_ControlSize : @12.0,
+	}];
+	XCTAssertNotNil(part.options.controlColor, @"the configuration parsed a color");
+	XCTAssertEqual([part effectiveHandleRadius], 6.0, @"half the control size");
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:NO];
+	simd_float4 fill = [pass colorAtCanvasPoint:CGPointMake(40.0, 40.0)];
+	XCTAssertGreaterThan(fill.x, 0.9f, @"the red channel of the control color");
+	XCTAssertLessThan(fill.y, 0.1f);
+	XCTAssertEqualWithAccuracy(fill.w, 0.25, 0.02, @"at the unselected alpha");
+}
+
+/*! @abstract A handle whose parameter the host does not answer draws nothing, answers no hit, and refuses a drag. */
+- (void)testAHandleWithoutAParameterValueIsInert
+{
+	CMTime time = FxGripPointOSCTestTime();
+	FxGripOSCRichPointHandlePart *part = [FxGripOSCRichPointHandlePart partWithID:1
+																	 parameterID:97
+																		 options:[self optionsWith:nil]];
+	[self.control addPart:part];
+	CGPoint canvasPoint = CGPointZero;
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:NO];
+	XCTAssertEqualWithAccuracy([self inkNear:CGPointMake(40.0, 40.0) inPass:pass], 0.0, 0.01);
+	XCTAssertFalse([part handleCanvasPoint:&canvasPoint atTime:time]);
+	XCTAssertFalse([part hitTestObjectPoint:CGPointZero canvasPoint:CGPointZero atTime:time]);
+	XCTAssertFalse([part dragToObjectPoint:CGPointMake(0.5, 0.5) objectDelta:CGPointMake(0.1, 0.0)
+								 modifiers:0 atTime:time], @"a drag cannot begin without a start value");
+}
+
+/*! @abstract A drag that arrives without a mouse-down begins its own drag from the parameter's value. */
+- (void)testADragWithoutAMouseDownBeginsItsOwnDrag
+{
+	FxGripOSCRichPointHandlePart *part = [self addRichHandleWith:nil];
+
+	XCTAssertTrue([part dragToObjectPoint:CGPointMake(0.5, 0.5) objectDelta:CGPointMake(0.1, 0.2)
+								modifiers:0 atTime:FxGripPointOSCTestTime()]);
+	[self assertLastWriteX:0.5 y:0.6];
+}
+
+#pragma mark Divider drawing
+
+/*! Adds a divider bound to the staged point, with the given configuration. */
+- (FxGripOSCPointDividerPart *)addDividerWith:(nonnull NSDictionary *)config draggable:(BOOL)draggable
+{
+	[self stagePoint:NSMakePoint(0.4, 0.4)];
+	FxGripOSCPointDividerPart *part = [FxGripOSCPointDividerPart partWithID:1
+															   parameterID:kPointOSCParameter
+																   options:[self optionsWith:config]];
+	part.draggable = draggable;
+	[self.control addPart:part];
+	return part;
+}
+
+/*! @abstract A horizontally constrained point carries a vertical divider that spans the canvas height. */
+- (void)testAHorizontalConstraintDrawsAVerticalDivider
+{
+	FxGripOSCPointDividerPart *part = [self addDividerWith:@{
+		kFxGripPointKey_Constraint : @(FxGripPointConstraintHorizontal),
+	} draggable:NO];
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:NO];
+	XCTAssertGreaterThan([self inkNear:CGPointMake(40.0, 10.0) inPass:pass], 0.5f, @"low on the canvas");
+	XCTAssertGreaterThan([self inkNear:CGPointMake(40.0, 70.0) inPass:pass], 0.5f, @"and high on it");
+	XCTAssertEqualWithAccuracy([self inkNear:CGPointMake(20.0, 40.0) inPass:pass], 0.0, 0.01,
+							   @"a vertical divider has no horizontal reach");
+}
+
+/*! @abstract A vertically constrained point carries a horizontal divider, thickened when it is draggable. */
+- (void)testAVerticalConstraintDrawsAHorizontalDividerThickenedWhenDraggable
+{
+	FxGripOSCPointDividerPart *thin = [self addDividerWith:@{
+		kFxGripPointKey_Constraint : @(FxGripPointConstraintVertical),
+	} draggable:NO];
+
+	FxGripPointBeginPass(thinPass, CGSizeMake(80.0, 80.0));
+	[self drawPart:thin inPass:thinPass selected:NO];
+	XCTAssertGreaterThan([self inkNear:CGPointMake(10.0, 40.0) inPass:thinPass], 0.5f, @"the divider line");
+	XCTAssertEqualWithAccuracy([thinPass colorAtCanvasPoint:CGPointMake(10.0, 41.0)].w, 0.0, 0.01,
+							   @"a thin divider has no band");
+
+	FxGripOSCPointDividerPart *thick = [self addDividerWith:@{
+		kFxGripPointKey_Constraint : @(FxGripPointConstraintVertical),
+	} draggable:YES];
+	thick.partID = 2;
+
+	FxGripPointBeginPass(thickPass, CGSizeMake(80.0, 80.0));
+	[self drawPart:thick inPass:thickPass selected:YES];
+	XCTAssertEqualWithAccuracy([thickPass colorAtCanvasPoint:CGPointMake(10.0, 41.0)].w,
+							   kFxGripOSCSelectedFillColor.w, 0.02, @"the draggable band around the line");
+}
+
+/*! @abstract A divider with a control color strokes in that color. */
+- (void)testADividerWithAControlColorStrokesInThatColor
+{
+	FxGripOSCPointDividerPart *part = [self addDividerWith:@{
+		kFxGripPointKey_Constraint : @(FxGripPointConstraintHorizontal),
+		kFxGripPointKey_ControlColor : (@[@0.0, @1.0, @0.0]),
+	} draggable:NO];
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:NO];
+	simd_float4 line = [self colorNear:CGPointMake(40.0, 20.0) inPass:pass];
+	XCTAssertGreaterThan(line.y, 0.9f, @"the green channel of the control color");
+	XCTAssertLessThan(line.x, 0.1f);
+}
+
+/*! @abstract A divider whose parameter the host does not answer draws nothing and answers no hit. */
+- (void)testADividerWithoutAParameterValueIsInert
+{
+	FxGripOSCPointDividerPart *part = [FxGripOSCPointDividerPart partWithID:1
+															   parameterID:97
+																   options:[self optionsWith:@{
+		kFxGripPointKey_Constraint : @(FxGripPointConstraintHorizontal),
+	}]];
+	part.draggable = YES;
+	[self.control addPart:part];
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:NO];
+	XCTAssertEqualWithAccuracy([self inkNear:CGPointMake(40.0, 40.0) inPass:pass], 0.0, 0.01);
+	XCTAssertFalse([part hitTestObjectPoint:CGPointZero canvasPoint:CGPointMake(40.0, 40.0)
+									 atTime:FxGripPointOSCTestTime()]);
+}
+
+#pragma mark Background image
+
+/*! A PNG file in the temporary directory, for the file-path image branch. */
+- (NSString *)writeTemporaryImageFile
+{
+	NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+																	pixelsWide:8
+																	pixelsHigh:8
+																 bitsPerSample:8
+															   samplesPerPixel:4
+																	  hasAlpha:YES
+																	  isPlanar:NO
+																colorSpaceName:NSDeviceRGBColorSpace
+																   bytesPerRow:0
+																  bitsPerPixel:0];
+	memset(rep.bitmapData, 0xFF, (size_t)(rep.bytesPerRow * rep.pixelsHigh));
+	NSData *png = [rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+	NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:@"FxGripPointOSCTestImage.png"];
+	[png writeToFile:path atomically:YES];
+	return path;
+}
+
+/*! @abstract The background image resolves by AppKit name and by file path, and stays nil without one. */
+- (void)testTheBackgroundImageResolvesByNameAndByPath
+{
+	FxGripOSCPointBackgroundPart *named = [FxGripOSCPointBackgroundPart partWithID:1
+																		  options:[self optionsWith:@{
+		kFxGripPointKey_BackgroundImage : NSImageNameCaution,
+	}]];
+	XCTAssertNotNil([named image], @"an AppKit image name resolves");
+
+	FxGripOSCPointBackgroundPart *fromPath = [FxGripOSCPointBackgroundPart partWithID:2
+																			 options:[self optionsWith:@{
+		kFxGripPointKey_BackgroundImage : [self writeTemporaryImageFile],
+	}]];
+	XCTAssertNotNil([fromPath image], @"a file path resolves");
+
+	FxGripOSCPointBackgroundPart *none = [FxGripOSCPointBackgroundPart partWithID:3
+																		 options:[self optionsWith:nil]];
+	XCTAssertNil([none image], @"no name, no image");
+}
+
+/*! @abstract The background texture is built once per device, and a missing image builds none. */
+- (void)testTheBackgroundTextureIsBuiltOncePerDevice
+{
+	id<MTLDevice> device = FxGripOSCMetalTestPass.sharedDevice;
+	if (device == nil) {
+		XCTSkip(@"no Metal device is available");
+	}
+	FxGripOSCPointBackgroundPart *part = [FxGripOSCPointBackgroundPart partWithID:1
+																		 options:[self optionsWith:@{
+		kFxGripPointKey_BackgroundImage : [self writeTemporaryImageFile],
+	}]];
+	[self.control addPart:part];
+
+	id<MTLTexture> texture = [part textureForDevice:device];
+	XCTAssertNotNil(texture);
+	XCTAssertTrue([part textureForDevice:device] == texture, @"the second call returns the cached texture");
+
+	FxGripOSCPointBackgroundPart *none = [FxGripOSCPointBackgroundPart partWithID:2
+																		 options:[self optionsWith:nil]];
+	[self.control addPart:none];
+	XCTAssertNil([none textureForDevice:device], @"no image, no texture");
+}
+
+/*! @abstract A background part with no image draws nothing. */
+- (void)testABackgroundPartWithNoImageDrawsNothing
+{
+	FxGripOSCPointBackgroundPart *part = [FxGripOSCPointBackgroundPart partWithID:1
+																		 options:[self optionsWith:nil]];
+	[self.control addPart:part];
+
+	FxGripPointBeginPass(pass, CGSizeMake(80.0, 80.0));
+	[self drawPart:part inPass:pass selected:NO];
+	XCTAssertEqualWithAccuracy([self inkNear:CGPointMake(40.0, 40.0) inPass:pass], 0.0, 0.01);
+}
+
+/*! @abstract The background image draws as a textured quad centered on its object point. */
+- (void)testTheBackgroundImageDrawsItsTexturedQuad
+{
+	FxImageTile *tile = [FxGripOSCMetalTestPass destinationTileWithCanvasSize:CGSizeMake(64.0, 64.0)];
+	if (tile == nil) {
+		XCTSkip(@"no Metal device is available");
+	}
+	self.manager.onScreenControlAPIv4.stagedInputBounds = NSMakeRect(0.0, 0.0, 100.0, 100.0);
+	FxGripOSCPointBackgroundPart *part = [FxGripOSCPointBackgroundPart partWithID:1
+																		 options:[self optionsWith:@{
+		kFxGripPointKey_BackgroundImage : [self writeTemporaryImageFile],
+		kFxGripPointKey_BackgroundImageSize : @0.2,
+		kFxGripPointKey_BackgroundImageX : @0.32,
+		kFxGripPointKey_BackgroundImageY : @0.32,
+	}]];
+	[self.control addPart:part];
+
+	[self.control drawOSCWithWidth:64 height:64 activePart:0
+				  destinationImage:tile atTime:FxGripPointOSCTestTime()];
+
+	id<MTLTexture> texture = [tile metalTextureForDevice:FxGripOSCMetalTestPass.sharedDevice];
+	NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:5.0];
+	while ([FxGripOSCMetalTestPass colorInTexture:texture atCanvasPoint:CGPointMake(32.0, 32.0)].w == 0.0f
+		   && deadline.timeIntervalSinceNow > 0.0) {
+		[NSThread sleepForTimeInterval:0.001];
+	}
+	XCTAssertGreaterThan([FxGripOSCMetalTestPass colorInTexture:texture
+												  atCanvasPoint:CGPointMake(32.0, 32.0)].w, 0.1f,
+						 @"the image covers its object point");
+	XCTAssertEqualWithAccuracy([FxGripOSCMetalTestPass colorInTexture:texture
+														atCanvasPoint:CGPointMake(58.0, 32.0)].w, 0.0, 0.01,
+							   @"and nothing beyond its quad");
+}
+
+#pragma mark Name label
+
+/*! @abstract A hover-gated label draws its panel only while its handle is hovered. */
+- (void)testAHoverGatedLabelDrawsOnlyWhileHovered
+{
+	[self stagePoint:NSMakePoint(0.2, 0.6)];
+	FxGripOSCPointLabelPart *label = [[FxGripOSCPointLabelPart alloc] initWithPartID:1];
+	label.text = @"Center";
+	label.anchorParameterID = kPointOSCParameter;
+	label.nameOnlyWhenAbove = YES;
+	[self.control addPart:label];
+
+	FxGripPointBeginPass(hiddenPass, CGSizeMake(80.0, 80.0));
+	[self drawPart:label inPass:hiddenPass selected:NO];
+	XCTAssertEqualWithAccuracy([self inkNear:CGPointMake(24.0, 56.0) inPass:hiddenPass], 0.0, 0.01,
+							   @"an unhovered gated label draws nothing");
+
+	label.hovered = YES;
+	XCTAssertTrue(label.visible);
+	FxGripPointBeginPass(shownPass, CGSizeMake(80.0, 80.0));
+	[self drawPart:label inPass:shownPass selected:NO];
+	XCTAssertGreaterThan([shownPass colorAtCanvasPoint:CGPointMake(24.0, 56.0)].w, 0.5f,
+						 @"the hovered label draws its panel");
+}
+
+#pragma mark Constraint edges
+
+/*! @abstract Shift locks a distance drag to the vertical axis when the vertical travel dominates. */
+- (void)testShiftLocksADistanceDragToTheVerticalAxisWhenItDominates
+{
+	[self stagePoint:NSMakePoint(0.4, 0.4)];
+	[self.control addPointParameter:kPointOSCParameter name:nil options:[self optionsWith:@{
+		kFxGripPointKey_Constraint : @(FxGripPointConstraintDistance),
+		kFxGripPointKey_DistanceFromX : @0.4,
+		kFxGripPointKey_DistanceFromY : @0.4,
+		kFxGripPointKey_MaxDistance : @1.0,
+		kFxGripPointKey_DistanceShiftOneAxis : @YES,
+	}]];
+
+	[self mouseDownAtCanvasX:40 y:40 activePart:1];
+	// The pointer travels 2 px right and 20 px up: in the 200 x 100 input frame that is
+	// 4 input pixels across against 20 up, so the vertical axis wins.
+	[self dragToCanvasX:42 y:60 activePart:1 modifiers:kFxModifierKey_SHIFT];
+
+	[self assertLastWriteX:0.4 y:0.6];
+}
+
+/*! @abstract Without a usable input frame the distance clamp falls back to object units. */
+- (void)testTheDistanceClampFallsBackToObjectUnitsWithoutAnInputFrame
+{
+	self.manager.onScreenControlAPIv4.stagedInputBounds = NSZeroRect;
+	[self stagePoint:NSMakePoint(0.4, 0.4)];
+	[self.control addPointParameter:kPointOSCParameter name:nil options:[self optionsWith:@{
+		kFxGripPointKey_Constraint : @(FxGripPointConstraintDistance),
+		kFxGripPointKey_DistanceFromX : @0.4,
+		kFxGripPointKey_DistanceFromY : @0.4,
+		kFxGripPointKey_MaxDistance : @0.1,
+	}]];
+
+	[self mouseDownAtCanvasX:40 y:40 activePart:1];
+	// A pure horizontal travel of 0.4 object units clamps to the 0.1 unit radius.
+	[self dragToCanvasX:80 y:40 activePart:1 modifiers:0];
+
+	[self assertLastWriteX:0.5 y:0.4];
 }
 
 @end

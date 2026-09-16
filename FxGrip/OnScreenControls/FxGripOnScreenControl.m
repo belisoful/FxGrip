@@ -583,7 +583,9 @@ static const CGFloat kFxGripOSCDoubleClickSlop = 4.0;
 		CGPointMake(canvasSize.width, canvasSize.height),
 		CGPointMake(0.0, canvasSize.height),
 	};
-	vector_float2 texCoords[4] = { { 1.0, 1.0 }, { 0.0, 1.0 }, { 1.0, 0.0 }, { 0.0, 0.0 } };
+	// The texture is a render target drawn through FxGripOSCMetalPointFromCanvasPoint, so canvas
+	// row 0 is already texture row 0. This differs from the bitmap convention of encodeTexturedQuadLL:.
+	vector_float2 texCoords[4] = { { 1.0, 0.0 }, { 0.0, 0.0 }, { 1.0, 1.0 }, { 0.0, 1.0 } };
 	FxGripOSCTexturedVertex vertices[4];
 	for (NSUInteger index = 0; index < 4; index++) {
 		CGPoint metalPoint = FxGripOSCMetalPointFromCanvasPoint(corners[index], canvasSize);

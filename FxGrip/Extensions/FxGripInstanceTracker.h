@@ -32,7 +32,7 @@
 */
 @interface FxGripInstanceTracker : FxGripExtension
 
-- (nullable id)init;
+- (nonnull instancetype)init;
 
 /*! The live sibling instances of this effect's plugin UUID, in registry order. */
 @property (readonly, nonnull) NSArray<id<FxGripTileableEffect>> *instances;

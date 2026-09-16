@@ -399,9 +399,11 @@ static void FxGripParseFlagSpec(id spec, FxParameterFlags *add, FxParameterFlags
 }
 
 /*!
-	Returns the Menu entry name at an index, preferring the live menu recorded by
-	FxGripParameterData over the declared configuration, so entries appended at run time
-	resolve. Toggle parameters carry no entries and return nil.
+	Returns the name of the Menu entry a menu value selects, preferring the live menu recorded
+	by FxGripParameterData over the declared configuration, so entries appended at run time
+	resolve. A plain popup's value is the entry's position. A tagged popup's value is the
+	entry's tag, as FxParameterCreationAPI_v6 documents, so its entries are matched by tag.
+	Toggle parameters carry no entries and return nil.
 */
 - (NSString *_Nullable)menuEntryNameForParameter:(FxParameterId)parameterID
 								   configuration:(NSDictionary *_Nullable)configuration
@@ -410,12 +412,22 @@ static void FxGripParseFlagSpec(id spec, FxParameterFlags *add, FxParameterFlags
 	if (index < 0) {
 		return nil;
 	}
-	id<FxGripEffectHost> effect = self.effect;
 	NSArray *entries = [self.hostParameterData storedMenus:parameterID];
 	if (![entries isKindOfClass:NSArray.class]) {
 		entries = configuration[kFxParameterProperty_MenuItems];
 	}
-	if (![entries isKindOfClass:NSArray.class] || (NSUInteger)index >= entries.count) {
+	if (![entries isKindOfClass:NSArray.class]) {
+		return nil;
+	}
+	if ([entries.firstObject isKindOfClass:FxTaggedMenuEntry.class]) {
+		for (FxTaggedMenuEntry *entry in entries) {
+			if ([entry isKindOfClass:FxTaggedMenuEntry.class] && entry.tag == (NSUInteger)index) {
+				return entry.menuItemName;
+			}
+		}
+		return nil;
+	}
+	if ((NSUInteger)index >= entries.count) {
 		return nil;
 	}
 	NSString *name = entries[index];

@@ -105,7 +105,8 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	uint8_t pixels[64] = {0};
 	XCTAssertNil([FxGripLiveFrame frameWithBytes:pixels rowBytes:16 width:0 height:2 pixelFormat:MTLPixelFormatRGBA8Unorm]);
 	XCTAssertNil([FxGripLiveFrame frameWithBytes:pixels rowBytes:16 width:4 height:0 pixelFormat:MTLPixelFormatRGBA8Unorm]);
-	XCTAssertNil([FxGripLiveFrame frameWithBytes:NULL rowBytes:16 width:4 height:2 pixelFormat:MTLPixelFormatRGBA8Unorm]);
+	const void *noPixels = NULL;
+	XCTAssertNil([FxGripLiveFrame frameWithBytes:noPixels rowBytes:16 width:4 height:2 pixelFormat:MTLPixelFormatRGBA8Unorm]);
 	XCTAssertNil([FxGripLiveFrame frameWithBytes:pixels rowBytes:8 width:4 height:2 pixelFormat:MTLPixelFormatRGBA8Unorm]);
 }
 
@@ -308,7 +309,8 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 /*! @abstract Building a frame from a NULL CGImage returns nil. */
 - (void)testANullCGImageMakesNoFrame
 {
-	XCTAssertNil([FxGripLiveFrame frameWithCGImage:NULL]);
+	CGImageRef noImage = NULL;
+	XCTAssertNil([FxGripLiveFrame frameWithCGImage:noImage]);
 }
 
 #pragma mark Image buffer
@@ -422,6 +424,78 @@ static FxGripLiveFrameTestImageSize FxGripLiveFrameTestSymbol(const char *name)
 	id<MTLTexture> texture = [device newTextureWithDescriptor:descriptor];
 
 	XCTAssertNil([FxGripLiveFrame frameWithTexture:texture]);
+}
+
+
+#pragma mark Image buffer formats
+
+/*! @abstract Every image-buffer format that maps directly to a Metal format is carried through as is. */
+- (void)testEveryDirectlyMappedBufferFormatIsCarriedThrough
+{
+	struct { FxGripPixelFormat buffer; MTLPixelFormat metal; NSUInteger bytesPerPixel; } cases[] = {
+		{ FxGripPixelFormatRGBA8U,  MTLPixelFormatRGBA8Unorm,  4 },
+		{ FxGripPixelFormatRGBA16U, MTLPixelFormatRGBA16Unorm, 8 },
+		{ FxGripPixelFormatRGBA16F, MTLPixelFormatRGBA16Float, 8 },
+		{ FxGripPixelFormatRGBA32F, MTLPixelFormatRGBA32Float, 16 },
+		{ FxGripPixelFormatGray8U,  MTLPixelFormatR8Unorm,     1 },
+		{ FxGripPixelFormatGray16F, MTLPixelFormatR16Float,    2 },
+		{ FxGripPixelFormatGray32F, MTLPixelFormatR32Float,    4 },
+	};
+	for (NSUInteger index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
+		NSUInteger rowBytes = 2 * cases[index].bytesPerPixel;
+		NSMutableData *pixels = [NSMutableData dataWithLength:rowBytes * 2];
+		memset(pixels.mutableBytes, 0x20, pixels.length);
+		FxGripImageBuffer *buffer = [FxGripImageBuffer.alloc initWithBytes:pixels.bytes
+																 rowBytes:rowBytes
+																	width:2
+																   height:2
+																   format:cases[index].buffer
+															  compression:FxGripCompressionNone];
+		XCTAssertNotNil(buffer, @"format %d", (int)cases[index].buffer);
+
+		FxGripLiveFrame *frame = [FxGripLiveFrame frameWithImageBuffer:buffer];
+
+		XCTAssertEqual(frame.pixelFormat, cases[index].metal, @"format %d", (int)cases[index].buffer);
+		XCTAssertEqualObjects(frame.pixels, pixels, @"format %d", (int)cases[index].buffer);
+	}
+}
+
+#pragma mark Half decoding
+
+/*! @abstract The half decoder handles subnormal, infinite, and zero halves when a frame builds its CGImage. */
+- (void)testTheHalfDecoderHandlesSubnormalAndInfiniteHalves
+{
+	// One pixel per case: a subnormal half (0x0001), positive infinity (0x7C00), zero, and one.
+	uint16_t pixels[4 * 4] = {
+		0x0001, 0x0001, 0x0001, 0x3C00,
+		0x7C00, 0x7C00, 0x7C00, 0x3C00,
+		0x0000, 0x0000, 0x0000, 0x3C00,
+		0x3C00, 0x3C00, 0x3C00, 0x3C00,
+	};
+	FxGripLiveFrame *frame = [FxGripLiveFrame frameWithBytes:pixels rowBytes:8 width:1 height:4
+												 pixelFormat:MTLPixelFormatRGBA16Float];
+	XCTAssertNotNil(frame);
+
+	CGImageRef image = frame.CGImage;
+
+	XCTAssertTrue(image != NULL);
+	XCTAssertEqual(CGImageGetWidth(image), (size_t)1);
+	XCTAssertEqual(CGImageGetHeight(image), (size_t)4);
+}
+
+#pragma mark Description
+
+/*! @abstract A frame describes itself with its class, address, and pixel dimensions. */
+- (void)testAFrameDescribesItselfWithItsSize
+{
+	uint8_t pixels[4 * 3 * 4] = { 0 };
+	FxGripLiveFrame *frame = [FxGripLiveFrame frameWithBytes:pixels rowBytes:16 width:4 height:3
+												 pixelFormat:MTLPixelFormatRGBA8Unorm];
+
+	NSString *description = frame.description;
+
+	XCTAssertTrue([description containsString:@"FxGripLiveFrame"]);
+	XCTAssertTrue([description containsString:frame.sizeDescription]);
 }
 
 @end

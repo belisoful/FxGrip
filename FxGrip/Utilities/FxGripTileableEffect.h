@@ -275,7 +275,7 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 - (nullable instancetype)initWithAPIManager:(nullable id<PROAPIAccessing>)apiManager NS_DESIGNATED_INITIALIZER;
 
 /*! Constructs an effect with no host, by delegating to `initWithAPIManager:` with a nil manager. */
-- (nullable instancetype)init;
+- (nonnull instancetype)init;
 
 /*! The host-API accessor the effect uses to reach FxPlug host services. */
 @property (readonly, nonnull) id<FxGripAPIAccessing> apiManager;

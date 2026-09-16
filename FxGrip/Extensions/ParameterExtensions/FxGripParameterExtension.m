@@ -52,7 +52,7 @@
 
 @synthesize customView;
 
-- (instancetype _Nullable)init
+- (nonnull instancetype)init
 {
 	self = [super init];
 	if (self) {

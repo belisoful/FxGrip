@@ -17,6 +17,8 @@
 #import "FxGrip/FxGripParameterFlags.h"
 #import "FxGrip/FxGripMetaManager.h"
 #import "FxGrip/FxGripAPINotifications.h"
+#import "FxGrip/FxGripExtension.h"
+#import "FxGrip/FxGripTileableEffect.h"
 #import "FxGrip/FxGripTileableEffect+Notifications.h"
 #import "FxGrip/FxGripParameterTagsAPI_v1.h"
 #import "FxGrip/FxGripMetaAPI_v1.h"
@@ -36,6 +38,16 @@
 - (void)extParameterChanged:(nonnull NSNotification *)notification;
 - (void)extFlush:(nonnull NSNotification *)notification;
 - (NSInteger)ncPriority:(nullable NSNotificationName)aName;
+- (nullable id<NSSecureCoding, NSCopying>)valueAtTime:(CMTime)renderTime;
+- (nullable id)parameterForDictionary:(nonnull NSDictionary *)data;
+@end
+
+// The effect-side meta accessors live in the same unreachable header; the implementation
+// comes from the linked framework.
+@interface FxGripTileableEffect (FxGripMetaTestHooks)
+- (nullable FxGripMetaManager *)meta;
+- (BOOL)hasMeta;
+- (nonnull id)newMetaExtension;
 @end
 
 static const FxParameterId kMetaTestParamA = 10;
@@ -50,14 +62,13 @@ static NSNotificationCenter *FxGripMetaTestMakePriorityCenter(void)
 }
 
 /*!
-	The test bundle does not link FxPlug.framework, and FxPlug is weak-linked by FxGrip, so
-	the constant is read from the loaded images. Outside an FxPlug host the symbol is absent
-	and FxGripErrors.h substitutes FxGripPlugErrorDomain.
+	FxGripErrors.h selects the host's FxPlugErrorDomain only inside an FxPlug host, where
+	FxBaseEffect exists. The FxPlugStub test framework supplies the symbol without the host,
+	so the FxGrip constant applies; the helper reads the same macro the framework uses.
 */
 static NSString *FxGripMetaTestExpectedErrorDomain(void)
 {
-	NSString * __unsafe_unretained *domain = (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "FxPlugErrorDomain");
-	return domain ? *domain : FxGripPlugErrorDomainConstant;
+	return FxGripPlugErrorDomain;
 }
 
 /*!
@@ -905,6 +916,166 @@ static NSString * const kFxMetaTestResetEvent = @"reset";
 	XCTAssertFalse([(id)self.dynamicAPI respondsToSelector:removeMeta]);
 	XCTAssertFalse([(id)self.tagsAPI respondsToSelector:metaCount]);
 	XCTAssertFalse([(id)self.tagsAPI respondsToSelector:removeMeta]);
+}
+
+@end
+
+#pragma mark - Notification priority, encoded value, and the effect accessors
+
+/*! A plugin dictionary the NSDictionary(FxGripTileableEffect) plugin accessors accept. */
+static NSDictionary *FxGripMetaTestPluginProperties(BOOL manageMeta)
+{
+	return @{
+		kProPlugPlugIn_UuidProperty: @"55555555-5555-5555-5555-555555555555",
+		kProPlugPlugIn_ClassNameProperty: @"FxGripMetaTestPlugin",
+		kProPlugPlugIn_GroupUUIDProperty: @"66666666-6666-6666-6666-666666666666",
+		kProPlugPlugIn_DisplayNameProperty: @"Meta Test Plugin",
+		kProPlugPlugInX_ManagedMetaProperty: @(manageMeta)
+	};
+}
+
+/*! A real effect whose plugin properties keep meta management on. */
+@interface FxGripMetaTestHostEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripMetaTestHostEffect
+- (NSDictionary<NSString *, id> *)pluginProperties { return FxGripMetaTestPluginProperties(YES); }
+@end
+
+/*! A real effect whose plugin properties opt out of meta management. */
+@interface FxGripMetaTestOptOutEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripMetaTestOptOutEffect
+- (NSDictionary<NSString *, id> *)pluginProperties { return FxGripMetaTestPluginProperties(NO); }
+@end
+
+@interface FxGripMetaOrderingTests : XCTestCase
+@property (nonatomic, strong) FxGripMeta *extension;
+@property (nonatomic, strong) FxGripMetaTestStubEffect *effect;
+@end
+
+@implementation FxGripMetaOrderingTests
+
+- (void)setUp
+{
+	[super setUp];
+	self.extension = [FxGripMeta.alloc init];
+	self.effect = [FxGripMetaTestStubEffect.alloc init];
+	XCTAssertTrue([self.extension extLoadWithEffect:(id)self.effect]);
+}
+
+- (void)tearDown
+{
+	self.extension = nil;
+	self.effect = nil;
+	[super tearDown];
+}
+
+/*! @abstract The extension seeds after every other add observer, loads early, and flushes last. */
+- (void)testTheNotificationPrioritiesOrderSeedingLoadingAndFlushing
+{
+	XCTAssertEqual([self.extension ncPriority:FxGripNotifyAPI_ParameterAddName], (NSInteger)-20,
+				   @"seeding runs after the other extensions have processed the add");
+	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectAddedToDocumentName], (NSInteger)-18);
+	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectParameterChangedName], (NSInteger)-10,
+				   @"the change pass runs after the per-parameter start handlers");
+	XCTAssertEqual([self.extension ncPriority:FxGripTileableEffectFlushName], (NSInteger)-14);
+	XCTAssertEqual([self.extension ncPriority:@"SomeUnrelatedNotification"], FxGripExtensionDefaultPriority);
+}
+
+/*! @abstract The encoded parameter value is the extension's meta manager, and nil before one exists. */
+- (void)testTheEncodedValueIsTheMetaManager
+{
+	CMTime time = (CMTime){.value = 0, .timescale = 1, .flags = kCMTimeFlags_Valid};
+
+	XCTAssertNil([self.extension valueAtTime:time], @"no manager exists until a parameter is seeded");
+
+	[self.extension extAPIParameterAdd:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterAddName,
+																		   kMetaTestParamA,
+																		   self.effect)];
+
+	XCTAssertEqual((id)[self.extension valueAtTime:time], (id)self.extension.manager);
+	XCTAssertNotNil([self.extension valueAtTime:time]);
+}
+
+/*! @abstract A remove for a parameter the manager never tracked changes nothing. */
+- (void)testARemoveForAnUntrackedParameterChangesNothing
+{
+	[self.extension extAPIParameterRemove:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterRemoveName,
+																			   kMetaTestParamA,
+																			   self.effect)];
+	XCTAssertNil(self.extension.manager, @"a remove never creates a manager");
+
+	[self.extension extAPIParameterAdd:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterAddName,
+																		   kMetaTestParamA,
+																		   self.effect)];
+	XCTAssertTrue([self.extension.manager parameterExists:kMetaTestParamA]);
+
+	[self.extension extAPIParameterRemove:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterRemoveName,
+																			   kMetaTestParamB,
+																			   self.effect)];
+	XCTAssertTrue([self.extension.manager parameterExists:kMetaTestParamA],
+				  @"removing an untracked parameter leaves the tracked one alone");
+}
+
+/*! @abstract A live instance writes the meta record as each parameter is added and removed. */
+- (void)testALiveInstanceWritesTheRecordOnEachAddAndRemove
+{
+	[self.extension parameterForDictionary:@{kFxParameterProperty_Id: @(kFxParameterId_InstanceMeta),
+											 kFxParameterProperty_Type: kFxParameterType_Custom,
+											 kFxParameterProperty_Name: @"Instance Meta"}];
+	[self.extension extAddedToDocument:[NSNotification notificationWithName:FxGripTileableEffectAddedToDocumentName
+																	 object:self.effect
+																   userInfo:nil]];
+	[self.extension.manager setEffect:(id)self.effect];
+	FxGripMetaTestStubSetAPI *setAPI = self.effect.apiManager.paramSetAPIv5;
+
+	[self.extension extAPIParameterAdd:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterAddName,
+																		   kMetaTestParamA,
+																		   self.effect)];
+	XCTAssertEqual(setAPI.values.count, (NSUInteger)1, @"a live instance persists the seeded record at once");
+
+	[self.extension extAPIParameterRemove:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterRemoveName,
+																			   kMetaTestParamA,
+																			   self.effect)];
+	XCTAssertEqual(setAPI.values.count, (NSUInteger)2, @"the removal is persisted too");
+	XCTAssertFalse([self.extension.manager parameterExists:kMetaTestParamA]);
+}
+
+/*! @abstract A remove carrying no parameter ID is ignored. */
+- (void)testARemoveWithoutAParameterIDIsIgnored
+{
+	[self.extension extAPIParameterAdd:FxGripMetaTestParameterNotification(FxGripNotifyAPI_ParameterAddName,
+																		   kMetaTestParamA,
+																		   self.effect)];
+
+	XCTAssertNoThrow([self.extension extAPIParameterRemove:
+					  [NSNotification notificationWithName:FxGripNotifyAPI_ParameterRemoveName
+													object:self.effect
+												  userInfo:@{}]]);
+	XCTAssertTrue([self.extension.manager parameterExists:kMetaTestParamA]);
+}
+
+/*! @abstract An effect whose plugin properties manage meta installs the extension and vends its manager. */
+- (void)testAnEffectThatManagesMetaVendsItsManager
+{
+	FxGripMetaTestHostEffect *effect = [FxGripMetaTestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertTrue(effect.hasMeta);
+	XCTAssertTrue([[effect newMetaExtension] isKindOfClass:NSClassFromString(@"FxGripMeta")]);
+	// The manager is created on the first seeded parameter, so the accessor reports the
+	// extension's manager, which is nil until then.
+	XCTAssertNil(effect.meta);
+}
+
+/*! @abstract An effect that opts out of meta management installs no extension and vends no manager. */
+- (void)testAnEffectThatOptsOutOfMetaVendsNoManager
+{
+	FxGripMetaTestOptOutEffect *effect = [FxGripMetaTestOptOutEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertFalse(effect.hasMeta);
+	XCTAssertNil(effect.meta);
 }
 
 @end

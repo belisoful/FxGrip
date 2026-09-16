@@ -14,6 +14,8 @@
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripColorParameter.h>
+#import <FxGrip/FxGripParameter.h>
+#import <FxGrip/NSCoder+FxPlug.h>
 
 static const FxParameterId kColorTestParameter = 31;
 static const double kColorTestGamma = 2.2;
@@ -256,6 +258,73 @@ static const double kColorTestGamma = 2.2;
 	parameter.flagDontRemapColors = YES;
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls.firstObject[@"flags"],
 						  @(kFxParameterFlag_DONT_REMAP_COLORS));
+}
+
+
+/*! @abstract A refused read answers opaque black and records the retrieval error. */
+- (void)testColorValueAtTimeReportsARefusedRead
+{
+	FxGripColorParameter *parameter = [self makeColorParameter];
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+
+	FxGripColor color = [parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertEqualWithAccuracy(color.r, 0.0, 1e-12);
+	XCTAssertEqualWithAccuracy(color.a, 1.0, 1e-12);
+	XCTAssertNotNil(parameter.error);
+	XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
+}
+
+/*! @abstract Clearing the do-not-remap flag drops only that bit from the parameter flags. */
+- (void)testClearingDontRemapColorsDropsOnlyThatBit
+{
+	FxGripColorParameter *parameter = [self makeColorParameter];
+	self.effect.apiManager.paramGetAPIv6.flags = kFxParameterFlag_HIDDEN | kFxParameterFlag_DONT_REMAP_COLORS;
+	XCTAssertTrue(parameter.flagDontRemapColors);
+
+	parameter.flagDontRemapColors = NO;
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls.firstObject[@"flags"],
+						  @(kFxParameterFlag_HIDDEN), @"only the remap bit is dropped");
+}
+
+#pragma mark Plugin state
+
+/*! @abstract A plain coder, which is no plugin-state encoder, reads no color from the host. */
+- (void)testColorEncodingWithAPlainCoderReadsNoValue
+{
+	FxGripColorParameter *parameter = [self makeColorParameter];
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+
+	[parameter encodeWithCoder:archiver];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
+}
+
+/*! @abstract A plugin-state coder reads the color at its own render time and encodes every component. */
+- (void)testColorEncodingWithAPluginStateCoderRoundTripsEveryComponent
+{
+	FxGripColorParameter *parameter = [self makeColorParameter];
+	self.effect.apiManager.paramGetAPIv6.red = 0.2;
+	self.effect.apiManager.paramGetAPIv6.green = 0.4;
+	self.effect.apiManager.paramGetAPIv6.blue = 0.6;
+	self.effect.apiManager.paramGetAPIv6.alpha = 0.8;
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = FxGripParamClassTestTime(6, 24);
+
+	[parameter encodeWithCoder:archiver];
+	[archiver finishEncoding];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @6);
+
+	NSKeyedUnarchiver *unarchiver = [NSKeyedUnarchiver.alloc initForReadingFromData:archiver.encodedData error:NULL];
+	unarchiver.requiresSecureCoding = NO;
+	NSUInteger length = 0;
+	const FxGripColor *decoded = (const FxGripColor *)[unarchiver decodeBytesAtIndex:kColorTestParameter
+																	 returnedLength:&length];
+	XCTAssertEqual(length, sizeof(FxGripColor));
+	XCTAssertEqualWithAccuracy(decoded->r, 0.2, 1e-12);
+	XCTAssertEqualWithAccuracy(decoded->a, 0.8, 1e-12);
 }
 
 @end

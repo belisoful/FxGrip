@@ -210,7 +210,7 @@ extern const NSInteger FxGripExtensionDefaultPriority;
 */
 @property (readonly, assign) BOOL			extIndividuate;
 
-- (nullable id)init;
+- (nonnull instancetype)init;
 
 /*!
 	@method		setExtActive:

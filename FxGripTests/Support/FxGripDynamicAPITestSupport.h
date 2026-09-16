@@ -59,11 +59,11 @@ NSError *FxGripDynamicTestError(void);
 	notification-observing and wrapper-construction helpers the per-class test cases share.
 */
 @interface FxGripDynamicAPITestCase : XCTestCase
-@property (nonatomic, strong) FxGripDynamicTestStubEffect *effect;
-@property (nonatomic, strong) FxGripDynamicTestStubAPI *hostAPI;
-@property (nonatomic, strong) NSMutableArray<NSNotification *> *posted;
+@property (nonatomic, strong, nullable) FxGripDynamicTestStubEffect *effect;
+@property (nonatomic, strong, nullable) FxGripDynamicTestStubAPI *hostAPI;
+@property (nonatomic, strong, nullable) NSMutableArray<NSNotification *> *posted;
 // The notifier holds its observers weakly, so every token is retained for the test.
-@property (nonatomic, strong) NSMutableArray *observerTokens;
+@property (nonatomic, strong, nullable) NSMutableArray *observerTokens;
 
 - (NSArray<NSNotificationName> *)recordedNotificationNames;
 - (void)observeName:(NSNotificationName)name usingBlock:(void (^)(NSNotification *notification))block;

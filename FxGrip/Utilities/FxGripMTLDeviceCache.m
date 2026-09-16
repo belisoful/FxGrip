@@ -789,6 +789,28 @@ typedef void (^FxGripMTLFunctionHandler)(id<MTLFunction> _Nullable function, NSE
 	return [_library installName];
 }
 
+- (nullable MTLFunctionReflection *)reflectionForFunctionWithName:(NSString *)functionName API_AVAILABLE(macos(26.0))
+{
+	return [_library reflectionForFunctionWithName:functionName];
+}
+
+#pragma mark Forwarding
+
+// Metal adds required MTLLibrary members with each SDK. A member this wrapper does not yet
+// implement reaches the wrapped library rather than raising an unrecognized selector.
+- (BOOL)respondsToSelector:(SEL)selector
+{
+	return [super respondsToSelector:selector] || [_library respondsToSelector:selector];
+}
+
+- (id)forwardingTargetForSelector:(SEL)selector
+{
+	if ([_library respondsToSelector:selector]) {
+		return _library;
+	}
+	return [super forwardingTargetForSelector:selector];
+}
+
 @end
 
 
@@ -885,8 +907,9 @@ static NSString*    kKey_CommandQueue   = @"CommandQueue";
 - (FxGripMTLLibraryCache*)defaultLibraryCache
 {
 	@synchronized (self) {
-		if (!_defaultLibraryCache) {
-			_defaultLibraryCache = [FxGripMTLLibraryCache.alloc initWithLibrary:self.defaultLibrary];
+		id<MTLLibrary> library = self.defaultLibrary;
+		if (!_defaultLibraryCache && library != nil) {
+			_defaultLibraryCache = [FxGripMTLLibraryCache.alloc initWithLibrary:library];
 		}
 		return _defaultLibraryCache;
 	}

@@ -12,8 +12,99 @@
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripAnalyzerParameter.h>
 #import <FxGrip/FxGripParameterUtility.h>
+#import <FxGrip/FxGripTileableEffect.h>
+#import <FxGrip/FxGripTileableEffect+Analyze.h>
+#import <FxGrip/FxGripAnalysis.h>
 
 static const FxParameterId kAnalyzerTestParameter = 61;
+
+#pragma mark - Host doubles
+
+/*! Stands in for the host's FxAnalysisAPI_v2, recording the direction and location asked for. */
+@interface FxGripAnalyzerTestAnalysisAPI : NSObject
+@property (nonatomic, assign) BOOL succeeds;
+@property (nonatomic, assign) BOOL failsWithError;
+@property (nonatomic, strong) NSMutableArray<NSDictionary *> *starts;
+@end
+
+@implementation FxGripAnalyzerTestAnalysisAPI
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_starts = NSMutableArray.new;
+	}
+	return self;
+}
+
+- (BOOL)record:(NSString *)direction location:(FxAnalysisLocation)location error:(NSError **)error
+{
+	[self.starts addObject:@{@"direction": direction, @"location": @(location)}];
+	if (!self.succeeds && self.failsWithError && error != NULL) {
+		*error = [NSError errorWithDomain:@"FxGripAnalyzerTest" code:7 userInfo:nil];
+	}
+	return self.succeeds;
+}
+
+- (BOOL)startForwardAnalysis:(FxAnalysisLocation)location error:(NSError **)error
+{
+	return [self record:@"forward" location:location error:error];
+}
+
+- (BOOL)startBackwardAnalysis:(FxAnalysisLocation)location error:(NSError **)error
+{
+	return [self record:@"backward" location:location error:error];
+}
+
+@end
+
+/*! Carries the analysis API the effect base's analysis category reaches for. */
+@interface FxGripAnalyzerTestAPIManager : FxGripParamClassTestAPIManager
+@property (nonatomic, strong, nullable) FxGripAnalyzerTestAnalysisAPI *analysisAPIv2;
+@end
+
+@implementation FxGripAnalyzerTestAPIManager
+@end
+
+/*! A real effect that conforms to FxAnalyzer, so the base reports an analysis pass. */
+@interface FxGripAnalyzerTestEffect : FxGripTileableEffect <FxAnalyzer>
+@property (nonatomic, strong) NSNotificationCenter *privateNotifier;
+@property (nonatomic, strong) FxGripAnalyzerTestAPIManager *stubAPIManager;
+@end
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wprotocol"
+@implementation FxGripAnalyzerTestEffect
+
+- (NSPriorityNotificationCenter *)notifier
+{
+	if (!_privateNotifier) {
+		_privateNotifier = [[NSClassFromString(@"NSPriorityNotificationCenter") alloc] init];
+	}
+	return (NSPriorityNotificationCenter *)_privateNotifier;
+}
+
+- (id<FxGripAPIAccessing>)apiManager
+{
+	return (id<FxGripAPIAccessing>)_stubAPIManager;
+}
+
+- (id)effectBase
+{
+	return self;
+}
+
+- (id<NSSecureCoding, NSCopying>)analyzeImageTile:(FxImageTile *)frame
+										  atTime:(CMTime)frameTime
+									  frameIndex:(NSInteger)frameIndex
+										   error:(NSError * _Nullable * _Nullable)error
+{
+	return @(frameIndex);
+}
+
+@end
+#pragma clang diagnostic pop
 
 @interface FxGripAnalyzerParameterTests : XCTestCase
 @property (nonatomic, strong) FxGripParamClassTestEffect *effect;
@@ -50,6 +141,26 @@ static const FxParameterId kAnalyzerTestParameter = 61;
 - (NSString *)synthesizedSelectorName
 {
 	return [FxGripParameterUtility clickSelectorNameForParameter:kAnalyzerTestParameter];
+}
+
+
+/*! A real effect that reports an analysis pass, carrying the recording analysis API. */
+- (FxGripAnalyzerTestEffect *)makeAnalyzerEffect
+{
+	FxGripAnalyzerTestEffect *effect = [FxGripAnalyzerTestEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	effect.stubAPIManager = [FxGripAnalyzerTestAPIManager.alloc init];
+	effect.stubAPIManager.analysisAPIv2 = [FxGripAnalyzerTestAnalysisAPI.alloc init];
+	effect.stubAPIManager.analysisAPIv2.succeeds = YES;
+	XCTAssertTrue(effect.hasAnalysis, @"the FxAnalyzer conformance loads the analysis extension");
+	return effect;
+}
+
+- (FxGripAnalyzerParameter *)analyzerWithExtra:(nullable NSDictionary *)extra
+									  onEffect:(FxGripAnalyzerTestEffect *)effect
+{
+	NSDictionary *config = FxGripParamClassTestConfig(kAnalyzerTestParameter, kFxParameterType_Analyzer,
+													  @"Analyze", extra);
+	return [FxGripAnalyzerParameter.alloc initWithDictionary:config effect:(id)effect];
 }
 
 #pragma mark Type identity
@@ -113,6 +224,70 @@ static const FxParameterId kAnalyzerTestParameter = 61;
 	FxGripAnalyzerParameter *parameter = [FxGripAnalyzerParameter.alloc initWithDictionary:config effect:(id)self.effect];
 
 	XCTAssertNoThrow([parameter defaultParameterAction]);
+}
+
+
+#pragma mark Analysis location
+
+/*! @abstract The analyzer runs on the GPU by default and takes the CPU when the configuration asks for it. */
+- (void)testTheDeclaredAnalysisLocationIsCarriedIntoTheAction
+{
+	FxGripAnalyzerTestEffect *effect = [self makeAnalyzerEffect];
+
+	[[self analyzerWithExtra:nil onEffect:effect] defaultParameterAction];
+	XCTAssertEqualObjects(effect.stubAPIManager.analysisAPIv2.starts.lastObject[@"location"],
+						  @(kFxAnalysisLocation_GPU));
+
+	[[self analyzerWithExtra:@{kFxGripAnalyzerKey_Location: @(kFxAnalysisLocation_CPU)} onEffect:effect]
+	 defaultParameterAction];
+	XCTAssertEqualObjects(effect.stubAPIManager.analysisAPIv2.starts.lastObject[@"location"],
+						  @(kFxAnalysisLocation_CPU));
+}
+
+/*! @abstract A location entry that is not the CPU constant leaves the pass on the GPU. */
+- (void)testAnUnknownDeclaredLocationStaysOnTheGPU
+{
+	FxGripAnalyzerTestEffect *effect = [self makeAnalyzerEffect];
+
+	[[self analyzerWithExtra:@{kFxGripAnalyzerKey_Location: @"cpu"} onEffect:effect] defaultParameterAction];
+
+	XCTAssertEqualObjects(effect.stubAPIManager.analysisAPIv2.starts.lastObject[@"location"],
+						  @(kFxAnalysisLocation_GPU));
+}
+
+#pragma mark Analysis direction
+
+/*! @abstract The click starts the forward pass, and the backward flag starts the reverse pass. */
+- (void)testTheClickStartsThePassInTheDeclaredDirection
+{
+	FxGripAnalyzerTestEffect *effect = [self makeAnalyzerEffect];
+
+	[[self analyzerWithExtra:nil onEffect:effect] defaultParameterAction];
+	XCTAssertEqualObjects(effect.stubAPIManager.analysisAPIv2.starts.lastObject[@"direction"], @"forward");
+
+	[[self analyzerWithExtra:@{kFxGripAnalyzerKey_Backward: @YES} onEffect:effect] defaultParameterAction];
+	XCTAssertEqualObjects(effect.stubAPIManager.analysisAPIv2.starts.lastObject[@"direction"], @"backward");
+}
+
+/*! @abstract A host that refuses to start the pass leaves the click without effect and does not throw. */
+- (void)testAHostRefusalToStartThePassIsSurvived
+{
+	FxGripAnalyzerTestEffect *effect = [self makeAnalyzerEffect];
+	effect.stubAPIManager.analysisAPIv2.succeeds = NO;
+	effect.stubAPIManager.analysisAPIv2.failsWithError = YES;
+
+	XCTAssertNoThrow([[self analyzerWithExtra:nil onEffect:effect] defaultParameterAction]);
+
+	XCTAssertEqual(effect.stubAPIManager.analysisAPIv2.starts.count, 1u);
+}
+
+/*! @abstract An effect that reports no analysis pass starts nothing. */
+- (void)testAnEffectWithoutAnAnalysisPassStartsNothing
+{
+	FxGripAnalyzerTestEffect *effect = [self makeAnalyzerEffect];
+	effect.stubAPIManager.analysisAPIv2 = nil;
+
+	XCTAssertNoThrow([[self analyzerWithExtra:nil onEffect:effect] defaultParameterAction]);
 }
 
 @end

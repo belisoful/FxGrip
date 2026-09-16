@@ -18,6 +18,9 @@
 #import <FxGrip/SCNParticleSystem+FxGripInteraction.h>
 #import <FxGrip/SCNScene+FxGripInteraction.h>
 #import <FxGrip/SCNPhysicsField+FxGripInteraction.h>
+#import <CoreVideo/CoreVideo.h>
+#import <Metal/Metal.h>
+#import "FxPlugStub.h"
 
 #pragma mark - Stub backend
 
@@ -373,6 +376,209 @@
 	XCTAssertNotNil(effect.emittedSystem.boundInteractionField);
 	XCTAssertNil(effect.emittedSystem.particleInteraction,
 				 @"the default does not displace the field's force");
+}
+
+@end
+
+#pragma mark - The render dispatch
+
+/*! Records the scene, point of view, and time the effect hands the backend, and can refuse readiness. */
+@interface FxGripSceneKitRecordingBackend : NSObject <FxGripSceneKitBackend>
+@property (nonatomic, assign) BOOL ready;
+@property (nonatomic, assign) BOOL renderSucceeds;
+@property (nonatomic, assign) NSUInteger renderCount;
+@property (nonatomic, strong, nullable) SCNScene *lastScene;
+@property (nonatomic, strong, nullable) SCNNode *lastPointOfView;
+@property (nonatomic, assign) CFTimeInterval lastSeconds;
+@end
+
+@implementation FxGripSceneKitRecordingBackend
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_ready = YES;
+		_renderSucceeds = YES;
+		_lastSeconds = -1.0;
+	}
+	return self;
+}
+
+- (BOOL)isReady { return self.ready; }
+- (NSString *)backendIdentifier { return @"recording"; }
+
+- (BOOL)renderScene:(SCNScene *)scene
+		pointOfView:(SCNNode *)pointOfView
+		  toTexture:(id<MTLTexture>)texture
+			 atTime:(CFTimeInterval)seconds
+			  error:(NSError **)error
+{
+	self.renderCount += 1;
+	self.lastScene = scene;
+	self.lastPointOfView = pointOfView;
+	self.lastSeconds = seconds;
+	return self.renderSucceeds;
+}
+
+@end
+
+/*!
+	Drives renderSceneFromCoder:sourceTile:toTexture:atTime:error:, which needs a destination Metal
+	texture and, for the layer plane, a source FxImageTile. The FxPlugStub test framework supplies
+	the tile class that FxPlug's binary-less SDK does not.
+*/
+@interface FxGripSceneKitEffectRenderTests : XCTestCase
+@property (nonatomic, strong) FxGripSceneKitEffect *effect;
+@property (nonatomic, strong) FxGripSceneKitRecordingBackend *backend;
+@property (nonatomic, strong) id<MTLDevice> device;
+@end
+
+@implementation FxGripSceneKitEffectRenderTests
+
+- (void)setUp
+{
+	[super setUp];
+	self.effect = [FxGripSceneKitEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	self.backend = [FxGripSceneKitRecordingBackend.alloc init];
+	self.effect.spaceBackend = self.backend;
+	self.device = MTLCreateSystemDefaultDevice();
+}
+
+- (void)tearDown
+{
+	self.effect = nil;
+	self.backend = nil;
+	self.device = nil;
+	[super tearDown];
+}
+
+- (NSCoder *)emptyCoder
+{
+	NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+	[archiver finishEncoding];
+	NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:archiver.encodedData error:nil];
+	decoder.requiresSecureCoding = NO;
+	return decoder;
+}
+
+- (id<MTLTexture>)destinationTexture
+{
+	MTLTextureDescriptor *descriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA16Float
+																						  width:16 height:16 mipmapped:NO];
+	descriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	return [self.device newTextureWithDescriptor:descriptor];
+}
+
+/*! @abstract A ready backend receives the built scene, its camera as the point of view, and the render time in seconds. */
+- (void)testAReadyBackendReceivesTheSceneAndItsCamera
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	NSError *error = nil;
+
+	BOOL rendered = [self.effect renderSceneFromCoder:[self emptyCoder]
+										   sourceTile:nil
+											toTexture:[self destinationTexture]
+											   atTime:CMTimeMake(3, 2)
+												error:&error];
+
+	XCTAssertTrue(rendered);
+	XCTAssertNil(error);
+	XCTAssertEqual(self.backend.renderCount, (NSUInteger)1);
+	XCTAssertNotNil(self.backend.lastScene);
+	XCTAssertNotNil(self.backend.lastPointOfView, @"the camera node is the point of view");
+	XCTAssertEqualWithAccuracy(self.backend.lastSeconds, 1.5, 1e-9);
+}
+
+/*! @abstract An invalid render time reaches the backend as zero seconds. */
+- (void)testAnInvalidRenderTimeReachesTheBackendAsZero
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect renderSceneFromCoder:[self emptyCoder]
+										 sourceTile:nil
+										  toTexture:[self destinationTexture]
+											 atTime:kCMTimeInvalid
+											  error:&error]);
+
+	XCTAssertEqualWithAccuracy(self.backend.lastSeconds, 0.0, 1e-9);
+}
+
+/*! @abstract A backend that is not ready is bypassed for the base class's passthrough. */
+- (void)testAnUnreadyBackendFallsBackToThePassthrough
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	self.backend.ready = NO;
+	NSError *error = nil;
+
+	BOOL rendered = [self.effect renderSceneFromCoder:[self emptyCoder]
+										   sourceTile:nil
+											toTexture:[self destinationTexture]
+											   atTime:kCMTimeZero
+												error:&error];
+
+	XCTAssertTrue(rendered, @"the base passthrough succeeds with no source");
+	XCTAssertNil(error);
+	XCTAssertEqual(self.backend.renderCount, (NSUInteger)0);
+}
+
+/*! @abstract A backend that refuses the frame reports the refusal to the caller. */
+- (void)testABackendThatRefusesTheFrameReportsFailure
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	self.backend.renderSucceeds = NO;
+	NSError *error = nil;
+
+	XCTAssertFalse([self.effect renderSceneFromCoder:[self emptyCoder]
+										  sourceTile:nil
+										   toTexture:[self destinationTexture]
+											  atTime:kCMTimeZero
+											   error:&error]);
+
+	XCTAssertEqual(self.backend.renderCount, (NSUInteger)1);
+}
+
+/*! @abstract A source tile becomes a layer plane node in the scene handed to the backend. */
+- (void)testASourceTileBecomesALayerPlaneInTheScene
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *source = [FxImageTile stubTileWithPixelBounds:((FxRect){ 0, 0, 16, 16 })
+												  pixelFormat:kCVPixelFormatType_64RGBAHalf
+													   device:self.device];
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect renderSceneFromCoder:[self emptyCoder]
+										 sourceTile:source
+										  toTexture:[self destinationTexture]
+											 atTime:kCMTimeZero
+											  error:&error]);
+
+	__block BOOL foundPlane = NO;
+	[self.backend.lastScene.rootNode enumerateChildNodesUsingBlock:^(SCNNode *node, BOOL *stop) {
+		if ([node.geometry isKindOfClass:SCNPlane.class]) {
+			foundPlane = YES;
+			*stop = YES;
+		}
+	}];
+	XCTAssertTrue(foundPlane, @"the source tile is presented as a plane");
+}
+
+/*! @abstract Each render builds an independent scene rather than reusing the one before it. */
+- (void)testEachRenderBuildsAnIndependentScene
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	id<MTLTexture> texture = [self destinationTexture];
+
+	[self.effect renderSceneFromCoder:[self emptyCoder] sourceTile:nil toTexture:texture atTime:kCMTimeZero error:NULL];
+	SCNScene *first = self.backend.lastScene;
+	[self.effect renderSceneFromCoder:[self emptyCoder] sourceTile:nil toTexture:texture atTime:kCMTimeZero error:NULL];
+	SCNScene *second = self.backend.lastScene;
+
+	XCTAssertEqual(self.backend.renderCount, (NSUInteger)2);
+	XCTAssertNotNil(first);
+	XCTAssertNotNil(second);
+	XCTAssertNotEqual(first, second);
 }
 
 @end

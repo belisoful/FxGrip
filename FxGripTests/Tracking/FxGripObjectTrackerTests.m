@@ -5,7 +5,7 @@
 	@date       2026-09-06
 	@header     FxGripObjectTrackerTests
 	@abstract   Verifies the Vision-backed FxGripObjectTracker follows a moving patch across a synthetic frame sequence.
-	@discussion Introduced in FxGrip 0.1.0. A high-contrast textured patch is drawn on a dark ground and stepped horizontally across frames, and the tracker is seeded on the first frame and tracked on the rest. The tests confirm the track follows the patch rightward within tolerance, rotation mode seeds and reports a finite rotation, and reset clears the last sample.
+	@discussion Introduced in FxGrip 0.1.0. A high-contrast textured patch is drawn on a dark ground and stepped horizontally across frames, and the tracker is seeded on the first frame and tracked on the rest. The tests confirm the track follows the patch rightward within tolerance, rotation mode seeds and reports a finite rotation, reset clears the last sample, the sample value type compares and hashes by its geometry, and a nil frame or an untracked sequence yields no sample.
 */
 
 #import <XCTest/XCTest.h>
@@ -22,6 +22,8 @@ typedef NS_ENUM(NSInteger, FxGripObjectTrackerLevel) {
 @property (readonly, nonatomic) CGPoint center;
 @property (readonly, nonatomic) float confidence;
 @property (readonly, nonatomic) CGFloat rotation;
+- (instancetype)initWithBoundingBox:(CGRect)boundingBox confidence:(float)confidence;
+- (instancetype)initWithBoundingBox:(CGRect)boundingBox rotation:(CGFloat)rotation confidence:(float)confidence;
 @end
 
 @interface FxGripObjectTracker : NSObject
@@ -159,6 +161,99 @@ static const NSInteger kFrameCount = 9;
 	[tracker startTrackingImage:[self frameWithPatchX:kStartX patchY:patchY] boundingBox:seedBox error:NULL];
 	XCTAssertNotNil(tracker.lastSample);
 	[tracker reset];
+	XCTAssertNil(tracker.lastSample);
+}
+
+
+#pragma mark Sample value semantics
+
+/*! Reaches the sample class by name; the header is not part of the test target's surface. */
+- (FxGripObjectTrackerSample *)sampleWithBox:(CGRect)box rotation:(CGFloat)rotation confidence:(float)confidence
+{
+	return [[NSClassFromString(@"FxGripObjectTrackerSample") alloc] initWithBoundingBox:box
+																			   rotation:rotation
+																			 confidence:confidence];
+}
+
+/*! @abstract A sample equals itself and any sample with the same box, rotation, and confidence. */
+- (void)testSamplesWithTheSameGeometryAreEqual
+{
+	CGRect box = CGRectMake(0.1, 0.2, 0.3, 0.4);
+	FxGripObjectTrackerSample *sample = [self sampleWithBox:box rotation:0.5 confidence:0.9f];
+
+	XCTAssertTrue([sample isEqual:sample]);
+	XCTAssertEqualObjects(sample, [self sampleWithBox:box rotation:0.5 confidence:0.9f]);
+	XCTAssertEqualObjects(sample, [sample copy]);
+}
+
+/*! @abstract A difference in the box, the rotation, or the confidence breaks equality. */
+- (void)testADifferenceInAnyComponentBreaksEquality
+{
+	CGRect box = CGRectMake(0.1, 0.2, 0.3, 0.4);
+	FxGripObjectTrackerSample *sample = [self sampleWithBox:box rotation:0.5 confidence:0.9f];
+
+	XCTAssertNotEqualObjects(sample, [self sampleWithBox:CGRectMake(0.15, 0.2, 0.3, 0.4)
+											   rotation:0.5 confidence:0.9f]);
+	XCTAssertNotEqualObjects(sample, [self sampleWithBox:box rotation:0.25 confidence:0.9f]);
+	XCTAssertNotEqualObjects(sample, [self sampleWithBox:box rotation:0.5 confidence:0.5f]);
+	XCTAssertNotEqualObjects(sample, @"not a sample");
+}
+
+/*! @abstract Equal samples share a hash, so a sample keys a collection by its geometry. */
+- (void)testEqualSamplesShareAHash
+{
+	CGRect box = CGRectMake(0.25, 0.5, 0.2, 0.2);
+	FxGripObjectTrackerSample *sample = [self sampleWithBox:box rotation:0.0 confidence:1.0f];
+
+	XCTAssertEqual(sample.hash, [self sampleWithBox:box rotation:0.0 confidence:1.0f].hash);
+	NSSet *set = [NSSet setWithObjects:sample, [self sampleWithBox:box rotation:0.0 confidence:1.0f], nil];
+	XCTAssertEqual(set.count, 1u);
+}
+
+/*! @abstract A sample built without a rotation reports zero rotation and its box center. */
+- (void)testASampleWithoutARotationReportsItsCenter
+{
+	FxGripObjectTrackerSample *sample =
+		[[NSClassFromString(@"FxGripObjectTrackerSample") alloc] initWithBoundingBox:CGRectMake(0.2, 0.4, 0.2, 0.2)
+																		 confidence:0.75f];
+
+	XCTAssertEqualWithAccuracy(sample.rotation, 0.0, 1e-12);
+	XCTAssertEqualWithAccuracy(sample.center.x, 0.3, 1e-12);
+	XCTAssertEqualWithAccuracy(sample.center.y, 0.5, 1e-12);
+	XCTAssertEqualWithAccuracy(sample.confidence, 0.75f, 1e-6);
+}
+
+#pragma mark Guards
+
+/*! @abstract Seeding with no frame refuses and leaves the tracker unseeded. */
+- (void)testSeedingWithoutAFrameRefuses
+{
+	FxGripObjectTracker *tracker = [[NSClassFromString(@"FxGripObjectTracker") alloc]
+									initWithLevel:FxGripObjectTrackerLevelFast];
+
+	XCTAssertFalse([tracker startTrackingImage:nil boundingBox:CGRectMake(0.1, 0.1, 0.2, 0.2) error:NULL]);
+	XCTAssertNil(tracker.lastSample);
+}
+
+/*! @abstract Tracking a nil frame yields no sample. */
+- (void)testTrackingANilFrameYieldsNoSample
+{
+	FxGripObjectTracker *tracker = [[NSClassFromString(@"FxGripObjectTracker") alloc]
+									initWithLevel:FxGripObjectTrackerLevelFast];
+	[tracker startTrackingImage:[self frameWithPatchX:kStartX patchY:100.0]
+					boundingBox:CGRectMake(0.1, 0.3, 0.15, 0.26)
+						  error:NULL];
+
+	XCTAssertNil([tracker trackImage:nil error:NULL]);
+}
+
+/*! @abstract Tracking before any seed yields no sample, because there is no observation to advance. */
+- (void)testTrackingBeforeSeedingYieldsNoSample
+{
+	FxGripObjectTracker *tracker = [[NSClassFromString(@"FxGripObjectTracker") alloc]
+									initWithLevel:FxGripObjectTrackerLevelFast];
+
+	XCTAssertNil([tracker trackImage:[self frameWithPatchX:kStartX patchY:100.0] error:NULL]);
 	XCTAssertNil(tracker.lastSample);
 }
 

@@ -11,6 +11,8 @@
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripWindow.h>
 #import <FxGrip/FxGripErrors.h>
+#import <FxGrip/FxGripExtension.h>
+#import <FxGrip/FxGripTileableEffect.h>
 
 static NSView *FxGripWindowTestView(void)
 {
@@ -87,6 +89,28 @@ static NSView *FxGripWindowTestView(void)
 @end
 
 #pragma mark - Tests
+
+/*! A real effect that installs the window extension. */
+@interface FxGripWindowTestHostEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripWindowTestHostEffect
+
+- (NSMutableArray<id<FxGripExtension>> *)loadExtensions
+{
+	NSMutableArray<id<FxGripExtension>> *extensions = [super loadExtensions];
+	[extensions addObject:(id<FxGripExtension>)[self newWindowExtension]];
+	return extensions;
+}
+
+@end
+
+/*! A real effect that installs no window extension. */
+@interface FxGripWindowTestPlainEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripWindowTestPlainEffect
+@end
 
 @interface FxGripWindowTests : XCTestCase
 @property (nonatomic, strong) FxGripWindow *window;
@@ -257,6 +281,59 @@ static NSView *FxGripWindowTestView(void)
 	[self.window noteWindowClosed];
 	XCTAssertFalse(self.window.isWindowPresented);
 	XCTAssertNil(self.window.windowParentView);
+}
+
+#pragma mark The content view
+
+/*! @abstract The content view reads back what was set and setting the same view again is a no-op. */
+- (void)testTheContentViewReadsBackAndIgnoresARepeatedSet
+{
+	XCTAssertNil(self.window.contentView);
+
+	NSView *view = FxGripWindowTestView();
+	self.window.contentView = view;
+	XCTAssertEqual(self.window.contentView, view);
+
+	self.window.contentView = view;
+	XCTAssertEqual(self.window.contentView, view, @"setting the same view changes nothing");
+}
+
+/*! @abstract Clearing the content view while presented removes it from the host's parent view. */
+- (void)testClearingTheContentViewWhilePresentedRemovesItFromTheParent
+{
+	NSView *parent = FxGripWindowTestView();
+	self.api.stagedParentView = parent;
+	NSView *content = FxGripWindowTestView();
+	self.window.contentView = content;
+	[self.window presentWindowOfSize:CGSizeMake(320, 200) completion:nil];
+	XCTAssertEqualObjects(content.superview, parent);
+
+	self.window.contentView = nil;
+
+	XCTAssertNil(self.window.contentView);
+	XCTAssertNil(content.superview, @"the outgoing view leaves the host's parent view");
+	XCTAssertEqual(parent.subviews.count, (NSUInteger)0);
+}
+
+#pragma mark The effect-side accessors
+
+/*! @abstract An effect that installs the window extension resolves it and reports it present. */
+- (void)testAnEffectThatInstallsTheWindowExtensionResolvesIt
+{
+	FxGripWindowTestHostEffect *effect = [FxGripWindowTestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertTrue(effect.hasWindowExtension);
+	XCTAssertNotNil(effect.windowExtension);
+	XCTAssertTrue([[effect newWindowExtension] isKindOfClass:FxGripWindow.class]);
+}
+
+/*! @abstract An effect that installs no window extension reports none. */
+- (void)testAnEffectWithoutTheWindowExtensionReportsNone
+{
+	FxGripWindowTestPlainEffect *effect = [FxGripWindowTestPlainEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertFalse(effect.hasWindowExtension);
+	XCTAssertNil(effect.windowExtension);
 }
 
 @end

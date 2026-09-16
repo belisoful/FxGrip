@@ -79,7 +79,7 @@
 
 @synthesize fxFactorySettingsObject = _fxFactorySettingsObject;
 
-- (instancetype _Nullable)init
+- (nonnull instancetype)init
 {
 	self = [super init];
 	if (self) {
@@ -287,8 +287,12 @@
 	@discussion	Introduced in FxGrip 0.1.0. The method finds or creates the fxfactory parameter, sets
 				it to a hidden non-animatable toggle, resolves each setting from the settings object,
 				parameter, or plugin property, and appends the product UUID, version, watermark, buy,
-				product, and update-checking parameters that are not hard-coded. It returns early
-				when the integration is deactivated. */
+				product, and update-checking parameters that are not hard-coded. A declared
+				fxfactory parameter is configured in place and stays at its position; a missing one
+				is created and appended. The method returns early only when the configuration
+				declares the integration inactive. Without a declared active state, a resolved
+				product activates the integration, and with neither the hidden FxFactory Active
+				toggle is added so the plugin can switch the integration on at run time. */
 - (void)extAddParameters:(nonnull NSNotification*)notification
 {
 	NSMutableArray<NSMutableDictionary *> *parameters = notification.userInfo.fxEffectParameters;
@@ -305,8 +309,8 @@
 		}
 	}
 	
-	// If none, construct
-	if (!parameter) {
+	BOOL parameterWasDeclared = parameter != nil;
+	if (!parameterWasDeclared) {
 		parameter = @{}.mutableCopy;
 	}
 	
@@ -336,9 +340,14 @@
 	
 	[parameter[kFxParameterProperty_Flags] addObjectsFromArray:pFlags];
 	
-	[fxFactoryComponents addObject:parameter];
+	// A declared entry is already in the array and is configured in place.
+	if (!parameterWasDeclared) {
+		[fxFactoryComponents addObject:parameter];
+	}
 	
 	NSDictionary *fxFactoryParameter = parameter;
+	// The support parameters share the toggle's group; an undeclared parent reads as the top level.
+	NSNumber *parentID = @(fxFactoryParameter.parameterParentID);
 	
 	
 	// Step 1: Get FxFactory Extension Active
@@ -349,8 +358,9 @@
 	}
 	_fxFactoryHasActive = _fxFactoryActive != nil;
 	
-	// If hard deactivated, then stop
-	if (!self.fxFactoryActive) {
+	// Read the declaration, not fxFactoryActive: that reader depends on the product resolved
+	// below and on the Active parameter, which is not registered until this pass returns.
+	if ([_fxFactoryActive isKindOfClass:NSNumber.class] && !_fxFactoryActive.boolValue) {
 		return;
 	}
 	
@@ -428,7 +438,7 @@
 			@"type": kFxParameterType_Toggle,
 			@"name": @"FxFactory Active",
 			@"id": @(_parameterID + kParameterFxFactoryActiveOffset),
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			// HIDDEN: licensing enforcement state, not a user control. Without it the end
 			// user could switch off FxFactory licensing from the inspector.
 			@"flags": @[kParameterFlagString_HIDDEN, kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA]
@@ -442,7 +452,7 @@
 			@"type": kFxParameterType_String,
 			@"name": @"FxFactory Product UUID",
 			@"id": @(_parameterID + kParameterFxFactoryProductUUIDOffset),
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			@"flags": @[kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA, kParameterFlagString_NO_STATE]
 		}.mutableCopy;
 		[fxFactoryComponents addObject:parameter];
@@ -451,7 +461,7 @@
 			@"id": @(_parameterID + kParameterFxFactoryProductVersionOffset),
 			@"name": @"FxFactory Product Version",
 			@"type": kFxParameterType_String,
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			@"flags": @[kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA, kParameterFlagString_NO_STATE]
 		}.mutableCopy;
 		[fxFactoryComponents addObject:parameter];
@@ -462,7 +472,7 @@
 			@"id": @(_parameterID + kParameterFxFactoryWaterMarkUnlicensedOffset),
 			@"name": @"FxFactory Unlicensed Watermark",
 			@"type": kFxParameterType_Toggle,
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			// HIDDEN: enforcement state, not a user control. Without it the end user could
 			// switch off the unlicensed watermark from the inspector.
 			@"flags": @[kParameterFlagString_HIDDEN, kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA]
@@ -478,7 +488,7 @@
 			@"type": kFxParameterType_PushButton,
 			@"name": name,
 			@"id": @(_parameterID + kParameterFxFactoryBuyButtonOffset),
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			@"flags": @[kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA]
 		}.mutableCopy;
 		[fxFactoryComponents addObject:parameter];
@@ -488,7 +498,7 @@
 			@"name": @"Buy Button Label",
 			@"id": @(_parameterID + kParameterFxFactoryBuyButtonLabelOffset),
 			@"default": name,
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			@"flags": @[kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA]
 		}.mutableCopy;
 		[fxFactoryComponents addObject:parameter];
@@ -499,7 +509,7 @@
 			@"type": kFxParameterType_PushButton,
 			@"name": @"Show FxFactory Product...",
 			@"id": @(_parameterID + kParameterFxFactoryProductButtonOffset),
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			@"flags": @[kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA]
 		}.mutableCopy;
 		[fxFactoryComponents addObject:parameter];
@@ -509,7 +519,7 @@
 			@"name": @"Product Button Label",
 			@"id": @(_parameterID + kParameterFxFactoryProductButtonLabelOffset),
 			@"default": name,
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			@"flags": @[kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA]
 		}.mutableCopy;
 		[fxFactoryComponents addObject:parameter];
@@ -519,7 +529,7 @@
 			@"type": kFxParameterType_Toggle,
 			@"name": @"FxFactory Update Checking",
 			@"id": @(_parameterID + kParameterFxFactoryAutoCheckingOffset),
-			kFxParameterProperty_ParentId: fxFactoryParameter[kFxParameterProperty_ParentId],
+			kFxParameterProperty_ParentId: parentID,
 			@"default": @YES,
 			@"flags": @[kParameterFlagString_NOT_ANIMATABLE, kParameterFlagString_PRESETNOMETA, kParameterFlagString_NO_STATE]
 		}.mutableCopy;
@@ -989,6 +999,12 @@
 #pragma mark -
 #pragma mark FxFactory Regression methods
 
+// The bundle whose Info.plist the regression check reads, factored out so a subclass can
+// point the check at a bundle other than the running application's.
+- (NSBundle *)fxFactoryRegressionBundle
+{
+	return NSBundle.mainBundle;
+}
 
 /*!
 	@method		fxFactoryRegression
@@ -1006,8 +1022,8 @@
 	//	@"AllowPackages": @[@"AZLNLGPTT3"]
 	//	@"AllowProcesses": @{@"AZLNLGPTT3": @[@"com.fxfactory.FxFactory", @"com.fxfactory.FxFactory.helper"] }
 	
-	NSBundle *mainBundle = [NSBundle mainBundle];
-	
+	NSBundle *mainBundle = [self fxFactoryRegressionBundle];
+
 	id prop = [mainBundle objectForInfoDictionaryKey:@"com.apple.security.app-sandbox"];
 	if (!prop) {
 		success = NO;

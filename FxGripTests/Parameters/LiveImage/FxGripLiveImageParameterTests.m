@@ -20,6 +20,14 @@
 #import <FxGrip/FxGripLiveFrame.h>
 #import <FxGrip/FxGripLiveImageParameter.h>
 #import <FxGrip/FxGripCustomCreationAPI_v1.h>
+#import <CoreVideo/CoreVideo.h>
+#import "FxPlugStub.h"
+
+/*! registerView: is implemented but declared in no header; the tests reach it by name. */
+@interface FxGripLiveImageParameter (FxGripLiveImageTestAccess)
+- (void)registerView:(FxGripLiveImageView *)view;
+@end
+
 
 typedef void *(*FxGripLiveImageTestCreateDevice)(void);
 
@@ -465,7 +473,8 @@ static const FxParameterId kLiveImageTestID = 93;
 	XCTAssertEqual(frame.width, 5u);
 	XCTAssertEqual(frame.height, 3u);
 	XCTAssertEqual(frame.pixelFormat, MTLPixelFormatRGBA8Unorm);
-	XCTAssertFalse([parameter publishCGImage:NULL inSlot:0]);
+	CGImageRef noImage = NULL;
+	XCTAssertFalse([parameter publishCGImage:noImage inSlot:0]);
 }
 
 #pragma mark Metal
@@ -603,6 +612,171 @@ static const FxParameterId kLiveImageTestID = 93;
 
 	XCTAssertEqual([parameter frameInSlot:0].width, 4u);
 	XCTAssertEqual(((const uint8_t *)[parameter frameInSlot:0].pixels.bytes)[0], 0x60);
+}
+
+
+#pragma mark Display flags
+
+/*! @abstract A value of another class leaves the strip's configuration untouched. */
+- (void)testAValueOfAnotherClassLeavesTheStripAlone
+{
+	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 240, 80)];
+	[view updateFromCustomData:[FxGripDictionary dictionaryWithDictionary:@{kFxGripLiveImageKey_Labels: @[@"A", @"B"]}]];
+
+	[view updateFromCustomData:(id)@"not a configuration"];
+
+	XCTAssertEqual(view.slotCount, 2u);
+}
+
+/*! @abstract The info, checkerboard, and flip flags drive the strip and it still draws with each of them off. */
+- (void)testTheDisplayFlagsDriveTheStripAndItStillDraws
+{
+	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 240, 80)];
+	[view showFrame:[self frameWithWidth:16 height:9 fill:0xC0] inSlot:0];
+
+	[view updateFromCustomData:[FxGripDictionary dictionaryWithDictionary:@{
+		kFxGripLiveImageKey_ShowInfo: @NO,
+		kFxGripLiveImageKey_Checkerboard: @NO,
+		kFxGripLiveImageKey_Flip: @YES,
+		kFxGripLiveImageKey_Height: @(64.0)}]];
+
+	XCTAssertEqualWithAccuracy(view.intrinsicContentSize.height, 64.0, 1e-9);
+	XCTAssertNoThrow([view cacheDisplayInRect:view.bounds
+							 toBitmapImageRep:[view bitmapImageRepForCachingDisplayInRect:view.bounds]]);
+}
+
+#pragma mark Degenerate geometry
+
+/*! @abstract A strip narrower and shorter than its slots still lays out and draws. */
+- (void)testADegenerateStripStillDraws
+{
+	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 4, 6)];
+	[view updateFromCustomData:[FxGripDictionary dictionaryWithDictionary:@{kFxGripLiveImageKey_Slots: @8}]];
+	[view showFrame:[self frameWithWidth:64 height:64 fill:0x30] inSlot:0];
+
+	XCTAssertEqual(view.slotCount, 8u);
+	XCTAssertNoThrow([view cacheDisplayInRect:view.bounds
+							 toBitmapImageRep:[view bitmapImageRepForCachingDisplayInRect:view.bounds]]);
+}
+
+/*! @abstract A frame far wider than the strip fits into at least one pixel of each axis. */
+- (void)testAnExtremelyWideFrameStillFitsInsideTheSlot
+{
+	FxGripLiveImageView *view = [FxGripLiveImageView.alloc initWithFrame:NSMakeRect(0, 0, 20, 20)];
+	[view showFrame:[self frameWithWidth:4000 height:2 fill:0x55] inSlot:0];
+
+	XCTAssertNoThrow([view cacheDisplayInRect:view.bounds
+							 toBitmapImageRep:[view bitmapImageRepForCachingDisplayInRect:view.bounds]]);
+}
+
+#pragma mark View registration
+
+/*! @abstract Registering a view twice adds it to the push list once. */
+- (void)testRegisteringAViewTwiceAddsItOnce
+{
+	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
+	FxGripLiveImageView *view = [self hostedViewForParameter:parameter];
+	FxGripLiveFrame *frame = [self frameWithWidth:4 height:4 fill:0x22];
+	XCTAssertTrue([parameter publishFrame:frame inSlot:0]);
+	XCTAssertTrue([self pumpUntilView:view showsFrame:frame inSlot:0]);
+
+	[parameter registerView:view];
+
+	XCTAssertTrue([view frameInSlot:0] == frame, @"the already-registered view keeps its frame");
+	XCTAssertTrue([parameter publishFrame:[self frameWithWidth:4 height:4 fill:0x33] inSlot:0]);
+	XCTAssertTrue([self pumpUntil:^BOOL{ return [view frameInSlot:0] != frame; } timeout:5.0]);
+}
+
+#pragma mark Image tiles
+
+/*! @abstract An image tile publishes through its Metal texture. */
+- (void)testAnImageTilePublishesThroughItsMetalTexture
+{
+	id<MTLDevice> device = [self metalDevice];
+	XCTSkipIf(device == nil, @"No Metal device.");
+
+	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
+	FxGripLiveImageView *view = [self hostedViewForParameter:parameter];
+	FxRect bounds = { 0, 0, 32, 24 };
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:bounds
+												 pixelFormat:kCVPixelFormatType_32BGRA
+													  device:device];
+	XCTAssertNotNil(tile);
+
+	XCTAssertTrue([parameter publishImageTile:tile inSlot:0]);
+
+	XCTAssertTrue([self pumpUntil:^BOOL{ return [view frameInSlot:0] != nil; } timeout:5.0]);
+	XCTAssertEqual([view frameInSlot:0].width, 32u);
+}
+
+/*! @abstract An image tile with no Metal texture publishes nothing. */
+- (void)testAnImageTileWithoutATextureIsRefused
+{
+	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
+	[self hostedViewForParameter:parameter];
+	FxRect bounds = { 0, 0, 8, 8 };
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:bounds];
+
+	XCTAssertFalse([parameter publishImageTile:tile inSlot:0]);
+}
+
+#pragma mark Texture batches
+
+/*! @abstract Publishing into a later slot pads the earlier slots and leaves them empty. */
+- (void)testPublishingIntoALaterSlotLeavesTheEarlierSlotsEmpty
+{
+	id<MTLDevice> device = [self metalDevice];
+	XCTSkipIf(device == nil, @"No Metal device.");
+
+	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @3}];
+	FxGripLiveImageView *view = [self hostedViewForParameter:parameter];
+	id<MTLTexture> texture = [self textureWithDevice:device format:MTLPixelFormatRGBA8Unorm width:16 height:16 fill:0x44];
+
+	XCTAssertTrue([parameter publishTexture:texture inSlot:2]);
+
+	XCTAssertTrue([self pumpUntil:^BOOL{ return [view frameInSlot:2] != nil; } timeout:5.0]);
+	XCTAssertNil([view frameInSlot:0]);
+	XCTAssertNil([view frameInSlot:1]);
+}
+
+/*! @abstract A batch holding no texture at all encodes nothing and is refused. */
+- (void)testABatchWithoutATextureIsRefused
+{
+	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @2}];
+	[self hostedViewForParameter:parameter];
+
+	XCTAssertFalse([parameter publishTextures:(@[NSNull.null, NSNull.null])]);
+}
+
+/*! @abstract A batch whose only entries are outside the slots encodes nothing and is refused. */
+- (void)testABatchBeyondTheSlotsEncodesNothing
+{
+	id<MTLDevice> device = [self metalDevice];
+	XCTSkipIf(device == nil, @"No Metal device.");
+
+	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:@{kFxGripLiveImageKey_Slots: @1}];
+	[self hostedViewForParameter:parameter];
+	id<MTLTexture> texture = [self textureWithDevice:device format:MTLPixelFormatRGBA8Unorm width:8 height:8 fill:0x66];
+
+	XCTAssertFalse([parameter publishTextures:(@[NSNull.null, texture])],
+				   @"the only real texture sits past the last slot");
+}
+
+/*! @abstract A tiny source clamps the requested mip level to the staging texture's chain. */
+- (void)testATinySourceClampsTheMipLevelToTheStagingChain
+{
+	id<MTLDevice> device = [self metalDevice];
+	XCTSkipIf(device == nil, @"No Metal device.");
+
+	FxGripLiveImageParameter *parameter = [self makeParameterWithDefault:nil];
+	parameter.snapshotSize = 1;
+	FxGripLiveImageView *view = [self hostedViewForParameter:parameter];
+	id<MTLTexture> texture = [self textureWithDevice:device format:MTLPixelFormatRGBA8Unorm width:2 height:2 fill:0x77];
+
+	XCTAssertTrue([parameter publishTexture:texture inSlot:0]);
+
+	XCTAssertTrue([self pumpUntil:^BOOL{ return [view frameInSlot:0] != nil; } timeout:5.0]);
+	XCTAssertGreaterThan([view frameInSlot:0].width, 0u);
 }
 
 @end

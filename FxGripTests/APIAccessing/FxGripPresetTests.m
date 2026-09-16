@@ -812,4 +812,81 @@ static BOOL FxGripPresetTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNil(value);
 }
 
+/*! @abstract The get path returns NO and no value for every typed getter the retrieval API refuses. */
+- (void)testGetReturnsNoForEveryTypeWhenTheGetterFails
+{
+	_setter.retrievalAPI.succeeds = NO;
+	FxParameterType types[] = {FxParameterType_RGBA, FxParameterType_RGB, FxParameterType_Point,
+							   FxParameterType_String, FxParameterType_FontMenu, FxParameterType_Toggle,
+							   FxParameterType_Int, FxParameterType_Menu, FxParameterType_Custom};
+
+	for (size_t i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
+		BOOL success = YES;
+		id value = [self getValueWithType:types[i] success:&success];
+		XCTAssertFalse(success, @"type %d", (int)types[i]);
+		XCTAssertNil(value, @"type %d", (int)types[i]);
+	}
+}
+
+#pragma mark Set path — shape inference (custom and none)
+
+/*! @abstract Without a dynamic API a dictionary carrying neither color nor point keys infers Custom and reaches the custom setter. */
+- (void)testSetInfersCustomFromAPlainDictionaryWhenNoDynamicAPI
+{
+	FxGripPresetTestSetterWithGetter *bare = [[FxGripPresetTestSetterWithGetter alloc] init];
+	bare.retrievalAPI = [[FxGripPresetTestRetrievalAPI alloc] init];
+	NSDictionary *data = @{@"mode": @"fast"};
+
+	XCTAssertTrue([FxGripPreset setParameterValue:data toParameter:kPresetTestParamID
+										   atTime:FxGripPresetTestTime() withAPI:(id)bare]);
+
+	XCTAssertEqualObjects(bare.recordedSelector, @"setCustomParameterValue:toParameter:atTime:");
+	XCTAssertEqualObjects(bare.recordedCustom, data);
+}
+
+/*! @abstract Without a dynamic API a value that is neither string, dictionary, nor number infers no type and is rejected without a setter call. */
+- (void)testSetRejectsAnUninferrableValueWhenNoDynamicAPI
+{
+	FxGripPresetTestSetter *bare = [[FxGripPresetTestSetter alloc] init];
+
+	XCTAssertFalse([FxGripPreset setParameterValue:@[@1] toParameter:kPresetTestParamID
+											atTime:FxGripPresetTestTime() withAPI:(id)bare]);
+
+	XCTAssertEqual(bare.callCount, 0u);
+}
+
+#pragma mark Set path — rejections by shape
+
+/*! @abstract The RGBA and RGB types reject a value that is not a dictionary. */
+- (void)testSetRejectsNonDictionaryForColorTypes
+{
+	XCTAssertFalse([self setValue:@"red" withType:FxParameterType_RGBA]);
+	XCTAssertFalse([self setValue:@1 withType:FxParameterType_RGB]);
+	XCTAssertEqual(_setter.callCount, 0u);
+}
+
+/*! @abstract The Toggle type rejects a value that is not a number. */
+- (void)testSetRejectsNonNumberForToggleType
+{
+	XCTAssertFalse([self setValue:@"yes" withType:FxParameterType_Toggle]);
+	XCTAssertEqual(_setter.callCount, 0u);
+}
+
+/*! @abstract The default float branch rejects a value that is not a number. */
+- (void)testSetRejectsNonNumberForFloatType
+{
+	XCTAssertFalse([self setValue:@"1.0" withType:FxParameterType_Float]);
+	XCTAssertFalse([self setValue:@{@"v": @1} withType:FxParameterType_Percent]);
+	XCTAssertEqual(_setter.callCount, 0u);
+}
+
+/*! @abstract The Custom type rejects a value that supports neither secure coding nor copying. */
+- (void)testSetRejectsANonCodableCustomValue
+{
+	_setter.retrievalAPI.customToReturn = nil;
+
+	XCTAssertFalse([self setValue:[[NSObject alloc] init] withType:FxParameterType_Custom]);
+	XCTAssertEqual(_setter.callCount, 0u);
+}
+
 @end

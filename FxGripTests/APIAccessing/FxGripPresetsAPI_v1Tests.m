@@ -9,7 +9,6 @@
 */
 
 #import <XCTest/XCTest.h>
-#import <dlfcn.h>
 #import <CoreMedia/CoreMedia.h>
 #import <FxPlug/FxTypes.h>
 #import "FxGrip/FxGripTypes.h"
@@ -33,14 +32,13 @@ static NSString *const kPresetsTestPluginUuid = @"11111111-2222-3333-4444-555555
 static NSString *const kPresetsTestGroupUuid = @"GROUP-UUID-1";
 
 /*!
-	The test bundle does not link FxPlug.framework, and FxPlug is weak-linked by FxGrip, so
-	the constant is read from the loaded images. Outside an FxPlug host the symbol is absent
-	and FxGripErrors.h substitutes FxGripPlugErrorDomain.
+	FxGripErrors.h selects the host's FxPlugErrorDomain only inside an FxPlug host, where
+	FxBaseEffect exists. The FxPlugStub test framework supplies the symbol without the host,
+	so the FxGrip constant applies; the helper reads the same macro the framework uses.
 */
 static NSString *FxGripPresetsTestExpectedErrorDomain(void)
 {
-	NSString * __unsafe_unretained *domain = (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "FxPlugErrorDomain");
-	return domain ? *domain : FxGripPlugErrorDomainConstant;
+	return FxGripPlugErrorDomain;
 }
 
 static const FxParameterId kPresetsTestParamA = 10;
@@ -1276,6 +1274,42 @@ static BOOL FxGripPresetsTestTimesEqual(CMTime lhs, CMTime rhs)
 	XCTAssertNotNil(presetsAPI);
 	XCTAssertTrue([presetsAPI isKindOfClass:FxGripPresetsAPI_v1.class]);
 	XCTAssertTrue([presetsAPI compatiblePreset:[self compatiblePreset]]);
+}
+
+@end
+
+#pragma mark - The panel-driven save and load
+
+/*!
+	These two methods run an NSSavePanel / NSOpenPanel modally, so only their argument guards run
+	without a person at the keyboard. The guards are what a plugin hits when it passes nothing, and
+	they are asserted here; the panel paths need a seam around -runModal to become testable.
+*/
+@interface FxGripPresetsAPI_v1PanelTests : XCTestCase
+@end
+
+@implementation FxGripPresetsAPI_v1PanelTests
+
+/*! @abstract savePreset:remap: refuses a nil preset without presenting a panel. */
+- (void)testSavingANilPresetIsRefusedWithoutAPanel
+{
+	id noEffect = nil;
+	FxGripPreset *noPreset = nil;
+	FxGripPresetsAPI_v1 *api = [FxGripPresetsAPI_v1.alloc initWithAPI:nil effect:noEffect];
+
+	XCTAssertFalse([api savePreset:noPreset remap:nil]);
+	XCTAssertFalse([api savePreset:noPreset remap:@{@"10": @"20"}]);
+}
+
+/*! @abstract loadPreset:remap: refuses a NULL out-pointer without presenting a panel. */
+- (void)testLoadingIntoANullPointerIsRefusedWithoutAPanel
+{
+	id noEffect = nil;
+	FxGripPreset *__autoreleasing *noPresetOut = NULL;
+	FxGripPresetsAPI_v1 *api = [FxGripPresetsAPI_v1.alloc initWithAPI:nil effect:noEffect];
+
+	XCTAssertFalse([api loadPreset:noPresetOut remap:nil]);
+	XCTAssertFalse([api loadPreset:noPresetOut remap:@{@"10": @"20"}]);
 }
 
 @end

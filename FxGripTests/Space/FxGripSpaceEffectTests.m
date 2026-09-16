@@ -17,6 +17,9 @@
 #import <FxGrip/FxGripPhysicsSimulationStore.h>
 #import <FxGrip/FxGripErrors.h>
 #import <FxGrip/NSCoder+FxPlug.h>
+#import <CoreVideo/CoreVideo.h>
+#import <Metal/Metal.h>
+#import "FxPlugStub.h"
 
 #pragma mark - Hook subclass
 
@@ -211,6 +214,207 @@
 	XCTAssertNotNil(error.domain);
 	XCTAssertEqual(error.code, kFxGripError_SpaceRenderFailure);
 	XCTAssertEqualObjects(error.localizedDescription, @"why");
+}
+
+@end
+
+#pragma mark - The tile-facing entry points
+
+/*!
+	Drives the FxPlug entry points that take image tiles. FxPlug ships no binary, so FxImageTile did
+	not exist in the test process and these never ran; the FxPlugStub test framework supplies the
+	class, and these tests hand the effect real IOSurface-backed tiles.
+*/
+@interface FxGripSpaceEffectTileTests : XCTestCase
+@property (nonatomic, strong) FxGripSpaceEffect *effect;
+@property (nonatomic, strong) id<MTLDevice> device;
+@end
+
+@implementation FxGripSpaceEffectTileTests
+
+- (void)setUp
+{
+	[super setUp];
+	self.effect = [FxGripSpaceEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	self.device = MTLCreateSystemDefaultDevice();
+}
+
+- (void)tearDown
+{
+	self.effect = nil;
+	self.device = nil;
+	[super tearDown];
+}
+
+- (FxImageTile *)tileWithBounds:(FxRect)bounds
+{
+	return [FxImageTile stubTileWithPixelBounds:bounds
+									pixelFormat:kCVPixelFormatType_64RGBAHalf
+										 device:self.device];
+}
+
+- (NSCoder *)emptyCoder
+{
+	NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+	[archiver finishEncoding];
+	NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:archiver.encodedData error:nil];
+	decoder.requiresSecureCoding = NO;
+	return decoder;
+}
+
+/*! @abstract The destination image rect is the destination tile's own image bounds. */
+- (void)testTheDestinationImageRectIsTheDestinationTilesImageBounds
+{
+	FxRect bounds = { 10, 20, 110, 220 };
+	FxImageTile *destination = [FxImageTile stubTileWithPixelBounds:bounds];
+	FxRect result = { 0, 0, 0, 0 };
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect destinationImageRect:&result
+									   sourceImages:@[]
+								   destinationImage:destination
+										pluginCoder:[self emptyCoder]
+											 atTime:kCMTimeZero
+											  error:&error]);
+
+	XCTAssertTrue(FxRectsAreEqual(result, bounds));
+	XCTAssertNil(error);
+}
+
+/*! @abstract The source tile rect is the indexed source's full image bounds, so the whole layer is available. */
+- (void)testTheSourceTileRectIsTheIndexedSourcesImageBounds
+{
+	FxRect first = { 0, 0, 50, 50 };
+	FxRect second = { 5, 5, 105, 205 };
+	NSArray *sources = @[[FxImageTile stubTileWithPixelBounds:first],
+						 [FxImageTile stubTileWithPixelBounds:second]];
+	FxRect result = { 0, 0, 0, 0 };
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect sourceTileRect:&result
+							 sourceImageIndex:1
+								 sourceImages:sources
+						  destinationTileRect:((FxRect){ 0, 0, 10, 10 })
+							 destinationImage:[FxImageTile stubTileWithPixelBounds:first]
+								  pluginCoder:[self emptyCoder]
+									   atTime:kCMTimeZero
+										error:&error]);
+
+	XCTAssertTrue(FxRectsAreEqual(result, second));
+	XCTAssertNil(error);
+}
+
+/*! @abstract An out-of-range source index falls back to the destination tile rect. */
+- (void)testAnOutOfRangeSourceIndexFallsBackToTheDestinationTileRect
+{
+	FxRect destinationTileRect = { 1, 2, 3, 4 };
+	FxRect result = { 0, 0, 0, 0 };
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect sourceTileRect:&result
+							 sourceImageIndex:5
+								 sourceImages:@[]
+						  destinationTileRect:destinationTileRect
+							 destinationImage:[FxImageTile stubTileWithPixelBounds:destinationTileRect]
+								  pluginCoder:[self emptyCoder]
+									   atTime:kCMTimeZero
+										error:&error]);
+
+	XCTAssertTrue(FxRectsAreEqual(result, destinationTileRect));
+	XCTAssertNil(error);
+}
+
+/*! @abstract The render reports an error when the destination tile carries no Metal texture. */
+- (void)testTheRenderReportsAnErrorWithoutADestinationTexture
+{
+	FxImageTile *destination = [FxImageTile stubTileWithPixelBounds:((FxRect){ 0, 0, 8, 8 })];
+	NSError *error = nil;
+
+	XCTAssertFalse([self.effect renderDestinationImage:destination
+										  sourceImages:@[]
+										   pluginCoder:[self emptyCoder]
+												atTime:kCMTimeZero
+												 error:&error]);
+
+	XCTAssertNotNil(error);
+	XCTAssertTrue([error.localizedDescription containsString:@"Metal texture"]);
+}
+
+/*! @abstract With a destination texture and no source, the base's passthrough render succeeds. */
+- (void)testTheRenderSucceedsWithNoSourceTile
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *destination = [self tileWithBounds:((FxRect){ 0, 0, 8, 8 })];
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect renderDestinationImage:destination
+										 sourceImages:@[]
+										  pluginCoder:[self emptyCoder]
+											   atTime:kCMTimeZero
+												error:&error]);
+
+	XCTAssertNil(error);
+}
+
+/*! @abstract The base's passthrough copies the source tile's pixels into the destination texture. */
+- (void)testThePassthroughCopiesTheSourceIntoTheDestination
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *source = [self tileWithBounds:((FxRect){ 0, 0, 8, 8 })];
+	FxImageTile *destination = [self tileWithBounds:((FxRect){ 0, 0, 8, 8 })];
+	id<MTLTexture> sourceTexture = [source metalTextureForDevice:self.device];
+	id<MTLTexture> destinationTexture = [destination metalTextureForDevice:self.device];
+
+	// A known half-float green pixel, so the copy is observable rather than assumed.
+	const uint16_t green[4] = { 0x0000, 0x3C00, 0x0000, 0x3C00 };
+	[sourceTexture replaceRegion:MTLRegionMake2D(0, 0, 1, 1) mipmapLevel:0 withBytes:green bytesPerRow:8 * 8];
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect renderDestinationImage:destination
+										 sourceImages:@[source]
+										  pluginCoder:[self emptyCoder]
+											   atTime:kCMTimeZero
+												error:&error]);
+
+	XCTAssertNil(error);
+	uint16_t readBack[4] = { 0, 0, 0, 0 };
+	[destinationTexture getBytes:readBack bytesPerRow:8 * 8 fromRegion:MTLRegionMake2D(0, 0, 1, 1) mipmapLevel:0];
+	XCTAssertEqual(readBack[1], green[1]);
+	XCTAssertEqual(readBack[3], green[3]);
+}
+
+/*! @abstract A source tile with no Metal texture leaves the destination untouched and still succeeds. */
+- (void)testAPassthroughFromATileWithoutATextureSucceedsWithoutCopying
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *destination = [self tileWithBounds:((FxRect){ 0, 0, 8, 8 })];
+	FxImageTile *source = [FxImageTile stubTileWithPixelBounds:((FxRect){ 0, 0, 8, 8 })];
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect renderDestinationImage:destination
+										 sourceImages:@[source]
+										  pluginCoder:[self emptyCoder]
+											   atTime:kCMTimeZero
+												error:&error]);
+
+	XCTAssertNil(error);
+}
+
+/*! @abstract The passthrough copies only the overlap when the two tiles differ in size. */
+- (void)testThePassthroughCopiesOnlyTheOverlappingRegion
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *source = [self tileWithBounds:((FxRect){ 0, 0, 16, 16 })];
+	FxImageTile *destination = [self tileWithBounds:((FxRect){ 0, 0, 8, 8 })];
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect renderDestinationImage:destination
+										 sourceImages:@[source]
+										  pluginCoder:[self emptyCoder]
+											   atTime:kCMTimeZero
+												error:&error]);
+
+	XCTAssertNil(error);
 }
 
 @end

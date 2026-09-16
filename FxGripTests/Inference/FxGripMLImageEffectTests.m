@@ -15,6 +15,11 @@
 #import <FxGrip/FxGripInferenceResult.h>
 #import <FxGrip/FxGripPassthroughBackend.h>
 #import <FxGrip/FxGripErrors.h>
+#import <FxGrip/FxGripFrameData.h>
+#import <FxGrip/FxGripMLCache.h>
+#import <FxGrip/FxGripImageBuffer.h>
+#import <CoreVideo/CoreVideo.h>
+#import "FxPlugStub.h"
 
 static CMTime FxGripMLTestTime(void)
 {
@@ -157,7 +162,8 @@ static CMTime FxGripMLTestTime(void)
 {
 	id<FxGripInferenceBackend> before = self.effect.inferenceBackend;
 	XCTAssertFalse([self.effect useInferKitBackend:NSObject.new], @"InferKit is not linked in the test bundle");
-	XCTAssertFalse([self.effect useInferKitBackend:nil]);
+	id noBackend = nil;
+	XCTAssertFalse([self.effect useInferKitBackend:noBackend]);
 	XCTAssertEqual(self.effect.inferenceBackend, before, @"a failed bridge leaves the backend unchanged");
 }
 
@@ -379,6 +385,367 @@ static CMTime FxGripMLCacheFrame(int64_t value)
 	[self renderFrame:5];
 	[self renderFrame:5];
 	XCTAssertEqual(self.backend.runCount, (NSUInteger)2);
+}
+
+@end
+
+#pragma mark - Real cache and Metal seams
+
+/*!
+	Runs the shipped cache and Metal seams rather than replacing them. mlCacheData reads through
+	the FxGripMLCache extension, which answers nil without a host, so the cache is supplied here.
+*/
+@interface FxGripMLRealSeamEffect : FxGripMLImageEffect
+@property (nonatomic, strong) NSNotificationCenter *privateNotifier;
+@property (nonatomic, strong, nullable) FxGripFrameData *suppliedCache;
+@property (nonatomic, strong, nullable) NSDictionary<NSString *, id> *stagedParameters;
+@end
+
+@implementation FxGripMLRealSeamEffect
+
+- (id)effectBase
+{
+	return self;
+}
+
+- (NSPriorityNotificationCenter *)notifier
+{
+	if (!_privateNotifier) {
+		Class cls = NSClassFromString(@"NSPriorityNotificationCenter");
+		_privateNotifier = [[cls alloc] init];
+	}
+	return (NSPriorityNotificationCenter *)_privateNotifier;
+}
+
+- (id<FxGripAPIAccessing>)apiManager { return nil; }
+
+- (FxGripFrameData *)mlCacheData { return self.suppliedCache; }
+
+- (NSDictionary<NSString *, id> *)inferenceParametersAtTime:(CMTime)time { return self.stagedParameters; }
+
+@end
+
+@interface FxGripMLImageEffectSeamTests : XCTestCase
+@property (nonatomic, strong) FxGripMLRealSeamEffect *effect;
+@property (nonatomic, strong) id<MTLDevice> device;
+@end
+
+@implementation FxGripMLImageEffectSeamTests
+
+- (void)setUp
+{
+	[super setUp];
+	self.effect = [FxGripMLRealSeamEffect.alloc initWithAPIManager:nil];
+	self.device = MTLCreateSystemDefaultDevice();
+}
+
+- (void)tearDown
+{
+	self.effect = nil;
+	self.device = nil;
+	[super tearDown];
+}
+
+/*! A tile carrying a real IOSurface-backed texture on the default device. */
+- (FxImageTile *)tileWithBounds:(FxRect)bounds
+{
+	return [FxImageTile stubTileWithPixelBounds:bounds
+									pixelFormat:kCVPixelFormatType_64RGBAHalf
+										 device:self.device];
+}
+
+#pragma mark Frame index
+
+/*! @abstract cacheFrameIndexForTime: normalizes the render time to a 600 timescale. */
+- (void)testTheCacheFrameIndexNormalizesToA600Timescale
+{
+	XCTAssertEqual([self.effect cacheFrameIndexForTime:CMTimeMake(1, 30)], 20);
+	XCTAssertEqual([self.effect cacheFrameIndexForTime:CMTimeMake(2, 1)], 1200);
+	XCTAssertEqual([self.effect cacheFrameIndexForTime:CMTimeMake(600, 600)], 600);
+}
+
+/*! @abstract cacheFrameIndexForTime: maps an invalid time to frame zero. */
+- (void)testTheCacheFrameIndexOfAnInvalidTimeIsZero
+{
+	XCTAssertEqual([self.effect cacheFrameIndexForTime:kCMTimeInvalid], 0);
+}
+
+#pragma mark Reading the cache
+
+/*! @abstract cachedOutputForFrameIndex:device: answers nil without a device. */
+- (void)testTheCachedOutputIsNilWithoutADevice
+{
+	XCTAssertNil([self.effect cachedOutputForFrameIndex:0 device:nil]);
+}
+
+/*! @abstract cachedOutputForFrameIndex:device: answers nil on a miss and for a record of another class. */
+- (void)testTheCachedOutputIsNilOnAMissAndForAForeignRecord
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxGripFrameData *cache = FxGripFrameData.new;
+	self.effect.suppliedCache = cache;
+
+	XCTAssertNil([self.effect cachedOutputForFrameIndex:7 device:self.device]);
+
+	[cache setRecord:(NSObject<NSSecureCoding, NSCopying> *)@"not a buffer" atIndex:7];
+
+	XCTAssertNil([self.effect cachedOutputForFrameIndex:7 device:self.device]);
+}
+
+/*! @abstract A stored output comes back from the cache as a texture of the same size. */
+- (void)testAStoredOutputComesBackAsATexture
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	self.effect.suppliedCache = FxGripFrameData.new;
+	FxImageTile *tile = [self tileWithBounds:(FxRect){ 0, 0, 16, 8 }];
+	id<MTLTexture> source = [tile metalTextureForDevice:self.device];
+	XCTAssertNotNil(source);
+
+	[self.effect storeOutput:source forFrameIndex:12];
+	id<MTLTexture> restored = [self.effect cachedOutputForFrameIndex:12 device:self.device];
+
+	XCTAssertNotNil(restored);
+	XCTAssertEqual(restored.width, source.width);
+	XCTAssertEqual(restored.height, source.height);
+}
+
+#pragma mark Writing the cache
+
+/*! @abstract storeOutput:forFrameIndex: ignores an output that is not a Metal texture. */
+- (void)testStoringANonTextureIsIgnored
+{
+	self.effect.suppliedCache = FxGripFrameData.new;
+
+	[self.effect storeOutput:@"not a texture" forFrameIndex:3];
+
+	XCTAssertEqual(self.effect.suppliedCache.frameIndexes.count, 0u);
+}
+
+/*! @abstract storeOutput:forFrameIndex: does nothing when the effect has no cache. */
+- (void)testStoringWithoutACacheDoesNothing
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *tile = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	self.effect.suppliedCache = nil;
+
+	[self.effect storeOutput:[tile metalTextureForDevice:self.device] forFrameIndex:1];
+
+	XCTAssertNil([self.effect cachedOutputForFrameIndex:1 device:self.device]);
+}
+
+#pragma mark Invalidation
+
+/*! @abstract A cache carrying no signature yet is treated as stale, so the first call clears it. */
+- (void)testACacheWithNoSignatureIsClearedOnTheFirstCall
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxGripFrameData *cache = FxGripFrameData.new;
+	self.effect.suppliedCache = cache;
+	FxImageTile *tile = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	[self.effect storeOutput:[tile metalTextureForDevice:self.device] forFrameIndex:4];
+	XCTAssertEqual(cache.frameIndexes.count, 1u);
+
+	[self.effect invalidateCacheIfSignatureChanged:@"signature-a"];
+
+	XCTAssertEqual(cache.frameIndexes.count, 0u);
+}
+
+/*! @abstract An unchanged signature leaves every cached frame in place. */
+- (void)testAnUnchangedSignatureKeepsTheCachedFrames
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxGripFrameData *cache = FxGripFrameData.new;
+	self.effect.suppliedCache = cache;
+	FxImageTile *tile = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+
+	// The signature has to be recorded before a frame is worth keeping.
+	[self.effect invalidateCacheIfSignatureChanged:@"signature-a"];
+	[self.effect storeOutput:[tile metalTextureForDevice:self.device] forFrameIndex:4];
+
+	[self.effect invalidateCacheIfSignatureChanged:@"signature-a"];
+
+	XCTAssertEqual(cache.frameIndexes.count, 1u);
+}
+
+/*! @abstract A changed signature clears every cached frame and records the new signature. */
+- (void)testAChangedSignatureClearsEveryCachedFrame
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxGripFrameData *cache = FxGripFrameData.new;
+	self.effect.suppliedCache = cache;
+	FxImageTile *tile = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	[self.effect invalidateCacheIfSignatureChanged:@"signature-a"];
+	[self.effect storeOutput:[tile metalTextureForDevice:self.device] forFrameIndex:4];
+	[self.effect storeOutput:[tile metalTextureForDevice:self.device] forFrameIndex:9];
+	XCTAssertEqual(cache.frameIndexes.count, 2u);
+
+	[self.effect invalidateCacheIfSignatureChanged:@"signature-b"];
+
+	XCTAssertEqual(cache.frameIndexes.count, 0u);
+
+	// The new signature replaced the old one, so a frame stored after it survives.
+	[self.effect storeOutput:[tile metalTextureForDevice:self.device] forFrameIndex:11];
+	[self.effect invalidateCacheIfSignatureChanged:@"signature-b"];
+	XCTAssertEqual(cache.frameIndexes.count, 1u);
+}
+
+/*! @abstract invalidateCacheIfSignatureChanged: does nothing when the effect has no cache. */
+- (void)testInvalidatingWithoutACacheDoesNothing
+{
+	self.effect.suppliedCache = nil;
+
+	XCTAssertNoThrow([self.effect invalidateCacheIfSignatureChanged:@"signature-a"]);
+}
+
+/*! @abstract The signature joins the backend identifier to the frame's parameters. */
+- (void)testTheSignatureJoinsTheBackendIdentifierAndTheParameters
+{
+	self.effect.stagedParameters = @{ @"strength": @2 };
+
+	NSString *signature = [self.effect cacheSignatureForParametersAtTime:FxGripMLTestTime()];
+
+	XCTAssertTrue([signature hasPrefix:self.effect.inferenceBackend.backendIdentifier]);
+	XCTAssertTrue([signature containsString:@"strength"]);
+}
+
+#pragma mark The image input seam
+
+/*! @abstract imageInputForSourceTile: reports a missing-input error without a tile. */
+- (void)testTheImageInputReportsAMissingInputWithoutATile
+{
+	NSError *error = nil;
+
+	XCTAssertNil([self.effect imageInputForSourceTile:nil atTime:FxGripMLTestTime() error:&error]);
+
+	XCTAssertNotNil(error);
+	XCTAssertEqual(error.code, kFxGripError_InferenceMissingInput);
+}
+
+/*! @abstract imageInputForSourceTile: reports a backend failure when the tile has no texture. */
+- (void)testTheImageInputReportsAFailureWhenTheTileHasNoTexture
+{
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }];
+	NSError *error = nil;
+
+	XCTAssertNil([self.effect imageInputForSourceTile:tile atTime:FxGripMLTestTime() error:&error]);
+
+	XCTAssertNotNil(error);
+	XCTAssertEqual(error.code, kFxGripError_InferenceBackendFailure);
+}
+
+/*! @abstract imageInputForSourceTile: answers the tile's own Metal texture. */
+- (void)testTheImageInputIsTheTilesMetalTexture
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *tile = [self tileWithBounds:(FxRect){ 0, 0, 16, 16 }];
+	NSError *error = nil;
+
+	id input = [self.effect imageInputForSourceTile:tile atTime:FxGripMLTestTime() error:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqual(input, [tile metalTextureForDevice:self.device]);
+}
+
+#pragma mark The output seam
+
+/*! @abstract writeImageOutput: reports a backend failure for an output that is not a texture. */
+- (void)testWritingANonTextureReportsAFailure
+{
+	NSError *error = nil;
+
+	XCTAssertFalse([self.effect writeImageOutput:@"not a texture" toDestinationTile:nil
+										  atTime:FxGripMLTestTime() error:&error]);
+
+	XCTAssertNotNil(error);
+	XCTAssertEqual(error.code, kFxGripError_InferenceBackendFailure);
+}
+
+/*! @abstract writeImageOutput: reports a missing input without a destination tile. */
+- (void)testWritingWithoutADestinationReportsAMissingInput
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *source = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	NSError *error = nil;
+
+	XCTAssertFalse([self.effect writeImageOutput:[source metalTextureForDevice:self.device]
+							   toDestinationTile:nil atTime:FxGripMLTestTime() error:&error]);
+
+	XCTAssertNotNil(error);
+	XCTAssertEqual(error.code, kFxGripError_InferenceMissingInput);
+}
+
+/*! @abstract writeImageOutput: reports a failure when the destination tile has no texture. */
+- (void)testWritingToATileWithoutATextureReportsAFailure
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *source = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	FxImageTile *destination = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 8, 8 }];
+	NSError *error = nil;
+
+	XCTAssertFalse([self.effect writeImageOutput:[source metalTextureForDevice:self.device]
+							   toDestinationTile:destination atTime:FxGripMLTestTime() error:&error]);
+
+	XCTAssertNotNil(error);
+	XCTAssertEqual(error.code, kFxGripError_InferenceBackendFailure);
+}
+
+/*! @abstract Writing a tile's own texture back to it is a no-op that reports success. */
+- (void)testWritingATilesOwnTextureBackToItSucceedsWithoutABlit
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *tile = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect writeImageOutput:[tile metalTextureForDevice:self.device]
+							  toDestinationTile:tile atTime:FxGripMLTestTime() error:&error]);
+
+	XCTAssertNil(error);
+}
+
+/*! @abstract writeImageOutput: blits the output into the destination tile's texture. */
+- (void)testWritingBlitsTheOutputIntoTheDestination
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *source = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	FxImageTile *destination = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	id<MTLTexture> sourceTexture = [source metalTextureForDevice:self.device];
+	id<MTLTexture> destinationTexture = [destination metalTextureForDevice:self.device];
+
+	// A known half-float red pixel, so the blit is observable rather than assumed.
+	const uint16_t red[4] = { 0x3C00, 0x0000, 0x0000, 0x3C00 };
+	[sourceTexture replaceRegion:MTLRegionMake2D(0, 0, 1, 1) mipmapLevel:0 withBytes:red bytesPerRow:8 * 8];
+	NSError *error = nil;
+
+	XCTAssertTrue([self.effect writeImageOutput:sourceTexture toDestinationTile:destination
+										 atTime:FxGripMLTestTime() error:&error]);
+
+	XCTAssertNil(error);
+	uint16_t readBack[4] = { 0, 0, 0, 0 };
+	[destinationTexture getBytes:readBack bytesPerRow:8 * 8 fromRegion:MTLRegionMake2D(0, 0, 1, 1) mipmapLevel:0];
+	XCTAssertEqual(readBack[0], red[0]);
+	XCTAssertEqual(readBack[3], red[3]);
+}
+
+#pragma mark The render entry point
+
+/*! @abstract renderDestinationImage:sourceImages:pluginCoder:atTime:error: runs the pass on the first source tile. */
+- (void)testTheRenderEntryPointUsesTheFirstSourceTile
+{
+	XCTSkipIf(self.device == nil, @"No Metal device.");
+	FxImageTile *source = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	FxImageTile *destination = [self tileWithBounds:(FxRect){ 0, 0, 8, 8 }];
+	NSError *error = nil;
+	NSCoder *noCoder = nil;
+
+	BOOL rendered = [self.effect renderDestinationImage:destination
+										   sourceImages:@[source]
+											pluginCoder:noCoder
+												 atTime:FxGripMLTestTime()
+												  error:&error];
+
+	// The default backend is the passthrough, so the pass completes and writes the source through.
+	XCTAssertTrue(rendered, @"%@", error);
+	XCTAssertNil(error);
 }
 
 @end

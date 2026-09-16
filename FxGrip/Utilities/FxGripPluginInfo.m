@@ -52,7 +52,7 @@ static NSCharacterSet*		gSeparatorSet = nil;
 	return self.__BESingleton;
 }
 
-- (nullable instancetype)init;
+- (nonnull instancetype)init
 {
 	self = [super init];
 	

@@ -512,23 +512,21 @@ static NSString *FxGripCoderLightKey(NSString *prefix, long index)
 	XCTAssertEqual(memcmp(decoded, stub.matrix, sizeof(Matrix44Data)), 0);
 }
 
-/*!
-	FxPlug.framework is weak-linked, so outside an FxPlug host FxMatrix44 resolves to Nil
-	and the object-returning decoders answer nil for well-formed data. The value-returning
-	-decodeMatrix44Data: is the usable path in that configuration.
-*/
-- (void)testFxMatrix44DecodersAreNilSafeWhenFxPlugIsNotLoaded
+/*! @abstract The object decoders rebuild an FxMatrix44 from encoded data and answer nil for an absent key. */
+- (void)testFxMatrix44DecodersRebuildTheMatrixAndAnswerNilForAnAbsentKey
 {
-	if (NSClassFromString(@"FxMatrix44") != Nil) {
-		XCTSkip(@"FxPlug is loaded; the object decoders resolve against the real class.");
-	}
 	NSKeyedArchiver *archiver = FxGripCoderArchiver();
-	Matrix44Data matrix = { { 1.0 } };
+	Matrix44Data matrix = { { 1.0, 2.0, 3.0, 4.0 }, { 5.0, 6.0, 7.0, 8.0 }, { 9.0, 10.0, 11.0, 12.0 }, { 13.0, 14.0, 15.0, 16.0 } };
 	[archiver encodeMatrix44Data:&matrix forKey:@"m"];
 	NSKeyedUnarchiver *unarchiver = FxGripCoderUnarchiver(archiver);
 
-	XCTAssertNil([unarchiver decodeFxMatrix44:@"m"]);
-	XCTAssertNil([unarchiver decodeFxColorMatrix44:@"m"]);
+	FxMatrix44 *decoded = [unarchiver decodeFxMatrix44:@"m"];
+	FxMatrix44 *decodedColor = [unarchiver decodeFxColorMatrix44:@"m"];
+
+	XCTAssertNotNil(decoded);
+	XCTAssertEqual(memcmp(*[decoded matrix], matrix, sizeof(Matrix44Data)), 0);
+	XCTAssertNotNil(decodedColor);
+	XCTAssertEqual(memcmp(*[decodedColor matrix], matrix, sizeof(Matrix44Data)), 0);
 	XCTAssertNil([unarchiver decodeFxMatrix44:@"absent"]);
 	XCTAssertNil([unarchiver decodeFxColorMatrix44:@"absent"]);
 }

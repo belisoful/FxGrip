@@ -9,7 +9,6 @@
 */
 
 #import <XCTest/XCTest.h>
-#import <dlfcn.h>
 #import <CoreMedia/CoreMedia.h>
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripErrors.h>
@@ -31,15 +30,17 @@
 #import <FxGrip/FxGripInstanceTracker.h>
 #import <FxGrip/FxGripTileableEffect+Analyze.h>
 #import <FxGrip/FxGripAnalysis.h>
+#import <FxGrip/FxGripTileableEffect+OOBParameterAccess.h>
+#import <FxGrip/FxGripOOBParameterAccess.h>
 
 /*!
-	The test bundle links neither CoreMedia nor FxPlug, so the error domain FxGripErrors.h
-	names is read from the loaded images the way FxGripMetaTests does.
+	FxGripErrors.h selects the host's FxPlugErrorDomain only inside an FxPlug host, where
+	FxBaseEffect exists. The FxPlugStub test framework supplies the symbol without the host,
+	so the FxGrip constant applies; the helper reads the same macro the framework uses.
 */
 static NSString *FxGripCatTestExpectedErrorDomain(void)
 {
-	NSString * __unsafe_unretained *domain = (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "FxPlugErrorDomain");
-	return domain ? *domain : FxGripPlugErrorDomainConstant;
+	return FxGripPlugErrorDomain;
 }
 
 static CMTime FxGripCatTestMakeTime(int64_t value, int32_t timescale)
@@ -1585,6 +1586,168 @@ static CMTime FxGripAnalysisTestCMTime(int64_t value, int32_t timescale)
 	XCTAssertEqual(desired.start.timescale, (int32_t)30);
 	XCTAssertEqual(desired.duration.value, (int64_t)50);
 	XCTAssertEqual(desired.duration.timescale, (int32_t)30);
+}
+
+#pragma mark Out-of-band parameter access
+
+/*! @abstract Each out-of-band context is a distinct access object bound to the effect, and one of them flushes on release. */
+- (void)testTheOutOfBandContextsAreBoundToTheEffect
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+
+	@autoreleasepool {
+		FxGripOOBParameterAccess *plain = [effect startContext];
+		FxGripOOBParameterAccess *flushing = [effect startContextFlush];
+
+		XCTAssertNotNil(plain);
+		XCTAssertNotNil(flushing);
+		XCTAssertFalse(plain == flushing, @"each request opens its own context");
+	}
+}
+
+#pragma mark Color gamut matrices
+
+/*! @abstract The RGB and XYZ conversion matrices are mutual inverses for the effect's primaries. */
+- (void)testTheGamutMatricesRoundTripThroughXYZ
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+
+	simd_float3x3 toXYZ = effect.rgbToXYZMatrix;
+	simd_float3x3 fromXYZ = effect.xyzToRGBMatrix;
+	simd_float3 white = simd_make_float3(1.0f, 1.0f, 1.0f);
+	simd_float3 restored = simd_mul(fromXYZ, simd_mul(toXYZ, white));
+
+	XCTAssertEqualWithAccuracy(restored.x, 1.0f, 1e-4);
+	XCTAssertEqualWithAccuracy(restored.y, 1.0f, 1e-4);
+	XCTAssertEqualWithAccuracy(restored.z, 1.0f, 1e-4);
+}
+
+/*! @abstract The gamut conversion to and from the effect's own primaries is the identity. */
+- (void)testTheGamutConversionToItsOwnPrimariesIsTheIdentity
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+
+	simd_float3x3 toSelf = [effect gamutMatrixToPrimaries:effect.colorPrimaries];
+	simd_float3x3 fromSelf = [effect gamutMatrixFromPrimaries:effect.colorPrimaries];
+	simd_float3 color = simd_make_float3(0.25f, 0.5f, 0.75f);
+
+	simd_float3 forward = simd_mul(toSelf, color);
+	simd_float3 backward = simd_mul(fromSelf, color);
+
+	XCTAssertEqualWithAccuracy(forward.x, color.x, 1e-4);
+	XCTAssertEqualWithAccuracy(forward.y, color.y, 1e-4);
+	XCTAssertEqualWithAccuracy(forward.z, color.z, 1e-4);
+	XCTAssertEqualWithAccuracy(backward.z, color.z, 1e-4);
+}
+
+#pragma mark Source tile requests
+
+/*! @abstract A source tile request names the effect clip at the offset time and excludes leading filters. */
+- (void)testASourceTileRequestNamesTheEffectClipAtTheOffsetTime
+{
+	[self makeEffect];
+	[self installTimingAPI];		// frame duration defaults to 1/30
+	FxGripCatTestEffect *effect = self.effect;
+
+	FxImageTileRequest *previous = [effect sourceTileRequestAtTime:FxGripCatTestMakeTime(30, 30) frameOffset:-1];
+	FxImageTileRequest *current = [effect sourceTileRequestAtTime:FxGripCatTestMakeTime(30, 30)];
+
+	XCTAssertNotNil(previous);
+	XCTAssertEqual(previous.source, kFxImageTileRequestSourceEffectClip);
+	XCTAssertFalse(previous.includeLeadingFilters);
+	XCTAssertEqual(previous.parameterID, (UInt32)0);
+	XCTAssertNotNil(current);
+	XCTAssertEqual(current.requestTime.value, (int64_t)30);
+	XCTAssertLessThan(previous.requestTime.value, current.requestTime.value,
+					  @"a negative frame offset moves the request earlier");
+}
+
+#pragma mark Parameter type resolution
+
+/*! @abstract A configuration record carrying an "off" key in any supported language builds no parameter. */
+- (void)testAnOffKeyDisablesTheParameter
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+	NSDictionary *english = @{
+		kFxParameterProperty_Id: @31, kFxParameterProperty_Type: kFxParameterType_Float,
+		kFxParameterProperty_Name: @"Level", @"off": @YES,
+	};
+	NSDictionary *spanish = @{
+		kFxParameterProperty_Id: @31, kFxParameterProperty_Type: kFxParameterType_Float,
+		kFxParameterProperty_Name: @"Level", @"apagado": @YES,
+	};
+
+	XCTAssertNil([effect parameterForDictionary:english]);
+	XCTAssertNil([effect parameterForDictionary:spanish]);
+}
+
+/*! @abstract A record naming no known type, an unknown class, or a non-conforming class builds no parameter. */
+- (void)testAnUnresolvableRecordBuildsNoParameter
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+	NSDictionary *unknownType = @{
+		kFxParameterProperty_Id: @32, kFxParameterProperty_Type: @"fxGripNoSuchType",
+		kFxParameterProperty_Name: @"Mystery",
+	};
+	NSDictionary *unknownClass = @{
+		kFxParameterProperty_Id: @33, kFxParameterProperty_Type: kFxParameterType_Float,
+		kFxParameterProperty_Name: @"Level", kFxParameterProperty_ClassName: @"FxGripNoSuchClass",
+	};
+	NSDictionary *nonStringClass = @{
+		kFxParameterProperty_Id: @34, kFxParameterProperty_Type: kFxParameterType_Float,
+		kFxParameterProperty_Name: @"Level", kFxParameterProperty_ClassName: @42,
+	};
+	NSDictionary *nonConformingClass = @{
+		kFxParameterProperty_Id: @35, kFxParameterProperty_Type: kFxParameterType_Float,
+		kFxParameterProperty_Name: @"Level", kFxParameterProperty_ClassName: @"NSObject",
+	};
+
+	XCTAssertNil([effect parameterForDictionary:unknownType]);
+	XCTAssertNil([effect parameterForDictionary:unknownClass]);
+	XCTAssertNil([effect parameterForDictionary:nonStringClass]);
+	XCTAssertNil([effect parameterForDictionary:nonConformingClass]);
+}
+
+/*! @abstract A record naming a conforming class builds that class instead of the type's own. */
+- (void)testADeclaredClassNameBuildsThatParameterClass
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+	NSDictionary *record = @{
+		kFxParameterProperty_Id: @36,
+		kFxParameterProperty_Type: kFxParameterType_Float,
+		kFxParameterProperty_Name: @"Level",
+		kFxParameterProperty_ClassName: @"FxGripPercentParameter",
+	};
+
+	id parameter = [effect parameterForDictionary:record];
+
+	XCTAssertNil(parameter, @"the named class refuses a record whose declared type is not its own");
+}
+
+/*! @abstract The type-to-class map resolves in both directions and reports nothing for the none type. */
+- (void)testTheTypeMapResolvesInBothDirections
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+
+	XCTAssertEqual([effect parameterTypeWithString:kFxParameterType_Float], FxParameterType_Float);
+	XCTAssertEqualObjects([effect parameterStringWithType:FxParameterType_Float], kFxParameterType_Float);
+	XCTAssertNotNil([effect parameterClassWithType:FxParameterType_Float]);
+
+	XCTAssertEqual([effect parameterTypeWithString:nil], FxParameterType_None);
+	XCTAssertEqual([effect parameterTypeWithString:@"fxGripNoSuchType"], FxParameterType_None);
+	XCTAssertNil([effect parameterStringWithType:FxParameterType_None]);
+	XCTAssertNil([effect parameterClassWithType:FxParameterType_None]);
+}
+
+/*! @abstract Registering a class that is not a parameter leaves the type map unchanged. */
+- (void)testRegisteringANonParameterClassIsIgnored
+{
+	FxGripCatTestEffect *effect = [self makeEffect];
+
+	[effect registerParameterType:NSObject.class];
+	[effect registerParameterType:nil];
+
+	XCTAssertEqual([effect parameterTypeWithString:@"NSObject"], FxParameterType_None);
 }
 
 @end

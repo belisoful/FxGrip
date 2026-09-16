@@ -13,6 +13,7 @@
 
 #import <XCTest/XCTest.h>
 #import <FxGrip/FxGripTypes.h>
+#import <FxGrip/FxGripTileableEffect.h>
 #import <FxGrip/FxGripTileableEffect+Notifications.h>
 #import <FxGrip/FxGripGoogleAnalytics.h>
 
@@ -22,6 +23,46 @@
 - (void)captureEvent:(nonnull NSNotification *)notification;
 - (void)logWithName:(nonnull NSString *)eventName parameters:(nullable NSDictionary *)parameters;
 - (nonnull NSPredicate *)addCaptureEvent:(nonnull NSNotificationName)name;
+- (nonnull NSPredicate *)addCaptureEvent:(nonnull NSNotificationName)name outcome:(BOOL)outcome;
+@end
+
+/*! A plugin dictionary the NSDictionary(FxGripTileableEffect) plugin accessors accept. */
+static NSDictionary *FxGripGATestPluginProperties(NSString *identifier)
+{
+	NSMutableDictionary *properties = @{
+		kProPlugPlugIn_UuidProperty: @"77777777-7777-7777-7777-777777777777",
+		kProPlugPlugIn_ClassNameProperty: @"FxGripGATestPlugin",
+		kProPlugPlugIn_GroupUUIDProperty: @"88888888-8888-8888-8888-888888888888",
+		kProPlugPlugIn_DisplayNameProperty: @"Analytics Test Plugin"
+	}.mutableCopy;
+	if (identifier) {
+		properties[kProPlugPlugInX_GoogleAnalyticsProperty] = identifier;
+	}
+	return properties.copy;
+}
+
+/*! A real effect whose Google Analytics identifier is supplied by the test. */
+@interface FxGripGATestHostEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripGATestHostEffect
+- (NSDictionary<NSString *, id> *)pluginProperties { return FxGripGATestPluginProperties(@"G-TESTID"); }
+@end
+
+/*! A real effect whose Google Analytics identifier is switched off with a leading dash. */
+@interface FxGripGATestDisabledEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripGATestDisabledEffect
+- (NSDictionary<NSString *, id> *)pluginProperties { return FxGripGATestPluginProperties(@"-G-TESTID"); }
+@end
+
+/*! A real effect that declares no Google Analytics identifier at all. */
+@interface FxGripGATestAbsentEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripGATestAbsentEffect
+- (NSDictionary<NSString *, id> *)pluginProperties { return FxGripGATestPluginProperties(nil); }
 @end
 
 // Records the events the deny-by-default decision would send, so the decision is observable
@@ -265,6 +306,92 @@ static NSNotificationCenter *FxGripGATestMakePriorityCenter(void)
 	}
 	XCTAssertEqual(self.analytics.loggedEvents.count, (NSUInteger)3,
 				   @"a non-positive interval disables the latch");
+}
+
+#pragma mark Rule construction
+
+/*! @abstract A predicate-format rule is installed and decides the events it matches. */
+- (void)testAPredicateFormatRuleDecidesTheEventsItMatches
+{
+	NSPredicate *rule = [self.analytics addCaptureRule:@"name LIKE %@" outcome:1, @"Report*"];
+
+	XCTAssertTrue([self.analytics.captureRules containsObject:rule]);
+	[self captureEventNamed:@"ReportOpened"];
+	[self captureEventNamed:@"SomethingElse"];
+
+	XCTAssertEqualObjects(self.analytics.loggedEvents, (@[@"ReportOpened"]));
+}
+
+/*! @abstract A prioritized predicate-format rule is evaluated ahead of a later accept rule. */
+- (void)testAPrioritizedPredicateFormatRuleIsEvaluatedFirst
+{
+	[self.analytics addCaptureEvent:@"Report*" outcome:YES];
+	[self.analytics addCaptureRule:@"name LIKE %@" outcome:NO priority:-10, @"ReportSecret*"];
+
+	[self captureEventNamed:@"ReportOpened"];
+	[self captureEventNamed:@"ReportSecretOpened"];
+
+	XCTAssertEqualObjects(self.analytics.loggedEvents, (@[@"ReportOpened"]),
+						  @"the higher-priority deny rule wins for the event it matches");
+}
+
+/*! @abstract An explicit-outcome name rule at the default priority accepts or denies its own name. */
+- (void)testAnExplicitOutcomeNameRuleDecidesItsOwnName
+{
+	NSPredicate *accept = [self.analytics addCaptureEvent:@"Allowed" outcome:YES];
+	NSPredicate *deny = [self.analytics addCaptureEvent:@"Blocked" outcome:NO];
+
+	XCTAssertTrue([self.analytics.captureRules containsObject:accept]);
+	XCTAssertTrue([self.analytics.captureRules containsObject:deny]);
+
+	[self captureEventNamed:@"Allowed"];
+	[self captureEventNamed:@"Blocked"];
+
+	XCTAssertEqualObjects(self.analytics.loggedEvents, (@[@"Allowed"]));
+}
+
+#pragma mark The logger
+
+/*! @abstract The logger is inert without a measurement identifier and stays inert with one when Firebase is absent. */
+- (void)testTheLoggerIsInertWithoutFirebase
+{
+	FxGripGoogleAnalytics *analytics = [FxGripGoogleAnalytics.alloc init];
+	[analytics extLoadWithEffect:(id)self.effect];
+
+	XCTAssertNil(analytics.measurementID, @"logging is off until a measurement identifier is set");
+	XCTAssertNoThrow([analytics logWithName:@"Event" parameters:@{@"a": @1}]);
+
+	analytics.measurementID = @"G-TESTID";
+	// FIRAnalytics is resolved by name; the test process links no Firebase, so the call is
+	// a no-op rather than a crash.
+	XCTAssertNoThrow([analytics logWithName:@"Event" parameters:@{@"a": @1}]);
+}
+
+#pragma mark The effect-side accessors
+
+/*! @abstract An effect declaring a usable identifier installs and resolves the extension. */
+- (void)testAnEffectWithAUsableIdentifierInstallsTheExtension
+{
+	FxGripGATestHostEffect *effect = [FxGripGATestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertEqualObjects(effect.gaIdentifier, @"G-TESTID");
+	XCTAssertTrue(effect.isGoogleAnalyticsInstalled);
+	XCTAssertNotNil(effect.googleAnalytics);
+	XCTAssertTrue([[effect newGoogleAnalyticsExtension] isKindOfClass:FxGripGoogleAnalytics.class]);
+}
+
+/*! @abstract A dash-prefixed identifier switches analytics off, and an absent one reports none. */
+- (void)testADashPrefixedOrAbsentIdentifierSwitchesAnalyticsOff
+{
+	FxGripGATestDisabledEffect *disabled = [FxGripGATestDisabledEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	XCTAssertEqualObjects(disabled.gaIdentifier, @"-G-TESTID");
+	XCTAssertFalse(disabled.isGoogleAnalyticsInstalled, @"a leading dash disables the identifier");
+	XCTAssertNil(disabled.googleAnalytics);
+
+	FxGripGATestAbsentEffect *absent = [FxGripGATestAbsentEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+	XCTAssertNil(absent.gaIdentifier);
+	XCTAssertFalse(absent.isGoogleAnalyticsInstalled);
+	XCTAssertNil(absent.googleAnalytics);
 }
 
 @end

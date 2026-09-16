@@ -1057,4 +1057,34 @@ static float FxGripTestSampleLUT(const float *lut, int n, float x)
 	}
 }
 
+
+/*! @abstract A curve is equal to itself without comparing its points. */
+- (void)testACurveIsEqualToItself
+{
+	FxGripCurveData *curve = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleRemap
+															domain:FxGripCurveDomainLinear];
+
+	XCTAssertTrue([curve isEqual:curve]);
+}
+
+/*! @abstract Each role's identity sits at that role's neutral value. */
+- (void)testEachRoleIdentitySitsAtItsNeutralValue
+{
+	NSDictionary<NSNumber *, NSNumber *> *neutrals = @{@(FxGripCurveRoleRemap): @(0.0),
+													   @(FxGripCurveRoleShift): @(0.5),
+													   @(FxGripCurveRoleMultiplierHalf): @(0.5),
+													   @(FxGripCurveRoleMultiplierOne): @(1.0)};
+	for (NSNumber *role in neutrals) {
+		FxGripCurveData *curve = [FxGripCurveData identityCurveWithRole:(FxGripCurveRole)role.integerValue
+																 domain:FxGripCurveDomainLinear];
+		CGPoint first = [curve pointAtIndex:0];
+		if (role.integerValue == FxGripCurveRoleRemap) {
+			// The remap identity is the diagonal, so its neutral shows at x = 0.
+			XCTAssertEqualWithAccuracy(first.y, 0.0, 1e-12);
+			continue;
+		}
+		XCTAssertEqualWithAccuracy(first.y, neutrals[role].doubleValue, 1e-12, @"role %@", role);
+	}
+}
+
 @end

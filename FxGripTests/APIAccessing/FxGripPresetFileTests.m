@@ -22,6 +22,8 @@ static NSURL *FxGripPresetFileTestSampleURL(void)
 	NSString *root = source.stringByDeletingLastPathComponent.stringByDeletingLastPathComponent;
 	NSArray<NSString *> *candidates = @[
 		@"FxFactory Circle Preset.fxpreset",
+		@"Local/FxFactory/FxFactory Circle Preset xml.fxpreset",
+		@"Local/FxFactory/FxFactory Circle Preset.fxpreset",
 		@"Local/FxFactory Circle Preset xml.fxpreset",
 		@"Local/FxFactory Circle Preset.fxpreset"
 	];

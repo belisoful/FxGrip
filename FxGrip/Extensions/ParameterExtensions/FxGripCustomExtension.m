@@ -29,7 +29,7 @@
 @implementation FxGripCustomExtension
 
 /*! @abstract Seeds the ordered set of value classes the custom parameter accepts. */
--(instancetype _Nullable) init
+- (nonnull instancetype)init
 {
 	self = [super init];
 	if(self) {

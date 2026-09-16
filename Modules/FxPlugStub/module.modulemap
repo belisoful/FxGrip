@@ -1,0 +1,7 @@
+// Test-only clang module for the FxPlugStub test controls, so Swift test targets can import
+// them. The stub framework builds outside the shared products directory and defines no module
+// of its own; see FxPlugStub/FxPlugStub.h.
+module FxPlugStub {
+	header "../../FxPlugStub/FxPlugStub.h"
+	export *
+}

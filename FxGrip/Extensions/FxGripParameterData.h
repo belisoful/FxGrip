@@ -60,8 +60,8 @@
 - (FxParameterFlags)storedFlags:(FxParameterId)parameterID;
 /*! The stored parent group ID of a parameter, or -1 when unknown. */
 - (FxParameterId)storedParentId:(FxParameterId)parameterID;
-/*! The stored menu items of a parameter, or nil when unknown. */
-- (nullable NSArray<NSString*> *)storedMenus:(FxParameterId)parameterID;
+/*! The stored menu items of a parameter: strings, or FxTaggedMenuEntry objects for a tagged popup; nil when unknown. */
+- (nullable NSArray *)storedMenus:(FxParameterId)parameterID;
 /*! The stored action selector of a parameter, or nil when unknown. */
 - (nullable NSString *)storedSelector:(FxParameterId)parameterID;
 

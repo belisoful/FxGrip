@@ -391,4 +391,14 @@ static const double kGoldenRatio = 1.618033988749895;
 	XCTAssertEqualObjects(self.divider, copy);
 }
 
+
+/*! @abstract A divider value is equal to itself without comparing its geometry. */
+- (void)testADividerValueIsEqualToItself
+{
+	FxGripDividerData *data = [FxGripDividerData.alloc init];
+	data.percentWidth = 0.5;
+
+	XCTAssertTrue([data isEqual:data]);
+}
+
 @end

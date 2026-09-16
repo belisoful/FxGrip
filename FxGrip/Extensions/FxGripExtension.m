@@ -40,7 +40,7 @@ const NSInteger FxGripExtensionDefaultPriority = 10;
 @synthesize extDefaultPriority = _extDefaultPriority;
 @synthesize extIndividuate = _extIndividuate;
 
-- (nullable id)init
+- (nonnull instancetype)init
 {
 	self = [super init];
 	if (self) {

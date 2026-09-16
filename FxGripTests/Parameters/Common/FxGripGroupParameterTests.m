@@ -322,4 +322,29 @@ static const FxParameterId kGroupTestParameter = 71;
 	XCTAssertTrue(((NSNumber *)write[@"flags"]).unsignedIntegerValue & kFxParameterFlag_COLLAPSED);
 }
 
+
+/*! @abstract Clearing the collapsed flag drops only that bit from the parameter flags. */
+- (void)testClearingTheCollapsedFlagDropsOnlyThatBit
+{
+	FxGripGroupParameter *group = [self makeGroupWithID:kGroupTestParameter];
+	self.effect.apiManager.paramGetAPIv6.flags = kFxParameterFlag_HIDDEN | kFxParameterFlag_COLLAPSED;
+	XCTAssertTrue(group.flagCollapsed);
+
+	group.flagCollapsed = NO;
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls.firstObject[@"flags"],
+						  @(kFxParameterFlag_HIDDEN), @"only the collapsed bit is dropped");
+}
+
+/*! @abstract Setting the collapsed flag to its current state writes nothing. */
+- (void)testSettingTheCollapsedFlagToItsCurrentStateWritesNothing
+{
+	FxGripGroupParameter *group = [self makeGroupWithID:kGroupTestParameter];
+	self.effect.apiManager.paramGetAPIv6.flags = kFxParameterFlag_COLLAPSED;
+
+	group.flagCollapsed = YES;
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls, @[]);
+}
+
 @end

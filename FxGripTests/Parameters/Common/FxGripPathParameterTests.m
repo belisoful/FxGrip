@@ -13,6 +13,8 @@
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripPathParameter.h>
+#import <FxGrip/FxGripParameter.h>
+#import <FxGrip/NSCoder+FxPlug.h>
 
 static const FxParameterId kPathTestParameter = 51;
 
@@ -95,6 +97,52 @@ static const FxParameterId kPathTestParameter = 51;
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"path");
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"id"], @(kPathTestParameter));
 	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @8);
+}
+
+
+/*! @abstract A refused read records the retrieval error. */
+- (void)testPathValueAtTimeReportsARefusedRead
+{
+	FxGripPathParameter *parameter = [self makePathParameter];
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+
+	[parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertNotNil(parameter.error);
+	XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
+}
+
+#pragma mark Plugin state
+
+/*! @abstract A plain coder, which is no plugin-state encoder, reads no path from the host. */
+- (void)testPathEncodingWithAPlainCoderReadsNoValue
+{
+	FxGripPathParameter *parameter = [self makePathParameter];
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+
+	[parameter encodeWithCoder:archiver];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
+}
+
+/*! @abstract A plugin-state coder reads the path at its own render time and encodes it as bytes. */
+- (void)testPathEncodingWithAPluginStateCoderEncodesThePathAtItsRenderTime
+{
+	FxGripPathParameter *parameter = [self makePathParameter];
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = FxGripParamClassTestTime(11, 30);
+
+	[parameter encodeWithCoder:archiver];
+	[archiver finishEncoding];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"path");
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @11);
+
+	NSKeyedUnarchiver *unarchiver = [NSKeyedUnarchiver.alloc initForReadingFromData:archiver.encodedData error:NULL];
+	unarchiver.requiresSecureCoding = NO;
+	NSUInteger length = 0;
+	XCTAssertTrue([unarchiver decodeBytesAtIndex:kPathTestParameter returnedLength:&length] != NULL);
+	XCTAssertEqual(length, sizeof(FxPathID));
 }
 
 @end

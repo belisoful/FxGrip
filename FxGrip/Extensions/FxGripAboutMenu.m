@@ -382,16 +382,23 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 		return;
 	}
 	NSURL *url = urls[index];
-	NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
-	config.promptsUserIfNeeded = NO;
 	__weak typeof(self) weakSelf = self;
-	[[NSWorkspace sharedWorkspace] openURL:url configuration:config completionHandler:^(NSRunningApplication *app, NSError *openError) {
+	[self openAboutURL:url completionHandler:^(NSRunningApplication *app, NSError *openError) {
 		if (openError) {
 			[weakSelf openURLQueue:urls atIndex:index + 1];
 		} else {
 			[weakSelf broadcastAboutLink:url];
 		}
 	}];
+}
+
+// The one call that leaves the process. It is factored out so a subclass can route the open
+// somewhere else; every caller reaches NSWorkspace through here.
+- (void)openAboutURL:(NSURL*)url completionHandler:(void (^)(NSRunningApplication * _Nullable, NSError * _Nullable))completionHandler
+{
+	NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
+	config.promptsUserIfNeeded = NO;
+	[[NSWorkspace sharedWorkspace] openURL:url configuration:config completionHandler:completionHandler];
 }
 
 - (void)broadcastAboutLink:(NSURL*)url
@@ -411,6 +418,13 @@ static NSString *const FxGripAboutMenuDefaultName = @"FxGrip::AboutMenu::Name";
 	NSAlert *alert = [NSAlert.alloc init];
 	alert.informativeText = text ?: @"";
 	[alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+	[self presentAboutAlert:alert];
+}
+
+// The one call that blocks on the user. It is factored out so a subclass can present the
+// alert its own way; every caller reaches -runModal through here.
+- (void)presentAboutAlert:(NSAlert*)alert
+{
 	[alert runModal];
 }
 

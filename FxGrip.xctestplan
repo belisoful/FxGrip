@@ -9,7 +9,20 @@
     }
   ],
   "defaultOptions" : {
-
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:FxGrip.xcodeproj",
+          "identifier" : "CEA524C82D221BEF00302F8F",
+          "name" : "FxGrip"
+        },
+        {
+          "containerPath" : "container:FxGrip.xcodeproj",
+          "identifier" : "A00AA766D1763322A1473626",
+          "name" : "FxGripRealityKit"
+        }
+      ]
+    }
   },
   "testTargets" : [
     {

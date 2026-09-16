@@ -653,7 +653,7 @@
 	return value;
 }
 
-- (NSArray<NSString*>*_Nullable)parameterMenuItems
+- (NSArray*_Nullable)parameterMenuItems
 {
 	isParameterDictionary(nil);
 	NSArray* items =  self[kFxParameterProperty_MenuItems];

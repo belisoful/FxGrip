@@ -53,3 +53,40 @@
 }
 
 @end
+
+#pragma mark - Value semantics
+
+@interface FxGripInferenceRequestEqualityTests : XCTestCase
+@end
+
+@implementation FxGripInferenceRequestEqualityTests
+
+/*! @abstract Two requests carrying equal inputs and parameters are equal and hash alike. */
+- (void)testRequestsWithEqualContentsAreEqual
+{
+	FxGripInferenceRequest *one = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"A" }
+																 parameters:@{ @"strength": @2 }];
+	FxGripInferenceRequest *two = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"A" }
+																 parameters:@{ @"strength": @2 }];
+
+	XCTAssertEqualObjects(one, two);
+	XCTAssertEqual(one.hash, two.hash);
+	XCTAssertEqualObjects(one, one);
+}
+
+/*! @abstract A difference in either the inputs or the parameters makes two requests unequal. */
+- (void)testADifferenceInEitherHalfMakesRequestsUnequal
+{
+	FxGripInferenceRequest *base = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"A" }
+																  parameters:@{ @"strength": @2 }];
+	FxGripInferenceRequest *otherInput = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"B" }
+																		parameters:@{ @"strength": @2 }];
+	FxGripInferenceRequest *otherParameter = [FxGripInferenceRequest requestWithInputs:@{ @"image": @"A" }
+																			parameters:@{ @"strength": @3 }];
+
+	XCTAssertNotEqualObjects(base, otherInput);
+	XCTAssertNotEqualObjects(base, otherParameter);
+	XCTAssertNotEqualObjects(base, @"not a request");
+}
+
+@end

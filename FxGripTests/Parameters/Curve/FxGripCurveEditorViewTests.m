@@ -30,6 +30,16 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 - (NSRect)curveBounds;
 - (NSPoint)viewPointForCurvePoint:(CGPoint)point;
 - (CGPoint)curvePointForViewPoint:(NSPoint)point;
+- (BOOL)hasVerticalPaints;
+- (nullable NSColor *)backgroundColorAtFraction:(CGFloat)fraction;
+- (NSColor *)colorForPaint:(nullable FxGripCurvePaint *)paint atFraction:(CGFloat)fraction;
+- (NSString *)readoutComponent:(CGFloat)value axisX:(BOOL)isX;
+- (NSString *)readoutStringForCurvePoint:(CGPoint)point;
+- (NSRect)readoutChipRectForText:(NSString *)text near:(NSPoint)at inBounds:(NSRect)bounds;
+- (NSUInteger)readoutPointIndex;
+- (void)setHoveredPointIndex:(NSUInteger)index;
+- (void)fxResetCurve:(nullable id)sender;
+- (void)fxDeleteMenuPoint:(nullable id)sender;
 @end
 
 #pragma mark - Probes for the AppKit classes the bundle does not link
@@ -69,6 +79,7 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 						 colorSpaceName:(NSString *)colorSpaceName
 							bytesPerRow:(NSInteger)rowBytes
 						   bitsPerPixel:(NSInteger)pixelBits;
+- (nullable NSColor *)colorAtX:(NSInteger)x y:(NSInteger)y;
 @end
 
 /*! NSGraphicsContext's offscreen context stack. */
@@ -1037,6 +1048,529 @@ static const CGFloat kCurveTestStripSpacing = 6.0;
 	XCTAssertEqual(self.editor.pointReadoutStyle, FxGripCurveReadoutStyleAxis);
 	XCTAssertEqual(self.editor.pointReadoutUnits, FxGripCurveReadoutUnitsEightBit);
 	XCTAssertEqual(self.editor.pointReadoutTrigger, FxGripCurveReadoutTriggerActiveAndModifierHover);
+}
+
+#pragma mark Offscreen drawing
+
+/*! Draws an editor into a fresh offscreen bitmap and returns the bitmap for sampling. */
+- (id<FxGripCurveTestBitmapRep>)drawEditor:(FxGripCurveEditorView *)editor
+{
+	Class repClass = NSClassFromString(@"NSBitmapImageRep");
+	Class<FxGripCurveTestGraphicsContext> context =
+		(Class<FxGripCurveTestGraphicsContext>)NSClassFromString(@"NSGraphicsContext");
+	XCTAssertNotNil(repClass);
+	XCTAssertNotNil(context);
+
+	id<FxGripCurveTestBitmapRep> rep = [(id<FxGripCurveTestBitmapRep>)[repClass alloc]
+									 initWithBitmapDataPlanes:NULL
+												   pixelsWide:(NSInteger)editor.bounds.size.width
+												   pixelsHigh:(NSInteger)editor.bounds.size.height
+												bitsPerSample:8
+											  samplesPerPixel:4
+													 hasAlpha:YES
+													 isPlanar:NO
+											   colorSpaceName:@"NSCalibratedRGBColorSpace"
+												  bytesPerRow:0
+												 bitsPerPixel:0];
+	XCTAssertNotNil(rep);
+
+	[context saveGraphicsState];
+	[context setCurrentContext:[context graphicsContextWithBitmapImageRep:rep]];
+	[editor drawRect:editor.bounds];
+	[context restoreGraphicsState];
+	return rep;
+}
+
+/*! Counts the pixels of one bitmap row whose red channel leads green and blue by `lead`. */
+- (NSUInteger)redDominantPixelsInRow:(NSInteger)row
+								  of:(id<FxGripCurveTestBitmapRep>)rep
+							   width:(NSInteger)width
+								lead:(CGFloat)lead
+{
+	NSUInteger count = 0;
+	for (NSInteger x = 0; x < width; x++) {
+		NSColor *pixel = [rep colorAtX:x y:row];
+		if (pixel == nil) {
+			continue;
+		}
+		if (pixel.redComponent > pixel.greenComponent + lead
+			&& pixel.redComponent > pixel.blueComponent + lead) {
+			count += 1;
+		}
+	}
+	return count;
+}
+
+#pragma mark Construction
+
+/*! @abstract The plain frame initializer builds a linear remap strip on the grid background. */
+- (void)testThePlainFrameInitializerBuildsALinearRemapOnTheGrid
+{
+	FxGripCurveEditorView *editor = [FxGripCurveEditorView.alloc initWithFrame:NSMakeRect(0, 0, 120, 40)];
+
+	XCTAssertEqual(editor.background, FxGripCurveBackgroundGrid);
+	XCTAssertEqual(editor.curve.pointCount, (NSUInteger)2, @"the linear remap identity has two points");
+	XCTAssertEqualWithAccuracy([editor.curve pointAtIndex:0].y, 0.0, 1e-9);
+	XCTAssertEqualWithAccuracy([editor.curve pointAtIndex:1].y, 1.0, 1e-9);
+	XCTAssertEqual(editor.selectedPointIndex, NSNotFound);
+	XCTAssertEqualWithAccuracy(editor.slowDragScale, kFxGripCurveSlowDragScaleDefault, 1e-12);
+}
+
+/*! @abstract The strip takes the key window's focus, so the Delete key reaches it. */
+- (void)testTheStripAcceptsFirstResponder
+{
+	XCTAssertTrue(self.editor.acceptsFirstResponder);
+}
+
+/*! @abstract Setting the curve to nil or to the instance already held changes nothing. */
+- (void)testSettingTheSameOrANilCurveIsANoOp
+{
+	FxGripCurveData *three = [self threePointRemap];
+	self.editor.curve = three;
+	FxGripCurveData *held = self.editor.curve;
+
+	self.editor.curve = held;
+	XCTAssertEqual(self.editor.curve, held, @"assigning the held instance keeps it");
+
+	FxGripCurveData *noCurve = nil;
+	self.editor.curve = noCurve;
+	XCTAssertEqual(self.editor.curve, held, @"nil is refused");
+	XCTAssertEqual(self.editor.curve.pointCount, (NSUInteger)3);
+}
+
+#pragma mark Grid divisions
+
+/*! @abstract The grid divisions default to eighths and round-trip through the setter. */
+- (void)testTheGridDivisionsDefaultToEighthsAndRoundTrip
+{
+	XCTAssertEqual(self.editor.gridDivisions, FxGripCurveGridDivisionsEighths);
+
+	self.editor.gridDivisions = FxGripCurveGridDivisionsQuarters;
+	XCTAssertEqual(self.editor.gridDivisions, FxGripCurveGridDivisionsQuarters);
+
+	self.editor.gridDivisions = FxGripCurveGridDivisionsSixteenths;
+	XCTAssertEqual(self.editor.gridDivisions, FxGripCurveGridDivisionsSixteenths);
+}
+
+/*! @abstract Every grid division setting draws, including the sixteenth lines that take the dimmest tier. */
+- (void)testEveryGridDivisionDraws
+{
+	NSArray<NSNumber *> *divisions = @[@(FxGripCurveGridDivisionsQuarters),
+									   @(FxGripCurveGridDivisionsEighths),
+									   @(FxGripCurveGridDivisionsSixteenths)];
+	for (NSNumber *division in divisions) {
+		@autoreleasepool {
+			FxGripCurveEditorView *editor = [self editorWithRole:FxGripCurveRoleRemap
+														  domain:FxGripCurveDomainLinear];
+			editor.gridDivisions = (FxGripCurveGridDivisions)division.integerValue;
+			XCTAssertNotNil([self drawEditor:editor], @"divisions %@", division);
+		}
+	}
+}
+
+#pragma mark Vertical paints
+
+/*! @abstract A strip has no vertical paints until one stop is set. */
+- (void)testAVerticalPaintOverridesTheHorizontalBackground
+{
+	XCTAssertFalse([self.editor hasVerticalPaints]);
+
+	self.editor.centerPaint = [FxGripCurvePaint nonePaint];
+	XCTAssertTrue([self.editor hasVerticalPaints]);
+
+	self.editor.centerPaint = nil;
+	XCTAssertFalse([self.editor hasVerticalPaints]);
+}
+
+/*! @abstract A none stop contributes the transparent strip base, a hue stop the hue at the fraction, and a color stop that color. */
+- (void)testEachPaintKindContributesItsColor
+{
+	NSColor *transparent = [self.editor colorForPaint:[FxGripCurvePaint nonePaint] atFraction:0.5];
+	XCTAssertEqualWithAccuracy(transparent.alphaComponent, 0.0, 1e-9, @"none fades out");
+
+	NSColor *missing = [self.editor colorForPaint:nil atFraction:0.5];
+	XCTAssertEqualWithAccuracy(missing.alphaComponent, 0.0, 1e-9, @"an absent stop matches none");
+
+	NSColor *hue = [self.editor colorForPaint:[FxGripCurvePaint huePaint] atFraction:0.0];
+	XCTAssertEqualWithAccuracy(hue.alphaComponent, 0.9, 1e-9);
+	XCTAssertEqualWithAccuracy(hue.redComponent, 1.0, 1e-6, @"fraction 0 is red");
+	XCTAssertEqualWithAccuracy(hue.greenComponent, 0.0, 1e-6);
+
+	NSColor *green = [self.editor colorForPaint:[FxGripCurvePaint huePaint] atFraction:1.0 / 3.0];
+	XCTAssertEqualWithAccuracy(green.greenComponent, 1.0, 1e-6, @"one third is green");
+	XCTAssertEqualWithAccuracy(green.redComponent, 0.0, 1e-6);
+
+	NSColor *fixed = [self.editor colorForPaint:[FxGripCurvePaint paintWithColor:NSColor.blueColor]
+									 atFraction:0.7];
+	XCTAssertEqualWithAccuracy(fixed.alphaComponent, 0.9, 1e-9);
+	XCTAssertEqualWithAccuracy(fixed.blueComponent, 1.0, 1e-9);
+}
+
+/*! @abstract A single color stop fills the strip with that color, so the drawn row reads red-dominant. */
+- (void)testASingleColorStopFillsTheStripWithItsColor
+{
+	FxGripCurveEditorView *editor = [FxGripCurveEditorView.alloc initWithFrame:NSMakeRect(0, 0, 100, 60)
+																		 role:FxGripCurveRoleRemap
+																	   domain:FxGripCurveDomainLinear
+																   background:FxGripCurveBackgroundGrid];
+	editor.centerPaint = [FxGripCurvePaint paintWithColor:NSColor.redColor];
+
+	id<FxGripCurveTestBitmapRep> rep = [self drawEditor:editor];
+
+	XCTAssertGreaterThan([self redDominantPixelsInRow:30 of:rep width:100 lead:0.4], (NSUInteger)80);
+}
+
+/*! @abstract Two stops build a vertical gradient, so a red bottom reads red-dominant near the bottom and not at the top. */
+- (void)testTwoStopsBuildAVerticalGradient
+{
+	FxGripCurveEditorView *editor = [FxGripCurveEditorView.alloc initWithFrame:NSMakeRect(0, 0, 100, 60)
+																		 role:FxGripCurveRoleRemap
+																	   domain:FxGripCurveDomainLinear
+																   background:FxGripCurveBackgroundGrid];
+	editor.bottomPaint = [FxGripCurvePaint paintWithColor:NSColor.redColor];
+	editor.topPaint = [FxGripCurvePaint nonePaint];
+
+	id<FxGripCurveTestBitmapRep> rep = [self drawEditor:editor];
+
+	// The bitmap's rows run top-down while the strip's value axis runs bottom-up.
+	NSUInteger nearBottom = [self redDominantPixelsInRow:52 of:rep width:100 lead:0.4];
+	NSUInteger nearTop = [self redDominantPixelsInRow:6 of:rep width:100 lead:0.4];
+	XCTAssertGreaterThan(nearBottom, (NSUInteger)80, @"the red stop sits at the bottom");
+	XCTAssertEqual(nearTop, (NSUInteger)0, @"the none stop fades to the strip base");
+}
+
+/*! @abstract Three stops including a hue stop draw the strip in bands whose colors run across x. */
+- (void)testThreeStopsWithAHueStopDrawAcrossX
+{
+	FxGripCurveEditorView *editor = [FxGripCurveEditorView.alloc initWithFrame:NSMakeRect(0, 0, 100, 60)
+																		 role:FxGripCurveRoleRemap
+																	   domain:FxGripCurveDomainLinear
+																   background:FxGripCurveBackgroundGrid];
+	editor.bottomPaint = [FxGripCurvePaint huePaint];
+	editor.centerPaint = [FxGripCurvePaint nonePaint];
+	editor.topPaint = [FxGripCurvePaint huePaint];
+
+	id<FxGripCurveTestBitmapRep> rep = [self drawEditor:editor];
+
+	// The bitmap's rows run top-down, so row 8 sits in the strip's upper hue stop, clear of the
+	// diagonal curve and of every grid line.
+	NSColor *left = [rep colorAtX:5 y:8];
+	NSColor *twoThirds = [rep colorAtX:65 y:8];
+	XCTAssertNotNil(left);
+	XCTAssertNotNil(twoThirds);
+	XCTAssertGreaterThan(left.redComponent, left.greenComponent + 0.2, @"the spectrum starts red");
+	XCTAssertGreaterThan(left.redComponent, left.blueComponent + 0.2);
+	XCTAssertGreaterThan(twoThirds.blueComponent, twoThirds.redComponent + 0.2, @"two thirds along is blue");
+}
+
+#pragma mark Line style
+
+/*! @abstract The hue line style strokes the curve as a spectrum, and the strip still draws. */
+- (void)testTheHueLineStyleStrokesTheCurve
+{
+	FxGripCurveEditorView *editor = [FxGripCurveEditorView.alloc initWithFrame:NSMakeRect(0, 0, 100, 60)
+																		 role:FxGripCurveRoleRemap
+																	   domain:FxGripCurveDomainLinear
+																   background:FxGripCurveBackgroundGrid];
+	editor.lineStyle = FxGripCurveLineStyleHue;
+	editor.lineWidth = 3.0;
+
+	XCTAssertNotNil([self drawEditor:editor]);
+}
+
+/*! @abstract The grid background alone answers no horizontal ramp color; every ramp style answers one. */
+- (void)testOnlyARampBackgroundAnswersAColorAcrossX
+{
+	XCTAssertNil([self.editor backgroundColorAtFraction:0.5], @"the grid paints no ramp");
+
+	FxGripCurveEditorView *luma = [FxGripCurveEditorView.alloc initWithFrame:NSMakeRect(0, 0, 40, 40)
+																	   role:FxGripCurveRoleRemap
+																	 domain:FxGripCurveDomainLinear
+																 background:FxGripCurveBackgroundLumaRamp];
+	XCTAssertEqualWithAccuracy([luma backgroundColorAtFraction:0.25].whiteComponent, 0.25, 1e-9);
+}
+
+#pragma mark Hover
+
+/*! @abstract Building the tracking areas installs exactly one area that owns the strip. */
+- (void)testUpdatingTrackingAreasInstallsOneAreaOwnedByTheStrip
+{
+	[self.editor updateTrackingAreas];
+
+	XCTAssertEqual(self.editor.trackingAreas.count, (NSUInteger)1);
+	XCTAssertEqualObjects(self.editor.trackingAreas.firstObject.owner, self.editor);
+
+	[self.editor updateTrackingAreas];
+	XCTAssertEqual(self.editor.trackingAreas.count, (NSUInteger)1, @"the prior area is replaced");
+}
+
+/*! @abstract In the active-point trigger a hover never selects a readout point. */
+- (void)testTheActivePointTriggerIgnoresHover
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutStyle = FxGripCurveReadoutStyleFloatingChip;
+
+	NSPoint over = [self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)];
+	[self.editor mouseMoved:[self mouseEventOfType:NSEventTypeMouseMoved at:over clickCount:0]];
+
+	XCTAssertEqual([self.editor readoutPointIndex], NSNotFound);
+}
+
+/*! @abstract In the hover trigger, moving over a point makes it the readout point and moving away clears it. */
+- (void)testTheHoverTriggerFollowsThePointUnderTheMouse
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutTrigger = FxGripCurveReadoutTriggerActiveAndHover;
+
+	NSPoint over = [self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)];
+	[self.editor mouseMoved:[self mouseEventOfType:NSEventTypeMouseMoved at:over clickCount:0]];
+	XCTAssertEqual([self.editor readoutPointIndex], (NSUInteger)1);
+
+	[self.editor mouseMoved:[self mouseEventOfType:NSEventTypeMouseMoved at:NSMakePoint(20, 90) clickCount:0]];
+	XCTAssertEqual([self.editor readoutPointIndex], NSNotFound, @"away from every point the readout clears");
+}
+
+/*! @abstract In the modifier-gated trigger, only a Command-hover reveals the point. */
+- (void)testTheModifierHoverTriggerNeedsCommand
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutTrigger = FxGripCurveReadoutTriggerActiveAndModifierHover;
+	NSPoint over = [self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)];
+
+	[self.editor mouseMoved:[self mouseEventOfType:NSEventTypeMouseMoved at:over clickCount:0]];
+	XCTAssertEqual([self.editor readoutPointIndex], NSNotFound, @"without Command nothing is revealed");
+
+	[self.editor mouseMoved:[self mouseEventOfType:NSEventTypeMouseMoved at:over clickCount:0
+									 modifierFlags:NSEventModifierFlagCommand]];
+	XCTAssertEqual([self.editor readoutPointIndex], (NSUInteger)1);
+}
+
+/*! @abstract Leaving the strip clears the hovered point. */
+- (void)testExitingTheStripClearsTheHover
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutTrigger = FxGripCurveReadoutTriggerActiveAndHover;
+	NSPoint over = [self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)];
+	[self.editor mouseMoved:[self mouseEventOfType:NSEventTypeMouseMoved at:over clickCount:0]];
+	XCTAssertEqual([self.editor readoutPointIndex], (NSUInteger)1);
+
+	// mouseExited: ignores its event, and NSEvent builds no synthetic exit event outside a tracking area.
+	[self.editor mouseExited:[self mouseEventOfType:NSEventTypeMouseMoved at:NSMakePoint(-5, -5) clickCount:0]];
+
+	XCTAssertEqual([self.editor readoutPointIndex], NSNotFound);
+}
+
+/*! @abstract Changing the readout trigger drops any hovered point. */
+- (void)testChangingTheTriggerDropsTheHoveredPoint
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutTrigger = FxGripCurveReadoutTriggerActiveAndHover;
+	[self.editor setHoveredPointIndex:2];
+	XCTAssertEqual([self.editor readoutPointIndex], (NSUInteger)2);
+
+	self.editor.pointReadoutTrigger = FxGripCurveReadoutTriggerActiveAndModifierHover;
+
+	XCTAssertEqual([self.editor readoutPointIndex], NSNotFound);
+}
+
+/*! @abstract A selected point outranks a hovered one in the readout. */
+- (void)testASelectedPointOutranksAHoveredOne
+{
+	self.editor.curve = [self threePointRemap];
+	[self clickAt:[self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)]];
+	[self.editor setHoveredPointIndex:0];
+
+	XCTAssertEqual([self.editor readoutPointIndex], (NSUInteger)1);
+}
+
+#pragma mark Menu actions
+
+/*! @abstract The context menu's Reset Curve item resets the curve and commits it. */
+- (void)testTheResetCurveMenuItemResetsAndCommits
+{
+	self.editor.curve = [self threePointRemap];
+
+	[self.editor fxResetCurve:nil];
+
+	XCTAssertEqual(self.editor.curve.pointCount, (NSUInteger)2);
+	XCTAssertEqual(self.recorder.committed.count, (NSUInteger)1);
+	XCTAssertEqual(self.recorder.committed.lastObject.pointCount, (NSUInteger)2);
+}
+
+#pragma mark Readout units
+
+/*! @abstract Each readout unit formats a component in its own notation. */
+- (void)testEachReadoutUnitFormatsItsComponent
+{
+	XCTAssertEqualObjects([self.editor readoutComponent:0.5 axisX:NO], @"0.50", @"normalized by default");
+
+	self.editor.pointReadoutUnits = FxGripCurveReadoutUnitsEightBit;
+	XCTAssertEqualObjects([self.editor readoutComponent:1.0 axisX:NO], @"255");
+
+	self.editor.pointReadoutUnits = FxGripCurveReadoutUnitsPercent;
+	XCTAssertEqualObjects([self.editor readoutComponent:0.25 axisX:NO], @"25%");
+
+	self.editor.pointReadoutUnits = FxGripCurveReadoutUnitsDomainAware;
+	XCTAssertEqualObjects([self.editor readoutComponent:0.5 axisX:YES], @"128",
+						  @"a linear x reads as 0-255");
+	XCTAssertEqualObjects([self.editor readoutComponent:0.5 axisX:NO], @"128");
+}
+
+/*! @abstract The domain-aware unit reads a circular x in degrees and y in 0-255. */
+- (void)testTheDomainAwareUnitReadsACircularXInDegrees
+{
+	FxGripCurveEditorView *hue = [self editorWithRole:FxGripCurveRoleShift
+											   domain:FxGripCurveDomainCircular];
+	hue.pointReadoutUnits = FxGripCurveReadoutUnitsDomainAware;
+
+	XCTAssertEqualObjects([hue readoutComponent:0.5 axisX:YES], @"180°");
+	XCTAssertEqualObjects([hue readoutComponent:0.5 axisX:NO], @"128");
+}
+
+/*! @abstract A point's readout string joins its x and y components with a comma. */
+- (void)testTheReadoutStringJoinsBothComponents
+{
+	XCTAssertEqualObjects([self.editor readoutStringForCurvePoint:CGPointMake(0.25, 0.75)], @"0.25, 0.75");
+}
+
+#pragma mark Readout chip geometry
+
+/*! @abstract The readout chip sits up and to the right of the point when the strip has room. */
+- (void)testTheReadoutChipSitsAboveAndRightOfThePoint
+{
+	NSRect bounds = [self.editor curveBounds];
+	NSPoint at = NSMakePoint(20, 20);
+
+	NSRect chip = [self.editor readoutChipRectForText:@"0.20, 0.20" near:at inBounds:bounds];
+
+	XCTAssertEqualWithAccuracy(chip.origin.x, at.x + 9.0, 1e-9);
+	XCTAssertEqualWithAccuracy(chip.origin.y, at.y + 9.0, 1e-9);
+	XCTAssertTrue(NSContainsRect(bounds, chip), @"the chip stays inside the strip");
+}
+
+/*! @abstract A point near the right or top edge flips the chip to the other side, and the chip never leaves the strip. */
+- (void)testTheReadoutChipFlipsAwayFromTheEdges
+{
+	NSRect bounds = [self.editor curveBounds];
+	NSString *text = @"1.00, 1.00";
+
+	NSRect corner = [self.editor readoutChipRectForText:text near:NSMakePoint(NSMaxX(bounds), NSMaxY(bounds))
+											   inBounds:bounds];
+	XCTAssertLessThan(corner.origin.x, NSMaxX(bounds) - 9.0, @"the chip flips left");
+	XCTAssertLessThan(corner.origin.y, NSMaxY(bounds) - 9.0, @"the chip flips down");
+	XCTAssertGreaterThanOrEqual(corner.origin.x, bounds.origin.x);
+	XCTAssertGreaterThanOrEqual(corner.origin.y, bounds.origin.y);
+}
+
+/*! @abstract A chip wider than the strip clamps to the strip's origin rather than running off it. */
+- (void)testAnOversizedReadoutChipClampsToTheStripOrigin
+{
+	FxGripCurveEditorView *narrow = [FxGripCurveEditorView.alloc initWithFrame:NSMakeRect(0, 0, 30, 30)
+																		 role:FxGripCurveRoleRemap
+																	   domain:FxGripCurveDomainLinear
+																   background:FxGripCurveBackgroundGrid];
+	NSRect bounds = [narrow curveBounds];
+
+	NSRect chip = [narrow readoutChipRectForText:@"1000.00, 1000.00" near:NSMakePoint(25, 25) inBounds:bounds];
+
+	XCTAssertEqualWithAccuracy(chip.origin.x, bounds.origin.x, 1e-9);
+}
+
+#pragma mark Readout drawing
+
+/*! @abstract Every readout style draws for the selected point without throwing. */
+- (void)testEveryReadoutStyleDrawsForTheSelectedPoint
+{
+	for (FxGripCurveReadoutStyle style = FxGripCurveReadoutStyleNone;
+		 style <= FxGripCurveReadoutStyleSystemTooltip;
+		 style++) {
+		@autoreleasepool {
+			FxGripCurveEditorView *editor = [self editorWithRole:FxGripCurveRoleRemap
+														  domain:FxGripCurveDomainLinear];
+			editor.curve = [self threePointRemap];
+			editor.pointReadoutStyle = style;
+			editor.pointReadoutUnits = FxGripCurveReadoutUnitsPercent;
+			[editor mouseDown:[self mouseEventOfType:NSEventTypeLeftMouseDown
+												  at:[editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)]
+										  clickCount:1]];
+
+			XCTAssertNotNil([self drawEditor:editor], @"style %ld", (long)style);
+		}
+	}
+}
+
+/*! @abstract The axis readout draws its guides and both edge chips for a point in the corner of the strip. */
+- (void)testTheAxisReadoutDrawsForACornerPoint
+{
+	FxGripCurveEditorView *editor = [self editorWithRole:FxGripCurveRoleRemap domain:FxGripCurveDomainLinear];
+	editor.pointReadoutStyle = FxGripCurveReadoutStyleAxis;
+	editor.curve = [self threePointRemap];
+	[editor mouseDown:[self mouseEventOfType:NSEventTypeLeftMouseDown
+										  at:[editor viewPointForCurvePoint:CGPointMake(1.0, 1.0)]
+								  clickCount:1]];
+	XCTAssertEqual(editor.selectedPointIndex, (NSUInteger)2);
+
+	XCTAssertNotNil([self drawEditor:editor]);
+}
+
+/*! @abstract The system-tooltip style publishes the selected point's readout as the strip's tool tip. */
+- (void)testTheSystemTooltipStylePublishesTheReadoutAsTheToolTip
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutStyle = FxGripCurveReadoutStyleSystemTooltip;
+	self.editor.pointReadoutUnits = FxGripCurveReadoutUnitsPercent;
+	[self clickAt:[self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)]];
+
+	[self drawEditor:self.editor];
+
+	XCTAssertEqualObjects(self.editor.toolTip, @"50%, 50%");
+}
+
+/*! @abstract With no point to describe, the system-tooltip style clears the strip's tool tip. */
+- (void)testTheSystemTooltipClearsWithoutAPointToDescribe
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutStyle = FxGripCurveReadoutStyleSystemTooltip;
+	[self clickAt:[self.editor viewPointForCurvePoint:CGPointMake(1.0, 1.0)]];
+	XCTAssertEqual(self.editor.selectedPointIndex, (NSUInteger)2);
+	[self drawEditor:self.editor];
+	XCTAssertEqualObjects(self.editor.toolTip, @"1.00, 1.00");
+
+	[self releaseAt:[self.editor viewPointForCurvePoint:CGPointMake(1.0, 1.0)]];
+	self.editor.curve = [FxGripCurveData identityCurveWithRole:FxGripCurveRoleRemap
+													   domain:FxGripCurveDomainLinear];
+	XCTAssertEqual(self.editor.selectedPointIndex, NSNotFound, @"the selection outran the shorter curve");
+	[self drawEditor:self.editor];
+
+	XCTAssertNil(self.editor.toolTip);
+}
+
+/*! @abstract Turning the readout off clears a tool tip an earlier style published. */
+- (void)testTurningTheReadoutOffClearsTheToolTip
+{
+	self.editor.curve = [self threePointRemap];
+	self.editor.pointReadoutStyle = FxGripCurveReadoutStyleSystemTooltip;
+	[self clickAt:[self.editor viewPointForCurvePoint:CGPointMake(0.5, 0.5)]];
+	[self drawEditor:self.editor];
+	XCTAssertNotNil(self.editor.toolTip);
+
+	self.editor.pointReadoutStyle = FxGripCurveReadoutStyleNone;
+	[self drawEditor:self.editor];
+
+	XCTAssertNil(self.editor.toolTip);
+}
+
+#pragma mark Drag guards
+
+/*! @abstract A drag that never began through a mouse-down moves nothing and reports no edit. */
+- (void)testADragWithoutAMouseDownChangesNothing
+{
+	self.editor.curve = [self threePointRemap];
+
+	[self dragTo:NSMakePoint(80, 20)];
+
+	XCTAssertEqualObjects(self.recorder.edited, @[]);
+	XCTAssertEqualWithAccuracy([self.editor.curve pointAtIndex:1].x, 0.5, 1e-9);
 }
 
 @end

@@ -9,6 +9,7 @@
 */
 
 #import <XCTest/XCTest.h>
+#import "FxPlugStub.h"
 #import <FxGrip/FxGripTypes.h>
 #import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripTileableEffect+Notifications.h>
@@ -18,6 +19,12 @@
 #import <FxGrip/FxGripI18N.h>
 
 static const FxParameterId kI18NTestParameter = 7;
+
+// The notification handlers are registered by name from the extension base; the one the tests
+// invoke directly is declared here. The implementation comes from the linked framework.
+@interface FxGripI18N (FxGripI18NTestAccess)
+- (void)extAPIParameterAdd:(nonnull NSNotification *)notification;
+@end
 
 // The test target links only FxGrip and XCTest, so NSPriorityNotificationCenter
 // (from BEFoundation) is resolved at runtime by name to avoid an unlinked symbol.
@@ -192,6 +199,13 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	return nil;
 }
 
+// The delocalizing name replacement asks the manager for the raw v3 API; a hostless stub
+// reports none, so the replacement leaves the caller's name in place and delocalizes it.
+- (id)apiManager
+{
+	return nil;
+}
+
 @end
 
 // Supplies a fixture localization table so the localize/delocalize round-trip is testable
@@ -204,6 +218,28 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 - (NSDictionary<NSString *, NSString *> *)localizationTable
 {
 	return @{@"Greeting": @"Bonjour", @"Farewell": @"Au revoir"};
+}
+@end
+
+/*! An effect that declares itself internationalized, so the loader installs the extension. */
+@interface FxGripI18NTestHostEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripI18NTestHostEffect
+- (NSDictionary<NSString *, id> *)pluginProperties
+{
+	return @{kProPlugPlugInX_InternationalizeProperty: @YES};
+}
+@end
+
+/*! An effect that declares nothing, so no internationalization extension is installed. */
+@interface FxGripI18NTestPlainEffect : FxGripTileableEffect
+@end
+
+@implementation FxGripI18NTestPlainEffect
+- (NSDictionary<NSString *, id> *)pluginProperties
+{
+	return @{};
 }
 @end
 
@@ -560,6 +596,258 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 - (void)testApiManagerIsNilWhenTheInitNotificationCarriesNoManager
 {
 	XCTAssertNil([@{} fxApiManager]);
+}
+
+#pragma mark Handlers Over a Fixture Table
+
+/*! Loads an extension whose table maps Greeting to Bonjour and Farewell to Au revoir. */
+- (FxGripI18NTestFixtureTable *)loadedFixtureExtension
+{
+	FxGripI18NTestFixtureTable *extension = [FxGripI18NTestFixtureTable.alloc init];
+	XCTAssertTrue([extension extLoadWithEffect:(id)self.effect]);
+	self.extension = extension;
+	return extension;
+}
+
+- (void)postName:(NSNotificationName)name withNestedParameter:(NSMutableDictionary *)parameter
+{
+	[self.effect.notifier postNotificationName:name
+										object:self.effect
+									  userInfo:[self userInfoWithNestedParameter:parameter]];
+}
+
+/*! @abstract The add handler localizes the parameter name, a String parameter's default value, and a Menu parameter's items. */
+- (void)testTheAddHandlerLocalizesTheNameTheStringDefaultAndTheMenuItems
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *string = @{kFxParameterProperty_Id: @(kI18NTestParameter),
+									kFxParameterProperty_Type: @(FxParameterType_String),
+									kFxParameterProperty_Name: @"Greeting",
+									kFxParameterProperty_Default: @"Farewell"}.mutableCopy;
+	[self postName:FxGripNotifyAPI_ParameterAddName withNestedParameter:string];
+
+	XCTAssertEqualObjects(string[kFxParameterProperty_Name], @"Bonjour");
+	XCTAssertEqualObjects(string[kFxParameterProperty_Default], @"Au revoir");
+
+	NSMutableDictionary *menu = @{kFxParameterProperty_Id: @(kI18NTestParameter),
+								  kFxParameterProperty_Type: @(FxParameterType_Menu),
+								  kFxParameterProperty_Name: @"Farewell",
+								  kFxParameterProperty_MenuItems: @[@"Greeting", @"Unknown"]}.mutableCopy;
+	[self postName:FxGripNotifyAPI_ParameterAddName withNestedParameter:menu];
+
+	XCTAssertEqualObjects(menu[kFxParameterProperty_Name], @"Au revoir");
+	XCTAssertEqualObjects(menu[kFxParameterProperty_MenuItems], (@[@"Bonjour", @"Unknown"]),
+						  @"an entry absent from the table passes through unchanged");
+}
+
+/*! @abstract The add handler localizes a tagged menu's entry names and keeps each entry's tag. */
+- (void)testTheAddHandlerLocalizesTaggedMenuEntriesAndKeepsTheirTags
+{
+	[self loadedFixtureExtension];
+	FxTaggedMenuEntry *untranslated = [FxTaggedMenuEntry taggedMenuEntryWithName:@"Unknown" tag:7];
+	NSMutableDictionary *menu = @{kFxParameterProperty_Id: @(kI18NTestParameter),
+								  kFxParameterProperty_Type: @(FxParameterType_Menu),
+								  kFxParameterProperty_Name: @"Farewell",
+								  kFxParameterProperty_MenuItems: @[[FxTaggedMenuEntry taggedMenuEntryWithName:@"Greeting" tag:30],
+																   untranslated]}.mutableCopy;
+
+	[self postName:FxGripNotifyAPI_ParameterAddName withNestedParameter:menu];
+
+	NSArray<FxTaggedMenuEntry *> *entries = menu[kFxParameterProperty_MenuItems];
+	XCTAssertEqual(entries.count, (NSUInteger)2);
+	XCTAssertTrue([entries[0] isKindOfClass:FxTaggedMenuEntry.class]);
+	XCTAssertEqualObjects(entries[0].menuItemName, @"Bonjour");
+	XCTAssertEqual(entries[0].tag, (NSUInteger)30, @"the tag survives the rename");
+	XCTAssertTrue(entries[1] == untranslated, @"an entry with no translation is kept as is");
+}
+
+/*! @abstract The set-menu pre-handler localizes tagged entries and the get-menu handler restores their names. */
+- (void)testTheMenuWriteAndReadHandlersRoundTripTaggedEntries
+{
+	[self loadedFixtureExtension];
+	NSMutableDictionary *write = [self nestedParameterWithProperty:kFxParameterProperty_MenuItems
+															 value:@[[FxTaggedMenuEntry taggedMenuEntryWithName:@"Farewell" tag:9]]];
+
+	[self postName:FxGripNotifyAPI_ParameterSetMenuPreName withNestedParameter:write];
+
+	FxTaggedMenuEntry *written = [write[kFxParameterProperty_MenuItems] firstObject];
+	XCTAssertEqualObjects(written.menuItemName, @"Au revoir");
+	XCTAssertEqual(written.tag, (NSUInteger)9);
+
+	NSMutableDictionary *read = [self nestedParameterWithProperty:kFxParameterProperty_MenuItems value:@[written]];
+	[self postName:FxGripNotifyAPI_ParameterGetMenuName withNestedParameter:read];
+
+	FxTaggedMenuEntry *restored = [read[kFxParameterProperty_MenuItems] firstObject];
+	XCTAssertEqualObjects(restored.menuItemName, @"Farewell");
+	XCTAssertEqual(restored.tag, (NSUInteger)9);
+}
+
+/*! @abstract The add handler leaves a Toggle parameter's default value and menu items alone. */
+- (void)testTheAddHandlerLeavesANonStringDefaultAndNonMenuItemsAlone
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *toggle = @{kFxParameterProperty_Id: @(kI18NTestParameter),
+									kFxParameterProperty_Type: @(FxParameterType_Toggle),
+									kFxParameterProperty_Name: @"Greeting",
+									kFxParameterProperty_Default: @"Farewell",
+									kFxParameterProperty_MenuItems: @[@"Greeting"]}.mutableCopy;
+	[self postName:FxGripNotifyAPI_ParameterAddName withNestedParameter:toggle];
+
+	XCTAssertEqualObjects(toggle[kFxParameterProperty_Name], @"Bonjour", @"the name is always localized");
+	XCTAssertEqualObjects(toggle[kFxParameterProperty_Default], @"Farewell",
+						  @"only a String parameter's default is a localizable value");
+	XCTAssertEqualObjects(toggle[kFxParameterProperty_MenuItems], (@[@"Greeting"]),
+						  @"only a Menu parameter carries localizable items");
+}
+
+/*! @abstract The add handler ignores a notification carrying no nested parameter. */
+- (void)testTheAddHandlerIgnoresANotificationWithoutANestedParameter
+{
+	FxGripI18NTestFixtureTable *extension = [self loadedFixtureExtension];
+
+	XCTAssertNoThrow([extension extAPIParameterAdd:[NSNotification notificationWithName:FxGripNotifyAPI_ParameterAddName
+																				 object:self.effect
+																			   userInfo:@{}]]);
+}
+
+/*! @abstract The get-name handler delocalizes the name the host reported. */
+- (void)testTheGetNameHandlerDelocalizesTheHostName
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_Name value:@"Bonjour"];
+	[self postName:FxGripNotifyAPI_ParameterGetNameName withNestedParameter:parameter];
+
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Name], @"Greeting");
+}
+
+/*! @abstract The get-name handler leaves a non-string name alone. */
+- (void)testTheGetNameHandlerLeavesANonStringNameAlone
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_Name value:@42];
+	[self postName:FxGripNotifyAPI_ParameterGetNameName withNestedParameter:parameter];
+
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_Name], @42);
+}
+
+/*! @abstract The string-value handlers localize a write and delocalize a read. */
+- (void)testTheStringValueHandlersLocalizeAWriteAndDelocalizeARead
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *write = [self nestedParameterWithProperty:kFxParameterProperty_Default value:@"Greeting"];
+	[self postName:FxGripNotifyAPI_ParameterSetStringValuePreName withNestedParameter:write];
+	XCTAssertEqualObjects(write[kFxParameterProperty_Default], @"Bonjour");
+
+	NSMutableDictionary *read = [self nestedParameterWithProperty:kFxParameterProperty_Default value:@"Au revoir"];
+	[self postName:FxGripNotifyAPI_ParameterGetStringValueName withNestedParameter:read];
+	XCTAssertEqualObjects(read[kFxParameterProperty_Default], @"Farewell");
+}
+
+/*! @abstract The string-value handlers leave a non-string value alone in both directions. */
+- (void)testTheStringValueHandlersLeaveANonStringValueAlone
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *write = [self nestedParameterWithProperty:kFxParameterProperty_Default value:@42];
+	[self postName:FxGripNotifyAPI_ParameterSetStringValuePreName withNestedParameter:write];
+	XCTAssertEqualObjects(write[kFxParameterProperty_Default], @42);
+
+	NSMutableDictionary *read = [self nestedParameterWithProperty:kFxParameterProperty_Default value:@42];
+	[self postName:FxGripNotifyAPI_ParameterGetStringValueName withNestedParameter:read];
+	XCTAssertEqualObjects(read[kFxParameterProperty_Default], @42);
+}
+
+/*! @abstract The get-menu handler delocalizes the menu items the host reported. */
+- (void)testTheGetMenuHandlerDelocalizesTheHostItems
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_MenuItems
+																 value:@[@"Bonjour", @"Unknown"]];
+	[self postName:FxGripNotifyAPI_ParameterGetMenuName withNestedParameter:parameter];
+
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_MenuItems], (@[@"Greeting", @"Unknown"]));
+}
+
+/*! @abstract The get-menu handler leaves non-array menu items alone. */
+- (void)testTheGetMenuHandlerLeavesNonArrayItemsAlone
+{
+	[self loadedFixtureExtension];
+
+	NSMutableDictionary *parameter = [self nestedParameterWithProperty:kFxParameterProperty_MenuItems value:@"nope"];
+	[self postName:FxGripNotifyAPI_ParameterGetMenuName withNestedParameter:parameter];
+
+	XCTAssertEqualObjects(parameter[kFxParameterProperty_MenuItems], @"nope");
+}
+
+/*! @abstract The delocalizing name replacement delocalizes the name it is given and ignores a null out parameter. */
+- (void)testTheNameReplacementDelocalizesTheNameAndIgnoresANullOutParameter
+{
+	FxGripI18NTestFixtureTable *extension = [self loadedFixtureExtension];
+
+	NSString *name = @"Bonjour";
+	[extension parameter:kI18NTestParameter name:&name];
+	XCTAssertEqualObjects(name, @"Greeting");
+
+	NSString *__autoreleasing *noNameOut = NULL;
+	XCTAssertNoThrow([extension parameter:kI18NTestParameter name:noNameOut]);
+}
+
+/*! @abstract A localization key absent from the table passes through unchanged, and a non-string key is returned as it is. */
+- (void)testLocalizePassesThroughAnAbsentKeyAndANonString
+{
+	FxGripI18NTestFixtureTable *extension = [FxGripI18NTestFixtureTable.alloc init];
+
+	XCTAssertEqualObjects([extension localize:@"Absent"], @"Absent");
+	XCTAssertEqualObjects([extension localize:(NSString *)@42], @42);
+}
+
+/*! @abstract The default localization table is empty in a bundle carrying no strings file. */
+- (void)testTheDefaultLocalizationTableIsEmptyWithoutAStringsFile
+{
+	FxGripI18N *extension = [FxGripI18N.alloc init];
+
+	XCTAssertEqualObjects([extension localizationTable], @{},
+						  @"a bundle with no Localizable.strings yields an empty table");
+	XCTAssertEqualObjects([extension localize:@"Greeting"], @"Greeting");
+}
+
+#pragma mark Effect Accessors
+
+/*! @abstract An effect declaring the internationalize property installs and resolves the extension. */
+- (void)testAnInternationalizedEffectInstallsAndResolvesTheExtension
+{
+	FxGripI18NTestHostEffect *effect = [FxGripI18NTestHostEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertTrue(effect.isInternationalized);
+	XCTAssertNotNil(effect.i18n);
+	XCTAssertTrue([[effect newI18NExtension] isKindOfClass:FxGripI18N.class]);
+}
+
+/*! @abstract A deactivated extension stops before reading the delocalization switches from the plist. */
+- (void)testADeactivatedExtensionKeepsItsDefaultSwitches
+{
+	self.effect.pluginProperties = @{kProPlugPlugInX_DelocalizeNamesProperty: @NO};
+	FxGripI18N *extension = [FxGripI18N.alloc init];
+	[extension setExtActive:NO];
+
+	XCTAssertFalse([extension extLoadWithEffect:(id)self.effect],
+				   @"an inactive extension that is not kept while disabled is dropped");
+	XCTAssertTrue(extension.isDelocalizingNames, @"the plist switches are never read");
+}
+
+/*! @abstract An effect that declares nothing is not internationalized and installs no extension. */
+- (void)testAnEffectWithoutThePropertyInstallsNoExtension
+{
+	FxGripI18NTestPlainEffect *effect = [FxGripI18NTestPlainEffect.alloc initWithAPIManager:(id _Nonnull)nil];
+
+	XCTAssertFalse(effect.isInternationalized);
+	XCTAssertNil(effect.i18n);
 }
 
 @end

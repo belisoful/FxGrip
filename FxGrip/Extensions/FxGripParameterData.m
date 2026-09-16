@@ -127,7 +127,7 @@
 	return ((NSNumber*)_pData[pid][kExtParameterData_SubGroup]).intValue;
 }
 
-- (nullable NSArray<NSString*> *)storedMenus:(FxParameterId)parameterID
+- (nullable NSArray *)storedMenus:(FxParameterId)parameterID
 {
 	NSNumber *pid = @(parameterID);
 	

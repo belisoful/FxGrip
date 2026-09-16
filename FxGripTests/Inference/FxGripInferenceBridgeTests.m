@@ -121,9 +121,11 @@
 /*! @abstract Bridging returns nil for a nil backend, a Nil request class, or an object that lacks the run selector. */
 - (void)testBridgingRejectsNilAndNonBackends
 {
-	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:nil requestClass:FxGripBridgeKitRequest.class]);
+	id noBackend = nil;
+	Class noRequestClass = Nil;
+	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:noBackend requestClass:FxGripBridgeKitRequest.class]);
 	FxGripBridgeKitBackend *backend = [FxGripBridgeKitBackend new];
-	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:Nil]);
+	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:backend requestClass:noRequestClass]);
 	XCTAssertNil([FxGripInferenceBridge backendBridgingInferKitBackend:[NSObject new] requestClass:FxGripBridgeKitRequest.class],
 				 @"an object without runInferenceForRequest:error: is not bridged");
 }

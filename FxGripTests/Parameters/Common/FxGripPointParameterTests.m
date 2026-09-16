@@ -14,6 +14,7 @@
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripPointParameter.h>
+#import <FxGrip/NSCoder+FxPlug.h>
 
 static const FxParameterId kPointTestParameter = 31;
 
@@ -219,6 +220,44 @@ static const FxParameterId kPointTestParameter = 31;
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"x"], @0.4);
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite[@"y"], @0.9);
+}
+
+
+#pragma mark Plugin state
+
+/*! @abstract A plain coder, which is no plugin-state encoder, reads no point from the host. */
+- (void)testPointEncodingWithAPlainCoderReadsNoValue
+{
+	FxGripPointParameter *parameter = [self makePointParameter];
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+
+	[parameter encodeWithCoder:archiver];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
+}
+
+/*! @abstract A plugin-state coder reads the point at its own render time and round-trips both components. */
+- (void)testPointEncodingWithAPluginStateCoderRoundTripsBothComponents
+{
+	FxGripPointParameter *parameter = [self makePointParameter];
+	self.effect.apiManager.paramGetAPIv6.x = 0.3;
+	self.effect.apiManager.paramGetAPIv6.y = 0.7;
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = FxGripParamClassTestTime(12, 30);
+
+	[parameter encodeWithCoder:archiver];
+	[archiver finishEncoding];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @12);
+
+	NSKeyedUnarchiver *unarchiver = [NSKeyedUnarchiver.alloc initForReadingFromData:archiver.encodedData error:NULL];
+	unarchiver.requiresSecureCoding = NO;
+	NSUInteger length = 0;
+	const FxGripPoint *decoded = (const FxGripPoint *)[unarchiver decodeBytesAtIndex:kPointTestParameter
+																	 returnedLength:&length];
+	XCTAssertEqual(length, sizeof(FxGripPoint));
+	XCTAssertEqualWithAccuracy(decoded->x, 0.3, 1e-12);
+	XCTAssertEqualWithAccuracy(decoded->y, 0.7, 1e-12);
 }
 
 @end

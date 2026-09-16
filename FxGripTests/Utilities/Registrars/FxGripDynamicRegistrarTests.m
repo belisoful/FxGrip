@@ -15,6 +15,8 @@
 #import "FxGrip/FxGripRegisteredPlugin.h"
 #import <FxPlug/FxTypes.h>
 #import <FxGrip/FxGripTypes.h>
+#import <FxGrip/FxGripErrors.h>
+#import "FxGripMainBundleTestSupport.h"
 
 #define kDynPlugin1UUID		@"1B7B6A20-4C3D-4E2F-8A1B-2C3D4E5F6001"
 #define kDynPlugin1Group	@"7A6E6E30-9E1B-4B34-9C34-9A2E6B1F001A"
@@ -81,6 +83,105 @@
 @implementation FxGripDynamicRegistrarSubclassTestPlugin
 @end
 
+#define kDynNamedGroupPluginUUID		@"3B7B6A20-4C3D-4E2F-8A1B-2C3D4E5F6003"
+#define kDynNamedGroupUUID				@"7A6E6E30-9E1B-4B34-9C34-9A2E6B1F003A"
+#define kDynClassGroupPluginUUID		@"4B7B6A20-4C3D-4E2F-8A1B-2C3D4E5F6004"
+#define kDynClassGroupUUID				@"7A6E6E30-9E1B-4B34-9C34-9A2E6B1F004A"
+#define kDynBundleGroupPluginUUID		@"5B7B6A20-4C3D-4E2F-8A1B-2C3D4E5F6005"
+#define kDynBundleGroupUUID				@"7A6E6E30-9E1B-4B34-9C34-9A2E6B1F005A"
+#define kDynThrowingGroupPluginUUID		@"6B7B6A20-4C3D-4E2F-8A1B-2C3D4E5F6006"
+#define kDynThrowingGroupUUID			@"7A6E6E30-9E1B-4B34-9C34-9A2E6B1F006A"
+
+static NSDictionary *FxGripDynamicTestPluginInfo(Class cls, NSString *uuid, NSString *groupUUID)
+{
+	return @{
+		kProPlugPlugIn_UuidProperty: uuid,
+		kProPlugPlugIn_ClassNameProperty: NSStringFromClass(cls),
+		kProPlugPlugIn_DisplayNameProperty: NSStringFromClass(cls),
+		kProPlugPlugIn_GroupUUIDProperty: groupUUID,
+		kProPlugPlugIn_ProtocolNamesProperty: @[],
+		kProPlugPlugIn_InfoStringProperty: @"",
+		kProPlugPlugIn_VersionProperty: @1000
+	};
+}
+
+// Names its group through +groupNameForUUID:.
+@interface FxGripDynamicRegistrarNamedGroupTestPlugin : NSObject <FxGripRegisteredPlugin>
+@end
+@implementation FxGripDynamicRegistrarNamedGroupTestPlugin
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
+{
+	return FxGripDynamicTestPluginInfo(self, kDynNamedGroupPluginUUID, kDynNamedGroupUUID);
+}
++ (NSString *)groupNameForUUID:(NSString *)groupUUID
+{
+	return [groupUUID isEqualToString:kDynNamedGroupUUID] ? @"Named Group" : nil;
+}
+@end
+
+// Answers nil from +groupNameForUUID: so the name falls back to +groupName.
+@interface FxGripDynamicRegistrarClassGroupTestPlugin : NSObject <FxGripRegisteredPlugin>
+@end
+@implementation FxGripDynamicRegistrarClassGroupTestPlugin
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
+{
+	return FxGripDynamicTestPluginInfo(self, kDynClassGroupPluginUUID, kDynClassGroupUUID);
+}
++ (NSString *)groupNameForUUID:(NSString *)groupUUID
+{
+	return nil;
+}
++ (NSString *)groupName
+{
+	return @"Class Group";
+}
+@end
+
+// Names no group, so the name comes from the host bundle's group list or a placeholder.
+@interface FxGripDynamicRegistrarBundleGroupTestPlugin : NSObject <FxGripRegisteredPlugin>
+@end
+@implementation FxGripDynamicRegistrarBundleGroupTestPlugin
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
+{
+	return FxGripDynamicTestPluginInfo(self, kDynBundleGroupPluginUUID, kDynBundleGroupUUID);
+}
+@end
+
+// Raises from +groupNameForUUID: while the test arms it; otherwise names its group.
+static BOOL gFxGripDynamicRegistrarThrowOnGroupName = NO;
+@interface FxGripDynamicRegistrarThrowingGroupTestPlugin : NSObject <FxGripRegisteredPlugin>
+@end
+@implementation FxGripDynamicRegistrarThrowingGroupTestPlugin
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
+{
+	return FxGripDynamicTestPluginInfo(self, kDynThrowingGroupPluginUUID, kDynThrowingGroupUUID);
+}
++ (NSString *)groupNameForUUID:(NSString *)groupUUID
+{
+	if (gFxGripDynamicRegistrarThrowOnGroupName) {
+		[NSException raise:NSInternalInconsistencyException format:@"group name unavailable"];
+	}
+	return @"Throwing Group";
+}
+@end
+
+// Registered only while the test arms it, and raises from its information call.
+static BOOL gFxGripDynamicRegistrarThrowOnInformation = NO;
+@interface FxGripDynamicRegistrarThrowingInfoTestPlugin : NSObject <FxGripRegisteredPlugin>
+@end
+@implementation FxGripDynamicRegistrarThrowingInfoTestPlugin
++ (BOOL)isRegisteredPlugIn
+{
+	return gFxGripDynamicRegistrarThrowOnInformation;
+}
++ (nonnull id)registeredPlugInInformation:(nonnull id<FxGripRegisteringGroups>)groupRegistrar
+{
+	[NSException raise:NSInternalInconsistencyException format:@"information unavailable"];
+	return @{};
+}
+@end
+
+
 
 #pragma mark - Tests
 
@@ -88,6 +189,12 @@
 @end
 
 @implementation FxGripDynamicRegistrarTests
+
+- (void)tearDown
+{
+	[FxGripMainBundleTestSupport clearStagedValues];
+	[super tearDown];
+}
 
 #pragma mark registerGroup:
 
@@ -238,5 +345,131 @@
 
 	XCTAssertNoThrow([registrar plugInGroupsWithError:&error]);
 }
+
+
+#pragma mark Group name resolution
+
+- (NSDictionary *)group:(NSString *)uuid inArray:(NSArray<NSDictionary *> *)groups
+{
+	for (NSDictionary *group in groups) {
+		if ([group[kProPlugPlugInX_RegGroupUUIDProperty] isEqualToString:uuid]) {
+			return group;
+		}
+	}
+	return nil;
+}
+
+/*! @abstract A group named by the plugin class through +groupNameForUUID: registers under that name. */
+- (void)testRegisteredPlugInGroups_NamesAGroupThroughGroupNameForUUID {
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqualObjects([self group:kDynNamedGroupUUID inArray:groups][kProPlugPlugInX_RegGroupNameProperty], @"Named Group");
+}
+
+/*! @abstract A group whose class answers nil from +groupNameForUUID: falls back to +groupName. */
+- (void)testRegisteredPlugInGroups_FallsBackToGroupName {
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqualObjects([self group:kDynClassGroupUUID inArray:groups][kProPlugPlugInX_RegGroupNameProperty], @"Class Group");
+}
+
+/*! @abstract A group no class names takes its name from the host bundle's group list. */
+- (void)testRegisteredPlugInGroups_FillsANameFromTheBundleGroupList {
+	[FxGripMainBundleTestSupport stageInfoDictionary:@{ kProPlugPlugIn_GroupList_Property: @[
+		@"not a group",
+		@{ kProPlugPlugInX_RegGroupUUIDProperty: @"7A6E6E30-9E1B-4B34-9C34-9A2E6B1F00FF", kProPlugPlugInX_RegGroupNameProperty: @"Unreferenced" },
+		@{ kProPlugPlugInX_RegGroupUUIDProperty: kDynBundleGroupUUID, kProPlugPlugInX_RegGroupNameProperty: @"Bundle Group" }
+	] }];
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqualObjects([self group:kDynBundleGroupUUID inArray:groups][kProPlugPlugInX_RegGroupNameProperty], @"Bundle Group");
+	XCTAssertNil([self group:@"7A6E6E30-9E1B-4B34-9C34-9A2E6B1F00FF" inArray:groups]);
+}
+
+/*! @abstract A bundle group list given as a dictionary contributes its values. */
+- (void)testRegisteredPlugInGroups_AcceptsADictionaryBundleGroupList {
+	[FxGripMainBundleTestSupport stageInfoDictionary:@{ kProPlugPlugIn_GroupList_Property: @{
+		@"entry": @{ kProPlugPlugInX_RegGroupUUIDProperty: kDynBundleGroupUUID, kProPlugPlugInX_RegGroupNameProperty: @"Dictionary Group" }
+	} }];
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(error);
+	XCTAssertEqualObjects([self group:kDynBundleGroupUUID inArray:groups][kProPlugPlugInX_RegGroupNameProperty], @"Dictionary Group");
+}
+
+/*! @abstract A group no class or bundle names registers under a numbered placeholder. */
+- (void)testRegisteredPlugInGroups_LabelsAnUnnamedGroupWithAPlaceholder {
+	[FxGripMainBundleTestSupport stageInfoDictionary:@{ kProPlugPlugIn_GroupList_Property: NSNull.null }];
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	XCTAssertNil(error);
+	NSString *name = [self group:kDynBundleGroupUUID inArray:groups][kProPlugPlugInX_RegGroupNameProperty];
+	XCTAssertTrue([name hasPrefix:@"Unlabelled Group "], @"%@", name);
+}
+
+/*! @abstract Every group a registered plugin references is registered exactly once. */
+- (void)testRegisteredPlugInGroups_CoversEveryReferencedGroupOnce {
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *plugins = [registrar registeredPlugInsWithError:&error];
+	NSArray *groups = [registrar registeredPlugInGroupsWithError:&error];
+
+	NSSet *referenced = [NSSet setWithArray:[plugins valueForKey:kProPlugPlugIn_GroupUUIDProperty]];
+	NSArray *registered = [groups valueForKey:kProPlugPlugInX_RegGroupUUIDProperty];
+	XCTAssertEqualObjects([NSSet setWithArray:registered], referenced);
+	XCTAssertEqual(registered.count, referenced.count);
+}
+
+/*! @abstract An exception raised while naming a group is caught and reported as kFxGripError_Exception. */
+- (void)testPlugInGroupsWithError_ReportsAnExceptionWhileNamingGroups {
+	gFxGripDynamicRegistrarThrowOnGroupName = YES;
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *result = nil;
+	XCTAssertNoThrow(result = [registrar plugInGroupsWithError:&error]);
+	gFxGripDynamicRegistrarThrowOnGroupName = NO;
+
+	XCTAssertNil(result);
+	XCTAssertEqualObjects(error.domain, FxGripPlugErrorDomain);
+	XCTAssertEqual(error.code, kFxGripError_Exception);
+	XCTAssertTrue([error.localizedDescription containsString:@"group name unavailable"]);
+}
+
+/*! @abstract An exception raised by a plugin's information call is caught and reported as kFxGripError_Exception. */
+- (void)testPlugInsWithError_ReportsAnExceptionWhileRegistering {
+	gFxGripDynamicRegistrarThrowOnInformation = YES;
+	FxGripDynamicRegistrar *registrar = [FxGripDynamicRegistrar.alloc init];
+	NSError *error = nil;
+
+	NSArray *result = nil;
+	XCTAssertNoThrow(result = [registrar plugInsWithError:&error]);
+	gFxGripDynamicRegistrarThrowOnInformation = NO;
+
+	XCTAssertNil(result);
+	XCTAssertEqualObjects(error.domain, FxGripPlugErrorDomain);
+	XCTAssertEqual(error.code, kFxGripError_Exception);
+	XCTAssertTrue([error.localizedDescription containsString:@"information unavailable"]);
+}
+
 
 @end

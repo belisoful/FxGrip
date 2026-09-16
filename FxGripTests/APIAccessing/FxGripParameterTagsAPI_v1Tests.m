@@ -13,6 +13,7 @@
 #import <CoreMedia/CoreMedia.h>
 #import <FxPlug/FxTypes.h>
 #import "FxGrip/FxGripTypes.h"
+#import "FxPlugStub.h"
 #import "FxGrip/FxGripMetaManager.h"
 #import "FxGrip/FxGripParameterFlags.h"
 #import "FxGrip/FxGripParameterTagsAPI_v1.h"
@@ -231,7 +232,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 // entries the name-keyed definition lookup consults.
 @interface FxGripTagsTestParameterData : NSObject
 @property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSNumber *> *flagsByParameter;
-@property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *menusByParameter;
+@property (nonatomic, strong, nonnull) NSMutableDictionary<NSNumber *, NSArray *> *menusByParameter;
 @end
 
 @implementation FxGripTagsTestParameterData
@@ -251,7 +252,7 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	return (FxParameterFlags)self.flagsByParameter[@(parameterID)].unsignedIntValue;
 }
 
-- (NSArray<NSString *> *)storedMenus:(FxParameterId)parameterID
+- (NSArray *)storedMenus:(FxParameterId)parameterID
 {
 	return self.menusByParameter[@(parameterID)];
 }
@@ -1271,6 +1272,37 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 
 	XCTAssertTrue([self applyTargetPresetForParameter:kTagsTestParam options:FxGripPresetAll]);
 	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"ByName");
+}
+
+/*! @abstract A tagged menu's value is a tag, so a name-keyed definition resolves the entry carrying that tag. */
+- (void)testATaggedMenuResolvesTheEntryNameByTag
+{
+	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
+	[self installTargetPresetDefinition:@{@"Advanced": FxGripTagsTestNamesEntry(kTagsTestParam, @"ByName")}
+								 ofType:kFxParameterType_Menu];
+	self.parameterData.menusByParameter[@(kTagsTestParam)] = @[[FxTaggedMenuEntry taggedMenuEntryWithName:@"Advanced" tag:20],
+															  [FxTaggedMenuEntry taggedMenuEntryWithName:@"Basic" tag:10]];
+	self.retrievalAPI.intValue = 20;
+
+	XCTAssertTrue([self applyTargetPresetForParameter:kTagsTestParam options:FxGripPresetAll]);
+	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"ByName",
+						  @"the value 20 is the tag of Advanced, not a position");
+}
+
+/*! @abstract A tagged menu value that matches no tag resolves no entry name, so the index-keyed entry applies. */
+- (void)testATaggedMenuValueWithNoMatchingTagFallsBackToTheIndexEntry
+{
+	[self installApplyEnvironmentForParameters:@[@(kTagsTestParam)]];
+	[self installTargetPresetDefinition:@{@"Basic": FxGripTagsTestNamesEntry(kTagsTestParam, @"ByName"),
+										  @1: FxGripTagsTestNamesEntry(kTagsTestParam, @"ByIndex")}
+								 ofType:kFxParameterType_Menu];
+	self.parameterData.menusByParameter[@(kTagsTestParam)] = @[[FxTaggedMenuEntry taggedMenuEntryWithName:@"Advanced" tag:20],
+															  [FxTaggedMenuEntry taggedMenuEntryWithName:@"Basic" tag:10]];
+	self.retrievalAPI.intValue = 1;
+
+	XCTAssertTrue([self applyTargetPresetForParameter:kTagsTestParam options:FxGripPresetAll]);
+	XCTAssertEqualObjects(self.dynamicAPI.names[@(kTagsTestParam)], @"ByIndex",
+						  @"position 1 holds Basic, but a tagged menu is not read by position");
 }
 
 /*! @abstract A name-keyed definition follows its entry to a new index when entries are inserted before it. */

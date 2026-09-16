@@ -129,6 +129,26 @@
 	XCTAssertFalse([self.posted containsObject:FxGripNotifyAPI_ParameterAddName], @"a failed add does not post the add notification");
 }
 
+/*! @abstract An observer that sets an error on the add-pre notification aborts the add: the host is never asked and no add notification posts. */
+- (void)testAnObserverErrorOnTheAddPreNotificationAbortsTheAdd
+{
+	id token = [self.effect.notifier addObserverForName:FxGripNotifyAPI_ParameterAddPreName object:nil queue:nil usingBlock:^(NSNotification *note) {
+		((NSMutableDictionary *)note.userInfo).fxError = [NSError errorWithDomain:@"FxGripCreate6Test" code:1 userInfo:nil];
+	}];
+	[self.tokens addObject:token];
+
+	BOOL ok = [self.wrapper addTaggedPopupMenuWithName:@"Mode"
+										  parameterID:7
+										 defaultValue:0
+										  menuEntries:(id)@[]
+									   parameterFlags:kFxParameterFlag_DEFAULT];
+
+	XCTAssertFalse(ok);
+	XCTAssertNil(self.host.lastName, @"the host is never asked");
+	XCTAssertTrue([self.posted containsObject:FxGripNotifyAPI_ParameterAddPreName]);
+	XCTAssertFalse([self.posted containsObject:FxGripNotifyAPI_ParameterAddName]);
+}
+
 /*! @abstract The v6 wrapper conforms to both the v6 and v5 creation protocols and subclasses the v5 wrapper. */
 - (void)testTheV6WrapperIsAlsoAV5Wrapper
 {

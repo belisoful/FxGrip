@@ -132,10 +132,10 @@
 	if (_isLocalizingValues && type == FxParameterType_String && [defaultValue isKindOfClass:NSString.class]) {
 		parameter[kFxParameterProperty_Default] = [self localize:defaultValue];
 	}
-	NSArray<NSString*> *entries = parameter[kFxParameterProperty_MenuItems];
+	NSArray *entries = parameter[kFxParameterProperty_MenuItems];
 	if (_isLocalizingMenus && type == FxParameterType_Menu && [entries isKindOfClass:NSArray.class]) {
 		entries = [entries mapUsingBlock:^BOOL(id  _Nullable __autoreleasing * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-			*obj = [self localize:*obj];
+			*obj = [self localizedMenuEntry:*obj];
 			return YES;
 		}];
 		parameter[kFxParameterProperty_MenuItems] = entries;
@@ -169,10 +169,10 @@
 - (void)extAPIParameterSetMenuPre:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
-	NSArray<NSString*> *entries = parameter[kFxParameterProperty_MenuItems];
+	NSArray *entries = parameter[kFxParameterProperty_MenuItems];
 	if (_isLocalizingMenus && [entries isKindOfClass:NSArray.class]) {
 		entries = [entries mapUsingBlock:^BOOL(id *obj, NSUInteger idx, BOOL *stop) {
-			*obj = [self localize:*obj];
+			*obj = [self localizedMenuEntry:*obj];
 			return YES;
 		}];
 		parameter[kFxParameterProperty_MenuItems] = entries;
@@ -183,10 +183,10 @@
 - (void)extAPIParameterGetMenu:(nonnull NSNotification *)notification
 {
 	NSMutableDictionary *parameter = notification.userInfo.mutableFxParameter;
-	NSArray<NSString*> *entries = parameter[kFxParameterProperty_MenuItems];
+	NSArray *entries = parameter[kFxParameterProperty_MenuItems];
 	if (_isDelocalizingMenus && [entries isKindOfClass:NSArray.class]) {
 		entries = [entries mapUsingBlock:^BOOL(id *obj, NSUInteger idx, BOOL *stop) {
-			*obj = [self delocalize:*obj];
+			*obj = [self delocalizedMenuEntry:*obj];
 			return YES;
 		}];
 		parameter[kFxParameterProperty_MenuItems] = entries;
@@ -235,6 +235,44 @@
 	}
 	id value = self.localizationTable[key];
 	return [value isKindOfClass:NSString.class] ? value : key;
+}
+
+/*!
+	@method		localizedMenuEntry:
+	@abstract	Localizes one popup menu entry: a string, or the name of a tagged entry.
+	@discussion	Introduced in FxGrip 0.1.0. A tagged popup menu carries FxTaggedMenuEntry objects,
+				whose name is read-only, so a translated entry is rebuilt with the same tag. An entry
+				whose name has no translation, and any other object, is returned unchanged.
+*/
+- (nullable id)localizedMenuEntry:(nullable id)entry
+{
+	if ([entry isKindOfClass:FxTaggedMenuEntry.class]) {
+		return [self taggedMenuEntry:entry renamed:[self localize:[entry menuItemName]]];
+	}
+	return [self localize:entry];
+}
+
+/*!
+	@method		delocalizedMenuEntry:
+	@abstract	Delocalizes one popup menu entry: a string, or the name of a tagged entry.
+	@discussion	Introduced in FxGrip 0.1.0. The inverse of localizedMenuEntry:; a tagged entry keeps
+				its tag.
+*/
+- (nullable id)delocalizedMenuEntry:(nullable id)entry
+{
+	if ([entry isKindOfClass:FxTaggedMenuEntry.class]) {
+		return [self taggedMenuEntry:entry renamed:[self delocalize:[entry menuItemName]]];
+	}
+	return [self delocalize:entry];
+}
+
+/*! The tagged entry under a new name with its tag kept; the entry itself when the name is unchanged. */
+- (FxTaggedMenuEntry *)taggedMenuEntry:(FxTaggedMenuEntry *)entry renamed:(nullable NSString *)name
+{
+	if (![name isKindOfClass:NSString.class] || [name isEqualToString:entry.menuItemName]) {
+		return entry;
+	}
+	return [FxTaggedMenuEntry taggedMenuEntryWithName:name tag:entry.tag];
 }
 
 // Delocalization inverts the same table the forward path localizes through, so a round-trip

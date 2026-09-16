@@ -12,6 +12,8 @@
 #import "FxGrip/FxGripTypes.h"
 #import "FxGrip/FxGripPluginInfo.h"
 #import "FxGrip/FxMatrix+FxGrip.h"
+#import <FxGrip/FxGripErrors.h>
+#import "FxGripMainBundleTestSupport.h"
 
 /*!
 	A subclass that stages a plugin list. The lookups dispatch +plugIns on the receiving
@@ -38,6 +40,115 @@
 
 @interface FxGripPluginInfoTests : XCTestCase
 @end
+
+#define kPluginInfoDynamicPluginUUID	@"E1E1E1E1-0000-4000-8000-0000000000E1"
+#define kPluginInfoDynamicGroupUUID		@"E2E2E2E2-0000-4000-8000-0000000000E2"
+
+/*! A dynamic principal that answers one plugin and one group. */
+@interface FxGripPluginInfoTestPrincipal : NSObject <PROPlugInRegistering>
+@end
+
+@implementation FxGripPluginInfoTestPrincipal
+
++ (id)sharedInstance
+{
+	static FxGripPluginInfoTestPrincipal *shared = nil;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		shared = [[self alloc] init];
+	});
+	return shared;
+}
+
+- (BOOL)shouldLoadFirstInstanceOfPlugInWithError:(NSError **)error
+{
+	return YES;
+}
+
+- (NSArray *)registeredPlugInGroupsWithError:(NSError **)error
+{
+	return @[ @{ kProPlugPlugInX_RegGroupUUIDProperty: kPluginInfoDynamicGroupUUID,
+				 kProPlugPlugInX_RegGroupNameProperty: @"principal.group.name" } ];
+}
+
+- (NSArray *)requestedProtocolsWithError:(NSError **)error
+{
+	return nil;
+}
+
+- (NSArray *)registeredPlugInsWithError:(NSError **)error
+{
+	return @[ @{ kProPlugPlugIn_UuidProperty: kPluginInfoDynamicPluginUUID,
+				 kProPlugPlugIn_ClassNameProperty: @"FxGripPluginInfoDynamicPlugin",
+				 kProPlugPlugIn_DisplayNameProperty: @"principal.plugin.name" } ];
+}
+
+@end
+
+
+/*! A dynamic principal whose shared instance is nil. */
+@interface FxGripPluginInfoTestNilPrincipal : FxGripPluginInfoTestPrincipal
+@end
+
+@implementation FxGripPluginInfoTestNilPrincipal
+
++ (id)sharedInstance
+{
+	return nil;
+}
+
+@end
+
+
+/*! A dynamic principal that reports an error from both list queries. */
+@interface FxGripPluginInfoTestErrorPrincipal : FxGripPluginInfoTestPrincipal
+@end
+
+@implementation FxGripPluginInfoTestErrorPrincipal
+
++ (id)sharedInstance
+{
+	return [[self alloc] init];
+}
+
+- (NSArray *)registeredPlugInGroupsWithError:(NSError **)error
+{
+	*error = [NSError errorWithDomain:FxGripPlugErrorDomain code:kFxGripError_NoConfigGroups userInfo:nil];
+	return nil;
+}
+
+- (NSArray *)registeredPlugInsWithError:(NSError **)error
+{
+	*error = [NSError errorWithDomain:FxGripPlugErrorDomain code:kFxGripError_NoConfigPlugins userInfo:nil];
+	return nil;
+}
+
+@end
+
+
+/*! A dynamic principal that answers empty lists without an error. */
+@interface FxGripPluginInfoTestEmptyPrincipal : FxGripPluginInfoTestPrincipal
+@end
+
+@implementation FxGripPluginInfoTestEmptyPrincipal
+
++ (id)sharedInstance
+{
+	return [[self alloc] init];
+}
+
+- (NSArray *)registeredPlugInGroupsWithError:(NSError **)error
+{
+	return @[];
+}
+
+- (NSArray *)registeredPlugInsWithError:(NSError **)error
+{
+	return @[];
+}
+
+@end
+
 
 @implementation FxGripPluginInfoTests
 
@@ -412,5 +523,174 @@
 	XCTAssertTrue(info.hostIsMotion);
 	XCTAssertEqualObjects(info.hostBundleIdentifier, @"com.apple.motionapp");
 }
+
+
+#pragma mark - Staged Info.plist
+
+- (void)tearDown
+{
+	[FxGripMainBundleTestSupport clearStagedValues];
+	[super tearDown];
+}
+
+- (void)stageDynamicPrincipal:(nullable NSString *)className
+{
+	NSMutableDictionary *values = [NSMutableDictionary dictionaryWithObject:@YES forKey:kProPlugDynamicRegistration_Property];
+	if (className != nil) {
+		values[kProPlugDynamicRegistrationPrincipalClass_Property] = className;
+	}
+	[FxGripMainBundleTestSupport stageInfoDictionary:values];
+}
+
+/*! @abstract The static plugIns and plugInGroups read the staged Info.plist lists and localize their strings. */
+- (void)testStaticRegistrationReadsAndLocalizesTheBundleLists
+{
+	NSDictionary *plugin = @{ kProPlugPlugIn_UuidProperty: kPluginInfoDynamicPluginUUID,
+							  kProPlugPlugIn_DisplayNameProperty: @"plist.plugin.name" };
+	NSDictionary *group = @{ kProPlugPlugInX_RegGroupUUIDProperty: kPluginInfoDynamicGroupUUID,
+							 kProPlugPlugInX_RegGroupNameProperty: @"plist.group.name" };
+	[FxGripMainBundleTestSupport stageInfoDictionary:@{ kProPlugPlugInList_Property: @[plugin],
+														kProPlugPlugIn_GroupList_Property: @[group] }];
+	[FxGripMainBundleTestSupport stageLocalizedInfoDictionary:@{ @"plist.plugin.name": @"Plist Plugin",
+																 @"plist.group.name": @"Plist Group" }];
+
+	XCTAssertFalse(FxGripPluginInfo.isDynamicRegistration);
+	XCTAssertEqualObjects(FxGripPluginInfo.plugIns.firstObject[kProPlugPlugIn_DisplayNameProperty], @"Plist Plugin");
+	XCTAssertEqualObjects(FxGripPluginInfo.plugInGroups.firstObject[kProPlugPlugInX_RegGroupNameProperty], @"Plist Group");
+}
+
+/*! @abstract isDynamicRegistration and dynamicRegistrationPrincipalClass follow the staged Info.plist keys. */
+- (void)testDynamicRegistrationKeysAreRead
+{
+	[self stageDynamicPrincipal:NSStringFromClass(FxGripPluginInfoTestPrincipal.class)];
+
+	XCTAssertTrue(FxGripPluginInfo.isDynamicRegistration);
+	XCTAssertEqualObjects(FxGripPluginInfo.dynamicRegistrationPrincipalClass, NSStringFromClass(FxGripPluginInfoTestPrincipal.class));
+}
+
+/*! @abstract Dynamic registration queries the principal's shared instance and localizes both lists. */
+- (void)testDynamicRegistrationQueriesThePrincipalAndLocalizes
+{
+	[self stageDynamicPrincipal:NSStringFromClass(FxGripPluginInfoTestPrincipal.class)];
+	[FxGripMainBundleTestSupport stageLocalizedInfoDictionary:@{ @"principal.plugin.name": @"Principal Plugin",
+																 @"principal.group.name": @"Principal Group" }];
+
+	NSArray *plugins = FxGripPluginInfo.plugIns;
+	NSArray *groups = FxGripPluginInfo.plugInGroups;
+
+	XCTAssertEqual(plugins.count, 1u);
+	XCTAssertEqualObjects(plugins.firstObject[kProPlugPlugIn_UuidProperty], kPluginInfoDynamicPluginUUID);
+	XCTAssertEqualObjects(plugins.firstObject[kProPlugPlugIn_DisplayNameProperty], @"Principal Plugin");
+	XCTAssertEqual(groups.count, 1u);
+	XCTAssertEqualObjects(groups.firstObject[kProPlugPlugInX_RegGroupNameProperty], @"Principal Group");
+}
+
+/*! @abstract The lookups by class name and UUID find a dynamically registered plugin. */
+- (void)testLookupsFindADynamicallyRegisteredPlugin
+{
+	[self stageDynamicPrincipal:NSStringFromClass(FxGripPluginInfoTestPrincipal.class)];
+
+	XCTAssertEqualObjects([FxGripPluginInfo pluginPropertiesByUUID:kPluginInfoDynamicPluginUUID][kProPlugPlugIn_ClassNameProperty],
+						  @"FxGripPluginInfoDynamicPlugin");
+	XCTAssertEqualObjects([FxGripPluginInfo pluginPropertiesByClassName:@"fxgrippluginInfoDynamicPlugin"][kProPlugPlugIn_UuidProperty],
+						  kPluginInfoDynamicPluginUUID);
+}
+
+/*! @abstract Dynamic registration without a principal class name yields nil lists. */
+- (void)testDynamicRegistrationWithoutAPrincipalClassIsNil
+{
+	[self stageDynamicPrincipal:nil];
+
+	XCTAssertNil(FxGripPluginInfo.plugIns);
+	XCTAssertNil(FxGripPluginInfo.plugInGroups);
+}
+
+/*! @abstract A principal class name that resolves to no loaded class yields nil lists. */
+- (void)testDynamicRegistrationWithAnUnknownPrincipalClassIsNil
+{
+	[self stageDynamicPrincipal:@"FxGripPluginInfoNoSuchPrincipal"];
+
+	XCTAssertNil(FxGripPluginInfo.plugIns);
+	XCTAssertNil(FxGripPluginInfo.plugInGroups);
+}
+
+/*! @abstract A principal class that does not conform to PROPlugInRegistering yields nil lists. */
+- (void)testDynamicRegistrationWithANonConformingPrincipalIsNil
+{
+	[self stageDynamicPrincipal:NSStringFromClass(NSObject.class)];
+
+	XCTAssertNil(FxGripPluginInfo.plugIns);
+	XCTAssertNil(FxGripPluginInfo.plugInGroups);
+}
+
+/*! @abstract A principal whose shared instance is nil yields nil lists. */
+- (void)testDynamicRegistrationWithANilSharedInstanceIsNil
+{
+	[self stageDynamicPrincipal:NSStringFromClass(FxGripPluginInfoTestNilPrincipal.class)];
+
+	XCTAssertNil(FxGripPluginInfo.plugIns);
+	XCTAssertNil(FxGripPluginInfo.plugInGroups);
+}
+
+/*! @abstract A principal that reports an error yields nil lists. */
+- (void)testDynamicRegistrationWithAnErroringPrincipalIsNil
+{
+	[self stageDynamicPrincipal:NSStringFromClass(FxGripPluginInfoTestErrorPrincipal.class)];
+
+	XCTAssertNil(FxGripPluginInfo.plugIns);
+	XCTAssertNil(FxGripPluginInfo.plugInGroups);
+}
+
+/*! @abstract A principal that answers empty lists yields nil lists. */
+- (void)testDynamicRegistrationWithEmptyListsIsNil
+{
+	[self stageDynamicPrincipal:NSStringFromClass(FxGripPluginInfoTestEmptyPrincipal.class)];
+
+	XCTAssertNil(FxGripPluginInfo.plugIns);
+	XCTAssertNil(FxGripPluginInfo.plugInGroups);
+}
+
+#pragma mark - localizeObject: with translations
+
+/*! @abstract A string with a translation in the localized info dictionary maps to it. */
+- (void)testLocalizeObjectTranslatesAStringThroughTheLocalizedInfoDictionary
+{
+	[FxGripMainBundleTestSupport stageLocalizedInfoDictionary:@{ @"key.one": @"One" }];
+
+	XCTAssertEqualObjects([FxGripPluginInfo localizeObject:@"key.one"], @"One");
+	XCTAssertEqualObjects([FxGripPluginInfo localizeObject:@"key.missing"], @"key.missing");
+}
+
+/*! @abstract A mutable array and a mutable dictionary translate their strings in place. */
+- (void)testLocalizeObjectTranslatesMutableContainersInPlace
+{
+	[FxGripMainBundleTestSupport stageLocalizedInfoDictionary:@{ @"key.one": @"One", @"key.two": @"Two" }];
+	NSMutableArray *array = [NSMutableArray arrayWithArray:@[ @"key.one", @7, @"key.two" ]];
+	NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithDictionary:@{ @"a": @"key.one", @"b": @7 }];
+
+	XCTAssertTrue([FxGripPluginInfo localizeObject:array] == array);
+	XCTAssertTrue([FxGripPluginInfo localizeObject:dictionary] == dictionary);
+	XCTAssertEqualObjects(array, (@[ @"One", @7, @"Two" ]));
+	XCTAssertEqualObjects(dictionary, (@{ @"a": @"One", @"b": @7 }));
+}
+
+/*! @abstract An immutable array and dictionary return translated copies of their own class, leaving the originals unchanged. */
+- (void)testLocalizeObjectReturnsTranslatedCopiesOfImmutableContainers
+{
+	[FxGripMainBundleTestSupport stageLocalizedInfoDictionary:@{ @"key.one": @"One" }];
+	NSArray *array = @[ @"key.one", @{ @"inner": @"key.one" } ];
+	NSDictionary *dictionary = @{ @"a": @[ @"key.one" ] };
+
+	id localizedArray = [FxGripPluginInfo localizeObject:array];
+	id localizedDictionary = [FxGripPluginInfo localizeObject:dictionary];
+
+	XCTAssertEqualObjects(localizedArray, (@[ @"One", @{ @"inner": @"One" } ]));
+	XCTAssertEqualObjects(localizedDictionary, (@{ @"a": @[ @"One" ] }));
+	XCTAssertFalse([localizedArray isKindOfClass:NSMutableArray.class]);
+	XCTAssertFalse([localizedDictionary isKindOfClass:NSMutableDictionary.class]);
+	XCTAssertEqualObjects(array.firstObject, @"key.one");
+	XCTAssertEqualObjects(dictionary[@"a"][0], @"key.one");
+}
+
 
 @end

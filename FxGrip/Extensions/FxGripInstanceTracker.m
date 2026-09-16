@@ -39,7 +39,7 @@ static NSMutableDictionary<NSString*, NSMutableArray<NSValue*>*>    *gEffectInst
 
 static dispatch_once_t gInstanceTrackerOnce = 0;
 
-- (nullable id)init
+- (nonnull instancetype)init
 {
 	self = [super init];
 	if (self) {

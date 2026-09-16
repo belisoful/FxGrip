@@ -127,4 +127,20 @@ static const FxParameterId kFontMenuTestParameter = 41;
 	XCTAssertNil([parameter valueAtTime:FxGripParamClassTestTime(0, 1)]);
 }
 
+
+/*! @abstract A declared default that is a dictionary is handed to the policy observers as a mutable copy,
+	and a font menu whose resolved default is not a string falls back to the host default font name. */
+- (void)testADictionaryDeclaredDefaultIsResolvedThroughThePolicyObservers
+{
+	NSDictionary *declared = @{@"family": @"Futura"};
+
+	XCTAssertTrue([self add:FxGripFontMenuParameter.class
+					   type:kFxParameterType_FontMenu
+					  extra:@{kFxParameterProperty_Default: declared}]);
+
+	XCTAssertEqualObjects(self.call[@"default"], self.effect.defaultFontName,
+						  @"a dictionary default is no font name, so the effect default stands");
+	XCTAssertEqualObjects(declared, (@{@"family": @"Futura"}), @"the declaration is not mutated");
+}
+
 @end

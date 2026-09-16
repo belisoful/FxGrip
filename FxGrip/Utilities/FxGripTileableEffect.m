@@ -99,7 +99,7 @@
 //---------------------------------------------------------
 
 /*! @abstract Constructs an effect with no host, which is what a bare `init` means here. */
-- (nullable instancetype)init
+- (nonnull instancetype)init
 {
 	return [self initWithAPIManager:nil];
 }

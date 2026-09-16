@@ -220,6 +220,9 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 				and every caller's completion handler runs when it finishes, with the function or
 				the error. A synchronous request for a name whose asynchronous compile is in flight
 				compiles on the calling thread and returns its own result.
+
+				Any other `MTLLibrary` message, including a member a newer SDK adds, is forwarded to
+				the wrapped library.
 */
 @interface FxGripMTLLibraryCache : NSObject <MTLLibrary>
 {
@@ -356,15 +359,23 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 	@discussion Introduced in FxGrip 0.1.0. The command-queue pool starts with a fixed number of
 				queues and grows when every pooled queue is checked out. Pipeline states are keyed
 				by vertex and fragment function names. All methods are safe to call concurrently.
+
+				The default library is the `default.metallib` of the process's main bundle. An
+				FxPlug plugin runs in its own XPC service, which is that main bundle, so the
+				default library holds the plugin's shaders. FxGrip's own shaders live in the
+				framework bundle and are not in it. In a unit-test process the main bundle is
+				`xctest`, the default library is nil, and the pipeline-state methods that take no
+				library answer nil; pass a library explicitly there. Every pipeline-state method
+				also answers nil when a function fails to load or the state fails to compile.
 */
 @interface FxGripMTLDeviceCacheItem : NSObject
 
 /*! The Metal device this item caches for. */
 @property (readonly, nonnull)   		id<MTLDevice>                           gpuDevice;
-/*! The device's default shader library. */
-@property (readonly, nonnull)   		id<MTLLibrary>                          defaultLibrary;
-/*! The memoizing cache over the default library. */
-@property (readonly, nonnull)   		FxGripMTLLibraryCache*                  defaultLibraryCache;
+/*! The main bundle's default shader library, which in an FxPlug plugin holds the plugin's shaders; nil when the main bundle has none. */
+@property (readonly, nullable)  		id<MTLLibrary>                          defaultLibrary;
+/*! The memoizing cache over the default library; nil when there is no default library. */
+@property (readonly, nullable)  		FxGripMTLLibraryCache*                  defaultLibraryCache;
 /*! The render pipeline states, keyed by vertex and fragment function names. */
 @property (retain, nonnull)     		NSMutableDictionary<NSString*, id<MTLRenderPipelineState>>*   pipelineStates;
 /*! The depth-stencil state for this item's pixel format. */
@@ -404,27 +415,27 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 - (BOOL)containsCommandQueue:(nullable id<MTLCommandQueue>)commandQueue;
 
 /*! The render pipeline state for a vertex and fragment function pair, cached by name. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader;
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader;
 /*! The pipeline state for a function pair with function constants applied. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader constantValues:(nullable MTLFunctionConstantValues *)constantValues;
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader constantValues:(nullable MTLFunctionConstantValues *)constantValues;
 /*! The pipeline state for a function pair with function constants, cached under a specialized format key. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader constantValues:(nullable MTLFunctionConstantValues *)constantValues specializedFormat:(nullable NSString*)specializedFormat;
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithVertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader constantValues:(nullable MTLFunctionConstantValues *)constantValues specializedFormat:(nullable NSString*)specializedFormat;
 
 
 /*! The pipeline state for a function pair from a given library, with function constants. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader
 										constantValues:(nullable MTLFunctionConstantValues *)constantValues;
 /*! The pipeline state for a function pair from a given library, with function constants and a specialized format key. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexShader:(nonnull NSString*)vertexShader fragmentShader:(nonnull NSString*)fragmentShader
 										constantValues:(nullable MTLFunctionConstantValues *)constantValues specializedFormat:(nullable NSString*)specializedFormat;
 
 
 /*! The pipeline state for a vertex and fragment function descriptor pair. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexDescriptor:(nonnull MTLFunctionDescriptor*)vertexDescriptor fragmentDescriptor:(nonnull MTLFunctionDescriptor*)fragmentDescriptor;
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithVertexDescriptor:(nonnull MTLFunctionDescriptor*)vertexDescriptor fragmentDescriptor:(nonnull MTLFunctionDescriptor*)fragmentDescriptor;
 /*! The pipeline state for a function descriptor pair from a given library. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexDescriptor:(nonnull MTLFunctionDescriptor*)vertexDescriptor fragmentDescriptor:(nonnull MTLFunctionDescriptor*)fragmentDescriptor;
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithLibrary:(nullable id<MTLLibrary>)library vertexDescriptor:(nonnull MTLFunctionDescriptor*)vertexDescriptor fragmentDescriptor:(nonnull MTLFunctionDescriptor*)fragmentDescriptor;
 
 /*! The pipeline state for an already-built vertex and fragment function pair. */
-- (nonnull id<MTLRenderPipelineState>)pipelineStateWithVertexFunction:(nonnull id<MTLFunction>)vertexFunction fragmentFunction:(nonnull id<MTLFunction>)fragmentFunction;
+- (nullable id<MTLRenderPipelineState>)pipelineStateWithVertexFunction:(nonnull id<MTLFunction>)vertexFunction fragmentFunction:(nonnull id<MTLFunction>)fragmentFunction;
 
 @end

@@ -84,7 +84,8 @@
 {
 	FxGripSceneKitMetalBackend *backend = [FxGripSceneKitMetalBackend backend];
 	NSError *error = nil;
-	BOOL ok = [backend renderScene:[SCNScene scene] pointOfView:nil toTexture:nil atTime:0.0 error:&error];
+	id<MTLTexture> noTexture = nil;
+	BOOL ok = [backend renderScene:[SCNScene scene] pointOfView:nil toTexture:noTexture atTime:0.0 error:&error];
 	XCTAssertFalse(ok);
 	XCTAssertNotNil(error);
 }

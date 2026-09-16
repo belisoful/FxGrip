@@ -14,6 +14,7 @@
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripHistogramParameter.h>
+#import <FxGrip/NSCoder+FxPlug.h>
 
 static const FxParameterId kHistogramTestParameter = 51;
 
@@ -124,6 +125,60 @@ static const FxParameterId kHistogramTestParameter = 51;
 	XCTAssertEqual(histogram->component[1].blackIn, 0.05);
 	XCTAssertEqual(histogram->component[2].blackIn, 0.0);
 	XCTAssertEqual(histogram->component[2].gamma, 1.0, @"the zero histogram leaves gamma at one");
+}
+
+
+#pragma mark Plugin state
+
+/*! @abstract A plain coder, which is no plugin-state encoder, reads no histogram from the host. */
+- (void)testHistogramEncodingWithAPlainCoderReadsNoValue
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+
+	[parameter encodeWithCoder:archiver];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
+}
+
+/*! @abstract A plugin-state coder reads every channel at its own render time and encodes the histogram. */
+- (void)testHistogramEncodingWithAPluginStateCoderEncodesEveryChannel
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	self.effect.apiManager.paramGetAPIv6.gamma = 1.8;
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = FxGripParamClassTestTime(21, 30);
+
+	[parameter encodeWithCoder:archiver];
+	[archiver finishEncoding];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @21);
+
+	NSKeyedUnarchiver *unarchiver = [NSKeyedUnarchiver.alloc initForReadingFromData:archiver.encodedData error:NULL];
+	unarchiver.requiresSecureCoding = NO;
+	NSUInteger length = 0;
+	const FxGripHistogram *decoded = (const FxGripHistogram *)[unarchiver decodeBytesAtIndex:kHistogramTestParameter
+																			 returnedLength:&length];
+	XCTAssertEqual(length, sizeof(FxGripHistogram));
+	XCTAssertEqualWithAccuracy(decoded->component[0].gamma, 1.8, 1e-12);
+}
+
+/*! @abstract A histogram with a refused channel encodes nothing, because a partial read is not state. */
+- (void)testAHistogramWithARefusedChannelEncodesNothing
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	[self.effect.apiManager.paramGetAPIv6.refusedHistogramChannels addObject:@(kFxHistogramChannel_Blue)];
+	[parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = FxGripParamClassTestTime(0, 1);
+
+	[parameter encodeWithCoder:archiver];
+	[archiver finishEncoding];
+
+	NSKeyedUnarchiver *unarchiver = [NSKeyedUnarchiver.alloc initForReadingFromData:archiver.encodedData error:NULL];
+	unarchiver.requiresSecureCoding = NO;
+	NSUInteger length = 0;
+	XCTAssertTrue([unarchiver decodeBytesAtIndex:kHistogramTestParameter returnedLength:&length] == NULL);
 }
 
 @end

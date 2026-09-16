@@ -14,6 +14,8 @@
 #import <FxGrip/FxGripInferenceBackend.h>
 #import <FxGrip/FxGripInferenceRequest.h>
 #import <FxGrip/FxGripInferenceResult.h>
+#import <FxGrip/FxGripTypes.h>
+#import "FxPlugStub.h"
 
 static CMTime FxGripMLGenTestTime(void)
 {
@@ -202,6 +204,119 @@ static CMTime FxGripMLGenTestTime(void)
 											 atTime:FxGripMLGenTestTime() error:&error]);
 	XCTAssertEqualObjects(generator.lastClipRendered, clip);
 	XCTAssertEqual(generator.placeholderWrites, 1u, @"no placeholder once the clip renders");
+}
+
+@end
+
+#pragma mark - The tile-facing entry points
+
+/*!
+	Drives the FxPlug rect callbacks and the default declaration hooks on both generators. A
+	generator has no source, so these answer from the destination tile alone. The FxPlugStub test
+	framework supplies FxImageTile, which the binary-less FxPlug SDK does not.
+*/
+@interface FxGripMLGeneratorTileTests : XCTestCase
+@end
+
+@implementation FxGripMLGeneratorTileTests
+
+- (NSCoder *)emptyCoder
+{
+	NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+	[archiver finishEncoding];
+	NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:archiver.encodedData error:nil];
+	decoder.requiresSecureCoding = NO;
+	return decoder;
+}
+
+/*! @abstract The image generator's destination rect is the destination tile's image bounds. */
+- (void)testTheImageGeneratorFillsTheDestinationTilesImageBounds
+{
+	FxGripMLImageGenerator *generator = [FxGripMLImageGenerator.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxRect bounds = { 4, 8, 104, 208 };
+	FxRect result = { 0, 0, 0, 0 };
+	NSError *error = nil;
+
+	XCTAssertTrue([generator destinationImageRect:&result
+									 sourceImages:@[]
+								 destinationImage:[FxImageTile stubTileWithPixelBounds:bounds]
+									  pluginCoder:[self emptyCoder]
+										   atTime:kCMTimeZero
+											error:&error]);
+
+	XCTAssertTrue(FxRectsAreEqual(result, bounds));
+	XCTAssertNil(error);
+}
+
+/*! @abstract A generator has no source, so its source tile rect is empty. */
+- (void)testTheImageGeneratorAsksForNoSource
+{
+	FxGripMLImageGenerator *generator = [FxGripMLImageGenerator.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxRect result = { 1, 2, 3, 4 };
+	NSError *error = nil;
+
+	XCTAssertTrue([generator sourceTileRect:&result
+						   sourceImageIndex:0
+							   sourceImages:@[]
+						destinationTileRect:((FxRect){ 0, 0, 10, 10 })
+						   destinationImage:[FxImageTile stubTileWithPixelBounds:((FxRect){ 0, 0, 10, 10 })]
+								pluginCoder:[self emptyCoder]
+									 atTime:kCMTimeZero
+									  error:&error]);
+
+	XCTAssertTrue(FxRectsAreEqual(result, kFxRect_Empty));
+	XCTAssertNil(error);
+}
+
+/*! @abstract The base image generator declares no inputs and writes no placeholder, so a subclass supplies both. */
+- (void)testTheBaseImageGeneratorDeclaresNothing
+{
+	FxGripMLImageGenerator *generator = [FxGripMLImageGenerator.alloc initWithAPIManager:(id _Nonnull)nil];
+	NSError *error = nil;
+
+	XCTAssertEqualObjects([generator generatorInputsAtTime:kCMTimeZero], @{});
+	XCTAssertTrue([generator writePlaceholderToDestinationTile:nil atTime:kCMTimeZero error:&error]);
+	XCTAssertNil(error);
+}
+
+/*! @abstract The video generator's destination rect is the destination tile's image bounds. */
+- (void)testTheVideoGeneratorFillsTheDestinationTilesImageBounds
+{
+	FxGripMLVideoGenerator *generator = [FxGripMLVideoGenerator.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxRect bounds = { 0, 0, 320, 180 };
+	FxRect result = { 0, 0, 0, 0 };
+	NSError *error = nil;
+
+	XCTAssertTrue([generator destinationImageRect:&result
+									 sourceImages:@[]
+								 destinationImage:[FxImageTile stubTileWithPixelBounds:bounds]
+									  pluginCoder:[self emptyCoder]
+										   atTime:kCMTimeZero
+											error:&error]);
+
+	XCTAssertTrue(FxRectsAreEqual(result, bounds));
+	XCTAssertNil(error);
+}
+
+/*! @abstract The video generator asks for no source and writes no placeholder by default. */
+- (void)testTheVideoGeneratorAsksForNoSourceAndDeclaresNoPlaceholder
+{
+	FxGripMLVideoGenerator *generator = [FxGripMLVideoGenerator.alloc initWithAPIManager:(id _Nonnull)nil];
+	FxRect result = { 1, 2, 3, 4 };
+	NSError *error = nil;
+
+	XCTAssertTrue([generator sourceTileRect:&result
+						   sourceImageIndex:0
+							   sourceImages:@[]
+						destinationTileRect:((FxRect){ 0, 0, 10, 10 })
+						   destinationImage:[FxImageTile stubTileWithPixelBounds:((FxRect){ 0, 0, 10, 10 })]
+								pluginCoder:[self emptyCoder]
+									 atTime:kCMTimeZero
+									  error:&error]);
+
+	XCTAssertTrue(FxRectsAreEqual(result, kFxRect_Empty));
+	XCTAssertTrue([generator writePlaceholderToDestinationTile:nil atTime:kCMTimeZero error:&error]);
+	XCTAssertNil(error);
 }
 
 @end

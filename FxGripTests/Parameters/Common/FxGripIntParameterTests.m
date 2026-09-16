@@ -14,6 +14,8 @@
 #import <XCTest/XCTest.h>
 #import "FxGripParameterClassTestSupport.h"
 #import <FxGrip/FxGripIntParameter.h>
+#import <FxGrip/FxGripParameter.h>
+#import <FxGrip/NSCoder+FxPlug.h>
 
 static const FxParameterId kIntTestParameter = 21;
 
@@ -190,6 +192,80 @@ static const FxParameterId kIntTestParameter = 21;
 	parameter.flagIgnoreMinMax = YES;
 
 	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.setFlagsCalls, @[]);
+}
+
+
+#pragma mark Values
+
+/*! @abstract -valueAtTime: answers the staged host value and asks for its own parameter and time. */
+- (void)testIntValueAtTimeReadsTheHostValue
+{
+	FxGripIntParameter *parameter = [self makeIntParameter];
+	self.effect.apiManager.paramGetAPIv6.intValue = 42;
+
+	XCTAssertEqual([parameter valueAtTime:FxGripParamClassTestTime(9, 30)], 42);
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"int");
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"id"], @(kIntTestParameter));
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @9);
+	XCTAssertNil(parameter.error);
+}
+
+/*! @abstract A refused read answers zero and records the retrieval error. */
+- (void)testIntValueAtTimeReportsARefusedRead
+{
+	FxGripIntParameter *parameter = [self makeIntParameter];
+	self.effect.apiManager.paramGetAPIv6.intValue = 42;
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+
+	XCTAssertEqual([parameter valueAtTime:FxGripParamClassTestTime(0, 1)], 0);
+
+	XCTAssertNotNil(parameter.error);
+	XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
+}
+
+/*! @abstract -setValue:atTime: writes the integer to its own parameter at the given time. */
+- (void)testIntSetValueWritesTheIntegerAtTheGivenTime
+{
+	FxGripIntParameter *parameter = [self makeIntParameter];
+
+	[parameter setValue:17 atTime:FxGripParamClassTestTime(4, 24)];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramSetAPIv5.lastWrite,
+						  (@{@"accessor": @"int", @"id": @(kIntTestParameter),
+							 @"value": @(17), @"timevalue": @(4)}));
+}
+
+#pragma mark Plugin state
+
+/*! @abstract A plain coder, which is no plugin-state encoder, reads no value from the host. */
+- (void)testIntEncodingWithAPlainCoderReadsNoValue
+{
+	FxGripIntParameter *parameter = [self makeIntParameter];
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+
+	[parameter encodeWithCoder:archiver];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.reads, @[]);
+}
+
+/*! @abstract A plugin-state coder reads the value at its own render time and encodes it. */
+- (void)testIntEncodingWithAPluginStateCoderEncodesTheValueAtItsRenderTime
+{
+	FxGripIntParameter *parameter = [self makeIntParameter];
+	self.effect.apiManager.paramGetAPIv6.intValue = 7;
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = FxGripParamClassTestTime(15, 30);
+
+	[parameter encodeWithCoder:archiver];
+	[archiver finishEncoding];
+
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"accessor"], @"int");
+	XCTAssertEqualObjects(self.effect.apiManager.paramGetAPIv6.lastRead[@"timevalue"], @15);
+
+	NSKeyedUnarchiver *unarchiver = [NSKeyedUnarchiver.alloc initForReadingFromData:archiver.encodedData error:NULL];
+	unarchiver.requiresSecureCoding = NO;
+	XCTAssertEqual([unarchiver decodeIntAtIndex:kIntTestParameter], 7);
 }
 
 @end
