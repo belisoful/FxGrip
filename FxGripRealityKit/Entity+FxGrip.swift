@@ -181,13 +181,21 @@ public enum FxGripRealityKitEntityName {
 /// Introduced in FxGrip 0.1.0. The engine uses it when the host reports no projection matrix.
 public struct FxGripHostFrustum {
 
+	/// The left clip plane, at the near distance.
 	public var left: Double
+	/// The right clip plane, at the near distance.
 	public var right: Double
+	/// The bottom clip plane, at the near distance.
 	public var bottom: Double
+	/// The top clip plane, at the near distance.
 	public var top: Double
+	/// The near clip distance.
 	public var near: Double
+	/// The far clip distance.
 	public var far: Double
 
+	/// Creates a frustum from its six planes. An asymmetric left and right, or bottom and top,
+	/// describes an off-center projection, which the host reports for a shifted camera.
 	public init(left: Double, right: Double, bottom: Double, top: Double, near: Double, far: Double) {
 		self.left = left
 		self.right = right

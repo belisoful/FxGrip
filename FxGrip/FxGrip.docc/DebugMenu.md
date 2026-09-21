@@ -72,3 +72,7 @@ reveal cannot depend on it.
 - ``FxGripDebugMenu``
 - ``FxGripParameterData``
 - <doc:ExtensionArchitecture>
+
+### The extension key
+
+- ``FxGripDebugMenuExtensionKey``

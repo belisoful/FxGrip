@@ -55,6 +55,7 @@
 	@return		A new FxGripPluginGroupData. */
 + (nonnull instancetype)newPluginGroupUUID:(nullable NSString*)groupUUID groupName:(nullable NSString*)groupName;
 
+/*! Creates a plugin-group record with no fields set. */
 - (nonnull instancetype)init;
 
 /*!

@@ -60,3 +60,12 @@ ends.
 - <doc:ObjectTracking>
 - <doc:AnalysisPass>
 - ``FxGripTrackingOpacityParameter``
+
+### Configuration keys
+
+- ``kFxGripAnalyzerKey_Backward``
+- ``kFxGripAnalyzerKey_Location``
+
+### Defaults
+
+- ``kFxGripAnalyzerDefaultTitle``

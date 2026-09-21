@@ -116,12 +116,15 @@ typedef struct {
 /*! The stored frame indexes, ascending. */
 @property (readonly, nonatomic) NSArray<NSNumber *> *sampleFrameIndexes;
 
+/*! The tracked sample recorded for a frame; nil when the frame carries none. */
 - (nullable FxGripObjectTrackerSample *)sampleAtFrame:(NSInteger)frameIndex;
+/*! Records a tracked sample for a frame, replacing any sample already there. */
 - (void)setSample:(FxGripObjectTrackerSample *)sample atFrame:(NSInteger)frameIndex;
 
 /*! The sample at the greatest stored index at or before `frameIndex`, or nil when none. */
 - (nullable FxGripObjectTrackerSample *)latestSampleAtOrBeforeFrame:(NSInteger)frameIndex;
 
+/*! Drops every recorded sample, leaving the tracker's configuration in place. */
 - (void)removeAllSamples;
 
 /*! Resolves the tracked transform at a frame, holding the last result forward across gaps

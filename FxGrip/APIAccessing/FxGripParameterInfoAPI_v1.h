@@ -54,6 +54,13 @@
 
 @property (assign, readonly) id<FxDynamicParameterAPI_v3> _Nullable api;
 
+/*!
+	@method		initWithAPI:effect:
+	@abstract	Wraps a host dynamic-parameter API for an effect.
+	@param		api		The host's FxDynamicParameterAPI_v3, or nil when the host vends none.
+	@param		effect	The effect whose parameters the API reports on.
+	@return		The info API, or nil when it cannot be built.
+*/
 - (nullable instancetype)initWithAPI:(id<FxDynamicParameterAPI_v3> _Nullable)api
 							  effect:(nonnull id<FxGripEffectHost>)effect;
 

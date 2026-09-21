@@ -134,3 +134,21 @@ Four protocols connect a custom value to the objects that present it:
 
 ### Related
 
+### The custom-value keys
+
+- ``kCustomAPI_BoolKey``
+- ``kCustomAPI_ExemptKeysKey``
+- ``kCustomAPI_FloatKey``
+- ``kCustomAPI_HistogramKey``
+- ``kCustomAPI_IntKey``
+- ``kCustomAPI_IsLocked``
+- ``kCustomAPI_LastChangedKey``
+- ``kCustomAPI_PathIDKey``
+- ``kCustomAPI_PointKey``
+- ``kCustomAPI_RGBAKey``
+- ``kCustomAPI_RGBKey``
+- ``kCustomAPI_StringKey``
+
+### Interpolation
+
+- ``kInterpolatingDictionaryNonePrefix``

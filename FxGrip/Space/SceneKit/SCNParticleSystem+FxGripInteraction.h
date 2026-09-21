@@ -31,6 +31,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/*!
+	@abstract	Adds an inter-particle force to any SCNParticleSystem.
+	@discussion	Introduced in FxGrip 0.1.0. SceneKit particles respond to fields and colliders, and
+				compute no force between one another. The category attaches an
+				``FxGripParticleInteraction`` to a system and records the field bound to it.
+*/
 @interface SCNParticleSystem (FxGripInteraction)
 
 /*!

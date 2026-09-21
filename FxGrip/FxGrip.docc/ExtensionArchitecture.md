@@ -117,3 +117,119 @@ Lifecycle notifications whose FxPlug entry points take an `NSError **` post a mu
 `fxResult` complements `fxError` on the `…Pre` API notifications: setting it makes the wrapper return that value without calling the host, which lets an extension take over a get or set entirely (as `FxGripParameterData` can for flags).
 
 The `parameterChanged`, `pluginState`, geometry, and render notifications all follow this round trip; `extensionsFlush` returns the collected `fxError` from the flush notification to its caller.
+
+## Topics
+
+### The extension protocols
+
+- ``FxGripExtension-protocol``
+- ``FxGripExtensionBase-protocol``
+- ``FxGripParameterExtension-protocol``
+- ``FxGripTileableEffectExpanded``
+
+### The extension base classes
+
+- ``FxGripExtension-class``
+- ``FxGripExtensionBase-class``
+- ``FxGripParameterExtension-class``
+
+### The effect's own extension key
+
+- ``FxGripTileableEffectExtKey``
+- ``FxGripExtensionDefaultPriority``
+
+### Lifecycle notifications
+
+- ``FxGripTileableEffectInitName``
+- ``FxGripTileableEffectLoadName``
+- ``FxGripTileableEffectPropertiesName``
+- ``FxGripTileableEffectAddParametersName``
+- ``FxGripTileableEffectAddGroupParametersName``
+- ``FxGripTileableEffectFinishInitialSetupName``
+- ``FxGripTileableEffectAddedToDocumentName``
+- ``FxGripTileableEffectRemovedFromDocumentName``
+- ``FxGripTileableEffectUnloadName``
+- ``FxGripTileableEffectFlushName``
+
+### Parameter notifications
+
+- ``FxGripTileableEffectParameterChangedName``
+- ``FxGripTileableEffectParameterClickedName``
+- ``FxGripTileableEffectParameterPolicyName``
+
+### Render notifications
+
+- ``FxGripTileableEffectPluginStateName``
+- ``FxGripTileableEffectDestinationImageRectName``
+- ``FxGripTileableEffectSourceTileRectName``
+- ``FxGripTileableEffectScheduleInputsName``
+- ``FxGripTileableEffectRenderDestinationImageName``
+
+### Service resolution
+
+- ``FxGripTileableEffectResolveMetaName``
+- ``FxGripTileableEffectResolveParameterDataName``
+- ``FxGripTileableEffectResolvedObjectKey``
+
+### Notification userInfo keys
+
+- ``FxGripTileableEffectInitAPIManagerKey``
+- ``FxGripTileableEffectParametersKey``
+- ``FxGripTileableEffectPropertiesKey``
+- ``FxGripTileableEffectGroupIDKey``
+- ``FxGripTileableEffectParameterChangedIDKey``
+- ``FxGripTileableEffectParameterChangedAtTimeKey``
+- ``FxGripTileableEffectParameterClickedIDKey``
+- ``FxGripTileableEffectPluginStateCoderKey``
+- ``FxGripTileableEffectRenderDestinationImageKey``
+- ``FxGripTileableEffectRenderSourceImagesKey``
+- ``FxGripTileableEffectRenderAtTimeKey``
+
+### API notifications: creating parameters
+
+- ``FxGripNotifyAPI_ParameterAddPreName``
+- ``FxGripNotifyAPI_ParameterAddName``
+- ``FxGripNotifyAPI_ParameterStartGroupName``
+- ``FxGripNotifyAPI_ParameterEndGroupName``
+- ``FxGripNotifyAPI_ParameterRemoveName``
+
+### API notifications: name, type, and menu
+
+- ``FxGripNotifyAPI_ParameterGetNameName``
+- ``FxGripNotifyAPI_ParameterSetNamePreName``
+- ``FxGripNotifyAPI_ParameterSetNameName``
+- ``FxGripNotifyAPI_ParameterGetTypeName``
+- ``FxGripNotifyAPI_ParameterGetMenuName``
+- ``FxGripNotifyAPI_ParameterSetMenuPreName``
+- ``FxGripNotifyAPI_ParameterSetMenuName``
+
+### API notifications: flags and bounds
+
+- ``FxGripNotifyAPI_ParameterGetFlagsPreName``
+- ``FxGripNotifyAPI_ParameterGetFlagsName``
+- ``FxGripNotifyAPI_ParameterSetFlagsPreName``
+- ``FxGripNotifyAPI_ParameterSetFlagsName``
+- ``FxGripNotifyAPI_ParameterSetIntBoundsName``
+- ``FxGripNotifyAPI_ParameterSetFloatBoundsName``
+
+### API notifications: values
+
+- ``FxGripNotifyAPI_ParameterGetStringValueName``
+- ``FxGripNotifyAPI_ParameterSetStringValuePreName``
+- ``FxGripNotifyAPI_ParameterSetStringValueName``
+- ``FxGripNotifyAPI_ParameterSetBoolName``
+- ``FxGripNotifyAPI_ParameterSetIntName``
+- ``FxGripNotifyAPI_ParameterSetFloatName``
+- ``FxGripNotifyAPI_ParameterSetXYName``
+- ``FxGripNotifyAPI_ParameterSetRGBName``
+- ``FxGripNotifyAPI_ParameterSetRGBAName``
+- ``FxGripNotifyAPI_ParameterSetHistogramName``
+- ``FxGripNotifyAPI_ParameterSetPathIDName``
+- ``FxGripNotifyAPI_ParameterSetCustomValueName``
+
+### API notification userInfo keys
+
+- ``FxGripNotifyAPI_ParameterKey``
+- ``FxGripNotifyAPI_ParameterIDKey``
+- ``FxGripNotifyAPI_ResultKey``
+- ``FxGripNotifyAPI_ErrorKey``

@@ -1520,9 +1520,11 @@ static NSDictionary *FxGripTagsTestNamesEntry(FxParameterId parameterID, NSStrin
 	}
 }
 
-/*! The apply/meta members are declared @optional; steps 10-12 implement them. */
-// Required-ness tracks implementation. Every preset method is implemented, so the
-// protocol declares them all as required.
+/*!
+	@abstract	Every preset method the API implements is a required protocol member.
+	@discussion	Required-ness tracks implementation: each preset method is implemented, so the
+				protocol declares them all required rather than optional.
+*/
 - (void)testTheImplementedPresetMethodsAreRequiredProtocolMembers
 {
 	Protocol *tagsProtocol = @protocol(FxGripParameterTagsAPI_v1);

@@ -164,3 +164,68 @@ entries.
 
 - <doc:Adoption>
 - <doc:OnScreenControls>
+
+### The registration lists
+
+- ``kProPlugPlugInList_Property``
+- ``kProPlugPlugIn_GroupList_Property``
+- ``kProPlugPlugInX_FxRegisteredPlugins_Property``
+
+### Identifying a plug-in
+
+- ``kProPlugPlugIn_ClassNameProperty``
+- ``kProPlugPlugIn_DisplayNameProperty``
+- ``kProPlugPlugIn_UuidProperty``
+- ``kProPlugPlugIn_VersionProperty``
+- ``kProPlugPlugIn_InfoStringProperty``
+- ``kProPlugPlugIn_GroupUUIDProperty``
+- ``kProPlugPlugIn_SupportedPluginsProperty``
+- ``kProPlugPlugInX_PriorUuidsProperty``
+
+### The registration group
+
+- ``kProPlugPlugInX_RegGroupNameProperty``
+- ``kProPlugPlugInX_RegGroupUUIDProperty``
+
+### The protocols a plug-in declares
+
+- ``kProPlugPlugIn_ProtocolNamesProperty``
+- ``kProPlugPlugIn_ProtocolFxBaseEffect``
+- ``kProPlugPlugIn_ProtocolFxFilter``
+- ``kProPlugPlugIn_ProtocolFxGenerator``
+- ``kProPlugPlugIn_ProtocolFxOnScreenControl``
+
+### Declaring parameters and properties
+
+- ``kProPlugPlugInX_ParametersProperty``
+- ``kProPlugPlugInX_EffectPropertiesProperty``
+- ``kProPlugPlugInX_DefaultFontNameProperty``
+- ``kProPlugPlugInX_OSCUUIDsProperty``
+
+### Turning extensions on
+
+- ``kProPlugPlugInX_AboutMenuProperty``
+- ``kProPlugPlugInX_DebugMenuProperty``
+- ``kProPlugPlugInX_DebugActivatorProperty``
+- ``kProPlugPlugInX_GoogleAnalyticsProperty``
+- ``kProPlugPlugInX_InternationalizeProperty``
+- ``kProPlugPlugInX_ManagedMetaProperty``
+- ``kProPlugPlugInX_ManagedParameterDataProperty``
+- ``kProPlugPlugInX_PresetsProperty``
+- ``kProPlugPlugInX_RegressionProperty``
+- ``kProPlugPlugInX_TrackInstancesProperty``
+- ``kProPlugPlugInX_FxFactoryProperty``
+
+### Delocalization
+
+- ``kProPlugPlugInX_DelocalizeMenusProperty``
+- ``kProPlugPlugInX_DelocalizeNamesProperty``
+- ``kProPlugPlugInX_DelocalizeValuesProperty``
+
+### Dynamic registration
+
+- ``kProPlugDynamicRegistration_Property``
+- ``kProPlugDynamicRegistrationPrincipalClass_Property``
+- ``FxGripPrincipalDelegate``
+- ``kDefaultPluginID``
+- ``kFxGripLibraryActivator``

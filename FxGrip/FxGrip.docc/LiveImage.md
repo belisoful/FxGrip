@@ -122,3 +122,17 @@ its pixels, so it outlives the texture or image it was read from.
 
 ### Related
 
+### Configuration keys
+
+- ``kFxGripLiveImageKey_Checkerboard``
+- ``kFxGripLiveImageKey_Flip``
+- ``kFxGripLiveImageKey_Height``
+- ``kFxGripLiveImageKey_Labels``
+- ``kFxGripLiveImageKey_ShowInfo``
+- ``kFxGripLiveImageKey_Slots``
+- ``kFxGripLiveImageKey_SnapshotSize``
+
+### Defaults
+
+- ``kFxGripLiveImageDefaultHeight``
+- ``kFxGripLiveImageDefaultSnapshotSize``

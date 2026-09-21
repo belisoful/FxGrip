@@ -128,7 +128,9 @@
 				`+[FxGripMTLDeviceCache scopedCommandQueueForImageTile:]`.
 */
 @interface FxGripMTLCommandQueue : NSObject <MTLCommandQueue>
+/*! The checked-out host command queue every `MTLCommandQueue` message forwards to. */
 @property (readonly, nonatomic, nonnull) id<MTLCommandQueue> queue;
+/*! The cache item the queue was checked out of, and is checked back into at dealloc. */
 @property (readonly, retain, nonnull) FxGripMTLDeviceCacheItem *deviceCacheItem;
 
 /*!
@@ -137,6 +139,8 @@
 	@result     `nil` when `deviceCacheItem` is `nil` or has no queue to give.
 */
 - (nullable instancetype)initWithDeviceCacheItem:(nullable FxGripMTLDeviceCacheItem*)deviceCacheItem;
+
+/*! Checks the command queue back into `deviceCacheItem`. */
 - (void)dealloc;
 
 // MTLCommandQueue interface
@@ -239,6 +243,8 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 - (nullable instancetype)initWithLibrary:(nonnull id<MTLLibrary>)library;
 /*! Wraps a device's default library; nil when the device has none. */
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device;
+
+/*! Drops every memoized function. */
 - (void)dealloc;
 
 /*! Drops the memoized function for a name; NO when none was cached. */

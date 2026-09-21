@@ -71,3 +71,22 @@ up first, then a file at the same path.
 ### Related
 
 - <doc:Capsule>
+
+### Configuration keys
+
+- ``kFxGripBannerKey_ActionButton``
+- ``kFxGripBannerKey_CornerRadius``
+- ``kFxGripBannerKey_FillColor``
+- ``kFxGripBannerKey_FontSize``
+- ``kFxGripBannerKey_ImageName``
+- ``kFxGripBannerKey_LinkURL``
+- ``kFxGripBannerKey_Subtitle``
+- ``kFxGripBannerKey_TemplateImage``
+- ``kFxGripBannerKey_TextColor``
+- ``kFxGripBannerKey_Title``
+
+### Defaults and limits
+
+- ``kFxGripBannerDefaultFontSize``
+- ``kFxGripBannerMaxImageWidth``
+- ``kFxGripBannerSquareCorners``

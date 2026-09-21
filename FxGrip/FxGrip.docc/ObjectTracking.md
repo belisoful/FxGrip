@@ -91,3 +91,32 @@ converted to the unit square before analysis.
 - ``FxGripObjectTrackerOSC``
 - ``FxGripTrackingOpacityParameter``
 - ``FxGripAnalyzerParameter``
+
+### Configuration keys
+
+- ``kFxGripObjectTrackerKey_AnchorParameterIDs``
+- ``kFxGripObjectTrackerKey_AngleParameterID``
+- ``kFxGripObjectTrackerKey_Behavior``
+- ``kFxGripObjectTrackerKey_CenterParameterID``
+- ``kFxGripObjectTrackerKey_Enabled``
+- ``kFxGripObjectTrackerKey_IncludeLeadingFilters``
+- ``kFxGripObjectTrackerKey_InitialBox``
+- ``kFxGripObjectTrackerKey_Label``
+- ``kFxGripObjectTrackerKey_LowerLeftParameterID``
+- ``kFxGripObjectTrackerKey_Resolution``
+- ``kFxGripObjectTrackerKey_Shape``
+- ``kFxGripObjectTrackerKey_Smoothing``
+- ``kFxGripObjectTrackerKey_UpperRightParameterID``
+
+### Types
+
+- ``FxGripObjectTrackerBehavior``
+- ``FxGripObjectTrackerLevel``
+- ``FxGripObjectTrackerResolution``
+- ``FxGripObjectTrackerShape``
+- ``FxGripObjectTrackerTransform``
+
+### The tracker
+
+- ``FxGripObjectTracker``
+- ``FxGripObjectTrackerSample``

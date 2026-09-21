@@ -57,3 +57,16 @@ stepper. `updateFromCustomData:` clamps the value to the range before display.
 
 ### Related
 
+### Configuration keys
+
+- ``kFxGripRandomKey_Max``
+- ``kFxGripRandomKey_Min``
+- ``kFxGripRandomKey_Step``
+- ``kFxGripRandomKey_Value``
+
+### Defaults
+
+- ``kFxGripRandomDefaultMax``
+- ``kFxGripRandomDefaultMin``
+- ``kFxGripRandomDefaultStep``
+- ``kFxGripRandomDefaultValue``

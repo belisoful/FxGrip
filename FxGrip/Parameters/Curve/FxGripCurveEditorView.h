@@ -92,7 +92,9 @@ typedef NS_ENUM(NSInteger, FxGripCurvePaintKind) {
 				(top, center, bottom) into a vertical gradient over the strip base.
 */
 @interface FxGripCurvePaint : NSObject <NSCopying>
+/*! Which of the three stop kinds this paint is: none, a color, or the hue spectrum. */
 @property (nonatomic, readonly) FxGripCurvePaintKind kind;
+/*! The stop's color; nil for the none and hue kinds. */
 @property (nonatomic, readonly, nullable) NSColor *color;
 /*! A transparent stop; the gradient fades to the strip base here. */
 + (nonnull instancetype)nonePaint;
@@ -150,7 +152,10 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 				undo entry) coalesces to.
 */
 @protocol FxGripCurveEditorDelegate <NSObject>
+/*! The curve changed. Fires continuously through a drag, for live feedback. */
 - (void)curveEditorView:(nonnull FxGripCurveEditorView *)editor didEditCurve:(nonnull FxGripCurveData *)curve;
+/*! The edit finished. Fires on mouse-up and on a keyboard edit, which is the boundary an
+	out-of-band write and the host's undo entry coalesce to. */
 - (void)curveEditorView:(nonnull FxGripCurveEditorView *)editor didCommitCurve:(nonnull FxGripCurveData *)curve;
 @end
 
@@ -221,7 +226,9 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 				All three nil falls back to `background`. Setting any redraws.
 */
 @property (nonatomic, copy, nullable) FxGripCurvePaint *topPaint;
+/*! The gradient's middle stop. A nil center makes a two-stop top-to-bottom gradient. See ``topPaint``. */
 @property (nonatomic, copy, nullable) FxGripCurvePaint *centerPaint;
+/*! The gradient's bottom stop. A nil bottom drops that end. See ``topPaint``. */
 @property (nonatomic, copy, nullable) FxGripCurvePaint *bottomPaint;
 
 /*! How a point's exact value is displayed. Defaults to none. Setting redraws. */
@@ -245,6 +252,15 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 */
 @property (nonatomic, assign) CGFloat slowDragScale;
 
+/*!
+	@method		initWithFrame:role:domain:background:
+	@abstract	Creates a curve editor of a given role, domain, and background.
+	@param		frameRect	The view's frame.
+	@param		role		What the curve controls, which sets the default readout units.
+	@param		domain		The curve's input range, which sets whether it wraps.
+	@param		background	The strip's base fill, drawn under any gradient stops.
+	@return		The editor.
+*/
 - (nonnull instancetype)initWithFrame:(NSRect)frameRect
 								 role:(FxGripCurveRole)role
 							   domain:(FxGripCurveDomain)domain

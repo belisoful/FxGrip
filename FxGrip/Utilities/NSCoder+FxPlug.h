@@ -34,10 +34,12 @@ enum {
 	kFxQuality_MEDIUM = 1,
 	kFxQuality_HIGH   = 2
 };
+/*! The render quality the host asks for, when the FxPlug types header is absent. */
 typedef NSUInteger FxQuality;
 #endif
 
 #ifndef __FXMATRIX_H__
+/*! A raw 4x4 double matrix, when the FxMatrix header is absent. */
 typedef double  Matrix44Data[4][4];
 @class FxMatrix44;
 #endif
@@ -45,14 +47,23 @@ typedef double  Matrix44Data[4][4];
 
 /*! The per-attribute key suffixes the 3D encoders append to a scene key prefix. */
 extern NSString * _Nonnull const FxGrip3DCoderFocalLengthKey;
+/*! The key suffix for the scene's model matrix. */
 extern NSString * _Nonnull const FxGrip3DCoderModelMatrixKey;
+/*! The key suffix for the camera's view matrix. */
 extern NSString * _Nonnull const FxGrip3DCoderViewMatrixKey;
+/*! The key suffix for the camera's projection matrix. */
 extern NSString * _Nonnull const FxGrip3DCoderProjectionMatrixKey;
+/*! The key suffix for the frustum's left plane. */
 extern NSString * _Nonnull const FxGrip3DCoderFrustumLeftKey;
+/*! The key suffix for the frustum's right plane. */
 extern NSString * _Nonnull const FxGrip3DCoderFrustumRightKey;
+/*! The key suffix for the frustum's bottom plane. */
 extern NSString * _Nonnull const FxGrip3DCoderFrustumBottomKey;
+/*! The key suffix for the frustum's top plane. */
 extern NSString * _Nonnull const FxGrip3DCoderFrustumTopKey;
+/*! The key suffix for the frustum's near plane. */
 extern NSString * _Nonnull const FxGrip3DCoderFrustumNearKey;
+/*! The key suffix for the frustum's far plane. */
 extern NSString * _Nonnull const FxGrip3DCoderFrustumFarKey;
 
 /*! The key prefix that stands for the coder's current render time. */
@@ -121,34 +132,58 @@ extern NSString * _Nonnull const FxGrip3DCoderCurrentTimeKey;
 /*! An inner pointer to the raw 4x4 double matrix at a key; nil when absent or the wrong size. */
 - (nullable Matrix44Data*)decodeMatrix44Data:(NSString *_Null_unspecified)key NS_RETURNS_INNER_POINTER;
 
-/*! The 3D attribute at the coder's current-time key. */
+/*! The camera's focal length at the coder's current-time key. */
 - (double)decodeFx3DFocalLength;
+/*! An inner pointer to the raw 4x4 model matrix at the coder's current-time key. */
 - (nullable Matrix44Data*)decodeFx3DModelMatrixData NS_RETURNS_INNER_POINTER;
+/*! The model matrix as an `FxMatrix44` at the coder's current-time key. */
 - (nullable FxMatrix44*)decodeFx3DModelMatrix;
+/*! An inner pointer to the raw 4x4 view matrix at the coder's current-time key. */
 - (nullable Matrix44Data*)decodeFx3DViewMatrixData NS_RETURNS_INNER_POINTER;// NS_INTERNAL_POINTER;
+/*! The view matrix as an `FxMatrix44` at the coder's current-time key. */
 - (nullable FxMatrix44*)decodeFx3DViewMatrix;
+/*! An inner pointer to the raw 4x4 projection matrix at the coder's current-time key. */
 - (nullable Matrix44Data*)decodeFx3DProjectionMatrixData NS_RETURNS_INNER_POINTER;
+/*! The projection matrix as an `FxMatrix44` at the coder's current-time key. */
 - (nullable FxMatrix44*)decodeFx3DProjectionMatrix;
+/*! The frustum's left plane at the coder's current-time key. */
 - (double)decodeFx3DFrustumLeft;
+/*! The frustum's right plane at the coder's current-time key. */
 - (double)decodeFx3DFrustumRight;
+/*! The frustum's bottom plane at the coder's current-time key. */
 - (double)decodeFx3DFrustumBottom;
+/*! The frustum's top plane at the coder's current-time key. */
 - (double)decodeFx3DFrustumTop;
+/*! The frustum's near plane at the coder's current-time key. */
 - (double)decodeFx3DFrustumNear;
+/*! The frustum's far plane at the coder's current-time key. */
 - (double)decodeFx3DFrustumFar;
 
-/*! The same 3D attributes decoded under an explicit scene key prefix. */
+/*! The camera's focal length under an explicit scene key prefix. */
 - (double)decodeFx3DFocalLength:(NSString *_Null_unspecified)key;
+/*! An inner pointer to the raw 4x4 model matrix under an explicit scene key prefix. */
 - (nullable Matrix44Data*)decodeFx3DModelMatrixData:(NSString *_Null_unspecified)key NS_RETURNS_INNER_POINTER;
+/*! The model matrix as an `FxMatrix44` under an explicit scene key prefix. */
 - (nullable FxMatrix44*)decodeFx3DModelMatrix:(NSString *_Null_unspecified)key;
+/*! An inner pointer to the raw 4x4 view matrix under an explicit scene key prefix. */
 - (nullable Matrix44Data*)decodeFx3DViewMatrixData:(NSString *_Null_unspecified)key NS_RETURNS_INNER_POINTER;
+/*! The view matrix as an `FxMatrix44` under an explicit scene key prefix. */
 - (nullable FxMatrix44*)decodeFx3DViewMatrix:(NSString *_Null_unspecified)key;
+/*! An inner pointer to the raw 4x4 projection matrix under an explicit scene key prefix. */
 - (nullable Matrix44Data*)decodeFx3DProjectionMatrixData:(NSString *_Null_unspecified)key NS_RETURNS_INNER_POINTER;
+/*! The projection matrix as an `FxMatrix44` under an explicit scene key prefix. */
 - (nullable FxMatrix44*)decodeFx3DProjectionMatrix:(NSString *_Null_unspecified)key;
+/*! The frustum's left plane under an explicit scene key prefix. */
 - (double)decodeFx3DFrustumLeft:(NSString *_Null_unspecified)key;
+/*! The frustum's right plane under an explicit scene key prefix. */
 - (double)decodeFx3DFrustumRight:(NSString *_Null_unspecified)key;
+/*! The frustum's bottom plane under an explicit scene key prefix. */
 - (double)decodeFx3DFrustumBottom:(NSString *_Null_unspecified)key;
+/*! The frustum's top plane under an explicit scene key prefix. */
 - (double)decodeFx3DFrustumTop:(NSString *_Null_unspecified)key;
+/*! The frustum's near plane under an explicit scene key prefix. */
 - (double)decodeFx3DFrustumNear:(NSString *_Null_unspecified)key;
+/*! The frustum's far plane under an explicit scene key prefix. */
 - (double)decodeFx3DFrustumFar:(NSString *_Null_unspecified)key;
 
 /*! The encoded light count at the current-time key. */

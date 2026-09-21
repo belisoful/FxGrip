@@ -79,3 +79,28 @@ the same shape.
 ### Related
 
 - <doc:Divider>
+
+### Configuration keys
+
+- ``kFxGripSectionKey_Alignment``
+- ``kFxGripSectionKey_Color``
+- ``kFxGripSectionKey_FontName``
+- ``kFxGripSectionKey_MarginBottom``
+- ``kFxGripSectionKey_MarginTop``
+- ``kFxGripSectionKey_Opacity``
+- ``kFxGripSectionKey_Size``
+- ``kFxGripSectionKey_Title``
+- ``kFxGripSectionKey_Transform``
+- ``kFxGripSectionKey_Weight``
+- ``kFxGripSectionKey_Width``
+
+### Defaults
+
+- ``kFxGripSectionDefaultMarginBot``
+- ``kFxGripSectionDefaultMarginTop``
+- ``kFxGripSectionDefaultOpacity``
+- ``kFxGripSectionDefaultSize``
+
+### Types
+
+- ``FxGripSectionTransform``

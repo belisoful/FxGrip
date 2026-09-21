@@ -28,19 +28,31 @@
 @protocol FxGripParameterBoundsAPI_v1 <NSObject>
 
 // Float
+/*! Sets a Float parameter's minimum, preserving its maximum. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID floatMinimum:(double)min;
+/*! Sets a Float parameter's maximum, preserving its minimum. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID floatMaximum:(double)max;
+/*! Sets both edges of a Float parameter's value range. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID floatMinimum:(double)min maximum:(double)max;
+/*! Sets the left end of a Float parameter's slider track, preserving the right. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID floatSliderMinimum:(double)sliderMin;
+/*! Sets the right end of a Float parameter's slider track, preserving the left. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID floatSliderMaximum:(double)sliderMax;
+/*! Sets both ends of a Float parameter's slider track. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID floatSliderMinimum:(double)sliderMin sliderMaximum:(double)sliderMax;
 
 // Int
+/*! Sets an Int parameter's minimum, preserving its maximum. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID intMinimum:(int)min;
+/*! Sets an Int parameter's maximum, preserving its minimum. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID intMaximum:(int)max;
+/*! Sets both edges of an Int parameter's value range. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID intMinimum:(int)min maximum:(int)max;
+/*! Sets the left end of an Int parameter's slider track, preserving the right. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID intSliderMinimum:(int)sliderMin;
+/*! Sets the right end of an Int parameter's slider track, preserving the left. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID intSliderMaximum:(int)sliderMax;
+/*! Sets both ends of an Int parameter's slider track. Answers the error the host reported, or nil. */
 - (NSError* _Nullable)setParameter:(UInt32)parameterID intSliderMinimum:(int)sliderMin sliderMaximum:(int)sliderMax;
 
 @end
@@ -56,8 +68,16 @@
 */
 @interface FxGripParameterBoundsAPI_v1 : FxGripCommonAPI <FxGripParameterBoundsAPI_v1>
 
+/*! The host dynamic-parameter API the setters read the current range from and write back to. */
 @property (assign, readonly) id<FxDynamicParameterAPI_v3> _Nullable api;
 
+/*!
+	@method		initWithAPI:effect:
+	@abstract	Wraps a host dynamic-parameter API for an effect.
+	@param		api		The host's FxDynamicParameterAPI_v3, or nil when the host vends none.
+	@param		effect	The effect whose parameters the bounds apply to.
+	@return		The bounds API, or nil when it cannot be built.
+*/
 - (nullable instancetype)initWithAPI:(id<FxDynamicParameterAPI_v3> _Nullable)api
 							  effect:(nonnull id<FxGripEffectHost>)effect;
 

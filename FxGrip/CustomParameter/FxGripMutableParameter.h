@@ -24,7 +24,6 @@
 	@discussion	Introduced in FxGrip 0.1.0. Each method is optional; a value implements the types it
 				represents. Getters return YES on success; setters return YES when the value is accepted.
 */
-// This is the protocol for Custom Data to hijack the standard api get/set bool, int, float, string, etc.
 @protocol FxGripMutableParameter
 
 @optional
@@ -50,6 +49,11 @@
 
 /*! Reads a channel's black-in, black-out, white-in, white-out, and gamma. */
 //bIn, bOut, wIn, wOut, & gamma for each RGBA
+/*!
+	@abstract	Reads one channel of a histogram from the value.
+	@discussion	A value that represents no histogram leaves the outputs untouched and answers NO.
+	@return		YES when the value holds a histogram for the channel.
+*/
 - (BOOL)getHistogramBlackIn:(double*)blackIn
 				   blackOut:(double*)blackOut
 					whiteIn:(double*)whiteIn

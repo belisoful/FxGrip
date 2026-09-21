@@ -75,6 +75,8 @@
 	@param		device	The Metal device that allocates the texture.
 	@return		A texture one pixel tall and the sample count wide. */
 // A MTLTexture that is 1 pixel in height and number of Samples in width
+/*! A 1D Metal texture holding the gradient's samples; nil when the index names no gradient or
+	the device cannot make the texture. */
 - (nullable id<MTLTexture>) decodeGradientAtIndex:(int64_t)index device:(nonnull id<MTLDevice>)device NS_RETURNS_RETAINED;
 
 @end

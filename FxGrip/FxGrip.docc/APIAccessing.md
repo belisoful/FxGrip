@@ -188,3 +188,15 @@ v4 class; the dynamic accessor vends ``FxGripDynamicParameterAPI_v3``.
 - <doc:Registration>
 - <doc:ExtensionArchitecture>
 - <doc:OnScreenControls>
+
+### The API protocols
+
+- ``FxGripAPIAccessing-protocol``
+- ``FxGripCustomCreationAPI_v1-protocol``
+- ``FxGripDynamicParameterAPI_v4-protocol``
+- ``FxGripMetaAPI_v1-protocol``
+- ``FxGripParameterBoundsAPI_v1-protocol``
+- ``FxGripParameterGroupingAPI_v1-protocol``
+- ``FxGripParameterInfoAPI_v1-protocol``
+- ``FxGripParameterTagsAPI_v1-protocol``
+- ``FxGripPresetsAPI_v1-protocol``

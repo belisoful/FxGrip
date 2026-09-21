@@ -41,13 +41,16 @@ typedef uint64_t FxGripFMMKey;
 /*!
 	@struct     FxGripFMMCell
 	@abstract   One node of the octree.
-	@field      firstBody   Index into the sorted body arrays of this cell's first body.
-	@field      bodyCount   Number of bodies in this cell.
-	@field      firstChild  Index into the cell array of this cell's first child; valid when childCount > 0.
-	@field      childCount  Number of children; 0 marks a leaf.
-	@field      level       Depth from the root, which is level 0.
-	@field      centerX/Y/Z Center of the cell's cube in world space.
-	@field      radius      Half-width of the cell's cube.
+	@discussion The fields, in declaration order:
+
+	- `firstBody` → index into the sorted body arrays of this cell's first body.
+	- `bodyCount` → number of bodies in this cell.
+	- `firstChild` → index into the cell array of this cell's first child, valid when
+	  `childCount` is above 0.
+	- `childCount` → number of children; 0 marks a leaf.
+	- `level` → depth from the root, which is level 0.
+	- `centerX`, `centerY`, `centerZ` → center of the cell's cube in world space.
+	- `radius` → half-width of the cell's cube.
 */
 typedef struct FxGripFMMCell {
 	uint32_t firstBody;
@@ -64,13 +67,15 @@ typedef struct FxGripFMMCell {
 /*!
 	@struct     FxGripFMMTree
 	@abstract   A built octree with its sorted body order.
-	@field      bodyCount   Number of bodies.
-	@field      order       Permutation from sorted position to original body index, length bodyCount.
-	@field      sortedKeys  Morton key of each body in sorted order, length bodyCount.
-	@field      cells       Cell array in breadth-first order; the root is cells[0].
-	@field      cellCount   Number of cells.
-	@field      leafCapacity, maxDepth  The build parameters used.
-	@field      boxMinX/Y/Z, boxSize    The bounding cube: min corner and edge length.
+	@discussion The fields, in declaration order:
+
+	- `bodyCount` → number of bodies.
+	- `order` → permutation from sorted position to original body index, length `bodyCount`.
+	- `sortedKeys` → Morton key of each body in sorted order, length `bodyCount`.
+	- `cells` → cell array in breadth-first order; the root is `cells[0]`.
+	- `cellCount` → number of cells.
+	- `leafCapacity`, `maxDepth` → the build parameters used.
+	- `boxMinX`, `boxMinY`, `boxMinZ`, `boxSize` → the bounding cube's min corner and edge length.
 */
 typedef struct FxGripFMMTree {
 	uint32_t       bodyCount;

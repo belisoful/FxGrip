@@ -188,3 +188,28 @@ edits, the boundary the out-of-band write and the host's undo entry coalesce to.
 ### Related
 
 - <doc:CustomParameterData>
+
+### Configuration enums
+
+- ``FxGripCurveBackground``
+- ``FxGripCurveDomain``
+- ``FxGripCurveGridDivisions``
+- ``FxGripCurveLineStyle``
+- ``FxGripCurvePaintKind``
+- ``FxGripCurveReadoutStyle``
+- ``FxGripCurveReadoutTrigger``
+- ``FxGripCurveReadoutUnits``
+- ``FxGripCurveRole``
+
+### Defaults
+
+- ``kFxGripCurveLineWidthDefault``
+- ``kFxGripCurveSlowDragScaleDefault``
+
+### Sampling a curve
+
+- ``FxGripBuildCurveLUT``
+- ``FxGripBuildCurveLUTPeriodic``
+- ``FxGripCubicSegmentPoint``
+- ``FxGripPathCubicSegments``
+- ``FxGripPathSegmentCount``

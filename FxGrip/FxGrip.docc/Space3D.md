@@ -340,3 +340,73 @@ SceneKit light node.
 ### Inter-particle forces
 
 - ``FxGripParticleInteraction``
+
+### Encoding the host scene
+
+- ``FxGrip3DCoderCurrentTimeKey``
+- ``FxGrip3DCoderFocalLengthKey``
+- ``FxGrip3DCoderFrustumBottomKey``
+- ``FxGrip3DCoderFrustumFarKey``
+- ``FxGrip3DCoderFrustumLeftKey``
+- ``FxGrip3DCoderFrustumNearKey``
+- ``FxGrip3DCoderFrustumRightKey``
+- ``FxGrip3DCoderFrustumTopKey``
+- ``FxGrip3DCoderModelMatrixKey``
+- ``FxGrip3DCoderProjectionMatrixKey``
+- ``FxGrip3DCoderViewMatrixKey``
+
+### Camera motion
+
+- ``FxGripCameraMotion``
+- ``FxGripCameraMotionZero``
+- ``FxGripCameraMotionForward``
+- ``FxGripCameraMotionBackward``
+- ``FxGripCameraMotionCentral``
+- ``FxGripAngularVelocity``
+- ``FxGripFocusDistance``
+- ``FxGripCamera35mmSensorHeight``
+
+### Scene geometry
+
+- ``FxGripProjectionMatrixFromFrustum``
+- ``FxGripTransformOrientation``
+- ``FxGripTransformPosition``
+- ``FxGripRotationFromTo``
+
+### Particles
+
+- ``FxGripParticleRand``
+- ``FxGripParticleRand3``
+- ``FxGripParticleSpreadTangent``
+- ``FxGripParticleMaxSpreadAngle``
+- ``FxGripParticleInteractionKind``
+- ``FxGripParticleInteractionAccuracy``
+
+### Physics
+
+- ``FxGripPhysicsSimulationMode``
+
+### The Fast Multipole core
+
+- ``FxGripFMMParameters``
+- ``FxGripFMMDefaultParameters``
+- ``FxGripFMMContextCreate``
+- ``FxGripFMMContextDestroy``
+- ``FxGripFMMContextAllocationCount``
+- ``FxGripFMMContextArenaHighWaterMark``
+
+### Evaluating a field
+
+- ``FxGripFMMEvaluateField``
+- ``FxGripFMMEvaluateFieldDirect``
+- ``FxGripFMMEvaluateBiotSavart``
+- ``FxGripFMMEvaluateBiotSavartDirect``
+
+### Building a sampled field
+
+- ``FxGripFMMFieldBuild``
+- ``FxGripFMMFieldBuildChannels``
+- ``FxGripFMMFieldChannelCount``
+- ``FxGripFMMFieldEvaluateAt``
+- ``FxGripFMMFieldEvaluateChannelsAt``
+- ``FxGripFMMFieldDestroy``

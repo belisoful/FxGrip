@@ -134,6 +134,7 @@ public final class FxGripRealityKitParticleSystem {
 		/// The seed for the per-particle variation. The same seed reproduces the same particles.
 		public var seed: UInt32 = 0
 
+		/// Creates a configuration with every parameter at its default.
 		public init() {
 		}
 	}
@@ -265,6 +266,7 @@ public final class FxGripRealityKitParticleSystem {
 	@MainActor
 	public var material: (any Material)?
 
+	/// Creates an empty particle system at step zero, ready to be configured and stepped.
 	public init() {
 	}
 
@@ -583,9 +585,13 @@ public final class FxGripRealityKitParticleField {
 
 	/// One member system and the transform that places its space in the field's space.
 	public struct Member {
+		/// The particle system this member contributes.
 		public var system: FxGripRealityKitParticleSystem
+		/// The transform placing the system's space in the field's space.
 		public var transform: simd_float4x4
 
+		/// Creates a member from a system and the transform that places it. The identity transform
+		/// leaves the system in the field's own space.
 		public init(system: FxGripRealityKitParticleSystem, transform: simd_float4x4 = matrix_identity_float4x4) {
 			self.system = system
 			self.transform = transform
@@ -599,6 +605,8 @@ public final class FxGripRealityKitParticleField {
 	/// summation order and therefore the exact result.
 	public var members: [Member] = []
 
+	/// Creates a field under a force configuration, which the field copies. Passing nil makes a
+	/// field that steps its members without a force between them.
 	public init(interaction: FxGripParticleInteraction?) {
 		self.interaction = interaction?.copy() as? FxGripParticleInteraction
 	}

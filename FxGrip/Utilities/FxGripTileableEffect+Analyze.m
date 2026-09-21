@@ -89,7 +89,7 @@
 													 frameIndex:frameIndex
 														  error:error];
 	if (record != nil) {
-		[self.analysisData setRecord:record atIndex:frameIndex];
+		[self.analysisData setRecord:(NSObject<NSSecureCoding, NSCopying> *)record atIndex:frameIndex];
 	}
 	[self analyzeObjectTrackersWithTile:frame atFrame:frameIndex];
 	return YES;

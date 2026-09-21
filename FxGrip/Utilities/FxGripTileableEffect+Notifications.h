@@ -43,11 +43,14 @@ extern NSNotificationName	const _Nonnull FxGripTileableEffectAddedToDocumentName
 
 /*! Posted when a parameter value changes. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterChangedName;
-extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterChangedIDKey;		// NSNumber(FxParameterId) of the changed parameter
-extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterChangedAtTimeKey;	// CMTime-as-NSDictionary of the change time
+/*! The userInfo key carrying the changed parameter's ID, as an `NSNumber` of `FxParameterId`. */
+extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterChangedIDKey;
+/*! The userInfo key carrying the time the change applied at, as a `CMTime` encoded in a dictionary. */
+extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterChangedAtTimeKey;
 /*! Posted when a button or help-button parameter is clicked. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterClickedName;
-extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterClickedIDKey;		// NSNumber(FxParameterId) of the clicked button
+/*! The userInfo key carrying the clicked button's parameter ID, as an `NSNumber` of `FxParameterId`. */
+extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterClickedIDKey;
 /*! Posted so extensions commit pending parameter and state work. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectFlushName;
 
@@ -59,13 +62,16 @@ extern NSNotificationName	const _Nonnull FxGripTileableEffectParameterPolicyName
 /*! Posted by a group parameter after opening its subgroup so the configuration's owner adds the
 	group's children. The userInfo carries the group ID; an error returns through fxError. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectAddGroupParametersName;
+/*! The userInfo key carrying the open group's parameter ID. */
 extern NSString				* const _Nonnull FxGripTileableEffectGroupIDKey;
 
-/*! Posted to resolve a host service: an observer that owns the meta manager or the parameter
-	data answers by setting it under FxGripTileableEffectResolvedObjectKey in the mutable userInfo.
-	The effect base answers through its members directly; the resolve path serves a plain host
-	whose extensions supply the service. */
-/*! Posted to resolve the meta manager from an owning extension. */
+/*!
+	@abstract	Posted to resolve the meta manager from an owning extension.
+	@discussion	An observer that owns the meta manager answers by setting it under
+				FxGripTileableEffectResolvedObjectKey in the mutable userInfo. The effect base
+				answers through its own members directly; the resolve path serves a plain host
+				whose extensions supply the service.
+*/
 extern NSNotificationName	const _Nonnull FxGripTileableEffectResolveMetaName;
 /*! Posted to resolve the parameter-data store from an owning extension. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectResolveParameterDataName;
@@ -84,9 +90,12 @@ extern NSNotificationName	const _Nonnull FxGripTileableEffectSourceTileRectName;
 extern NSNotificationName	const _Nonnull FxGripTileableEffectScheduleInputsName;
 /*! Posted after the effect renders a destination image tile. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderDestinationImageName;
-extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderDestinationImageKey;	// FxImageTile* destination
-extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderSourceImagesKey;		// NSArray<FxImageTile*>* sources
-extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderAtTimeKey;			// CMTime-as-NSDictionary of the render time
+/*! The userInfo key carrying the destination `FxImageTile`. */
+extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderDestinationImageKey;
+/*! The userInfo key carrying the source tiles, as an `NSArray` of `FxImageTile`. */
+extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderSourceImagesKey;
+/*! The userInfo key carrying the render time, as a `CMTime` encoded in a dictionary. */
+extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderAtTimeKey;
 
 /*! Posted when the effect is removed from a document. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectRemovedFromDocumentName;

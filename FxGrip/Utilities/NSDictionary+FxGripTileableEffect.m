@@ -676,7 +676,6 @@
 	@discussion	Introduced in FxGrip 0.1.0. A number is read as an FxDepth or a byte count per the
 				depth type. A string maps "uchar", "float", and otherwise "half". The default is
 				kFxDepth_FLOAT16 when no depth is present.
-	@default	kFxDepth_FLOAT16
  */
 -(FxDepth)parameterGradientDepth
 {

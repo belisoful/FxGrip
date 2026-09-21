@@ -44,7 +44,6 @@
 				and the plain addParameter path are unavailable; subclasses adopt a concrete type through
 				the included parameter libraries.
 */
-//This is an extension that is itself a parameter
 @interface FxGripParameterExtension : FxGripExtension <FxGripParameter, FxGripParameterExtension>
 {
 	BOOL					_addedToEffect;
@@ -55,6 +54,7 @@
 	NSError*				_error;
 	NSMutableDictionary*	_data;
 }
+/*! Creates an unbound parameter extension, which takes its key from its class name. */
 - (nonnull instancetype)init;
 
 

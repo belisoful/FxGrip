@@ -54,7 +54,7 @@
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
 	CGContextRef context = CGBitmapContextCreate(pixels, pixelWidth, pixelHeight, 8, bytesPerRow,
 												 colorSpace,
-												 (CGBitmapInfo)(kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big));
+												 ((CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big));
 	CGColorSpaceRelease(colorSpace);
 	if (context == NULL) {
 		free(pixels);

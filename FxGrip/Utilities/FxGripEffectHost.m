@@ -17,6 +17,16 @@
 #import "FxGrip_ARC.h"
 
 /*! The two-step service resolution: the host's own member, else a resolve notification. */
+// The host may implement these through the meta and parameter-data extensions. Declaring them
+// locally keeps the selectors visible without importing the extension headers, which would
+// reverse the dependency this seam exists to avoid.
+@protocol __FxGripHostServices <NSObject>
+@optional
+@property (readonly, nullable, nonatomic) FxGripMetaManager *meta;
+@property (readonly, nonatomic) BOOL hasMeta;
+@property (readonly, nullable, nonatomic) FxGripParameterData *parameterData;
+@end
+
 static id _Nullable FxGripHostResolveService(id<FxGripEffectHost> _Nullable host,
 											 SEL member,
 											 NSNotificationName name)

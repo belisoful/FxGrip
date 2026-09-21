@@ -65,9 +65,13 @@
 */
 @interface FxGripObjectTrackerParameter : FxGripCustomParameter
 
+/*! The configuration string that names this parameter type. */
 + (nullable NSString*)parameterTypeString;
+/*! The `FxParameterType` this class registers. */
 + (FxParameterType)parameterType;
+/*! The secure-coding allow-list for the tracker's custom value. */
 + (nullable NSSet<Class> *)customValueClasses;
+/*! Builds the tracker parameter from its configuration dictionary and adds it to an effect. */
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 #pragma mark Analysis-pass driving

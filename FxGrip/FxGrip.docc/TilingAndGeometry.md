@@ -124,3 +124,39 @@ and narrows.
 - <doc:OnScreenControls>
 - <doc:TextAndWatermark>
 - <doc:ImageBuffer>
+
+### Rect conversion
+
+- ``CGRectFromFxRect``
+- ``FxRectFromCGRect``
+- ``kFxImageTileNotFound``
+- ``kFxImageTileRequest_NoParameter``
+
+### Vectors and points
+
+- ``FxGripPoint``
+- ``kZeroVector2``
+- ``kZeroVector3``
+- ``kZeroVector4``
+
+### Constants and rounding
+
+- ``kAspectRatio16x9``
+- ``phi``
+- ``floorWithError``
+- ``floorWithNearest``
+
+### Vector unions
+
+- ``FxGripFloat2``
+- ``FxGripFloat3``
+- ``FxGripFloat4``
+- ``FxGripDouble2``
+- ``FxGripDouble3``
+- ``FxGripDouble4``
+- ``FxGripHalf2``
+- ``FxGripHalf3``
+- ``FxGripHalf4``
+- ``FxGripUChar2``
+- ``FxGripUChar3``
+- ``FxGripUChar4``

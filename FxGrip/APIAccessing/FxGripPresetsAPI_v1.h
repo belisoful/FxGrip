@@ -47,25 +47,90 @@ typedef enum FxGripParameterPresetFlagOptions {
 */
 @protocol FxGripPresetsAPI_v1 <NSObject>
 
+/*!
+	@method		generatePreset:fromLabel:
+	@abstract	Captures the effect's current parameter state as a preset.
+	@discussion	Captures every runtime parameter's value at time zero, plus its tags and meta,
+				and fills the plug-in identity from the effect. A parameter flagged PRESETNOTAGS
+				or PRESETNOMETA opts out of that section.
+	@param		preset	On return, the captured preset.
+	@param		label	The preset's display name.
+	@return		The error that stopped the capture, or nil.
+*/
 - (NSError* _Nullable)generatePreset:(FxGripPreset* _Nullable * _Nonnull)preset fromLabel:(NSString* _Nonnull)label;
 
+/*!
+	@method		setPreset:options:atTime:
+	@abstract	Applies a preset at a time, through the tag API core.
+	@discussion	Verifies compatibility, then applies the values, tags, and meta sections under the
+				preset's tag, so the tag boundary governs which parameters change.
+	@param		preset	The preset to apply.
+	@param		flags	Options that relax the apply. See ``FxGripParameterPresetFlagOptions``.
+	@param		time	The time the values apply at.
+	@return		The error that stopped the apply, or nil.
+*/
 - (NSError* _Nullable)setPreset:(FxGripPreset* _Nonnull)preset options:(FxGripParameterPresetFlags)flags atTime:(CMTime)time;
+/*!
+	@method		setPreset:options:
+	@abstract	Applies a preset at time zero.
+	@param		preset	The preset to apply.
+	@param		flags	Options that relax the apply. See ``FxGripParameterPresetFlagOptions``.
+	@return		The error that stopped the apply, or nil.
+*/
 - (NSError* _Nullable)setPreset:(FxGripPreset* _Nonnull)preset options:(FxGripParameterPresetFlags)flags;
 
+/*!
+	@method		savePreset:remap:
+	@abstract	Saves a preset to a user-chosen file through the save panel.
+	@param		preset	The preset to write.
+	@param		keyMap	A mapping applied to the preset's keys on the way out, or nil.
+	@return		YES when the file was written.
+*/
 - (BOOL)savePreset:(FxGripPreset* _Nonnull)preset remap:(NSDictionary* _Nullable)keyMap;
+/*!
+	@method		loadPreset:remap:
+	@abstract	Loads a preset from a user-chosen file through the open panel.
+	@discussion	Reads a file written by FxGrip or by FxFactory.
+	@param		preset	On return, the loaded preset.
+	@param		keyMap	A mapping applied to the file's keys on the way in, or nil.
+	@return		YES when a preset was read.
+*/
 - (BOOL)loadPreset:(FxGripPreset* _Nullable * _Nonnull)preset remap:(NSDictionary* _Nullable)keyMap;
 
+/*! The plug-in's bundled `Presets` resource folder; nil when the bundle carries none. */
 - (NSURL* _Nullable)pluginPresetURL;
+/*! The bundled preset folder for one tag; nil when the bundle carries none. */
 - (NSURL* _Nullable)pluginPresetURL:(NSString* _Nonnull)tag;
+/*! The managed user preset folder, `~/Library/Application Support/<company>/<plugin name>`. */
 - (NSURL* _Nullable)userPresetURL;
+/*! The managed user preset folder for one tag, a `<tag>` subfolder of ``userPresetURL``. */
 - (NSURL* _Nullable)userPresetURL:(NSString* _Nonnull)tag;
 
+/*! Every preset carrying a tag, the plug-in's and the user's merged into one listing. */
 - (NSArray<FxGripPreset*>* _Nonnull)presetsForTag:(NSString* _Nonnull)tag;
+/*! The presets the plug-in bundle carries for a tag. */
 - (NSArray<FxGripPreset*>* _Nonnull)pluginPresetsForTag:(NSString* _Nonnull)tag;
+/*! The presets the managed user folder carries for a tag. */
 - (NSArray<FxGripPreset*>* _Nonnull)userPresetsForTag:(NSString* _Nonnull)tag;
 
+/*!
+	@method		observeTag:observer:
+	@abstract	Watches the managed per-tag user preset folder.
+	@discussion	The handler runs when a preset file is added, changed, or removed, so a preset
+				menu refreshes itself. Releasing the returned watcher ends the watch.
+	@param		tag			The tag whose folder to watch.
+	@param		handler		The block to run on each change.
+	@return		The watcher, or nil when the folder cannot be watched.
+*/
 - (BEPathWatcher* _Nullable)observeTag:(NSString* _Nonnull)tag observer:(void(^ _Nonnull)(void))handler;
 
+/*!
+	@method		compatiblePreset:
+	@abstract	Answers whether a preset's plug-in identity matches this effect.
+	@param		preset	The preset to test, or nil.
+	@return		YES when the preset's plug-in UUID matches the effect's, or appears among the
+				plug-in's `supportedPlugins` alternatives.
+*/
 - (BOOL)compatiblePreset:(FxGripPreset* _Nullable)preset;
 
 @end
@@ -118,8 +183,16 @@ typedef enum FxGripParameterPresetFlagOptions {
  */
 @interface FxGripPresetsAPI_v1 : FxGripCommonAPI <FxGripPresetsAPI_v1>
 
+/*! The wrapped API, which stays nil because FxGrip implements the presets API itself. */
 @property (assign, readonly) id<FxGripPresetsAPI_v1> _Nullable api;
 
+/*!
+	@method		initWithAPI:effect:
+	@abstract	Creates the presets API for an effect.
+	@param		api		Unused; no host vends a presets API, so callers pass nil.
+	@param		effect	The effect whose parameters the presets capture and apply.
+	@return		The presets API, or nil when it cannot be built.
+*/
 - (nullable instancetype)initWithAPI:(id<FxGripPresetsAPI_v1>_Nullable)api
 							  effect:(id<FxGripEffectHost>_Nonnull)effect;
 

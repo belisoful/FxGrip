@@ -216,7 +216,7 @@ static inline float FxGripLiveFrameComponent(const uint8_t *pixel, NSUInteger in
 	NSMutableData *pixels = [NSMutableData dataWithLength:width * height * 4];
 	CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
 	CGContextRef context = CGBitmapContextCreate(pixels.mutableBytes, width, height, 8, width * 4, space,
-												 kCGImageAlphaPremultipliedLast | kCGBitmapByteOrderDefault);
+												 (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrderDefault);
 	CGColorSpaceRelease(space);
 	if (context == NULL) {
 		return nil;
@@ -395,11 +395,11 @@ static MTLPixelFormat FxGripLiveFrameMetalFormatForBuffer(FxGripPixelFormat form
 		bytesPerPixel = _info->components;
 	}
 	if (_info->components == 1) {
-		bitmapInfo = kCGImageAlphaNone;
+		bitmapInfo = (CGBitmapInfo)kCGImageAlphaNone;
 	} else if (_info->isBGRA) {
-		bitmapInfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
+		bitmapInfo = (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
 	} else {
-		bitmapInfo = kCGImageAlphaPremultipliedLast;
+		bitmapInfo = (CGBitmapInfo)kCGImageAlphaPremultipliedLast;
 	}
 	if (bitsPerComponent == 16) {
 		bitmapInfo |= kCGBitmapByteOrder16Little;

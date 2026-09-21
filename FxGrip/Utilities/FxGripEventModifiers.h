@@ -49,14 +49,16 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)isContextMenu:(nonnull NSEvent *)event;
 
 /*!
-	@group      FxOnScreenControl events
 	@abstract   The same tests for a host on-screen-control event's FxModifierKeys bitmask.
 	@discussion FxPlug delivers OSC mouse and key events with an FxModifierKeys mask rather than an
 				NSEvent, so an OSC part reads its modifiers through these.
 */
 + (BOOL)isFineDragForFxModifiers:(FxModifierKeys)modifiers;
+/*! YES when the mask carries the constrain-to-axis modifier (Shift). */
 + (BOOL)isConstrainForFxModifiers:(FxModifierKeys)modifiers;
+/*! YES when the mask carries the delete modifier (Command). */
 + (BOOL)isDeleteClickForFxModifiers:(FxModifierKeys)modifiers;
+/*! YES when the mask carries the contextual-menu modifier (Control). */
 + (BOOL)isContextMenuForFxModifiers:(FxModifierKeys)modifiers;
 
 @end

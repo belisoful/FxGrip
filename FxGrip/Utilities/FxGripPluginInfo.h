@@ -68,6 +68,7 @@
 @property (class, strong, readonly) NSArray* _Nullable plugInGroups; // "ProPlugPlugInList" or dynamic registration from Info.plist
 
 //+ (FxGripPluginInfo* _Nonnull) sharedInfo;
+/*! Creates a plugin-info record with no fields set. */
 - (nonnull instancetype)init;
 
 /*!

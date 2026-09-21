@@ -55,3 +55,7 @@ view while presented swaps it in place.
 
 - ``FxGripWindow``
 - <doc:ExtensionArchitecture>
+
+### The extension key
+
+- ``FxGripWindowExtensionKey``

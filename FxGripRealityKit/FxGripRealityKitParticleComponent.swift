@@ -27,6 +27,7 @@ public struct FxGripRealityKitParticleComponent: Component {
 	/// The particle system this entity carries.
 	public var system: FxGripRealityKitParticleSystem
 
+	/// Wraps a particle system so an entity carries it into the frame.
 	public init(system: FxGripRealityKitParticleSystem) {
 		Self.registerComponent()
 		self.system = system

@@ -57,6 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithInputs:(NSDictionary<NSString *, id> *)inputs
 					parameters:(nullable NSDictionary<NSString *, id> *)parameters NS_DESIGNATED_INITIALIZER;
 
+/*! Unavailable. A request is built through the designated initializer, which names its inputs. */
 - (instancetype)init NS_UNAVAILABLE;
 
 /*! The input for a key, or nil when absent. */

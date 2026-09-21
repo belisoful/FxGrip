@@ -209,7 +209,6 @@
 	XCTAssertTrue([self.effect.spaceBackend isKindOfClass:FxGripSceneKitPhysicsBackend.class]);
 }
 
-/*! @abstract Enabling physics bake leaves a plugin's own explicitly set backend in place. */
 /*! @abstract The engine-neutral store seam installs on a physics backend and switches it to
 	session-cache mode, which is how FxGripPhysicsBake reaches the engine without naming it. */
 - (void)testInstallingASimulationStoreReachesThePhysicsBackend
@@ -232,6 +231,7 @@
 	XCTAssertFalse([self.effect installPhysicsSimulationStore:store]);
 }
 
+/*! @abstract Enabling physics bake leaves a plugin's own explicitly set backend in place. */
 - (void)testEnablingPhysicsBakeKeepsAUserSetBackend
 {
 	FxGripSpaceStubBackend *stub = [FxGripSpaceStubBackend.alloc init];

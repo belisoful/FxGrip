@@ -98,3 +98,63 @@ The managed per-tag folder is watched. A file added, removed, or renamed there r
 
 - <doc:APIAccessing>
 - <doc:MetaAndTags>
+
+### The preset file keys
+
+- ``kFxPresetProperty_ColorSpace``
+- ``kFxPresetProperty_CreatedByParameterId``
+- ``kFxPresetProperty_CreatedTime``
+- ``kFxPresetProperty_DisplayName``
+- ``kFxPresetProperty_Extension``
+- ``kFxPresetProperty_Framework``
+- ``kFxPresetProperty_LocalizedName``
+- ``kFxPresetProperty_ParameterMeta``
+- ``kFxPresetProperty_ParameterTags``
+- ``kFxPresetProperty_ParameterValues``
+- ``kFxPresetProperty_PluginAuthor``
+- ``kFxPresetProperty_PluginUuid``
+- ``kFxPresetProperty_PluginVersion``
+- ``kFxPresetProperty_PresetUuid``
+- ``kFxPresetProperty_ProductId``
+- ``kFxPresetProperty_RemapValues``
+- ``kFxPresetProperty_Tag``
+
+### FxFactory's own keys
+
+- ``kFxFactoryPresetKeyMap``
+- ``kFxFactoryPresetKey_CreatedByParameterId``
+- ``kFxFactoryPresetKey_LocalizedName``
+- ``kFxFactoryPresetKey_ParameterValues``
+- ``kFxFactoryPresetKey_PluginAuthor``
+- ``kFxFactoryPresetKey_PluginUuid``
+- ``kFxFactoryPresetKey_PluginVersion``
+- ``kFxFactoryPresetKey_ProductId``
+
+### The preset file extension
+
+- ``kFxPreset_Extension``
+
+### The presets menu
+
+- ``kFxPresetsMenuEntry_Default``
+- ``kFxPresetsMenuEntry_Reveal``
+- ``kFxPresetsMenuEntry_Save``
+- ``kFxPresetsMenuEntry_Separator``
+
+### Preset types
+
+- ``FxGripPresetOptions``
+- ``FxGripPresetSource``
+- ``FxGripParameterPresetFlagOptions``
+- ``FxGripParameterPresetFlags``
+
+### FxGrip's flat sibling keys
+
+- ``kFxGripPresetKey_Uuid``
+- ``kFxGripPresetKey_DisplayName``
+- ``kFxGripPresetKey_Framework``
+- ``kFxGripPresetKey_Tag``
+- ``kFxGripPresetKey_CreatedTime``
+- ``kFxGripPresetKey_ParameterTags``
+- ``kFxGripPresetKey_ParameterMeta``
+- ``kFxFactorPresetColorSpace_sRGB_Color``

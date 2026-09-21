@@ -40,7 +40,7 @@
 		_rangeMinY = [self doubleFrom:config key:kFxGripPointKey_RangeMinY fallback:0.0];
 		_rangeMaxY = [self doubleFrom:config key:kFxGripPointKey_RangeMaxY fallback:1.0];
 
-		_coordinateMapping = [self doubleFrom:config key:kFxGripPointKey_CoordinateMapping fallback:0.0] == FxGripPointCoordinateQuartzComposer
+		_coordinateMapping = [self doubleFrom:config key:kFxGripPointKey_CoordinateMapping fallback:0.0] == (double)FxGripPointCoordinateQuartzComposer
 			? FxGripPointCoordinateQuartzComposer : FxGripPointCoordinatePixel;
 		_compensateFrameMargin = [self boolFrom:config key:kFxGripPointKey_CompensateFrameMargin fallback:NO];
 

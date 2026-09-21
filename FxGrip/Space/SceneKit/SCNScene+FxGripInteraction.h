@@ -24,6 +24,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/*!
+	@abstract	A scene-wide default inter-particle force, and the reconciliation that applies it.
+	@discussion	Introduced in FxGrip 0.1.0. A scene carries a default `particleInteraction` that
+				every particle system without its own inherits. Reconciliation walks the scene and
+				binds each system to the field that serves it.
+*/
 @interface SCNScene (FxGripInteraction)
 
 /*!

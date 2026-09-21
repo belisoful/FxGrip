@@ -115,3 +115,32 @@ the value.
 - <doc:StandardValueParameters>
 - <doc:ParameterFlags>
 - <doc:CustomControls>
+
+### The parameter protocols
+
+- ``FxGripParameter-protocol``
+- ``FxGripParameterBase-protocol``
+- ``FxGripStateParameter``
+- ``FxGripSubParameters``
+- ``FxGripToggleParameter-protocol``
+- ``FxGripCustomParameter-protocol``
+- ``FxParameterFactory``
+
+### Numeric bounds
+
+- ``FxGripParameterMinMax``
+- ``FxGripParameterMinMaxInt``
+- ``FxGripParameterMinMaxDouble``
+
+### Identifying a parameter
+
+- ``FxParameterId``
+- ``FxPlugRootGroupID``
+- ``kFxAllParameters``
+- ``kFxParameterPropertyX_PathID``
+
+### Helpers
+
+- ``FxGripParameterUtility``
+- ``kFxGripParameterErrorBool``
+- ``kFxGripPluginStateParameterTypeString``

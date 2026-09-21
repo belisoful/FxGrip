@@ -5,9 +5,10 @@
 	@date       2026-09-06
 	@header     FxGripStringParameterBaseLibrary
 	@abstract   The shared method bodies for the base string parameter class.
-	@discussion Introduced in FxGrip 0.1.0. The fragment is textually included inside FxGripStringParameterBase's @implementation. It supplies the type identifiers, string value access, and state encoding common to the string parameter classes.
+	@discussion Introduced in FxGrip 0.1.0. The fragment is textually included inside FxGripStringParameterBase's implementation block. It supplies the type identifiers, string value access, and state encoding common to the string parameter classes.
 */
 
+/*! @abstract The configuration string that names the string parameter type. */
 + (nullable NSString*)parameterTypeString
 {
 	return kFxParameterType_String;

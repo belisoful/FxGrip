@@ -138,3 +138,9 @@ NSString *code = [FxGripTimecode stringForTime:time
 
 - <doc:TilingAndGeometry>
 - <doc:Adoption>
+
+### Watched timing properties
+
+- ``kWatchFPSChange``
+- ``kWatchInputStartTime``
+- ``kWatchInputDuration``

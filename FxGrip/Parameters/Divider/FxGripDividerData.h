@@ -46,15 +46,18 @@
 
 /*! Creates a divider data seeded from a width/margintop/marginbottom configuration dictionary. */
 +(instancetype)dataWithDictionary:(NSDictionary*)values;
+/*! Creates a divider with the default width and margins. */
 - (instancetype)init;
 
 
-// Set the width 0..1
+/*! Reads the divider's width as a fraction of the inspector width, 0 through 1. */
 - (BOOL)getFloatValue:(double*)floatValue;
+/*! Writes the divider's width as a fraction of the inspector width, 0 through 1. */
 - (BOOL)setFloatValue:(double)floatValue;
 
-// sets the total high split between top and bottom
+/*! Reads the divider's total height, which the top and bottom margins split. */
 - (BOOL)getIntValue:(int*)intValue;
+/*! Writes the divider's total height, split evenly between the top and bottom margins. */
 - (BOOL)setIntValue:(int)intValue;
 
 @end

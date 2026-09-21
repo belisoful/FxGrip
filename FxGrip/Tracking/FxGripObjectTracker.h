@@ -45,7 +45,9 @@ typedef NS_ENUM(NSInteger, FxGripObjectTrackerLevel) {
 	tracker; the rectangle tracker fills it from the tracked quad's top edge. */
 @property (readonly, nonatomic) CGFloat rotation;
 
+/*! Creates an unrotated sample from a bounding box and the tracker's confidence in it. */
 - (instancetype)initWithBoundingBox:(CGRect)boundingBox confidence:(float)confidence;
+/*! Creates a sample from a bounding box, its rotation in radians, and the tracker's confidence. */
 - (instancetype)initWithBoundingBox:(CGRect)boundingBox rotation:(CGFloat)rotation confidence:(float)confidence;
 
 @end
@@ -77,6 +79,7 @@ typedef NS_ENUM(NSInteger, FxGripObjectTrackerLevel) {
 /*! The most recent sample, or nil before tracking starts or after a reset. */
 @property (readonly, nullable, nonatomic) FxGripObjectTrackerSample *lastSample;
 
+/*! Creates a tracker at an accuracy level, which trades tracking quality against time. */
 - (instancetype)initWithLevel:(FxGripObjectTrackerLevel)level;
 
 /*! Seeds the tracker with the first frame and the initial normalized bounding box. */

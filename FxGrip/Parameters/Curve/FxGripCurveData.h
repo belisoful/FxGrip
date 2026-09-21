@@ -74,6 +74,7 @@ typedef NS_ENUM(NSInteger, FxGripCurveRole) {
 + (nonnull instancetype)identityCurveWithRole:(FxGripCurveRole)role
 									   domain:(FxGripCurveDomain)domain;
 
+/*! A curve built from an array of control points; nil when the array is empty or null. */
 + (nullable instancetype)curveWithPoints:(const CGPoint *_Nullable)points
 								   count:(NSUInteger)count
 									role:(FxGripCurveRole)role

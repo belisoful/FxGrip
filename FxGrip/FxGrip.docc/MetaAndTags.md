@@ -84,3 +84,12 @@ Activation follows the plist `manageMeta` boolean, which defaults to YES, throug
 
 - <doc:APIAccessing>
 - <doc:Meta>
+
+### The meta keys
+
+- ``kFxMetaProperty_ParamId``
+- ``kFxMetaProperty_ParamMeta``
+- ``kFxMetaProperty_ParamTags``
+- ``kFxMetaProperty_Parameters``
+- ``kFxMetaProperty_SelectedPreset``
+- ``kFxMetaProperty_Tags``

@@ -51,3 +51,7 @@ Each neighbor query opens a start-time access context on the sibling before read
 
 - ``FxGripInstanceTracker``
 - <doc:ExtensionArchitecture>
+
+### The extension key
+
+- ``kInstanceTrackerKey``

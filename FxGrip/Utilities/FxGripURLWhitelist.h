@@ -61,7 +61,8 @@ extern const unichar kFxGripURLWhitelistAnyString;		// '*'
 /*! A whitelist seeded with the patterns, in order, dropping empties and duplicates. */
 - (instancetype)initWithPatterns:(nullable NSArray<NSString *> *)patterns NS_DESIGNATED_INITIALIZER;
 
-- (instancetype)initWithCoder:(NSCoder *)coder NS_DESIGNATED_INITIALIZER;
+/*! Decodes a whitelist from a coder, delegating to initWithPatterns:. */
+- (instancetype)initWithCoder:(NSCoder *)coder;
 
 /*! A whitelist containing only `*`, allowing every URL. */
 + (instancetype)allowAllWhitelist;

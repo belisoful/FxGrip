@@ -31,30 +31,36 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @protocol FxGripCustomCreationAPI_v1 <NSObject>
 
+/*! A styled section header spanning the inspector width. */
 - (BOOL)addSectionWithName:(NSString *)name
 			   parameterID:(UInt32)parameterID
 			parameterFlags:(FxParameterFlags)flags;
 
+/*! A horizontal rule spanning the inspector width. */
 - (BOOL)addDividerWithParameterID:(UInt32)parameterID
 				   parameterFlags:(FxParameterFlags)flags;
 
+/*! A full-width colored strip with a bold title and an optional subtitle. */
 - (BOOL)addBannerWithName:(NSString *)name
 			  parameterID:(UInt32)parameterID
 					title:(nullable NSString *)title
 				 subtitle:(nullable NSString *)subtitle
 		   parameterFlags:(FxParameterFlags)flags;
 
+/*! A pill badge sized to its text. */
 - (BOOL)addCapsuleWithName:(NSString *)name
 			   parameterID:(UInt32)parameterID
 					 title:(nullable NSString *)title
 			parameterFlags:(FxParameterFlags)flags;
 
+/*! A read-only status light: a colored dot (a BEDotState) with a label. */
 - (BOOL)addStatusWithName:(NSString *)name
 			  parameterID:(UInt32)parameterID
 					state:(NSInteger)state
 					label:(nullable NSString *)label
 		   parameterFlags:(FxParameterFlags)flags;
 
+/*! A status light with a progress bar; fraction 0…1, or negative for indeterminate. */
 - (BOOL)addProgressWithName:(NSString *)name
 				parameterID:(UInt32)parameterID
 					  state:(NSInteger)state
@@ -62,11 +68,13 @@ NS_ASSUME_NONNULL_BEGIN
 				   fraction:(double)fraction
 			 parameterFlags:(FxParameterFlags)flags;
 
+/*! A boolean presented as a switch. */
 - (BOOL)addSwitchWithName:(NSString *)name
 			  parameterID:(UInt32)parameterID
 			 defaultValue:(BOOL)defaultValue
 		   parameterFlags:(FxParameterFlags)flags;
 
+/*! An integer field with a stepper and a reload button drawing uniformly in min…max. */
 - (BOOL)addRandomWithName:(NSString *)name
 			  parameterID:(UInt32)parameterID
 			 defaultValue:(NSInteger)defaultValue
@@ -75,6 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
 					 step:(NSInteger)step
 		   parameterFlags:(FxParameterFlags)flags;
 
+/*! A whitelisted web page embedded in the inspector. A nil whitelist allows every site. */
 - (BOOL)addWebViewWithName:(NSString *)name
 			   parameterID:(UInt32)parameterID
 					   URL:(nullable NSString *)urlString
@@ -82,6 +91,7 @@ NS_ASSUME_NONNULL_BEGIN
 					height:(double)height
 			parameterFlags:(FxParameterFlags)flags;
 
+/*! A whitelisted video player. A direct-media or file URL plays natively; other URLs embed. */
 - (BOOL)addVideoViewWithName:(NSString *)name
 				 parameterID:(UInt32)parameterID
 						 URL:(nullable NSString *)urlString
@@ -91,6 +101,8 @@ NS_ASSUME_NONNULL_BEGIN
 						loop:(BOOL)loop
 			  parameterFlags:(FxParameterFlags)flags;
 
+/*! A strip of live image slots fed from the render pass, one slot per label. A nil labels
+	array makes one unlabeled slot. */
 - (BOOL)addLiveImageWithName:(NSString *)name
 				 parameterID:(UInt32)parameterID
 					  labels:(nullable NSArray<NSString *> *)labels
@@ -116,8 +128,18 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @interface FxGripCustomCreationAPI_v1 : NSObject <FxGripCustomCreationAPI_v1>
 
+/*!
+	@method		initWithEffect:
+	@abstract	Creates the custom-creation API for an effect host.
+	@discussion	The API needs an effect host to register parameters through, so
+				``FxGripAPIAccessing-protocol``'s `customCreationAPIv1` answers nil when the
+				manager has none.
+	@param		effect	The effect host the created parameters are registered with.
+	@return		The creation API, or nil when the effect host is unusable.
+*/
 - (nullable instancetype)initWithEffect:(id<FxGripEffectHost>)effect;
 
+/*! The effect host the created parameters are registered with. */
 @property (readonly, nonnull, assign) id<FxGripEffectHost> effect;
 
 /*! A styled section header spanning the inspector width. */

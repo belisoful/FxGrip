@@ -72,8 +72,12 @@
 /*! @abstract Returns the subclass's plugin dictionaries, or nil with an error. */
 - (nullable NSArray<NSDictionary<NSString*, id> *> *)plugInsWithError:(NSError * _Nullable * _Nonnull)error;
 
-/*! @abstract Returns plugin class references the base class resolves and registers individually. */
-// This can be a Class, NSString* (divided by human terms in case of multiple), NSArray<Class | NSString*>, NSDictionary<id [unused], Class | NSString*>
+/*!
+	@abstract	Returns plugin class references the base class resolves and registers individually.
+	@discussion	The value is a `Class`, an `NSString` naming one (several separated by human
+				terms), an `NSArray` of either, or an `NSDictionary` whose values are either and
+				whose keys are unused.
+*/
 - (nullable id)plugInReferences;
 
 @end
@@ -102,8 +106,7 @@
 /*! @abstract YES when the host should load the first plugin instance from this bundle. */
 @property (readonly) BOOL															isLoadable;
 
-/*! @abstract The shared registrar instance. */
-// PROPlugInRegistering implementation
+/*! @abstract The shared registrar instance, which the host reaches through PROPlugInRegistering. */
 + (nonnull id)sharedInstance;
 
 /*!
@@ -127,7 +130,6 @@
 - (nullable NSArray *)registeredPlugInsWithError:(NSError * _Nullable * _Nonnull)error;
 
 /*! @abstract Deprecated. Returns nil. */
-// DEPRECATED
 - (nullable NSArray *)requestedProtocolsWithError:(NSError * _Nullable * _Nonnull)error;
 
 @end

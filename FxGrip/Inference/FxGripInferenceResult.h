@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*! The designated initializer. A nil outputs value becomes an empty dictionary. */
 - (instancetype)initWithOutputs:(NSDictionary<NSString *, id> *)outputs NS_DESIGNATED_INITIALIZER;
 
+/*! Unavailable. A result is produced by a backend, never built directly. */
 - (instancetype)init NS_UNAVAILABLE;
 
 /*! The output for a key, or nil when absent. */

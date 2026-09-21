@@ -39,6 +39,7 @@
 /*! Stores a curve; a nil or identity curve removes the key. */
 - (void)setCurve:(nullable FxGripCurveData *)curve forKey:(nonnull NSString *)key;
 
+/*! Removes the curve stored under a key; does nothing when the set holds none. */
 - (void)removeCurveForKey:(nonnull NSString *)key;
 
 /*! The mapping names with stored curves, sorted. */

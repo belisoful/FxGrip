@@ -124,9 +124,12 @@ typedef NS_ENUM(NSInteger, FxGripWatermarkCorner) {
 /*! The configuration this watermark renders. A copy of the value passed at initialization. */
 @property (readonly, copy, nonatomic) FxGripWatermarkConfiguration *configuration;
 
+/*! A watermark built from a configuration. */
 + (instancetype)watermarkWithConfiguration:(FxGripWatermarkConfiguration *)configuration;
 
+/*! Creates a watermark from a configuration. The designated initializer. */
 - (instancetype)initWithConfiguration:(FxGripWatermarkConfiguration *)configuration NS_DESIGNATED_INITIALIZER;
+/*! Unavailable. A watermark needs a configuration. */
 - (instancetype)init NS_UNAVAILABLE;
 
 /*!

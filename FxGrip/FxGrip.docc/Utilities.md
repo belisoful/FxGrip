@@ -82,3 +82,8 @@ every draggable FxGrip control reads. See <doc:EventModifiers>.
 - ``FxGripWatermark``
 - ``FxGripTimecode``
 - ``FxGripEventModifiers``
+
+### Debug logging
+
+- ``DebugLog``
+- ``DebugLog2``

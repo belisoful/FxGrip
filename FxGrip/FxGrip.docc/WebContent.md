@@ -111,3 +111,8 @@ Reach a user-chosen local file through a security-scoped bookmark; BEFoundation'
 
 - ``FxGripWebViewParameter``
 - ``FxGripVideoViewParameter``
+
+### Whitelist wildcards
+
+- ``kFxGripURLWhitelistAnyCharacter``
+- ``kFxGripURLWhitelistAnyString``

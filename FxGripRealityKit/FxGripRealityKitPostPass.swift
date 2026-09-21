@@ -44,6 +44,7 @@ public struct FxGripRealityKitCameraEffects: Equatable {
 		/// The longest blur, in pixels. Defaults to 64.
 		public var maximumPixels: Float = 64.0
 
+		/// Creates motion-blur settings from a shutter interval and an optional assumed depth.
 		public init(shutter: Float = 1.0 / 48.0, assumedDepth: Float? = nil) {
 			self.shutter = shutter
 			self.assumedDepth = assumedDepth
@@ -70,22 +71,27 @@ public struct FxGripRealityKitCameraEffects: Equatable {
 		/// Taps in the gather disc. Defaults to 24.
 		public var sampleCount: Int = 24
 
+		/// Creates depth-of-field settings from a focus distance and an aperture.
 		public init(focusDistance: Float, aperture: Float) {
 			self.focusDistance = focusDistance
 			self.aperture = aperture
 		}
 	}
 
+	/// The motion-blur settings, or nil to leave camera motion blur off.
 	public var motionBlur: MotionBlur? = nil
+	/// The depth-of-field settings, or nil to leave depth of field off.
 	public var depthOfField: DepthOfField? = nil
 
 	/// No effect on either count.
 	public static let none = FxGripRealityKitCameraEffects()
 
+	/// True when neither effect is set, which lets the engine skip the post pass entirely.
 	public var isEmpty: Bool {
 		return motionBlur == nil && depthOfField == nil
 	}
 
+	/// Creates a camera-effects set. Omitting both gives the same result as ``none``.
 	public init(motionBlur: MotionBlur? = nil, depthOfField: DepthOfField? = nil) {
 		self.motionBlur = motionBlur
 		self.depthOfField = depthOfField
@@ -117,6 +123,7 @@ public struct FxGripRealityKitPostCamera {
 	/// The far clip distance, which also scales the depth proxy.
 	public var far: Float
 
+	/// Creates the post-pass camera from a frame's projection, pose, motion, and clip range.
 	public init(projection: simd_float4x4,
 				cameraToWorld: simd_float4x4,
 				linearVelocity: SIMD3<Float> = .zero,
@@ -343,7 +350,9 @@ public final class FxGripRealityKitPostPass {
 		if let extra {
 			encoder.setTexture(extra, index: 2)
 		}
-		encoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+		withUnsafeBytes(of: &uniforms) { bytes in
+			encoder.setBytes(bytes.baseAddress!, length: MemoryLayout<Uniforms>.stride, index: 0)
+		}
 		let threads = MTLSize(width: 8, height: 8, depth: 1)
 		let groups = MTLSize(width: (destination.width + 7) / 8, height: (destination.height + 7) / 8, depth: 1)
 		encoder.dispatchThreadgroups(groups, threadsPerThreadgroup: threads)

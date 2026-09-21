@@ -62,6 +62,7 @@
 	@return		A new FxGripPluginData. */
 + (nonnull instancetype)newPluginWithDictionary:(nullable NSDictionary*)data;
 
+/*! Creates a plugin record with no fields set. */
 - (nonnull instancetype)init;
 
 /*!

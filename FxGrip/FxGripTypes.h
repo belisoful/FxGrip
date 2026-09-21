@@ -50,6 +50,7 @@
 
 /*! Bit flags that select preset behavior, such as ignoring meta or compatibility. */
 //options for the preset, like ignoring meta, ignoring compatability, etc.
+/*! A bit set of ``FxGripParameterPresetFlagOptions``, which relax how a preset applies. */
 typedef UInt32	FxGripParameterPresetFlags;
 /*! A parameter's numeric identifier. */
 typedef UInt32	FxParameterId;

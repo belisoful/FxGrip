@@ -40,6 +40,19 @@ Code is commit-ready only when every check below passes.
 3. `test` under **AddressSanitizer** (`-enableAddressSanitizer YES`)
 4. `docbuild` of the DocC catalog
 
+### Diagnostic build flags
+
+Off by default. Each is opt-in through the target's preprocessor macros and compiles out of a
+Release build whatever its value.
+
+| Flag | Effect |
+| --- | --- |
+| `FXGRIP_LOG_HOST_API_METHODS` | Logs every selector the host's API manager implements, once per effect instance. Use it to find out what a given host actually vends. |
+
+```bash
+xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destination 'platform=macOS' GCC_PREPROCESSOR_DEFINITIONS='$(inherited) FXGRIP_LOG_HOST_API_METHODS=1' build
+```
+
 ## SDK and Host Requirements
 
 - **FxPlug SDK** — the project links `FxPlug.framework` from `/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/`. The FxPlug 4 SDK must be installed at that path to build.
@@ -142,6 +155,15 @@ _Banned constructions_:
 - **Em-dash dramatic asides** used for emphasis or reveal ("— and that's the point"). Use a period or plain clause.
 - **Editorializing / filler.**
 - **Rule-of-three rhetorical lists** and build-up sentences. One fact per sentence.
+
+The build enables `-Wdocumentation` and `-Wdocumentation-unknown-command`, so a doc comment
+attached to a declaration must use only tags clang recognizes. HeaderDoc tags clang does not know —
+`@field`, `@group`, `@description`, `@default` — warn; use `@discussion` with a markdown list
+instead. A markdown list inside `@discussion` must sit at a single tab: the tab + 12-space
+continuation indent used elsewhere is past markdown's four-space threshold, so the list renders as
+a code block and its items are dropped. Read the generated page, not just the warning count. A file block that lands directly before a declaration is parsed as that declaration's
+documentation, which is why the `*Library.m` fragments give their first method its own block. The
+`FxPlugStub` target opts out, because it mirrors Apple's headers verbatim.
 
 Prefer subject–verb–object declaratives, and bullet lists of `condition → result` where appropriate. Documentation informs and describes; it is not persuasive writing. Documentation additions, changes, and removals are integrated into the surrounding text at each level of detail.
 

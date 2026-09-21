@@ -161,3 +161,7 @@ result survives a reopen. Switching the backend or changing a parameter clears t
 ### InferKit
 
 - ``FxGripInferenceBridge``
+
+### Video state
+
+- ``FxGripMLVideoState``

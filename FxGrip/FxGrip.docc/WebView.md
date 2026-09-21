@@ -67,3 +67,13 @@ declares the entitlements. See <doc:WebContent> for the requirements in full.
 
 - ``FxGripURLWhitelist``
 - <doc:WebContent>
+
+### Configuration keys
+
+- ``kFxGripWebViewKey_Height``
+- ``kFxGripWebViewKey_URL``
+- ``kFxGripWebViewKey_Whitelist``
+
+### Defaults
+
+- ``kFxGripWebViewDefaultHeight``

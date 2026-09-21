@@ -126,7 +126,11 @@ NS_INLINE NSDictionary * _Nullable FxGripHostConfigurationForParameter(id<FxGrip
 	observer owns the service answers. The API wrappers cache the resolution per vended instance.
 */
 FOUNDATION_EXPORT FxGripMetaManager * _Nullable FxGripHostMeta(id<FxGripEffectHost> _Nullable host);
+/*! Answers whether a host carries a meta manager, resolving through the notification seam when
+	the host does not answer directly. NO for a nil host. */
 FOUNDATION_EXPORT BOOL FxGripHostHasMeta(id<FxGripEffectHost> _Nullable host);
+/*! A host's parameter-data store, resolving through the notification seam when the host does not
+	answer directly. nil for a nil host, or when no extension owns one. */
 FOUNDATION_EXPORT FxGripParameterData * _Nullable FxGripHostParameterData(id<FxGripEffectHost> _Nullable host);
 
 NS_ASSUME_NONNULL_END

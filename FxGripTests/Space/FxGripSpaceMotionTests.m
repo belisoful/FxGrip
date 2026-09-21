@@ -147,7 +147,6 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 
 #pragma mark Guards
 
-/*! @abstract A zero or negative time step yields zero linear and angular velocity for every estimator. */
 /*! @abstract The shortest-arc rotation carries the source direction onto the target direction. */
 - (void)testRotationFromToCarriesOneDirectionOntoTheOther
 {
@@ -180,6 +179,7 @@ static simd_float4x4 TransformFromBasis(simd_float3x3 basis, simd_float3 transla
 	XCTAssertEqualWithAccuracy(rotated.z, 1.0f, 1e-5);
 }
 
+/*! @abstract A zero or negative time step yields zero linear and angular velocity for every estimator. */
 - (void)testNonPositiveDtYieldsZeroMotion
 {
 	simd_float4x4 a = TransformWithTranslation(0.0f, 0.0f, 0.0f);

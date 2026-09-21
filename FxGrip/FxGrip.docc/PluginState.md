@@ -92,3 +92,8 @@ The encoded state passes through a size-gated lossless codec on the effect base.
 
 - <doc:ExtensionArchitecture>
 - <doc:Space3D>
+
+### The state coder's keys
+
+- ``kFxPlugCoderQualityLevelKey``
+- ``kFxPlugCoderImageRefCountKey``

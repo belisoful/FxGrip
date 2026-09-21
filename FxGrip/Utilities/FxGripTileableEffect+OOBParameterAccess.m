@@ -35,9 +35,9 @@ FxGripOOBParameterAccess *__attribute__((unused)) accessor = [FxGripOOBParameter
 }
 
 /*!
- * @method		startContextFlush
- * @description	This calls extensionFlush upon deactivating.
- */
+	@method		startContextFlush
+	@abstract	Opens an out-of-band context that flushes the effect's extensions when it closes.
+*/
 - (FxGripOOBParameterAccess*_Nonnull)startContextFlush
 {
 	return [FxGripOOBParameterAccess access:self flush:YES];

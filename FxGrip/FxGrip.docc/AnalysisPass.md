@@ -79,3 +79,17 @@ An object-tracker parameter is analyzed automatically during the same pass. The 
 
 - <doc:ObjectTracking>
 - <doc:TrackingOpacity>
+
+### Frame-data keys
+
+- ``kFxGripFrameDataKey_FrameDuration``
+- ``kFxGripFrameDataKey_InstanceUUID``
+- ``kFxGripFrameDataKey_SpillFile``
+- ``kFxGripFrameDataKey_SpillLength``
+- ``kFxGripFrameDataKey_SpillThreshold``
+
+### Spill defaults
+
+- ``kFxGripFrameDataDefaultSpillThreshold``
+- ``kFxGripFrameDataFileExtension``
+- ``kFxGripFrameDataNeverSpill``

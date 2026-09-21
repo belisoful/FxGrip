@@ -61,14 +61,20 @@ open class FxGripRealityKitMetalBackend: NSObject, FxGripRealityKitBackend {
 		super.init()
 	}
 
+	/// True once the renderer exists and the driver can draw a frame.
 	public var isReady: Bool {
 		return device != nil
 	}
 
+	/// The driver's name, which a plug-in reads to tell which engine drew a frame.
 	public var backendIdentifier: String {
 		return "realitykit-metal"
 	}
 
+	/// Whether the driver can draw into a texture.
+	///
+	/// `RealityRenderer` takes no Metal device and draws on the system default device, so a tile
+	/// on a second GPU is unreachable. The effect falls back to the passthrough when this is false.
 	public func canRender(into texture: any MTLTexture) -> Bool {
 		guard let device else {
 			return false
@@ -76,6 +82,11 @@ open class FxGripRealityKitMetalBackend: NSObject, FxGripRealityKitBackend {
 		return texture.device.registryID == device.registryID
 	}
 
+	/// Draws one frame into a texture, building the scene through the supplied closure.
+	///
+	/// The build and the submission run on the main actor while the calling thread waits, because
+	/// RealityKit's entity graph is main-actor isolated. Renders serialize behind a lock, since
+	/// RealityKit holds one scene per renderer.
 	public func render(into texture: any MTLTexture,
 					   atTime seconds: TimeInterval,
 					   scene: FxGripRealityKitSceneBuilder) throws {

@@ -63,3 +63,8 @@ updating the latch.
 
 - ``FxGripGoogleAnalytics``
 - <doc:ExtensionArchitecture>
+
+### Notification naming
+
+- ``kFxGripGoogleAnalyticsNotificationPrefix``
+- ``kFxGripGoogleAnalyticsSelfRemovePredicate``

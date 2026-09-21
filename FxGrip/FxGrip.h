@@ -13,10 +13,10 @@
 
 #import <Foundation/Foundation.h>
 
-//! Project version number for FxGrip.
+/*! The framework's version number, as Xcode emits it for a linked framework. */
 FOUNDATION_EXPORT double FxGripVersionNumber;
 
-//! Project version string for FxGrip.
+/*! The framework's version string, as Xcode emits it for a linked framework. */
 FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <FxGrip/PublicHeader.h>
@@ -81,6 +81,7 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripEventModifiers.h>
 
 #import <FxGrip/FxGripColorGamut.h>
+#import <FxGrip/FxGripParameterUtility.h>
 #import <FxGrip/FxGripPluginInfo.h>
 #import <FxGrip/FxGripRect.h>
 #import <FxGrip/FxGripURLWhitelist.h>

@@ -28,8 +28,11 @@ FOUNDATION_EXPORT CGPoint FxGripOSCMetalPointFromCanvasPoint(CGPoint canvasPoint
 
 /*! The standard control colors: translucent gray fills, white outline, dark shadow. */
 FOUNDATION_EXPORT const simd_float4 kFxGripOSCUnselectedFillColor;
+/*! The fill a selected on-screen control part draws with. */
 FOUNDATION_EXPORT const simd_float4 kFxGripOSCSelectedFillColor;
+/*! The outline every on-screen control part draws with. */
 FOUNDATION_EXPORT const simd_float4 kFxGripOSCOutlineColor;
+/*! The shadow an on-screen control part draws under itself, so it reads over any image. */
 FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 
 /*!
@@ -85,6 +88,7 @@ FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 
 /*! Converts through the host's OSC API; identity when the API is unavailable. */
 - (CGPoint)objectPointFromCanvasPoint:(CGPoint)canvasPoint;
+/*! Converts a point in the control's object space to the host canvas. */
 - (CGPoint)canvasPointFromObjectPoint:(CGPoint)objectPoint;
 
 #pragma mark Parameter access

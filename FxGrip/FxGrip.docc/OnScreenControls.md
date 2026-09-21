@@ -164,3 +164,74 @@ through ``FxGripPathData/copyCubicSegmentsToBuffer:capacity:``.
 
 - ``FxGripOSCCurvePart``
 - ``FxGripOSCHUDPart``
+
+### Drawing colors
+
+- ``kFxGripOSCOutlineColor``
+- ``kFxGripOSCSelectedFillColor``
+- ``kFxGripOSCShadowColor``
+- ``kFxGripOSCUnselectedFillColor``
+
+### Shapes and geometry
+
+- ``FxGripOSCShapeOptions``
+- ``FxGripOSCRectCorner``
+- ``FxGripOSCVertex``
+- ``FxGripOSCTexturedVertex``
+- ``FxGripOSCMetalPointFromCanvasPoint``
+
+### Shader binding indices
+
+- ``FxGripOSCVertexInputIndex``
+- ``FxGripOSCFragmentInputIndex``
+- ``FxGripOSCFragmentTextureIndex``
+
+### The point control
+
+- ``FxGripPointOSC``
+- ``FxGripPointOptions``
+- ``FxGripPointConstraint``
+- ``FxGripPointCoordinateMapping``
+- ``FxGripPointDivider``
+
+### The point control's parts
+
+- ``FxGripOSCPointBackgroundPart``
+- ``FxGripOSCPointDividerPart``
+- ``FxGripOSCPointLabelPart``
+- ``FxGripOSCRichPointHandlePart``
+
+### The point control's configuration keys
+
+- ``kFxGripPointKey_BackgroundImage``
+- ``kFxGripPointKey_BackgroundImageSize``
+- ``kFxGripPointKey_BackgroundImageX``
+- ``kFxGripPointKey_BackgroundImageY``
+- ``kFxGripPointKey_CompensateFrameMargin``
+- ``kFxGripPointKey_Constraint``
+- ``kFxGripPointKey_ControlColor``
+- ``kFxGripPointKey_ControlSize``
+- ``kFxGripPointKey_CoordinateMapping``
+- ``kFxGripPointKey_DisplayName``
+- ``kFxGripPointKey_DistanceFromX``
+- ``kFxGripPointKey_DistanceFromY``
+- ``kFxGripPointKey_DistanceShiftOneAxis``
+- ``kFxGripPointKey_Divider``
+- ``kFxGripPointKey_MaxDistance``
+- ``kFxGripPointKey_MouseSpeed``
+- ``kFxGripPointKey_MouseSpeedShiftOnly``
+- ``kFxGripPointKey_NameOnlyWhenAbove``
+- ``kFxGripPointKey_PinAngle``
+- ``kFxGripPointKey_PinDistance``
+- ``kFxGripPointKey_RangeMaxX``
+- ``kFxGripPointKey_RangeMaxY``
+- ``kFxGripPointKey_RangeMinX``
+- ``kFxGripPointKey_RangeMinY``
+
+### The point control's defaults
+
+- ``kFxGripPointDefaultBackgroundSize``
+- ``kFxGripPointDefaultControlSize``
+- ``kFxGripPointDefaultMaxDistance``
+- ``kFxGripPointDefaultMouseSpeed``
+- ``kFxGripPointDefaultPosition``

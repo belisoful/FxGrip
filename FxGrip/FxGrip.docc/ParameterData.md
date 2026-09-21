@@ -66,3 +66,11 @@ a plain host that loads it.
 - ``FxGripParameterData``
 - ``FxGripCustomExtension``
 - <doc:ExtensionArchitecture>
+
+### The extension's parameter keys
+
+- ``kExtParameterData_Flag``
+- ``kExtParameterData_MenuItems``
+- ``kExtParameterData_Selector``
+- ``kExtParameterData_SubGroup``
+- ``kExtParameterData_Type``

@@ -25,7 +25,7 @@ const NSUInteger FxGripCompressionEnvelopeThresholdDefault = 4096;
 // property list ("bplist00"), so a raw pluginState blob is never mistaken for an envelope.
 static const uint8_t kFxGripEnvelopeSignature[4] = { 'F', 'x', 'G', 'z' };
 static const uint8_t kFxGripEnvelopeVersion = 1;
-static const NSUInteger kFxGripEnvelopeHeaderLength = 14;
+enum : NSUInteger { kFxGripEnvelopeHeaderLength = 14 };
 
 NSUInteger FxGripPixelFormatComponents(FxGripPixelFormat format)
 {

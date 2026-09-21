@@ -101,3 +101,15 @@ presets, analysis, and the ML effect templates.
 
 - ``FxGripTileableEffect-class``
 - ``FxGripTileableGenerator``
+
+### The host seam
+
+- ``FxGripHostIdentity``
+- ``FxGripHostPluginUUID``
+- ``FxGripHostPluginProperties``
+- ``FxGripHostHasMeta``
+- ``FxGripHostMeta``
+- ``FxGripHostParameterData``
+- ``FxGripHostConfigurationForParameter``
+- ``FxGripHostBundleIdentifierIsMotion``
+- ``kMotionProjectDocumentId``

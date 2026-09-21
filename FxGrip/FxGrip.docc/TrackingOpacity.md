@@ -49,3 +49,8 @@ analyzed frame. See <doc:ObjectTracking> for how the parts fit together.
 
 - <doc:ObjectTracking>
 - ``FxGripAnalyzerParameter``
+
+### Opacity levels
+
+- ``kFxGripTrackingOpacityAnalyzing``
+- ``kFxGripTrackingOpacityResting``

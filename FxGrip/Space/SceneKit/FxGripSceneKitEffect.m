@@ -409,7 +409,7 @@ static NSString * const FxGripSceneKitCoderTemplateKey = @"_fxspace_template";
 		node = nil;
 	}
 	[unarchiver finishDecoding];
-	NARC_AUTORELEASE(unarchiver);
+	(void)NARC_AUTORELEASE(unarchiver);
 
 	return [node isKindOfClass:SCNNode.class] ? node : nil;
 }

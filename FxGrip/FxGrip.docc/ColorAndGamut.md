@@ -87,3 +87,22 @@ desired processing color info.
 ### Related
 
 - <doc:TilingAndGeometry>
+
+### Color values
+
+- ``FxGripColor``
+- ``kFxGripBlackOpaque``
+- ``kFxGripBlackTransparent``
+- ``kFxGripWhiteOpaque``
+- ``kFxGripWhiteTransparent``
+
+### Gamma conversion
+
+- ``gammaToLinear``
+- ``gammaToLinear2``
+- ``gammaToLinear3``
+- ``gammaToLinear4``
+- ``linearToGamma``
+- ``linearToGamma2``
+- ``linearToGamma3``
+- ``linearToGamma4``

@@ -48,7 +48,6 @@
 				Bridges: Metal textures for the 1-, 2-, and 4-channel formats (Gray→R,
 				GrayAlpha→RG, RGBA; Metal has no packed 3-channel storage), and
 				NSBitmapImageRep/NSImage previews through an RGBA8U conversion.
- 	@agent @todo should floats not be clamped to 0...1 due to HDR content?
 */
 @interface FxGripImageBuffer : NSObject <NSSecureCoding, NSCopying>
 
@@ -81,8 +80,11 @@
 						   compression:(FxGripCompression)compression
 							   quality:(float)quality;
 
+/*! The image's width in pixels. */
 @property (readonly) NSUInteger width;
+/*! The image's height in pixels. */
 @property (readonly) NSUInteger height;
+/*! The pixel format the payload decodes to. */
 @property (readonly) FxGripPixelFormat format;
 /*! The codec the payload is stored with; None when a lossless codec did not shrink it
 	or the encoder failed. */
@@ -91,7 +93,9 @@
 @property (readonly) float quality;
 /*! Tightly-packed bytes per row: width times bytes per pixel. */
 @property (readonly) NSUInteger rowBytes;
+/*! The byte count of the decompressed pixels: `rowBytes` times `height`. */
 @property (readonly) NSUInteger uncompressedLength;
+/*! The stored payload, compressed with `compression` or held verbatim when that is None. */
 @property (readonly, nonnull) NSData *compressedData;
 
 /*! The decompressed, tightly-packed pixels; nil when the payload fails to decompress. */
@@ -131,6 +135,7 @@
 
 /*! An RGBA8U preview representation. */
 - (nullable NSBitmapImageRep *)bitmapRep;
+/*! An `NSImage` wrapping the preview representation; nil when the payload fails to decompress. */
 - (nullable NSImage *)image;
 
 @end

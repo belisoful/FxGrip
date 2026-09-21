@@ -33,81 +33,25 @@
 
 #import "FxGrip_ARC.h"
 
-/*
-//	#pragma unused(variable)
-@implementation FxGripAPITransaction
-
-- (nullable instancetype)init
-{
-	self = [super init];
-	
-	if (self != nil)
-	{
-		if (!_uuid)
-			_uuid = [NSUUID UUID];
-		_active = NO;
-	}
-	return self;
-}
-
-- (nullable instancetype)initWithAPIManager:(FxGripAPIAccessing*_Nonnull)apiManager
-{
-	self = [self init];
-	
-	if (self != nil)
-	{
-		_apiManager = apiManager;
-		_active = YES;
-	}
-	return self;
-}
-
-- (nullable instancetype)initWithTransaction:(FxGripAPITransaction*_Nonnull)transaction
-{
-	_uuid = transaction.uuid;
-	self = [self initWithAPIManager:transaction.apiManager];
-	
-	if (self != nil)
-	{
-	}
-	return self;
-}
-- (void)dealloc
-{
-	if (_active)
-		[self commit];
-	
-	[super dealloc];
-}
-
-- (nonnull id)copyWithZone:(nullable NSZone *)zone { 
-	return [FxGripAPITransaction.alloc initWithTransaction:self];
-}
-
-- (void)commit
-{
-	[self commit:YES];
-}
-
-- (void)commit:(BOOL)saveMeta
-{
-	if(saveMeta && _apiManager.effect && _apiManager.effect.hasMeta) {
-		//save any changes made to the meta
-		[_apiManager.effect.meta saveMeta];
-	}
-	[_apiManager endTransaction:self];
-	_active = NO;
-}
-
-@end
-
-*/
-
 
 #pragma mark -
 #pragma mark FxGripAPIAccessing
 
+/*!
+	@defined	FXGRIP_LOG_HOST_API_METHODS
+	@abstract	Logs every selector the host's API manager implements, once per effect instance.
+	@discussion	Off by default. The dump runs on every instantiation and names every method the
+				host vends, so it is opt-in for investigating what a particular host implements.
+				Define it as 1 in the target's preprocessor macros to turn it on. It compiles out
+				of a Release build whatever its value.
+*/
+#ifndef FXGRIP_LOG_HOST_API_METHODS
+	#define FXGRIP_LOG_HOST_API_METHODS 0
+#endif
+
+#if DEBUG && FXGRIP_LOG_HOST_API_METHODS
 	#import <objc/runtime.h>
+#endif
 
 @protocol __FxPROAPIAccessing <PROAPIAccessing>
 @property (assign, readonly) NSString* _Nullable pluginUUID;
@@ -120,19 +64,13 @@
 /*!
 	@abstract	The FxGrip layer over the host's PROAPIAccessing manager.
 	@discussion	Introduced in FxGrip 0.1.0. Reads pluginUUID and sessionID from the host manager
-				when it responds to them, retains the manager and effect, and vends wrapped or raw
-				APIs on request.
+				when it responds to them, and vends wrapped or raw APIs on request.
+
+				The manager and the effect are held unretained. The effect owns this manager, so a
+				retaining back-reference would form a cycle that keeps every effect instance alive
+				for the process lifetime.
 */
 @implementation FxGripAPIAccessing
-{
-	//FxGripParameterRetrievalAPI_v6 *mParamGetAPI_v6;
-	
-	
-//#define kFxGripMaxLockerCount 88
-	//NSMutableDictionary<id, NSNumber*>*	lockCounter;
-	//NSMutableDictionary<FxGripAPITransaction*, id>*	locker;
-}
-@dynamic pluginVersion;
 
 
 //---------------------------------------------------------
@@ -152,24 +90,23 @@
 	
 	if (self != nil)
 	{
+#if DEBUG && FXGRIP_LOG_HOST_API_METHODS
 		unsigned int methodCount = 0;
 		Method *methods = class_copyMethodList([apiManager class], &methodCount);
 		for(int i = 0; i < methodCount; i++) {
 			NSLog(@"%s\n", sel_getName(method_getName(methods[i])));
 		}
 		free(methods);
+#endif
 		if ([apiManager respondsToSelector:@selector(pluginUUID)]) {
-			_pluginUUID = manager.pluginUUID;
+			_pluginUUID = [manager.pluginUUID copy];
+		}
+		if ([apiManager respondsToSelector:@selector(pluginVersion)]) {
+			_pluginVersion = manager.pluginVersion;
 		}
 		if ([apiManager respondsToSelector:@selector(sessionID)]) {
 			_sessionID = manager.sessionID;
 		}
-		
-//		lockCounter = [NSMutableDictionary dictionary];
-//		locker = [NSMutableDictionary dictionary];
-//		
-//		[lockCounter retain];
-//		[locker retain];
 		
 		_apiAccessing = (id)apiManager;
 		_effect = effect;
@@ -182,69 +119,10 @@
 	_pluginUUID = nil;
 	_apiAccessing = nil;
 	_effect = nil;
-//	[lockCounter dealloc];
-//	lockCounter = nil;
-//	[locker dealloc];
-//	locker = nil;
 	
 	SUPER_DEALLOC();
 }
 
-
-#pragma mark -
-#pragma mark API Session Transaction
-
-/*
-
-- (FxGripAPITransaction*)transaction:(id)key
-{
-	@synchronized (lockCounter) {
-		if (!lockCounter[key]) {
-			lockCounter[key] = @1;
-		} else {
-			if ([lockCounter[key] isGreaterThanOrEqualTo:@kFxGripMaxLockerCount])
-				return nil;
-			lockCounter[key] = [lockCounter[key] plusOne];
-		}
-		FxGripAPITransaction *tx = [FxGripAPITransaction.alloc initWithAPIManager:self];
-		locker[tx] = key;
-		return tx;
-	}
-}
-
-- (BOOL)hasTransaction
-{
-	@synchronized (lockCounter) {
-		return locker.count > 0;
-	}
-}
-
-
-- (BOOL)endTransaction:(FxGripAPITransaction*)transaction
-{
-	@synchronized (lockCounter) {
-		if (locker[transaction]) {
-			id key = locker[transaction];
-			[locker removeObjectForKey:transaction];
-			lockCounter[key] = [lockCounter[key] minusOne];
-			if (lockCounter[key].isZero)
-				[lockCounter removeObjectForKey:key];
-			if (!locker.count)
-				[self clearProtocols];
-			return YES;
-		}
-	}
-	return NO;
-}
-
-- (void)clearProtocols
-{
-	if (mParamGetAPI_v6) {
-		[mParamGetAPI_v6 release];
-		mParamGetAPI_v6 = nil;
-	}
-}
-*/
 
 #pragma mark -
 #pragma mark FxGrip ProPlug API Layer
@@ -339,8 +217,6 @@
 	if (api && [FxGripParameterRetrievalAPI_v6 conformsToProtocol:apiProtocol]) {
 		
 		id paramGetAPI_v6 = nil;
-		//if (self.hasTransaction)
-		//	paramGetAPI_v6 = mParamGetAPI_v6;
 		if (!paramGetAPI_v6) {
 			id paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
 			if (paramInfo_v1 == nil)
@@ -353,10 +229,6 @@
 			{
 				NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterRetrievalAPI_v6", _sessionID);
 			}
-			//if (self.hasTransaction) {
-			//	mParamGetAPI_v6 = paramGetAPI_v6;
-			//	[mParamGetAPI_v6 retain];
-			//}
 		}
 		return paramGetAPI_v6;
 	}
@@ -444,7 +316,6 @@
 	
 	return api;
 }
-
 
 
 #pragma mark -
@@ -840,7 +711,7 @@
 	return api;
 }
 
-- (id<FxLightingAPI_v3> _Nullable)lightingAPIv3_Raws
+- (id<FxLightingAPI_v3> _Nullable)lightingAPIv3_Raw
 {
 	return [_apiAccessing apiForProtocol:@protocol(FxLightingAPI_v3)];
 }

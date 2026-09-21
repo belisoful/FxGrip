@@ -45,6 +45,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/*!
+	@abstract	An inter-particle force shaped as a SceneKit physics field.
+	@discussion	Introduced in FxGrip 0.1.0. SceneKit computes no force between particles, so the
+				force is evaluated in a custom field that binds to one particle system or to every
+				system under a node.
+*/
 @interface SCNPhysicsField (FxGripInteraction)
 
 /*!

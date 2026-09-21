@@ -148,17 +148,27 @@
 
 // Parameter Tags
 
+/*! Every tag in use across the effect's parameters. */
 - (NSArray* _Nullable)tags;
+/*! The count of tags on one parameter, or -1 when no meta manager is present. */
 - (SInt32)tagCount;
+/*! The count of tags on one parameter, or -1 when no meta manager is present. */
 - (SInt32)tagCount:(FxParameterId)parameterID;
 
+/*! The tags on one parameter. */
 - (NSArray<NSString*>* _Nullable)parameterTags:(FxParameterId)parameterID;
 
+/*! Answers whether a parameter carries a tag; sets `error` when no meta manager is present. */
 - (BOOL)parameter:(FxParameterId)parameterID hasTag:(NSString* _Nullable)tag error:(NSError* _Nullable * _Nullable)error;
+/*! Replaces a parameter's tags with `tags`. */
 - (NSError* _Nullable)setTags:(NSArray*_Nonnull)tags toParameter:(FxParameterId)parameterID;
+/*! Adds one tag to a parameter. */
 - (NSError* _Nullable)addTag:(NSString*_Nullable)label toParameter:(FxParameterId)parameterID;
+/*! Removes one tag from a parameter. */
 - (NSError* _Nullable)removeTag:(NSString*_Nullable)label fromParameter:(FxParameterId)parameterID;
+/*! Removes every tag from a parameter. */
 - (NSError* _Nullable)removeAllTags:(FxParameterId)parameterID;
+/*! The parameters that carry a tag. */
 - (NSArray* _Nullable)parametersWithTag:(NSString*_Nullable)label;
 
 @end

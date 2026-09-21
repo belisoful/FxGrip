@@ -32,6 +32,7 @@
 */
 @interface FxGripInstanceTracker : FxGripExtension
 
+/*! Creates an unbound instance tracker, which takes its key from its class name. */
 - (nonnull instancetype)init;
 
 /*! The live sibling instances of this effect's plugin UUID, in registry order. */

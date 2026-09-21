@@ -99,3 +99,29 @@ back to the main queue. A successful open posts `FxGripAboutMenuLinkName`.
 
 - ``FxGripAboutMenu``
 - <doc:ExtensionArchitecture>
+
+### The extension's configuration keys
+
+- ``FxGripAboutMenuAgreementAcceptedValueKey``
+- ``FxGripAboutMenuAgreementIdKey``
+- ``FxGripAboutMenuExtensionKey``
+- ``FxGripAboutMenuFallbackUrlKey``
+- ``FxGripAboutMenuItemsKey``
+- ``FxGripAboutMenuLinkName``
+- ``FxGripAboutMenuLinkURLKey``
+- ``FxGripAboutMenuMainTextKey``
+- ``FxGripAboutMenuNameKey``
+- ``FxGripAboutMenuWarningDialogTextKey``
+- ``FxGripAboutMenuWarningKey``
+
+### An entry's keys and kinds
+
+- ``FxGripAboutEntryDisplayIdKey``
+- ``FxGripAboutEntryFallbacksKey``
+- ``FxGripAboutEntryKindDialog``
+- ``FxGripAboutEntryKindKey``
+- ``FxGripAboutEntryKindLink``
+- ``FxGripAboutEntryKindSeparator``
+- ``FxGripAboutEntryKindText``
+- ``FxGripAboutEntryLabelKey``
+- ``FxGripAboutEntryUrlKey``

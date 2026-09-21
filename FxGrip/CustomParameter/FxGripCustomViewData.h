@@ -27,7 +27,6 @@
 	@discussion	Introduced in FxGrip 0.1.0. A conforming value keeps back references to the presenting
 				view and the owning effect host.
 */
-// This is the protocol for Custom Data to hijack the standard api get/set bool, int, float, string, etc.
 @protocol FxGripCustomViewData
 
 

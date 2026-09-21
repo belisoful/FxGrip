@@ -22,7 +22,6 @@
 	@abstract	Receives a custom parameter's new value so the view can update.
 	@discussion	Introduced in FxGrip 0.1.0. A custom parameter view conforms to this protocol.
 */
-// This is the protocol for Custom Data to hijack the standard api get/set bool, int, float, string, etc.
 @protocol FxGripCustomViewDataDelegate
 
 /*!

@@ -79,6 +79,7 @@
 	/*! The writable form of isLocked. */
 	@property (assign, getter=isLocked)  BOOL locked;
 
+/*! Creates an empty dictionary value. */
 - (instancetype _Null_unspecified)init;
 
 /*! The secure-coding allow-list for values a parameter dictionary may carry. A subclass
@@ -106,6 +107,11 @@
 
 /*! Reads a channel's histogram values at a key. */
 //bIn, bOut, wIn, wOut, & gamma for each RGBA
+/*!
+	@abstract	Reads one channel of a histogram from the value.
+	@discussion	A value that represents no histogram leaves the outputs untouched and answers NO.
+	@return		YES when the value holds a histogram for the channel.
+*/
 - (BOOL)getHistogramBlackIn:(double*_Null_unspecified)blackIn
 				   blackOut:(double*_Null_unspecified)blackOut
 					whiteIn:(double*_Null_unspecified)whiteIn

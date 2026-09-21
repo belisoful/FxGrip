@@ -92,6 +92,12 @@ extern NSString * const FxGripWindowExtensionKey;
 @end
 
 
+/*!
+	@abstract	Reaches the window extension from the effect.
+	@discussion	Introduced in FxGrip 0.1.0. The category answers the loaded ``FxGripWindow``
+				extension and the convenience that reports whether one is loaded, so a plug-in
+				presents a window without holding the extension itself.
+*/
 @interface FxGripTileableEffect (Window)
 
 /*! The loaded FxGripWindow extension; nil when none is loaded. */

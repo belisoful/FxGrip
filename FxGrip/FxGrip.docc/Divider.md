@@ -58,3 +58,7 @@ space evenly between the top and bottom margins.
 
 ### Related
 
+### Types and metrics
+
+- ``FxGripDividerSize``
+- ``kFxGripBoxDividerHeight``

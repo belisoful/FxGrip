@@ -47,6 +47,8 @@
 
 /*! Reads a parameter's name through the dynamic API and delocalizes it when enabled. */
 //This gets the name of a parameter but delocalizes it.
+/*! Replaces a parameter's name in place with its localized form, leaving it unchanged when the
+	strings file carries no entry. */
 - (void)parameter:(FxParameterId)parameterID name:(NSString*_Nonnull*_Nonnull)parameterName;
 
 /*! Maps a key to its localized string via localizationTable, returning the key unchanged

@@ -46,6 +46,7 @@ public enum FxGripRealityKitError: Error, LocalizedError {
 	/// RealityKit rejected the frame, or the frame did not complete.
 	case renderFailed(String)
 
+	/// A localized description of the failure, for an error surfaced to the host.
 	public var errorDescription: String? {
 		switch self {
 		case let .rendererUnavailable(reason):

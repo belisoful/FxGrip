@@ -44,7 +44,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*! Replaces the frame shown in a slot and redraws it; nil empties the slot. Main thread. */
 - (void)showFrame:(nullable FxGripLiveFrame *)frame inSlot:(NSUInteger)slot;
+/*! The frame currently held in a slot; nil when the slot is empty or out of range. */
 - (nullable FxGripLiveFrame *)frameInSlot:(NSUInteger)slot;
+/*! The label declared for a slot; nil when the slot is unlabeled or out of range. */
 - (nullable NSString *)labelInSlot:(NSUInteger)slot;
 
 @end
@@ -121,7 +123,9 @@ NS_ASSUME_NONNULL_BEGIN
 /*! Wraps the buffer's pixels in a frame and stores it. */
 - (BOOL)publishImageBuffer:(FxGripImageBuffer *)buffer inSlot:(NSUInteger)slot;
 
+/*! Drops the frame held in a slot. */
 - (void)clearSlot:(NSUInteger)slot;
+/*! Drops the frames held in every slot. */
 - (void)clearAllSlots;
 
 /*! The latest frame stored for a slot; nil when empty or out of range. */

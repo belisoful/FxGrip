@@ -112,11 +112,97 @@ value contributes its values as the flag list.
 ### Types
 
 - ``FxGripParameterFlags``
+- ``FxParameterFlags64``
+
+### FxGrip's flag bits
+
+- ``kFxParameterFlag_HIDDEN_PROXY``
+- ``kFxParameterFlag_IN_DEBUG_MODE``
+- ``kFxParameterFlag_NO_DEBUG``
+- ``kFxParameterFlag_NOSTATE``
+- ``kFxParameterFlag_PRESETNOVALUE``
+- ``kFxParameterFlag_PRESETNOTAGS``
+- ``kFxParameterFlag_PRESETNOMETA``
+- ``kFxParameterFlag_INVALID``
+- ``kFxParameterFlag_DEBUG_UNHIDE``
+- ``kFxParameterFlag_UNKNOWN_APPLE_FLAG``
+
+### The flag cache
+
+- ``kFxParameterFlag_CACHE``
+- ``kFxParameterFlag_CACHEDIRTY``
+- ``kFxParameterFlag_SAVING``
+- ``SavingFlags``
+- ``UnsavingFlags``
+- ``RemoveTempFlags``
+
+### Masks
+
+- ``kFxParameterFlag_APP_MASK``
+- ``kFxParameterFlag_FX_MASK``
+- ``kFxParameterFlag_TEMP_MASK``
+- ``FxParameterFlagsAppMask``
+- ``FxParameterFlagsFxMask``
+
+### Configuration strings
+
+- ``kParameterFlagString_HIDDEN``
+- ``kParameterFlagString_DISABLED``
+- ``kParameterFlagString_COLLAPSED``
+- ``kParameterFlagString_DONT_SAVE``
+- ``kParameterFlagString_DONT_DISPLAY``
+- ``kParameterFlagString_CUSTOM_UI``
+- ``kParameterFlagString_IGNORE_MIN_MAX``
+- ``kParameterFlagString_CURVE_EDITOR_HIDDEN``
+- ``kParameterFlagString_DONT_REMAP_COLORS``
+- ``kParameterFlagString_FULL_VIEW_WIDTH``
+- ``kParameterFlagString_NOT_ANIMATABLE``
+- ``kParameterFlagString_HIDDEN_PROXY``
+- ``kParameterFlagString_IN_DEBUG_MODE``
+- ``kParameterFlagString_NO_DEBUG``
+- ``kParameterFlagString_NO_STATE``
+- ``kParameterFlagString_PRESETNOVALUE``
+- ``kParameterFlagString_PRESETNOTAGS``
+- ``kParameterFlagString_PRESETNOMETA``
+
+### Testing a flag
+
+- ``flagHidden``
+- ``flagDisabled``
+- ``flagCollapsed``
+- ``flagDontSave``
+- ``flagDontDisplay``
+- ``flagCustomUI``
+- ``flagIgnoreMinMax``
+- ``flagCurveEditorHidden``
+- ``flagDontRemapColors``
+- ``flagUseFullViewWidth``
+- ``flagNotAnimatable``
+- ``flagHiddenProxy``
+- ``flagInDebugMode``
+- ``flagNoDebug``
+- ``flagNoState``
+- ``flagNoValue``
+- ``flagNoTags``
+- ``flagNoMeta``
+- ``flagInvalid``
+- ``flagIsDefault``
+- ``flagSaving``
+- ``flagCache``
+- ``flagCacheDirty``
+
+### Setting a flag
+
+- ``FxParameterAddFlag``
+- ``FxParameterRemoveFlag``
+- ``FxParameterSetFlagOn``
+
+### Converting the flags value
+
+- ``gfxFlags``
+- ``fxFlags``
 
 ### The parameter model
 
 - ``FxGripParameterBase-class``
 - ``FxGripParameter-class``
-
-### Related
-

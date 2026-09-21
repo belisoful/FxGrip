@@ -11,6 +11,7 @@
 	            on the parameter's flags.
 */
 
+/*! @abstract Whether the parameter holds one value with no keyframes. */
 - (BOOL)flagNotAnimatable {
 	return flagNotAnimatable(self.parameterFlags);
 }

@@ -28,15 +28,24 @@
 */
 @protocol FxGripMetaAPI_v1 <NSObject>
 
+/*! The number of meta entries a parameter carries; -1 when the effect has no meta manager. */
 - (SInt32)metaCountFromParameter:(FxParameterId)parameterID;
+/*! Reads a parameter's whole meta dictionary. Answers the error that stopped the read, or nil. */
 - (NSError* _Nullable)getMeta:(NSDictionary* _Nullable * _Nonnull)meta fromParameter:(FxParameterId)parameterID;
+/*! Replaces a parameter's whole meta dictionary. Answers the error that stopped the write, or nil. */
 - (NSError* _Nullable)setMeta:(NSDictionary* _Nonnull)meta toParameter:(FxParameterId)parameterID;
+/*! Reads the keys a parameter's meta carries. Answers the error that stopped the read, or nil. */
 - (NSError* _Nullable)getMetaKeys:(NSArray* _Nullable * _Nonnull)keys fromParameter:(FxParameterId)parameterID;
+/*! Removes every meta entry from a parameter. Answers the error that stopped the write, or nil. */
 - (NSError* _Nullable)removeAllMeta:(FxParameterId)parameterID;
 
+/*! Answers whether a parameter's meta carries a key, reporting through error why a read failed. */
 - (BOOL)parameter:(FxParameterId)parameterID hasMetaKey:(NSString* _Nonnull)key error:(NSError* _Nullable * _Nullable)error;
+/*! Reads one meta value from a parameter. Answers YES when the key was present. */
 - (BOOL)getMeta:(id<NSSecureCoding, NSCopying> _Nullable * _Nullable)value forKey:(NSString* _Nonnull)key fromParameter:(FxParameterId)parameterID;
+/*! Writes one meta value to a parameter. The value must support secure coding and copying. */
 - (BOOL)setMeta:(id<NSSecureCoding, NSCopying> _Nonnull)value forKey:(NSString* _Nonnull)key toParameter:(FxParameterId)parameterID;
+/*! Removes one meta entry from a parameter. Answers YES when the key was present. */
 - (BOOL)removeMetaKey:(NSString* _Nonnull)key fromParameter:(FxParameterId)parameterID;
 
 @end
@@ -52,6 +61,12 @@
 */
 @interface FxGripMetaAPI_v1 : FxGripCommonAPI <FxGripMetaAPI_v1>
 
+/*!
+	@method		initWithEffect:
+	@abstract	Creates the meta API over an effect host's meta manager.
+	@param		effect	The effect host whose meta manager stores the metadata.
+	@return		The meta API, or nil when it cannot be built.
+*/
 - (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect;
 
 @end

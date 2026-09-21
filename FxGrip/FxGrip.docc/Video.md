@@ -95,3 +95,15 @@ FxGrip provides the control; the plugin declares the entitlements. See
 
 - ``FxGripURLWhitelist``
 - <doc:WebContent>
+
+### Configuration keys
+
+- ``kFxGripVideoKey_Autoplay``
+- ``kFxGripVideoKey_Height``
+- ``kFxGripVideoKey_Loop``
+- ``kFxGripVideoKey_URL``
+- ``kFxGripVideoKey_Whitelist``
+
+### Defaults
+
+- ``kFxGripVideoDefaultHeight``

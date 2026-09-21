@@ -118,3 +118,29 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 - ``FxGripAPIAccessing-class``
 - ``FxGripEffectHost``
 - ``FxGripPluginHost``
+
+### Error codes
+
+- ``FxGripPlugErrorDomain``
+- ``FxGripPlugErrorDomainConstant``
+- ``kFxGripError_Exception``
+- ``kFxGripError_NoClassFound``
+- ``kFxGripError_NonconformingClass``
+- ``kFxGripError_NoSingleton``
+- ``kFxGripError_NoneFound``
+- ``kFxGripError_NoConfigGroups``
+- ``kFxGripError_NoConfigPlugins``
+- ``kFxGripError_Preset``
+- ``kFxGripError_WindowAPIUnavailable``
+- ``kFxGripError_WatermarkNoDevice``
+- ``kFxGripError_WatermarkRender``
+- ``kFxGripError_SpaceMissingScene``
+- ``kFxGripError_SpaceRenderFailure``
+- ``kFxGripError_InferenceNotReady``
+- ``kFxGripError_InferenceMissingInput``
+- ``kFxGripError_InferenceBackendFailure``
+
+### The framework's version
+
+- ``FxGripVersionNumber``
+- ``FxGripVersionString``

@@ -22,7 +22,6 @@
 	@discussion	Introduced in FxGrip 0.1.0. The host needs the member classes of a custom parameter
 				value to unarchive it from disk. A conforming class returns that class set.
 */
-// This is the protocol for Custom Data to hijack the standard api get/set bool, int, float, string, etc.
 @protocol FxGripCustomDataClasses
 
 /*!

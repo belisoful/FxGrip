@@ -42,15 +42,26 @@
 				error when a pending extension flush fails.
 */
 @protocol FxGripTileableEffectExpanded
+/*! The registered UUID of the plug-in this effect instantiates. */
 @property (readonly, nonnull, retain) NSString *pluginUUID;
+/*! The wrapped host API manager, through which the effect reaches every host service. */
 @property (readonly, nonnull, retain) id<FxGripAPIAccessing> apiManager;
+/*! The effect's notification center, which extensions and parameters register observers on. */
 @property (readonly, nonnull, assign) NSPriorityNotificationCenter *notifier;
+/*! The registered plug-in's properties dictionary, as the registrar declared it. */
 @property (readonly, nonnull, retain) NSDictionary<NSString*, id> *pluginProperties;
 
+/*! YES once the host has added the effect to a document. */
 @property (assign, readonly) BOOL addedToDocument;
+/*! YES once the `addParameters` pass has completed. */
 @property (assign, readonly) BOOL addedParameters;
 
 @optional
+	/*!
+		@method		extensionsFlush
+		@abstract	Runs the pending flush on every loaded extension.
+		@return		The error from the first extension that failed to flush, or nil.
+	*/
 	- (nullable NSError*)extensionsFlush;
 @end
 
@@ -70,14 +81,49 @@
 */
 @protocol FxGripTileableEffect <FxTileableEffect, FxGripTileableEffectExpanded, FxGripEffectHost>
 
+/*! The plug-in's display name, as the registrar declared it. */
 @property (readonly, nonnull, retain) NSString*		pluginDisplayName;
+/*! The UUID of the registration group the plug-in belongs to. */
 @property (readonly, nonnull, retain) NSString*		pluginGroupUUID;
+/*! The plug-in's informational string, shown by the host. */
 @property (readonly, nonnull, retain) NSString*		pluginInfoString;
 
+/*! The font name a parameter uses when its configuration names none. */
 @property (readonly, retain, nonnull) NSString*		defaultFontName;
 
+/*!
+	@method		objectAtIndexedSubscript:
+	@abstract	The parameter for a host ID, or for an ordinal position, as `effect[index]`.
+	@discussion	The subscript reads two ways, which the sign selects.
+
+				- index is positive → the parameter carrying that host ID.
+				- index is zero or negative → the parameter at ordinal position `-index` in the
+				  host's parameter list.
+	@param		index	A positive host ID, or a negated ordinal position.
+	@return		The parameter, or nil when the effect holds none there.
+*/
 - (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
+/*!
+	@method		objectForKeyedSubscript:
+	@abstract	The parameter or the extension a key names, as `effect[key]`.
+	@discussion	The key's shape selects what is returned.
+
+				- an `NSNumber`, or an `NSString` of digits → the parameter, resolved the way
+				  ``objectAtIndexedSubscript:`` resolves it.
+				- any other `NSString` → the extension registered under that key.
+				- any other object, or nil → nil.
+	@param		key		The parameter ID or the extension key.
+	@return		The parameter, the extension, or nil when neither is found.
+*/
 - (id _Nullable)objectForKeyedSubscript:(id _Nullable)key;
+/*!
+	@method		countByEnumeratingWithState:objects:count:
+	@abstract	Enumerates the effect's parameters with `for (id p in effect)`.
+	@param		enumerationState	The enumeration state the runtime carries between calls.
+	@param		stackBuffer			The buffer the runtime offers for returned objects.
+	@param		len					The capacity of stackBuffer.
+	@return		The number of objects written, or 0 at the end of the enumeration.
+*/
 - (NSUInteger) countByEnumeratingWithState: (nonnull NSFastEnumerationState *) enumerationState
 								   objects: (_Nullable id __unsafe_unretained [_Nullable]) stackBuffer
 									 count: (NSUInteger) len;
@@ -85,55 +131,121 @@
 
 @optional
 // ColorGamut category
+/*! The project's color primaries, as an `FxColorPrimaries`. */
 @property (readonly, assign) FxColorPrimaries colorPrimaries;
+/*! YES when the project works in the Rec. 2020 gamut. */
 @property (readonly, assign) BOOL isRec2020Gamut;
+/*! YES when the project works in the Rec. 709 gamut. */
 @property (readonly, assign) BOOL isRec709Gamut;
+/*! YES when color parameters carry gamma-encoded values. */
 @property (readonly, assign) BOOL isGammaColorParameters;
+/*! YES when color parameters carry linear-light values. */
 @property (readonly, assign) BOOL isLinearColorParameters;
 
 
+/*!
+	@method		addParametersWithGroupID:error:
+	@abstract	Adds the parameters declared for one group.
+	@discussion	The effect calls this for the top-level group, and again for each nested group a
+				declaration names. A subclass overrides it to add parameters by hand.
+	@param		groupID		The host ID of the group to add into.
+	@param		error		On return, the reason a parameter could not be added.
+	@return		YES when every parameter in the group was added.
+*/
 - (BOOL)addParametersWithGroupID:(FxParameterId)groupID error:(NSError*_Nonnull*_Nullable)error;
 
 // out of band
+/*!
+	@method		startContext
+	@abstract	Opens an out-of-band context for reading and writing parameters outside a render.
+	@return		The context, which closes when it goes out of scope.
+*/
 - (nonnull FxGripOOBParameterAccess *)startContext;
+/*!
+	@method		startContextFlush
+	@abstract	Opens an out-of-band context that flushes the effect's extensions when it closes.
+	@return		The context, which closes when it goes out of scope.
+*/
 - (nonnull FxGripOOBParameterAccess *)startContextFlush;
 
 
 //Timing
+/*! The duration of one frame after retiming, in timeline time. */
 @property (readonly) CMTime frameDuration;
+/*! The clip's retiming speed; 1.0 is 100%, 2.0 is 200%, 0.5 is slowed to 50%. */
 @property (readonly) Float64 retimingSpeed;
 
+/*! The sample duration; equal to the frame duration for progressive clips, half for interlaced. */
 @property (readonly) CMTime sampleDuration;
+/*! YES when the sample duration differs from the frame duration. */
 @property (readonly) BOOL isInterlacedClip;
+/*! YES when the project displays timecode in drop-frame format. NO on a host without `FxTimingAPI_v5`. */
 @property (readonly) BOOL isTimelineDropFrame;
+/*! YES when the filter's input clip requires drop-frame timecode. */
 @property (readonly) BOOL isInputDropFrame;
 
+/*! The effect's start time in input time. */
 @property (readonly) CMTime effectStartTime;
+/*! The effect's start time as a timeline frame index. */
 @property (readonly) NSInteger effectStartFrame;
+/*! The effect's start time converted to timeline time. */
 @property (readonly) CMTime effectStartTimeInTimeline;
+/*! The effect's duration in input time. */
 @property (readonly) CMTime effectDurationTime;
+/*! The effect's duration in timeline frames. */
 @property (readonly) NSInteger effectDurationFrames;
 
+/*! The filter input's start time in input time. */
 @property (readonly) CMTime inputStartTime;
+/*! The filter input's start time as a timeline frame index. */
 @property (readonly) NSInteger inputStartFrame;
+/*! The filter input's start time converted to timeline time. */
 @property (readonly) CMTime inputStartTimeInTimeline;
+/*! The filter input's duration in input time. */
 @property (readonly) CMTime inputDurationTime;
+/*! The filter input's duration in timeline frames. */
 @property (readonly) NSInteger inputDurationFrames;
 
+/*! The effect's in point on the timeline. */
 @property (readonly) CMTime effectInPointOfTimeLine;
+/*! The effect's out point on the timeline. */
 @property (readonly) CMTime effectOutPointOfTimeLine;
 
+/*! The numerator of the timeline frame rate. */
 @property (readonly) NSUInteger timelineFpsNumerator;
+/*! The denominator of the timeline frame rate. */
 @property (readonly) NSUInteger timelineFpsDenominator;
 
+/*! The timeline frame duration as a `CMTime`. */
 @property (readonly) CMTime timelineFrameDuration;
+/*! The timeline frame duration in seconds. */
 @property (readonly) Float64 timelineFrameDurationFloat;
+/*! The timeline frame rate as a `CMTime`. */
 @property (readonly) CMTime timelineFrameRate;
+/*! The timeline frame rate in frames per second. */
 @property (readonly) Float64 timelineFps;
 
+/*!
+	@method		frameForTime:
+	@abstract	The timeline frame index for a time.
+	@param		time	The time to convert.
+	@return		The time multiplied by the timeline frame rate, as a frame index.
+*/
 - (NSInteger)frameForTime:(CMTime)time;
 
+/*!
+	@method		timelineTime:fromInputTime:
+	@abstract	Converts an input time to timeline time through the host timing API.
+	@param		timelineTime	On return, the equivalent timeline time.
+	@param		time			The input time to convert.
+*/
 - (void)timelineTime:(nonnull CMTime*)timelineTime fromInputTime:(CMTime)time;
+/*!
+	@method		inputTime:fromTimelineTime:
+	@abstract	Converts a timeline time to input time through the host timing API.
+	@param		inputTime	On return, the equivalent input time.
+	@param		time		The timeline time to convert.
+*/
 - (void)inputTime:(nonnull CMTime*)inputTime fromTimelineTime:(CMTime)time;
 
 
@@ -152,11 +264,33 @@
 
 @optional
 
+/*!
+	@method		pluginCoder:atTime:quality:error:
+	@abstract	Encodes the state the render stages need, in place of `pluginState:atTime:quality:error:`.
+	@discussion	The coder replaces the opaque `NSData` plugin state, so the effect writes typed
+				values and reads them back in each render stage.
+	@param		coder			The coder the render state is written to.
+	@param		renderTime		The time the state describes.
+	@param		qualityLevel	The quality the host renders at.
+	@param		error			On return, the reason the state could not be encoded.
+	@return		YES when the state was encoded.
+*/
 - (BOOL) pluginCoder:(NSCoder * _Nonnull)coder
 			  atTime:(CMTime)renderTime
 			 quality:(FxQuality)qualityLevel
 			   error:(NSError * _Nullable * _Nullable)error;
 
+/*!
+	@method		destinationImageRect:sourceImages:destinationImage:pluginCoder:atTime:error:
+	@abstract	Reports the bounds the effect draws into, in place of the `pluginState` form.
+	@param		destinationImageRect	On return, the rectangle the effect draws into.
+	@param		sourceImages			The source tiles for this render.
+	@param		destinationImage		The destination tile.
+	@param		pluginCoder				The coder holding the state this render encoded.
+	@param		renderTime				The time being rendered.
+	@param		outError				On return, the reason the bounds could not be computed.
+	@return		YES when destinationImageRect holds the bounds.
+*/
 - (BOOL)destinationImageRect:(nonnull FxRect *)destinationImageRect
 				sourceImages:(NSArray<FxImageTile *> * _Null_unspecified)sourceImages
 			destinationImage:(nonnull FxImageTile *)destinationImage
@@ -164,6 +298,19 @@
 					  atTime:(CMTime)renderTime
 					   error:(NSError * _Nullable * _Null_unspecified)outError;
 
+/*!
+	@method		sourceTileRect:sourceImageIndex:sourceImages:destinationTileRect:destinationImage:pluginCoder:atTime:error:
+	@abstract	Reports the source region one destination tile reads, in place of the `pluginState` form.
+	@param		sourceTileRect			On return, the region of the source image the tile reads.
+	@param		sourceImageIndex		The index of the source image being described.
+	@param		sourceImages			The source tiles for this render.
+	@param		destinationTileRect		The destination tile being rendered.
+	@param		destinationImage		The destination tile.
+	@param		pluginCoder				The coder holding the state this render encoded.
+	@param		renderTime				The time being rendered.
+	@param		outError				On return, the reason the region could not be computed.
+	@return		YES when sourceTileRect holds the region.
+*/
 - (BOOL)sourceTileRect:(nonnull FxRect*)sourceTileRect
 	 sourceImageIndex:(NSUInteger)sourceImageIndex
 		 sourceImages:(NSArray<FxImageTile*>*_Null_unspecified)sourceImages
@@ -173,11 +320,31 @@
 			   atTime:(CMTime)renderTime
 				error:(NSError*_Nullable *_Null_unspecified)outError;
 
+/*!
+	@method		scheduleInputs:pluginCoder:atTime:error:
+	@abstract	Requests the source frames the render needs, in place of the `pluginState` form.
+	@discussion	A temporal effect asks for frames other than the one being rendered here.
+	@param		inputImageRequests	On return, the requests the host fulfills before the render.
+	@param		pluginCoder			The coder holding the state this render encoded, or nil.
+	@param		renderTime			The time being rendered.
+	@param		error				On return, the reason the requests could not be formed.
+	@return		YES when inputImageRequests holds the requests.
+*/
 - (BOOL)scheduleInputs:(NSArray<FxImageTileRequest*>* _Nullable * _Nullable)inputImageRequests
 		   pluginCoder:(NSCoder* _Nullable)pluginCoder
 				atTime:(CMTime)renderTime
 				 error:(NSError*_Nullable*_Nonnull)error;
 
+/*!
+	@method		renderDestinationImage:sourceImages:pluginCoder:atTime:error:
+	@abstract	Draws one destination tile, in place of the `pluginState` form.
+	@param		destinationImage	The tile to draw into.
+	@param		sourceImages		The source tiles for this render.
+	@param		pluginCoder			The coder holding the state this render encoded.
+	@param		renderTime			The time being rendered.
+	@param		outError			On return, the reason the tile could not be drawn.
+	@return		YES when the tile was drawn.
+*/
 - (BOOL)renderDestinationImage:(FxImageTile *_Nonnull)destinationImage
 				  sourceImages:(NSArray<FxImageTile *> *_Nullable)sourceImages
 				   pluginCoder:(NSCoder * _Nonnull)pluginCoder
@@ -197,6 +364,17 @@
 */
 @protocol FxGripTileableEffectCoderState <FxGripTileableEffectCoderStateWeak>
 
+/*!
+	@method		pluginCoder:atTime:quality:error:
+	@abstract	Encodes the state the render stages need, in place of `pluginState:atTime:quality:error:`.
+	@discussion	The coder replaces the opaque `NSData` plugin state, so the effect writes typed
+				values and reads them back in each render stage.
+	@param		coder			The coder the render state is written to.
+	@param		renderTime		The time the state describes.
+	@param		qualityLevel	The quality the host renders at.
+	@param		error			On return, the reason the state could not be encoded.
+	@return		YES when the state was encoded.
+*/
 - (BOOL) pluginCoder:(NSCoder * _Nonnull)coder
 			  atTime:(CMTime)renderTime
 			 quality:(FxQuality)qualityLevel
@@ -205,6 +383,17 @@
 
 
 
+/*!
+	@method		destinationImageRect:sourceImages:destinationImage:pluginCoder:atTime:error:
+	@abstract	Reports the bounds the effect draws into, in place of the `pluginState` form.
+	@param		destinationImageRect	On return, the rectangle the effect draws into.
+	@param		sourceImages			The source tiles for this render.
+	@param		destinationImage		The destination tile.
+	@param		pluginCoder				The coder holding the state this render encoded.
+	@param		renderTime				The time being rendered.
+	@param		outError				On return, the reason the bounds could not be computed.
+	@return		YES when destinationImageRect holds the bounds.
+*/
 - (BOOL)destinationImageRect:(nonnull FxRect *)destinationImageRect
 				sourceImages:(NSArray<FxImageTile *> *_Null_unspecified)sourceImages
 			destinationImage:(nonnull FxImageTile *)destinationImage
@@ -212,6 +401,19 @@
 					  atTime:(CMTime)renderTime
 					   error:(NSError * _Nullable *_Null_unspecified)outError;
 
+/*!
+	@method		sourceTileRect:sourceImageIndex:sourceImages:destinationTileRect:destinationImage:pluginCoder:atTime:error:
+	@abstract	Reports the source region one destination tile reads, in place of the `pluginState` form.
+	@param		sourceTileRect			On return, the region of the source image the tile reads.
+	@param		sourceImageIndex		The index of the source image being described.
+	@param		sourceImages			The source tiles for this render.
+	@param		destinationTileRect		The destination tile being rendered.
+	@param		destinationImage		The destination tile.
+	@param		pluginCoder				The coder holding the state this render encoded.
+	@param		renderTime				The time being rendered.
+	@param		outError				On return, the reason the region could not be computed.
+	@return		YES when sourceTileRect holds the region.
+*/
 - (BOOL)sourceTileRect:(nonnull FxRect*)sourceTileRect
 	 sourceImageIndex:(NSUInteger)sourceImageIndex
 		 sourceImages:(NSArray<FxImageTile*>*_Null_unspecified)sourceImages
@@ -222,6 +424,16 @@
 				error:(NSError*_Nullable *_Null_unspecified)outError;
 
 
+/*!
+	@method		renderDestinationImage:sourceImages:pluginCoder:atTime:error:
+	@abstract	Draws one destination tile, in place of the `pluginState` form.
+	@param		destinationImage	The tile to draw into.
+	@param		sourceImages		The source tiles for this render.
+	@param		pluginCoder			The coder holding the state this render encoded.
+	@param		renderTime			The time being rendered.
+	@param		outError			On return, the reason the tile could not be drawn.
+	@return		YES when the tile was drawn.
+*/
 - (BOOL)renderDestinationImage:(FxImageTile *_Nonnull)destinationImage
 				  sourceImages:(NSArray<FxImageTile *> *_Nullable)sourceImages
 				   pluginCoder:(NSCoder * _Nonnull)pluginCoder
@@ -229,6 +441,16 @@
 						 error:(NSError * _Nullable * _Nullable)outError;
 
 @optional
+/*!
+	@method		scheduleInputs:pluginCoder:atTime:error:
+	@abstract	Requests the source frames the render needs, in place of the `pluginState` form.
+	@discussion	A temporal effect asks for frames other than the one being rendered here.
+	@param		inputImageRequests	On return, the requests the host fulfills before the render.
+	@param		pluginCoder			The coder holding the state this render encoded, or nil.
+	@param		renderTime			The time being rendered.
+	@param		error				On return, the reason the requests could not be formed.
+	@return		YES when inputImageRequests holds the requests.
+*/
 - (BOOL)scheduleInputs:(NSArray<FxImageTileRequest*>* _Nullable * _Nullable)inputImageRequests
 		   pluginCoder:(NSCoder* _Nullable)pluginCoder
 				atTime:(CMTime)renderTime
@@ -258,7 +480,6 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 				render callbacks. The render state supports optional lossless compression through
 				pluginStateCompression.
 */
-//  @todo: this is FxGrip and so should be an FxGripTileableEffectBase
 @interface FxGripTileableEffect : FxGripExtensionBase <FxGripTileableEffect, FxGripTileableEffectCoderStateWeak>
 {
 	NSMutableDictionary<id, Class> *__typeToClassMap;
@@ -303,7 +524,8 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 @property (readonly, nonnull, retain) NSString*		pluginInfoString;
 
 // FxPlug FxTileableEffect Properties
-@property (assign, readonly) BOOL finishedProperties; // True when `-properties:error:` is called
+/*! YES once the host has called `properties:error:` on the effect. */
+@property (assign, readonly) BOOL finishedProperties;
 /*! Whether the effect requires the full source buffer instead of a tile. */
 @property (assign, readwrite, nonatomic) BOOL needsFullBuffer;
 /*! Whether the output varies over time while the parameters stay static. */
@@ -375,16 +597,29 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 
 /*!
 	@method		objectAtIndexedSubscript:
-	@abstract	Returns the parameter at an ordinal position for subscript access.
-	@param		index	The zero-based position of the parameter.
-	@return		The parameter at that position, or nil when the index is out of range. */
+	@abstract	The parameter for a host ID, or for an ordinal position, as `effect[index]`.
+	@discussion	The subscript reads two ways, which the sign selects.
+
+				- index is positive → the parameter carrying that host ID.
+				- index is zero or negative → the parameter at ordinal position `-index` in the
+				  host's parameter list.
+	@param		index	A positive host ID, or a negated ordinal position.
+	@return		The parameter, or nil when the effect holds none there.
+*/
 - (id<FxGripParameter> _Nullable)objectAtIndexedSubscript:(NSInteger)index;
 
 /*!
 	@method		objectForKeyedSubscript:
-	@abstract	Returns the parameter for a key for subscript access.
-	@param		key		The parameter ID or name that identifies the parameter.
-	@return		The matching parameter, or nil when none matches. */
+	@abstract	The parameter or the extension a key names, as `effect[key]`.
+	@discussion	The key's shape selects what is returned.
+
+				- an `NSNumber`, or an `NSString` of digits → the parameter, resolved the way
+				  ``objectAtIndexedSubscript:`` resolves it.
+				- any other `NSString` → the extension registered under that key.
+				- any other object, or nil → nil.
+	@param		key		The parameter ID or the extension key.
+	@return		The parameter, the extension, or nil when neither is found.
+*/
 - (id _Nullable)objectForKeyedSubscript:(id _Nullable)key;
 
 /*! @abstract Enumerates the effect's parameters for fast enumeration. */

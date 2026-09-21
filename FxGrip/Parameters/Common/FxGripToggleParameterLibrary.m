@@ -5,9 +5,10 @@
 	@date       2026-09-06
 	@header     FxGripToggleParameterLibrary
 	@abstract   The shared method bodies for the toggle parameter class.
-	@discussion Introduced in FxGrip 0.1.0. The fragment is textually included inside FxGripToggleParameter's @implementation. It supplies the type identifiers, host registration, boolean value access, and state encoding for the toggle button.
+	@discussion Introduced in FxGrip 0.1.0. The fragment is textually included inside FxGripToggleParameter's implementation block. It supplies the type identifiers, host registration, boolean value access, and state encoding for the toggle button.
 */
 
+/*! @abstract The configuration string that names the toggle parameter type. */
 + (nullable NSString*)parameterTypeString
 {
 	return kFxParameterType_Toggle;

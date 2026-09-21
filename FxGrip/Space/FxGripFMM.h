@@ -32,13 +32,15 @@ extern "C" {
 /*!
 	@struct     FxGripFMMParameters
 	@abstract   The knobs that trade accuracy against speed.
-	@field      expansionOrder   The multipole order: 2, 4, or 6. Higher is more accurate and slower.
-	@field      theta            The multipole acceptance ratio; a cell pair interacts by multipole
-	                             when (rA + rB) / distance is below this. Smaller is more accurate.
-	@field      leafCapacity     The particle count above which a cell subdivides (ncrit).
-	@field      directThreshold  At or below this particle count the evaluation is a direct sum.
-	@field      softening        The softening length ε, in world units, that bounds the near force.
-	@field      maxThreads       The parallel width; 0 selects the hardware concurrency.
+	@discussion The fields, in declaration order:
+
+	- `expansionOrder` → the multipole order: 2, 4, or 6. Higher is more accurate and slower.
+	- `theta` → the multipole acceptance ratio. A cell pair interacts by multipole when
+	  (rA + rB) / distance is below this. Smaller is more accurate.
+	- `leafCapacity` → the particle count above which a cell subdivides (ncrit).
+	- `directThreshold` → at or below this particle count the evaluation is a direct sum.
+	- `softening` → the softening length ε, in world units, that bounds the near force.
+	- `maxThreads` → the parallel width; 0 selects the hardware concurrency.
 */
 typedef struct FxGripFMMParameters {
 	uint32_t expansionOrder;

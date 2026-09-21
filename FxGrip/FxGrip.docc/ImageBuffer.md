@@ -181,3 +181,38 @@ for a tile's IOSurface.
 ### Related
 
 - <doc:CustomControls>
+
+### Pixel formats
+
+- ``FxGripPixelFormatMake``
+- ``FxGripPixelFormatComponentType``
+- ``FxGripPixelFormatR16F``
+- ``FxGripPixelFormatR32F``
+- ``FxGripPixelFormatRA16F``
+- ``FxGripPixelFormatRA32F``
+- ``FxGripMTLPixelFormatAny``
+- ``bytesFromFxDepth``
+- ``mtlPixelFormatFromFxDepth``
+
+### Compression
+
+- ``FxGripCompressionTypeIdentifier``
+- ``FxGripCompressionErrorDomain``
+- ``FxGripCompressionEnvelopeThresholdDefault``
+- ``kFxGripImageBufferDefaultQuality``
+
+### Histograms and gradients
+
+- ``FxGripChannelHistogram``
+- ``kZeroChannelHistogram``
+- ``kZeroHistogram``
+- ``FxGripGradient``
+- ``FxGripGradientHeader``
+- ``FxGripGradientUInt8``
+- ``FxGripGradientHalf``
+- ``FxGripGradientFloat``
+- ``kZeroGradient``
+
+### The histogram union
+
+- ``FxGripHistogram``

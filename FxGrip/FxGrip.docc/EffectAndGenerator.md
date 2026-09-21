@@ -99,3 +99,7 @@ A plug-in that keeps its own `FxTileableEffect` implementation adopts the parame
 - <doc:Adoption>
 - <doc:ExtensionArchitecture>
 - <doc:PluginState>
+
+### The effect protocol
+
+- ``FxGripTileableEffect-protocol``

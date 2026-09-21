@@ -60,3 +60,15 @@ and `updateFromCustomData:` relays out the badge.
 
 ### Related
 
+### Configuration keys
+
+- ``kFxGripCapsuleKey_CornerRadius``
+- ``kFxGripCapsuleKey_FillColor``
+- ``kFxGripCapsuleKey_FontSize``
+- ``kFxGripCapsuleKey_TextColor``
+- ``kFxGripCapsuleKey_Title``
+
+### Defaults
+
+- ``kFxGripCapsuleDefaultFontSize``
+- ``kFxGripCapsulePillRadius``
