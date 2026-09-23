@@ -1,0 +1,3 @@
+# Keep the vendored binary framework and reference material out of GitHub's language statistics.
+Frameworks/** linguist-vendored
+Information/** linguist-documentation

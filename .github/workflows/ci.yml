@@ -1,0 +1,133 @@
+name: CI
+
+# Runs the Full Check from AGENTS.md: arm64 build + test, x86_64 test, AddressSanitizer test, and DocC.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Private repository whose tag v<version> holds Apple's FxPlugSDK.pkg.
+  FXPLUG_SDK_REPOSITORY: ${{ vars.FXPLUG_SDK_REPOSITORY || 'belisoful/FxPlug-SDK' }}
+  FXPLUG_SDK_VERSION: ${{ vars.FXPLUG_SDK_VERSION || '4.3.5' }}
+  # Private repository whose tag v<version> holds the link-only FxFactory.framework stub.
+  FXFACTORY_REPOSITORY: ${{ vars.FXFACTORY_REPOSITORY || 'belisoful/FxFactory-SDK' }}
+  FXFACTORY_VERSION: ${{ vars.FXFACTORY_VERSION || '9.0.5' }}
+  # Empty selects the newest release Xcode on the runner.
+  XCODE_VERSION: ${{ vars.XCODE_VERSION || '' }}
+
+jobs:
+  gate:
+    name: SDK access
+    runs-on: ubuntu-latest
+    outputs:
+      has-sdk: ${{ steps.check.outputs.has-sdk }}
+    steps:
+      - id: check
+        env:
+          SDK_KEY: ${{ secrets.FXPLUG_SDK_DEPLOY_KEY }}
+          FXFACTORY_KEY: ${{ secrets.FXFACTORY_SDK_DEPLOY_KEY }}
+        run: |
+          if [[ -n "$SDK_KEY" && -n "$FXFACTORY_KEY" ]]; then
+            echo "has-sdk=true" >> "$GITHUB_OUTPUT"
+          else
+            # Pull requests from forks receive no secrets, so the SDK cannot be installed.
+            echo "has-sdk=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::FXPLUG_SDK_DEPLOY_KEY or FXFACTORY_SDK_DEPLOY_KEY is unavailable (fork pull request or unconfigured repository). The macOS build and test jobs are skipped; a maintainer runs them."
+          fi
+
+  test:
+    name: Test (${{ matrix.name }})
+    needs: gate
+    if: needs.gate.outputs.has-sdk == 'true'
+    runs-on: macos-26
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: arm64
+            destination: platform=macOS
+            flags: ''
+            rosetta: 'false'
+          - name: x86_64
+            destination: platform=macOS,arch=x86_64
+            flags: ''
+            rosetta: 'true'
+          - name: AddressSanitizer
+            destination: platform=macOS
+            flags: -enableAddressSanitizer YES
+            rosetta: 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-fxgrip
+        with:
+          sdk-repository: ${{ env.FXPLUG_SDK_REPOSITORY }}
+          sdk-version: ${{ env.FXPLUG_SDK_VERSION }}
+          sdk-deploy-key: ${{ secrets.FXPLUG_SDK_DEPLOY_KEY }}
+          fxfactory-repository: ${{ env.FXFACTORY_REPOSITORY }}
+          fxfactory-version: ${{ env.FXFACTORY_VERSION }}
+          fxfactory-deploy-key: ${{ secrets.FXFACTORY_SDK_DEPLOY_KEY }}
+          xcode-version: ${{ env.XCODE_VERSION }}
+          rosetta: ${{ matrix.rosetta }}
+
+      - name: Build and test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project FxGrip.xcodeproj \
+            -scheme FxGrip \
+            -configuration Debug \
+            -destination '${{ matrix.destination }}' \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath build/TestResults.xcresult \
+            ${{ matrix.flags }} \
+            | xcbeautify --renderer github-actions
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults-${{ matrix.name }}
+          path: build/TestResults.xcresult
+          retention-days: 14
+
+  docs:
+    name: DocC
+    needs: gate
+    if: needs.gate.outputs.has-sdk == 'true'
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-fxgrip
+        with:
+          sdk-repository: ${{ env.FXPLUG_SDK_REPOSITORY }}
+          sdk-version: ${{ env.FXPLUG_SDK_VERSION }}
+          sdk-deploy-key: ${{ secrets.FXPLUG_SDK_DEPLOY_KEY }}
+          fxfactory-repository: ${{ env.FXFACTORY_REPOSITORY }}
+          fxfactory-version: ${{ env.FXFACTORY_VERSION }}
+          fxfactory-deploy-key: ${{ secrets.FXFACTORY_SDK_DEPLOY_KEY }}
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Build documentation
+        run: |
+          set -o pipefail
+          xcodebuild docbuild \
+            -project FxGrip.xcodeproj \
+            -scheme FxGrip \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify --renderer github-actions

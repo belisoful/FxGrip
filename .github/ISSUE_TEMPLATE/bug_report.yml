@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a defect in FxGrip.
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happens, and what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps, code, or a failing test.
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host and version
+      placeholder: Final Cut Pro 11.1, Motion 5.9
+  - type: input
+    id: environment
+    attributes:
+      label: macOS, Xcode, and FxPlug SDK versions
+      placeholder: macOS 26.6, Xcode 27.0, FxPlug 4.3.5
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or crash report
+      render: text

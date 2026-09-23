@@ -1,0 +1,120 @@
+name: Set up FxGrip build environment
+description: >
+  Selects Xcode, installs Rosetta when an x86_64 run needs it, installs Apple's FxPlug SDK from
+  its private repository into /Library/Developer/SDKs/FxPlug.sdk, and installs the link-only
+  FxFactory.framework stub from its private repository into /Library/Frameworks.
+
+inputs:
+  sdk-repository:
+    description: Private repository whose tag v<version> holds FxPlugSDK.pkg at its root.
+    required: true
+  sdk-version:
+    description: FxPlug SDK version to install, e.g. 4.3.5. Selects the tag v<version>.
+    required: true
+  sdk-deploy-key:
+    description: Read-only SSH deploy key for the SDK repository.
+    required: true
+  fxfactory-repository:
+    description: Private repository whose tag v<version> holds the FxFactory.framework stub at its root.
+    required: true
+  fxfactory-version:
+    description: FxFactory stub version to install, e.g. 9.0.5. Selects the tag v<version>.
+    required: true
+  fxfactory-deploy-key:
+    description: Read-only SSH deploy key for the FxFactory stub repository.
+    required: true
+  xcode-version:
+    description: Xcode to select, e.g. 26.2. Empty selects the newest release Xcode on the runner.
+    required: false
+    default: ''
+  rosetta:
+    description: Install Rosetta 2 for x86_64 test runs.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Select Xcode
+      shell: bash
+      env:
+        XCODE_VERSION: ${{ inputs.xcode-version }}
+      run: |
+        set -euo pipefail
+        if [[ -n "$XCODE_VERSION" ]]; then
+          xcode="/Applications/Xcode_${XCODE_VERSION}.app"
+        else
+          # Newest release Xcode; beta and release-candidate bundles carry a suffix after the version.
+          xcode="$(ls -d /Applications/Xcode_*.app | grep -E '/Xcode_[0-9]+(\.[0-9]+)*\.app$' | sort -V | tail -n 1)"
+        fi
+        if [[ ! -d "$xcode" ]]; then
+          echo "::error::Xcode not found at $xcode. Available:" && ls -d /Applications/Xcode*.app
+          exit 1
+        fi
+        sudo xcode-select --switch "$xcode/Contents/Developer"
+        xcodebuild -version
+
+    - name: Install xcbeautify
+      shell: bash
+      run: command -v xcbeautify >/dev/null || brew install xcbeautify
+
+    - name: Install Rosetta 2
+      if: inputs.rosetta == 'true'
+      shell: bash
+      run: |
+        if /usr/bin/pgrep -q oahd; then
+          echo "Rosetta 2 is already installed."
+        else
+          sudo softwareupdate --install-rosetta --agree-to-license
+        fi
+
+    - name: Check out the FxPlug SDK
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.sdk-repository }}
+        ssh-key: ${{ inputs.sdk-deploy-key }}
+        path: .fxplug-sdk
+        ref: v${{ inputs.sdk-version }}
+        persist-credentials: false
+
+    - name: Install the FxPlug SDK
+      shell: bash
+      env:
+        SDK_VERSION: ${{ inputs.sdk-version }}
+      run: |
+        set -euo pipefail
+        pkg=".fxplug-sdk/FxPlugSDK.pkg"
+        if [[ ! -f "$pkg" ]]; then
+          echo "::error::$pkg is missing from tag v${SDK_VERSION} of the SDK repository."
+          exit 1
+        fi
+        sudo installer -pkg "$pkg" -target /
+        rm -rf .fxplug-sdk
+        test -f /Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/FxPlug.framework/Headers/FxPlugSDK.h
+        echo "FxPlug SDK ${SDK_VERSION} installed."
+
+    - name: Check out the FxFactory stub
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.fxfactory-repository }}
+        ssh-key: ${{ inputs.fxfactory-deploy-key }}
+        path: .fxfactory-sdk
+        ref: v${{ inputs.fxfactory-version }}
+        persist-credentials: false
+
+    - name: Install the FxFactory stub
+      shell: bash
+      env:
+        FXFACTORY_VERSION: ${{ inputs.fxfactory-version }}
+      run: |
+        set -euo pipefail
+        stub=".fxfactory-sdk/FxFactory.framework"
+        if [[ ! -f "$stub/Versions/A/FxFactory.tbd" ]]; then
+          echo "::error::$stub is missing from tag v${FXFACTORY_VERSION} of the FxFactory stub repository."
+          exit 1
+        fi
+        sudo mkdir -p /Library/Frameworks
+        sudo cp -R "$stub" /Library/Frameworks/
+        rm -rf .fxfactory-sdk
+        test -f /Library/Frameworks/FxFactory.framework/Headers/FxFactory.h
+        echo "FxFactory ${FXFACTORY_VERSION} stub installed."

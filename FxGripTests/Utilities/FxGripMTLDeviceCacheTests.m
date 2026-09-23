@@ -710,11 +710,20 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	XCTAssertNoThrow([scoped insertDebugCaptureBoundary]);
 #pragma clang diagnostic pop
+}
 
+/*! @abstract The residency-set messages on the wrapper reach the pooled queue. */
+- (void)testTheScopedQueueForwardsResidencySetMessages
+{
 	if (@available(macOS 15.0, *)) {
+		FxGripMTLCommandQueue *scoped = [FxGripMTLCommandQueue.alloc initWithDeviceCacheItem:self.item];
+		XCTAssertNotNil(scoped);
+
 		MTLResidencySetDescriptor *residencyDescriptor = MTLResidencySetDescriptor.new;
 		NSError *error = nil;
 		id<MTLResidencySet> residencySet = [self.device newResidencySetWithDescriptor:residencyDescriptor error:&error];
+		// The paravirtualized GPU of a macOS virtual machine answers nil with no error.
+		XCTSkipIf(residencySet == nil && error == nil, @"%@ vends no residency sets.", self.device.name);
 		XCTAssertNotNil(residencySet, @"%@", error);
 		id<MTLResidencySet> sets[1] = { residencySet };
 
@@ -722,6 +731,8 @@ static NSString * const kCommandQueueKey = @"CommandQueue";
 		XCTAssertNoThrow([scoped removeResidencySet:residencySet]);
 		XCTAssertNoThrow([scoped addResidencySets:sets count:1]);
 		XCTAssertNoThrow([scoped removeResidencySets:sets count:1]);
+	} else {
+		XCTSkip(@"Residency sets require macOS 15.");
 	}
 }
 
