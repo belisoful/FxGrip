@@ -2,6 +2,24 @@
 
 Developer tooling for the FxGrip project.
 
+## `make-fxfactory-stub.sh`
+
+Builds a link-only stub of `FxFactory.framework` for CI: the public headers, the module map, the
+Info.plist, and a text-based stub (`.tbd`) made with `tapi stubify` in place of the binary. FxGrip
+weak-links FxFactory, so a CI build compiles and links against the stub, and the FxFactory symbols
+resolve to NULL at runtime.
+
+```bash
+# Write build/FxFactory-stub/<version>/FxFactory.framework from the installed framework
+Scripts/make-fxfactory-stub.sh
+
+# Build the stub, then commit, tag v<version>, and push it to a clone of belisoful/FxFactory-SDK
+Scripts/make-fxfactory-stub.sh --publish ~/Code/FxFactory-SDK
+```
+
+To upgrade, update FxFactory, launch it once so it installs the new framework, run the script
+with `--publish`, and set the Actions variable `FXFACTORY_VERSION` to the new version.
+
 ## `pluginkit-manager.sh`
 
 A thin, developer-friendly wrapper around the macOS `pluginkit(8)` CLI for

@@ -1,0 +1,78 @@
+name: Dependency watch
+
+# Checks daily for an FxFactory release newer than the newest stub in the private FxFactory-SDK
+# repository, and opens an issue when one appears. Apple publishes FxPlug SDK versions only behind
+# an Apple Developer sign-in, so the FxPlug check runs outside GitHub Actions.
+
+on:
+  schedule:
+    - cron: '17 14 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  FXFACTORY_REPOSITORY: ${{ vars.FXFACTORY_REPOSITORY || 'belisoful/FxFactory-SDK' }}
+
+jobs:
+  fxfactory:
+    name: FxFactory
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find the newest release and the newest stub
+        id: versions
+        env:
+          DEPLOY_KEY: ${{ secrets.FXFACTORY_SDK_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          latest="$(curl -fsSL https://fxfactory.com/download/ \
+            | grep -oE 'files\.fxfactory\.com/fxfactory/FxFactory-[0-9]+(\.[0-9]+)+-[0-9]+\.zip' \
+            | sed -E 's/.*FxFactory-([0-9.]+)-[0-9]+\.zip/\1/' | sort -uV | tail -n 1)"
+          if [[ -z "$latest" ]]; then
+            echo "::error::No FxFactory release found on https://fxfactory.com/download/. The page layout may have changed."
+            exit 1
+          fi
+
+          key="$RUNNER_TEMP/fxfactory_deploy_key"
+          printf '%s\n' "$DEPLOY_KEY" > "$key"
+          chmod 600 "$key"
+          stubbed="$(GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            git ls-remote --tags --refs "git@github.com:${FXFACTORY_REPOSITORY}.git" 'v*' \
+            | sed -E 's|.*refs/tags/v||' | sort -V | tail -n 1)"
+          rm -f "$key"
+
+          newest="$(printf '%s\n%s\n' "$latest" "$stubbed" | sort -V | tail -n 1)"
+          echo "FxFactory release: $latest, newest stub: $stubbed"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "stubbed=$stubbed" >> "$GITHUB_OUTPUT"
+          if [[ "$latest" != "$stubbed" && "$newest" == "$latest" ]]; then
+            echo "outdated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "outdated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open an update issue
+        if: steps.versions.outputs.outdated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+          STUBBED: ${{ steps.versions.outputs.stubbed }}
+        run: |
+          set -euo pipefail
+          title="FxFactory ${LATEST} is available"
+          if gh issue list --state open --search "in:title \"${title}\"" --json title -q '.[].title' | grep -qxF "$title"; then
+            echo "An open issue already tracks ${title}."
+            exit 0
+          fi
+          gh issue create --title "$title" --body "$(cat <<EOF
+          FxFactory ${LATEST} is listed on https://fxfactory.com/download/. The newest CI stub is ${STUBBED}.
+
+          1. Update FxFactory and launch it once so it installs the new \`/Library/Frameworks/FxFactory.framework\`.
+          2. Run \`Scripts/make-fxfactory-stub.sh --publish <FxFactory-SDK clone>\`.
+          3. Set the Actions variable \`FXFACTORY_VERSION\` to \`${LATEST}\`, or update its default in \`.github/workflows/ci.yml\`.
+          4. Build FxGrip against the new framework and review header changes in \`FxGripFxFactory\`.
+          EOF
+          )"

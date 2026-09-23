@@ -40,6 +40,29 @@ Code is commit-ready only when every check below passes.
 3. `test` under **AddressSanitizer** (`-enableAddressSanitizer YES`)
 4. `docbuild` of the DocC catalog
 
+### Continuous integration
+
+`.github/workflows/ci.yml` runs the Full Check on GitHub Actions for every push to `main` and every
+pull request. `.github/actions/setup-fxgrip` selects Xcode and installs two dependencies that
+cannot enter this public repository, each from a private repository through its own read-only
+deploy key:
+
+- `belisoful/FxPlug-SDK` → Apple's `FxPlugSDK.pkg` at the root of tag `v<version>`, secret
+	`FXPLUG_SDK_DEPLOY_KEY`, version from the `FXPLUG_SDK_VERSION` Actions variable.
+- `belisoful/FxFactory-SDK` → a link-only `FxFactory.framework` stub (headers, module map, `.tbd`)
+	at the root of tag `v<version>`, installed into `/Library/Frameworks`, secret
+	`FXFACTORY_SDK_DEPLOY_KEY`, version from the `FXFACTORY_VERSION` Actions variable.
+
+`FxGripFxFactory.h` imports `<FxFactory/FxFactory.h>` and the target weak-links FxFactory, so every
+build needs the framework headers. `Scripts/make-fxfactory-stub.sh --publish <clone>` builds the
+stub from the installed framework and publishes it as a new tag. Fork pull requests receive no
+secrets, so their macOS jobs skip.
+
+`.github/workflows/dependency-watch.yml` checks fxfactory.com daily and opens an issue when an
+FxFactory release is newer than the newest stub. FxPlug SDK releases are listed only behind an
+Apple Developer sign-in, so the scheduled Claude task `fxplug-sdk-version-check` reads the
+downloads page weekly in the in-app browser and opens an issue for a newer SDK.
+
 ### Diagnostic build flags
 
 Off by default. Each is opt-in through the target's preprocessor macros and compiles out of a
@@ -56,6 +79,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 ## SDK and Host Requirements
 
 - **FxPlug SDK** — the project links `FxPlug.framework` from `/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/`. The FxPlug 4 SDK must be installed at that path to build.
+- **FxFactory.framework** — weak-linked from `/Library/Frameworks/` (installed by the FxFactory app); `FxGripFxFactory.h` imports its header.
 - **PluginManager.framework** — linked from `/Library/Developer/Frameworks/` (installed by the FxPlug SDK / Pro Apps).
 - **Deployment target** — macOS 13.5 (framework target); build with a current Xcode.
 - **No private Apple APIs** — plugins that ship this framework must not call private methods in Apple's APIs; FxPlug hosts (Final Cut Pro, Motion) run plugins out-of-process and Apple validates behavior.
@@ -79,6 +103,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 - `FxGrip.xctestplan` — Test plan configuration (parallelizable)
 - `Frameworks/` — vendored binary frameworks (see below)
 - `Information/` — reference material (FCP preset XML samples)
+- `.github/` — CI workflow, the `setup-fxgrip` composite action, issue and pull request templates, Dependabot
 
 ### Vendored: BEFoundation.framework
 
@@ -195,3 +220,4 @@ Required without exception:
 - **NEVER** run `rm` on any path without developer approval first.
 - **NEVER** erase or overwrite files for the task of unit testing — the changes being tested must be preserved.
 - **NEVER** delete a file or folder until its associated task is completely finished.
+- **NEVER** add Claude attribution (a `Co-Authored-By: Claude` trailer or a "Generated with Claude Code" line) to any commit, tag, or pull request, in this repository or any other.
