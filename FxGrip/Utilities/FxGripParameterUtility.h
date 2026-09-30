@@ -58,7 +58,8 @@
 + (NSDictionary<NSNumber*, NSString*>*_Nonnull)valueFlags;
 
 // Convert types to strings and strings to types
-/*! The FxParameterType for a type string; the unknown type when the string is nil or unmatched. */
+/*! The FxParameterType for a type string. An unlisted four-character ASCII string decodes as its
+	FourCC; any other unmatched string, or nil, gives FxParameterType_None. */
 + (FxParameterType)parameterTypeFromString:(NSString*_Nullable)type;
 /*! The type string for an FxParameterType, or nil when the type has no name. */
 + (NSString* _Nullable)parameterTypeString:(FxParameterType)type;

@@ -83,7 +83,7 @@
 	@method		parameterTypeFromString:
 	@abstract	The FxParameterType for a type string.
 	@discussion	Introduced in FxGrip 0.1.0. A known lowercase name maps through the table. A
-				four-character name that names no entry decodes as its big-endian FourCC.
+				four-character ASCII name that names no entry decodes as its big-endian FourCC.
 				Otherwise the result is FxParameterType_None. */
 + (FxParameterType)parameterTypeFromString:(NSString* _Nullable)type
 {
@@ -93,10 +93,22 @@
 			return result.intValue;
 		}
 		if (type.length == 4) {
-			return (FxParameterType)CFSwapInt32BigToHost(*(UInt32 *)[type cStringUsingEncoding:NSASCIIStringEncoding]);
+			return [self parameterTypeFromFourCharacterCode:type];
 		}
 	}
 	return FxParameterType_None;
+}
+
+/*! The big-endian FourCC of a four-character ASCII string; FxParameterType_None for any other text. */
++ (FxParameterType)parameterTypeFromFourCharacterCode:(NSString *)type
+{
+	char characters[5];
+	if (![type getCString:characters maxLength:sizeof(characters) encoding:NSASCIIStringEncoding]) {
+		return FxParameterType_None;
+	}
+	UInt32 code = 0;
+	memcpy(&code, characters, sizeof(code));
+	return (FxParameterType)CFSwapInt32BigToHost(code);
 }
 
 

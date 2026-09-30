@@ -674,6 +674,20 @@ static NSDictionary *FxGripTPRenamePreset(NSString *name)
 	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:nil], FxParameterType_None);
 }
 
+/*! @abstract A four-character code decodes big-endian, so the first character is the high byte. */
+- (void)testParameterTypeFromStringDecodesAFourCharacterCodeBigEndian
+{
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:@"abcd"], (FxParameterType)'abcd');
+}
+
+/*! @abstract A four-character name outside ASCII is None, including one a surrogate pair fills. */
+- (void)testParameterTypeFromStringIsNoneForANonASCIIFourCharacterName
+{
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:@"ñabc"], FxParameterType_None);
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:@"ab€d"], FxParameterType_None);
+	XCTAssertEqual([FxGripParameterUtility parameterTypeFromString:@"😀ab"], FxParameterType_None);
+}
+
 #pragma mark - Flag Conversion
 
 /*! @abstract convertToFlag: names a single-bit flag and is nil for zero or a multi-bit mask. */
