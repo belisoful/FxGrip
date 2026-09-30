@@ -36,15 +36,15 @@
 				plugin ID) triple; items are created on first request and dropped when Metal
 				reports the device's removal.
 
-				Every method is safe to call from concurrent render threads. The cache guards its
-				item list and library dictionary with one lock; each item guards its command-queue
-				pool and pipeline-state dictionary separately. Callers never hold a cache lock
-				while a Metal command buffer executes.
+	Every method is safe to call from concurrent render threads. The cache guards its
+	item list and library dictionary with one lock; each item guards its command-queue
+	pool and pipeline-state dictionary separately. Callers never hold a cache lock
+	while a Metal command buffer executes.
 
-				A command queue obtained from `+commandQueueForImageTile:` must be handed back
-				through `+returnCommandQueue:` or `-returnCommandQueueToCache:` once its command
-				buffer is committed. `+scopedCommandQueueForImageTile:` returns a
-				`FxGripMTLCommandQueue` wrapper that performs the hand-back on dealloc.
+	A command queue obtained from `+commandQueueForImageTile:` must be handed back
+	through `+returnCommandQueue:` or `-returnCommandQueueToCache:` once its command
+	buffer is committed. `+scopedCommandQueueForImageTile:` returns a
+	`FxGripMTLCommandQueue` wrapper that performs the hand-back on dealloc.
 */
 @interface FxGripMTLDeviceCache : NSObject <BESingleton>
 {
@@ -220,13 +220,13 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 				when a descriptor supplies one. A lookup that yields no function is not cached.
 				All methods are safe to call concurrently.
 
-				Asynchronous requests for one name share one compile: the first caller starts it
-				and every caller's completion handler runs when it finishes, with the function or
-				the error. A synchronous request for a name whose asynchronous compile is in flight
-				compiles on the calling thread and returns its own result.
+	Asynchronous requests for one name share one compile: the first caller starts it
+	and every caller's completion handler runs when it finishes, with the function or
+	the error. A synchronous request for a name whose asynchronous compile is in flight
+	compiles on the calling thread and returns its own result.
 
-				Any other `MTLLibrary` message, including a member a newer SDK adds, is forwarded to
-				the wrapped library.
+	Any other `MTLLibrary` message, including a member a newer SDK adds, is forwarded to
+	the wrapped library.
 */
 @interface FxGripMTLLibraryCache : NSObject <MTLLibrary>
 {
@@ -366,13 +366,13 @@ API_AVAILABLE(macos(15.0), ios(18.0));
 				queues and grows when every pooled queue is checked out. Pipeline states are keyed
 				by vertex and fragment function names. All methods are safe to call concurrently.
 
-				The default library is the `default.metallib` of the process's main bundle. An
-				FxPlug plugin runs in its own XPC service, which is that main bundle, so the
-				default library holds the plugin's shaders. FxGrip's own shaders live in the
-				framework bundle and are not in it. In a unit-test process the main bundle is
-				`xctest`, the default library is nil, and the pipeline-state methods that take no
-				library answer nil; pass a library explicitly there. Every pipeline-state method
-				also answers nil when a function fails to load or the state fails to compile.
+	The default library is the `default.metallib` of the process's main bundle. An
+	FxPlug plugin runs in its own XPC service, which is that main bundle, so the
+	default library holds the plugin's shaders. FxGrip's own shaders live in the
+	framework bundle and are not in it. In a unit-test process the main bundle is
+	`xctest`, the default library is nil, and the pipeline-state methods that take no
+	library answer nil; pass a library explicitly there. Every pipeline-state method
+	also answers nil when a function fails to load or the state fails to compile.
 */
 @interface FxGripMTLDeviceCacheItem : NSObject
 

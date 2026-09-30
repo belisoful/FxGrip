@@ -38,10 +38,10 @@ simd_float4x4 FxGripProjectionMatrixFromFrustum(double left, double right,
 				near and far clip planes. `fxg_setProjectionFromFrustumLeft:...` installs the exact
 				host projection when an asymmetric or otherwise non-standard frustum requires it.
 
-				The camera node transform (camera-to-world) is the caller's responsibility, built from
-				the host view matrix, because converting the host `FxMatrix44` (double, row-major) into
-				the SceneKit column-vector convention and inverting it belongs with the effect that
-				reads the host state.
+	The camera node transform (camera-to-world) is the caller's responsibility, built from
+	the host view matrix, because converting the host `FxMatrix44` (double, row-major) into
+	the SceneKit column-vector convention and inverting it belongs with the effect that
+	reads the host state.
 */
 @interface SCNCamera (FxGrip)
 

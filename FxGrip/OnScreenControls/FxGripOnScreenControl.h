@@ -43,26 +43,26 @@ FOUNDATION_EXPORT const simd_float4 kFxGripOSCShadowColor;
 				`supportedPlugins`); an effect's registration dictionary lists its OSC
 				UUIDs under the `"osc"` key and the registrar wires `supportedPlugins`.
 
-				The base implements the whole FxOnScreenControl_v4 surface:
-				- `drawOSCWithWidth:...` runs the Metal scaffold (command queue, render
-				  pass, the FxGrip OSC pipeline from the framework's shader library)
-				  and calls `drawOSC:commandEncoder:canvasSize:activePart:atTime:`.
-				- `hitTestOSCAtMousePositionX:...` converts the mouse to object space
-				  and calls `hitTestObjectPoint:canvasPoint:atTime:`.
-				- The mouse methods track the last object-space position and route a
-				  drag's object-space delta to
-				  `dragActivePart:toObjectPoint:objectDelta:modifiers:atTime:`,
-				  repeating the final delta on mouse-up.
-				- Key and mouse-moved events default to unhandled no-ops.
+	The base implements the whole FxOnScreenControl_v4 surface:
+	- `drawOSCWithWidth:...` runs the Metal scaffold (command queue, render
+	  pass, the FxGrip OSC pipeline from the framework's shader library)
+	  and calls `drawOSC:commandEncoder:canvasSize:activePart:atTime:`.
+	- `hitTestOSCAtMousePositionX:...` converts the mouse to object space
+	  and calls `hitTestObjectPoint:canvasPoint:atTime:`.
+	- The mouse methods track the last object-space position and route a
+	  drag's object-space delta to
+	  `dragActivePart:toObjectPoint:objectDelta:modifiers:atTime:`,
+	  repeating the final delta on mouse-up.
+	- Key and mouse-moved events default to unhandled no-ops.
 
-				A subclass either overrides those hooks directly, or adds
-				FxGripOSCPart instances (`addPart:`): the default hooks hit-test the
-				parts (topmost first), draw them (selected when the active part
-				matches), and route drags to the active part.
+	A subclass either overrides those hooks directly, or adds
+	FxGripOSCPart instances (`addPart:`): the default hooks hit-test the
+	parts (topmost first), draw them (selected when the active part
+	matches), and route drags to the active part.
 
-				Parameter writes go through the wrapped setting APIs without
-				startAction/endAction bracketing; the host expects parameter changes
-				from an on-screen control.
+	Parameter writes go through the wrapped setting APIs without
+	startAction/endAction bracketing; the host expects parameter changes
+	from an on-screen control.
 */
 @interface FxGripOnScreenControl : NSObject <FxOnScreenControl_v4>
 

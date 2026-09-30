@@ -30,11 +30,11 @@
 				parameter so the layer contributes nothing to the analyzed frame, which keeps
 				host-drawn overlays (for example Final Cut Pro titles) out of the analysis.
 
-				Creation adds the disabled and not-animatable flags: the value is framework
-				driven, not user edited. The parameter is published so other parameters can
-				link to it; the driver that lowers it during analysis pairs with the object
-				tracker and the [[fxgrip-frame-analysis]] pass. This mirrors the FxFactory
-				Tracking Opacity parameter.
+	Creation adds the disabled and not-animatable flags: the value is framework
+	driven, not user edited. The parameter is published so other parameters can
+	link to it; the driver that lowers it during analysis pairs with the object
+	tracker and the [[fxgrip-frame-analysis]] pass. This mirrors the FxFactory
+	Tracking Opacity parameter.
 */
 @interface FxGripTrackingOpacityParameter : FxGripPercentParameter
 

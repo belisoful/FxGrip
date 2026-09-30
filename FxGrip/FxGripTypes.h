@@ -238,13 +238,13 @@ typedef NS_ENUM(NSUInteger, FxGripPresetSource) {
 	@enum		FxGripDepthType
 	@abstract	How a gradient's sample depth is expressed.
 	@discussion	Introduced in FxGrip 0.1.0.
-	@constant	FxGripDepthTypeNone		No depth is specified.
-	@constant	FxGripDepthTypeFxDepth	The depth is an FxDepth constant.
-	@constant	FxGripDepthTypeBytes	The depth is a byte count per component.
 */
 typedef enum {
+	/*! No depth is specified. */
 	FxGripDepthTypeNone = 0,
+	/*! The depth is an FxDepth constant. */
 	FxGripDepthTypeFxDepth = 1,
+	/*! The depth is a byte count per component. */
 	FxGripDepthTypeBytes = 2
 } FxGripDepthType;
 

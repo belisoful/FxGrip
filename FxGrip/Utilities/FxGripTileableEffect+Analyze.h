@@ -29,11 +29,11 @@
 				(an FxGripFrameData held by the auto-loaded FxGripAnalysis extension), and
 				reads it back at render.
 
-				A subclass overrides `analyzeImageTile:atTime:frameIndex:error:` to compute
-				the per-frame record and, at render, calls `analysisRecordAtTime:` to read
-				the analyzed value for the current time. The pass is started from a
-				parameter action through `startForwardAnalysisAtLocation:error:` or its
-				backward variant.
+	A subclass overrides `analyzeImageTile:atTime:frameIndex:error:` to compute
+	the per-frame record and, at render, calls `analysisRecordAtTime:` to read
+	the analyzed value for the current time. The pass is started from a
+	parameter action through `startForwardAnalysisAtLocation:error:` or its
+	backward variant.
 */
 @interface FxGripTileableEffect (Analyze)
 

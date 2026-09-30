@@ -60,12 +60,12 @@ typedef struct {
 				is the region the on-screen control places; the frame-indexed samples are the
 				analysis output the pass writes.
 
-				Samples are sparse. `latestSampleAtOrBeforeFrame:` serves a seek to a frame
-				the pass has not written by holding the last known result forward.
-				`transform:atFrame:` resolves a sample to a location, rotation, and size,
-				averaging the bounding box across a `smoothing`-frame window when smoothing is
-				set. This is the direct-access half of the tracker's data API; the effect
-				exposes the same result by time.
+	Samples are sparse. `latestSampleAtOrBeforeFrame:` serves a seek to a frame
+	the pass has not written by holding the last known result forward.
+	`transform:atFrame:` resolves a sample to a location, rotation, and size,
+	averaging the bounding box across a `smoothing`-frame window when smoothing is
+	set. This is the direct-access half of the tracker's data API; the effect
+	exposes the same result by time.
 */
 @interface FxGripObjectTrackerData : NSObject <NSSecureCoding, NSCopying>
 

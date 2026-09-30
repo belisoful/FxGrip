@@ -62,9 +62,9 @@ typedef NS_ENUM(NSInteger, FxGripObjectTrackerLevel) {
 				sample. The tracker feeds each result forward as the next frame's input
 				observation, so frames are supplied in temporal order.
 
-				This is the engine seam the Object Tracker parameter drives from the FxGrip
-				analysis pass. It consumes the same CIImage the pass already builds from an
-				FxImageTile's IOSurface, so no extra image plumbing is required.
+	This is the engine seam the Object Tracker parameter drives from the FxGrip
+	analysis pass. It consumes the same CIImage the pass already builds from an
+	FxImageTile's IOSurface, so no extra image plumbing is required.
 */
 @interface FxGripObjectTracker : NSObject
 

@@ -12,15 +12,15 @@
 	            the particles, evaluates the force, and adds the resulting acceleration to their
 	            velocity. Setting a disabled configuration or nil removes it.
 
-	            The force reads the system's `particleMass` and `particleCharge` as the per-particle
-	            mass and charge, since SceneKit holds those as system constants. Gravity uses the mass,
-	            electric and magnetic use the charge and velocity.
+	The force reads the system's `particleMass` and `particleCharge` as the per-particle
+	mass and charge, since SceneKit holds those as system constants. Gravity uses the mass,
+	electric and magnetic use the charge and velocity.
 
-	            The modifier is installed at the pre-dynamics stage, which the interaction reserves;
-	            adding other pre-dynamics modifiers to a system that carries an interaction is not
-	            supported, because removal clears the stage. This is a deliberate use of a direct
-	            property name on an Apple class, per the project's decision to waive that rule for the
-	            particle interaction API.
+	The modifier is installed at the pre-dynamics stage, which the interaction reserves;
+	adding other pre-dynamics modifiers to a system that carries an interaction is not
+	supported, because removal clears the stage. This is a deliberate use of a direct
+	property name on an Apple class, per the project's decision to waive that rule for the
+	particle interaction API.
 */
 
 #ifndef SCNParticleSystem_FxGripInteraction_h

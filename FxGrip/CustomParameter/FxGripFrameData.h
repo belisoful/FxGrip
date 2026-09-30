@@ -43,27 +43,27 @@ static const NSInteger kFxGripFrameDataNeverSpill = -1;
 				rates, the instance UUID, the spill threshold) ride alongside and
 				persist with the store.
 
-				Storage is size-gated. A record whose secure-coded archive exceeds
-				`spillThreshold` is written to
-				`<cacheURL>/<instanceUUID>/<index>.fxframe` and a small marker takes its
-				place in the parameter, so the host document carries only the manifest;
-				smaller records stay inline. `cacheURL` is machine-local state the
-				owner configures after decode and is never encoded; without it nothing
-				spills and everything stays inline. A document opened where the cache
-				files are absent returns nil for spilled records, and the caller
-				re-simulates.
+	Storage is size-gated. A record whose secure-coded archive exceeds
+	`spillThreshold` is written to
+	`<cacheURL>/<instanceUUID>/<index>.fxframe` and a small marker takes its
+	place in the parameter, so the host document carries only the manifest;
+	smaller records stay inline. `cacheURL` is machine-local state the
+	owner configures after decode and is never encoded; without it nothing
+	spills and everything stays inline. A document opened where the cache
+	files are absent returns nil for spilled records, and the caller
+	re-simulates.
 
-				The spill home is the PROJECT MEDIA FOLDER
-				(attachProjectMediaCacheForEffect:), which the host deletes with its
-				project and carries with collected media. A user-domain folder is
-				deliberately not a fallback: nothing ever clears it. Without a media
-				folder the store spills nothing.
+	The spill home is the PROJECT MEDIA FOLDER
+	(attachProjectMediaCacheForEffect:), which the host deletes with its
+	project and carries with collected media. A user-domain folder is
+	deliberately not a fallback: nothing ever clears it. Without a media
+	folder the store spills nothing.
 
-				Frame N depending only on frame N-1 means eviction is safe: any prefix
-				of stored records may be removed and re-derived from the latest earlier
-				record.
+	Frame N depending only on frame N-1 means eviction is safe: any prefix
+	of stored records may be removed and re-derived from the latest earlier
+	record.
 
-				The class does not interpolate; host keyframing blends nothing.
+	The class does not interpolate; host keyframing blends nothing.
 */
 @interface FxGripFrameData : FxGripDictionary
 

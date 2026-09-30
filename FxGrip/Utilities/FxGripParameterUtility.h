@@ -92,10 +92,10 @@
 				its target-preset definition; a string definition resolves through
 				`pluginPresets`.
 
-				The preset's sections rewrite the configurations in place: `names` sets
-				`name`, `flags` and `tags` apply `+`/`-` entries to the string arrays, and
-				`values` writes each target's `default` according to its type. An index
-				that names no entry applies nothing; this path has no `default` fallback.
+	The preset's sections rewrite the configurations in place: `names` sets
+	`name`, `flags` and `tags` apply `+`/`-` entries to the string arrays, and
+	`values` writes each target's `default` according to its type. An index
+	that names no entry applies nothing; this path has no `default` fallback.
 	@param      parameters      The flattened configurations, mutated in place.
 	@param      pluginPresets   The plugin's preset table, resolving string definitions.
 */

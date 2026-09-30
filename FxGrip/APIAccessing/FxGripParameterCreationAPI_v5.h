@@ -27,10 +27,10 @@
 				pushes the group ID onto subGroupStack and endParameterSubGroup pops it, so the
 				parent ID travels with each parameter.
 
-				Every add method answers YES when the host accepted the parameter, and NO when
-				an observer rejected it or the host refused it. Each takes the parameter's
-				display name, its ID, and its flags; the remaining arguments configure the
-				control.
+	Every add method answers YES when the host accepted the parameter, and NO when
+	an observer rejected it or the host refused it. Each takes the parameter's
+	display name, its ID, and its flags; the remaining arguments configure the
+	control.
 */
 
 @interface FxGripParameterCreationAPI_v5 : FxGripCommonAPI<FxParameterCreationAPI_v5>

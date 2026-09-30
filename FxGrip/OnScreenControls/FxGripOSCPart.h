@@ -28,19 +28,19 @@
 				family's documented inclusion order, counting only the parts the
 				flags include; read partID off the returned parts when handles are
 				optional.
-	@constant   FxGripOSCShapeOptionBody           The shape body that hit-tests and drags the whole shape.
-	@constant   FxGripOSCShapeOptionCornerHandles  Resize handles on the four corners.
-	@constant   FxGripOSCShapeOptionVertexHandles  A point handle on each vertex.
-	@constant   FxGripOSCShapeOptionRadiusHandle   A handle on a circle's rim that sets the radius.
-	@constant   FxGripOSCShapeOptionRotationHandle A rotation handle, omitted when the angle parameter is 0.
-	@constant   FxGripOSCShapeOptionTangentHandles Tangent handles on the Bézier-family vertices.
 */
 typedef NS_OPTIONS(NSUInteger, FxGripOSCShapeOptions) {
+	/*! The shape body that hit-tests and drags the whole shape. */
 	FxGripOSCShapeOptionBody			= 1 << 0,
+	/*! Resize handles on the four corners. */
 	FxGripOSCShapeOptionCornerHandles	= 1 << 1,
+	/*! A point handle on each vertex. */
 	FxGripOSCShapeOptionVertexHandles	= 1 << 2,
+	/*! A handle on a circle's rim that sets the radius. */
 	FxGripOSCShapeOptionRadiusHandle	= 1 << 3,
+	/*! A rotation handle, omitted when the angle parameter is 0. */
 	FxGripOSCShapeOptionRotationHandle	= 1 << 4,
+	/*! Tangent handles on the Bézier-family vertices. */
 	FxGripOSCShapeOptionTangentHandles	= 1 << 5,
 
 	FxGripOSCShapeOptionsAll			= NSUIntegerMax,
@@ -281,9 +281,9 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 				frame. A hit is any pointer inside the rotated box; a drag moves the
 				center. angleParameterID 0 leaves the box axis-aligned.
 
-				boxPartsWithBodyID:... composes the body, four
-				FxGripOSCBoxCornerPart resize handles, and an FxGripOSCAngleDialPart
-				rotation spoke on the center.
+	boxPartsWithBodyID:... composes the body, four
+	FxGripOSCBoxCornerPart resize handles, and an FxGripOSCAngleDialPart
+	rotation spoke on the center.
 */
 @interface FxGripOSCBoxPart : FxGripOSCPart
 
@@ -339,14 +339,14 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 				its local frame, writing the width and height parameters. Modifiers
 				follow Final Cut Pro:
 
-				- The default anchors the diagonally opposite corner: it stays put
-				  while the center parameter shifts to follow the resize.
-				- Holding Option anchors the fixed center instead, resizing
-				  symmetrically; the center and angle do not change.
-				- Holding Shift locks the resize to the box's aspect ratio, scaling
-				  both dimensions by the dominant axis.
+	- The default anchors the diagonally opposite corner: it stays put
+	  while the center parameter shifts to follow the resize.
+	- Holding Option anchors the fixed center instead, resizing
+	  symmetrically; the center and angle do not change.
+	- Holding Shift locks the resize to the box's aspect ratio, scaling
+	  both dimensions by the dominant axis.
 
-				The angle never changes.
+	The angle never changes.
 */
 @interface FxGripOSCBoxCornerPart : FxGripOSCPart
 
@@ -391,9 +391,9 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 				within hitRadius canvas pixels of the segment; a drag moves both
 				endpoint parameters by the drag's object-space delta.
 
-				gradientPartsWithLineID:... composes the full control: the line body
-				plus a point handle on each endpoint. The handles are listed after
-				the body, so they win overlapping hits.
+	gradientPartsWithLineID:... composes the full control: the line body
+	plus a point handle on each endpoint. The handles are listed after
+	the body, so they win overlapping hits.
 */
 @interface FxGripOSCLinePart : FxGripOSCPart
 
@@ -646,8 +646,8 @@ typedef NS_ENUM(NSInteger, FxGripOSCRectCorner) {
 				hitRadius canvas pixels of a segment; a drag moves every point
 				parameter by the drag's object-space delta.
 
-				polylinePartsWithBodyID:... composes the body with a point handle on
-				each vertex, so the whole control is one addParts: call.
+	polylinePartsWithBodyID:... composes the body with a point handle on
+	each vertex, so the whole control is one addParts: call.
 */
 @interface FxGripOSCPolylinePart : FxGripOSCPart
 

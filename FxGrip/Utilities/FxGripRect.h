@@ -12,8 +12,8 @@
 	            tests bounds reimplements this. These functions supply union, intersection,
 	            containment, and the CGRect bridge once.
 
-	            Intersection and the empty result use the canonical empty rectangle
-	            `{ 0, 0, 0, 0 }`. Union treats an empty operand as absent and returns the other.
+	Intersection and the empty result use the canonical empty rectangle
+	`{ 0, 0, 0, 0 }`. Union treats an empty operand as absent and returns the other.
 */
 
 #ifndef FxGripRect_h

@@ -13,28 +13,28 @@
 	            the sources; the field evaluator queries that expansion at each target point. Building
 	            is O(N) and each query is a single tree walk.
 
-	            Use it in two steps: create the field with
-	            `particleInteractionFieldWithInteraction:`, assign it to a node's `physicsField`, and
-	            bind each contributing particle system with
-	            `bindParticleInteractionToParticleSystem:`. Binding sets `affectedByPhysicsFields` on
-	            the system and installs the companion modifier at the pre-dynamics stage.
+	Use it in two steps: create the field with
+	`particleInteractionFieldWithInteraction:`, assign it to a node's `physicsField`, and
+	bind each contributing particle system with
+	`bindParticleInteractionToParticleSystem:`. Binding sets `affectedByPhysicsFields` on
+	the system and installs the companion modifier at the pre-dynamics stage.
 
-	            The field carries the standard `SCNPhysicsField` controls, so `halfExtent`, `scope`,
-	            `categoryBitMask`, and `active` all apply. SceneKit also offers the field to rigid
-	            bodies in range, and it divides the returned vector by a body's mass while applying it
-	            to a particle unchanged. The vector is therefore the particle acceleration, and a rigid
-	            body feels that vector divided by its own mass. Restrict the field with
-	            `categoryBitMask` when only particles should respond.
+	The field carries the standard `SCNPhysicsField` controls, so `halfExtent`, `scope`,
+	`categoryBitMask`, and `active` all apply. SceneKit also offers the field to rigid
+	bodies in range, and it divides the returned vector by a body's mass while applying it
+	to a particle unchanged. The vector is therefore the particle acceleration, and a rigid
+	body feels that vector divided by its own mass. Restrict the field with
+	`categoryBitMask` when only particles should respond.
 
-	            The modifier gathers the source positions in the particle system's simulation space,
-	            and the evaluator receives its target position in world space. A system simulates in
-	            world space unless `local` is set, so leave `local` clear on a bound system.
+	The modifier gathers the source positions in the particle system's simulation space,
+	and the evaluator receives its target position in world space. A system simulates in
+	world space unless `local` is set, so leave `local` clear on a bound system.
 
-	            The pre-dynamics stage is reserved for the companion modifier, so a bound system must
-	            not carry other pre-dynamics modifiers, and must not also carry its own
-	            `particleInteraction`, which would apply the force twice. The direct method names on an
-	            Apple class are deliberate, per the project's decision to waive that rule for the
-	            particle interaction API.
+	The pre-dynamics stage is reserved for the companion modifier, so a bound system must
+	not carry other pre-dynamics modifiers, and must not also carry its own
+	`particleInteraction`, which would apply the force twice. The direct method names on an
+	Apple class are deliberate, per the project's decision to waive that rule for the
+	particle interaction API.
 */
 
 #ifndef SCNPhysicsField_FxGripInteraction_h

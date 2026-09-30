@@ -10,14 +10,14 @@
 	            deterministic re-simulation stays affordable. It has no SceneKit or Objective-C
 	            dependency; the categories that install it on a particle system live elsewhere.
 
-	            The scalar entry point evaluates the softened Laplace field for gravity and electric
-	            forces. The Biot-Savart entry point evaluates the magnetic field of moving charges. A
-	            direct O(N²) reference for each has identical semantics and backs the accuracy tests.
+	The scalar entry point evaluates the softened Laplace field for gravity and electric
+	forces. The Biot-Savart entry point evaluates the magnetic field of moving charges. A
+	direct O(N²) reference for each has identical semantics and backs the accuracy tests.
 
-	            Inputs are structure-of-arrays of single-precision floats. The caller folds the
-	            per-receiver coupling (the gravitational constant times receiver mass, or the electric
-	            constant times receiver charge) after the field is returned, so one evaluation serves
-	            gravity and electric alike.
+	Inputs are structure-of-arrays of single-precision floats. The caller folds the
+	per-receiver coupling (the gravitational constant times receiver mass, or the electric
+	constant times receiver charge) after the field is returned, so one evaluation serves
+	gravity and electric alike.
 */
 
 #ifndef FxGripFMM_h
@@ -113,11 +113,11 @@ void FxGripFMMEvaluateBiotSavart(FxGripFMMContext *context, const FxGripFMMParam
 	            handle holds the tree, the multipole expansions, and the local expansions of a set of
 	            sources; evaluate it at any point, in any order.
 
-	            The build runs the same dual-tree traversal as the batch evaluator, so every leaf ends
-	            up with the local expansion of the whole far field and a list of the near leaves the
-	            multipole could not cover. A query is then one local evaluation plus that leaf's near
-	            sum, at the same accuracy as the batch evaluator. A point outside the tree, or in an
-	            octant that holds no sources, falls back to a walk from the root.
+	The build runs the same dual-tree traversal as the batch evaluator, so every leaf ends
+	up with the local expansion of the whole far field and a list of the near leaves the
+	multipole could not cover. A query is then one local evaluation plus that leaf's near
+	sum, at the same accuracy as the batch evaluator. A point outside the tree, or in an
+	octant that holds no sources, falls back to a walk from the root.
 */
 typedef struct FxGripFMMField FxGripFMMField;
 

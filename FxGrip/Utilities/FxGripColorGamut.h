@@ -13,9 +13,9 @@
 	            from each gamut's primary chromaticities against a D65 white, so the luminance
 	            row agrees with the published weights.
 
-	            Matrices are simd_float3x3 in simd's column-major layout: `simd_mul(matrix, rgb)`
-	            transforms a column vector. FxGripColorMatrixMakeRowMajor builds one from the
-	            row-major form a reference matrix is usually written in.
+	Matrices are simd_float3x3 in simd's column-major layout: `simd_mul(matrix, rgb)`
+	transforms a column vector. FxGripColorMatrixMakeRowMajor builds one from the
+	row-major form a reference matrix is usually written in.
 */
 
 #ifndef FxGripColorGamut_h

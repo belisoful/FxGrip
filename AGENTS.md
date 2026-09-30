@@ -184,9 +184,12 @@ _Banned constructions_:
 The build enables `-Wdocumentation` and `-Wdocumentation-unknown-command`, so a doc comment
 attached to a declaration must use only tags clang recognizes. HeaderDoc tags clang does not know —
 `@field`, `@group`, `@description`, `@default` — warn; use `@discussion` with a markdown list
-instead. A markdown list inside `@discussion` must sit at a single tab: the tab + 12-space
-continuation indent used elsewhere is past markdown's four-space threshold, so the list renders as
-a code block and its items are dropped. Read the generated page, not just the warning count. A file block that lands directly before a declaration is parsed as that declaration's
+instead. The first paragraph of a tag keeps the aligned continuation indent. Every paragraph or
+list that follows a blank line sits at the tag column (a single tab), with a list item's wrapped
+lines at a tab plus two spaces. The aligned indent is past markdown's four-space threshold, so a
+later paragraph there renders as a code block, and consecutive indented paragraphs merge into one.
+DocC drops `@constant` lines and renders their wrapped lines as code, so each enum case carries its
+own `/*! ... */` comment instead. Read the generated page, not just the warning count. A file block that lands directly before a declaration is parsed as that declaration's
 documentation, which is why the `*Library.m` fragments give their first method its own block. The
 `FxPlugStub` target opts out, because it mirrors Apple's headers verbatim.
 

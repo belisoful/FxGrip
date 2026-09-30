@@ -29,11 +29,11 @@
 				subtitle, text color, and corner radius. The strip sizes its height to the
 				text plus padding.
 
-				Image mode (FxGrip 0.1.0): a resolvable image name draws a graphic above the
-				text. A template image is tinted by the text color so a black-with-alpha
-				graphic adapts to a light or dark UI. A link URL makes the banner clickable;
-				an action button shows a companion control that opens the same link. The keys
-				are declared in FxGripBanner.h.
+	Image mode (FxGrip 0.1.0): a resolvable image name draws a graphic above the
+	text. A template image is tinted by the text color so a black-with-alpha
+	graphic adapts to a light or dark UI. A link URL makes the banner clickable;
+	an action button shows a companion control that opens the same link. The keys
+	are declared in FxGripBanner.h.
 */
 @interface FxGripBannerView : NSView <FxGripCustomViewDataDelegate>
 

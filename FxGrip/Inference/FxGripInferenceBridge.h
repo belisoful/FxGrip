@@ -33,11 +33,11 @@ NS_ASSUME_NONNULL_BEGIN
 				InferKit is absent, isInferKitAvailable is NO and the bridge methods return nil, so
 				the effect keeps its own backend.
 
-				The bridge converts an FxGripInferenceRequest to an InferKit request, runs the
-				InferKit backend synchronously, and wraps the InferKit result's outputs in an
-				FxGripInferenceResult. The two frameworks expose the same inputs, parameters, and
-				outputs shape, so the conversion copies the dictionaries without interpreting the
-				values.
+	The bridge converts an FxGripInferenceRequest to an InferKit request, runs the
+	InferKit backend synchronously, and wraps the InferKit result's outputs in an
+	FxGripInferenceResult. The two frameworks expose the same inputs, parameters, and
+	outputs shape, so the conversion copies the dictionaries without interpreting the
+	values.
 */
 @interface FxGripInferenceBridge : NSObject
 

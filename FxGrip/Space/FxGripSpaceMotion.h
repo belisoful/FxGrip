@@ -14,14 +14,14 @@
 	            and the camera-to-layer distance for autofocus. SceneKit consumes these directly
 	            through `SCNCamera.motionBlurIntensity` and `SCNCamera.focusDistance`.
 
-	            Every function takes transforms in the standard simd column-vector convention: a
-	            point p maps as `M * (p, 1)`, the translation is `columns[3].xyz`, and the
-	            upper-left 3x3 is rotation times scale. This matches `SCNNode.simdTransform` and a
-	            camera-to-world (inverse view) matrix. Converting the host `FxMatrix44`
-	            (double, row-major) into this convention is the caller's concern, handled by the
-	            host-to-SceneKit configuration layer, not here.
+	Every function takes transforms in the standard simd column-vector convention: a
+	point p maps as `M * (p, 1)`, the translation is `columns[3].xyz`, and the
+	upper-left 3x3 is rotation times scale. This matches `SCNNode.simdTransform` and a
+	camera-to-world (inverse view) matrix. Converting the host `FxMatrix44`
+	(double, row-major) into this convention is the caller's concern, handled by the
+	host-to-SceneKit configuration layer, not here.
 
-	            The same functions compute object motion when fed model-to-world transforms.
+	The same functions compute object motion when fed model-to-world transforms.
 */
 
 #ifndef FxGripSpaceMotion_h

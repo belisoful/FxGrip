@@ -31,31 +31,31 @@ NS_ASSUME_NONNULL_BEGIN
 				SceneKit scene from that state and draws it into the destination tile through the
 				space backend.
 
-				The host renders frames concurrently on multiple threads, and re-renders and reorders
-				them. The template therefore holds no scene state: `buildSceneWithCoder:...` builds a
-				fresh scene from the per-frame coder on each render, so concurrent renders never share
-				a scene. All per-frame state travels through plugin state, never through the effect.
+	The host renders frames concurrently on multiple threads, and re-renders and reorders
+	them. The template therefore holds no scene state: `buildSceneWithCoder:...` builds a
+	fresh scene from the per-frame coder on each render, so concurrent renders never share
+	a scene. All per-frame state travels through plugin state, never through the effect.
 
-				A plugin adds its own geometry in `updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:`,
-				which receives the per-render scene. Expensive `SCNGeometry` and `SCNMaterial` are
-				immutable once built and safe to cache on the plugin and reference from the per-render
-				nodes; only nodes and transforms are created per frame. The built-in content, enabled
-				by `rendersSourceLayerPlane`, places the source tile on a plane at the host layer
-				transform.
+	A plugin adds its own geometry in `updateSceneContents:cameraNode:fromCoder:atTime:cameraMotion:`,
+	which receives the per-render scene. Expensive `SCNGeometry` and `SCNMaterial` are
+	immutable once built and safe to cache on the plugin and reference from the per-render
+	nodes; only nodes and transforms are created per frame. The built-in content, enabled
+	by `rendersSourceLayerPlane`, places the source tile on a plane at the host layer
+	transform.
 
-				`spaceBackend` defaults to an `FxGripSceneKitMetalBackend`. When no source is present
-				the template renders the scene alone; when the backend cannot render it copies the
-				source unchanged.
+	`spaceBackend` defaults to an `FxGripSceneKitMetalBackend`. When no source is present
+	the template renders the scene alone; when the backend cannot render it copies the
+	source unchanged.
 
-				The inter-particle force configuration the base carries, `particleInteraction` and
-				`particleInteractionFields`, is installed on the per-render scene after the apply hook
-				runs: the scene-wide default reconciles every `SCNParticleSystem` that has none of
-				its own, and each field entry is recreated as an `SCNPhysicsField` on its named node
-				with the emitters under that node bound as its sources.
+	The inter-particle force configuration the base carries, `particleInteraction` and
+	`particleInteractionFields`, is installed on the per-render scene after the apply hook
+	runs: the scene-wide default reconciles every `SCNParticleSystem` that has none of
+	its own, and each field entry is recreated as an `SCNPhysicsField` on its named node
+	with the emitters under that node bound as its sources.
 
-				Converting the host matrices into the SceneKit column-vector convention and deriving
-				the camera-to-world transform is performed in the base and is the part of the
-				subsystem that requires verification against a running Final Cut Pro or Motion host.
+	Converting the host matrices into the SceneKit column-vector convention and deriving
+	the camera-to-world transform is performed in the base and is the part of the
+	subsystem that requires verification against a running Final Cut Pro or Motion host.
 */
 @interface FxGripSceneKitEffect : FxGripSpaceEffect
 
@@ -109,12 +109,12 @@ NS_ASSUME_NONNULL_BEGIN
 				afterward, so a subclass combines a static authored template with per-frame
 				adjustments (found by name on the recreated copy).
 
-				Recreating from the archive gives each render its own node graph, so this style is
-				concurrency-safe with no per-frame rebuild. FxGrip re-archives the template only when
-				`sceneTemplateVersion` changes, so a static template serializes once. The archived
-				graph is embedded in every frame's plugin state, so this style suits authored or
-				imported scenes with light animation; a parameter-driven scene is cheaper to build
-				imperatively.
+	Recreating from the archive gives each render its own node graph, so this style is
+	concurrency-safe with no per-frame rebuild. FxGrip re-archives the template only when
+	`sceneTemplateVersion` changes, so a static template serializes once. The archived
+	graph is embedded in every frame's plugin state, so this style suits authored or
+	imported scenes with light animation; a parameter-driven scene is cheaper to build
+	imperatively.
 */
 - (nullable SCNNode *)sceneTemplateNodeAtTime:(CMTime)renderTime;
 

@@ -32,15 +32,15 @@ NS_ASSUME_NONNULL_BEGIN
 				of its pixels, so it outlives the texture or image it was read from. Frames
 				stay in the plugin process and never persist in the host document.
 
-				Supported pixel formats: RGBA8Unorm, RGBA8Unorm_sRGB, BGRA8Unorm,
-				BGRA8Unorm_sRGB, RGBA16Unorm, RGBA16Float, RGBA32Float, R8Unorm, R16Float,
-				and R32Float. A constructor given any other format returns nil.
+	Supported pixel formats: RGBA8Unorm, RGBA8Unorm_sRGB, BGRA8Unorm,
+	BGRA8Unorm_sRGB, RGBA16Unorm, RGBA16Float, RGBA32Float, R8Unorm, R16Float,
+	and R32Float. A constructor given any other format returns nil.
 
-				The CGImage wraps the pixel bytes directly for the integer formats. A float
-				format converts to 8-bit on first use, clamped to 0...1, and keeps the raw
-				float pixels in `pixels`. Color: integer formats are tagged sRGB and float
-				formats extended linear sRGB, unless colorSpaceName overrides the tag.
-				Four-channel pixels are treated as premultiplied.
+	The CGImage wraps the pixel bytes directly for the integer formats. A float
+	format converts to 8-bit on first use, clamped to 0...1, and keeps the raw
+	float pixels in `pixels`. Color: integer formats are tagged sRGB and float
+	formats extended linear sRGB, unless colorSpaceName overrides the tag.
+	Four-channel pixels are treated as premultiplied.
 */
 @interface FxGripLiveFrame : NSObject <NSCopying>
 

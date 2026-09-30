@@ -30,24 +30,24 @@
 				directly, so archiving a buffer costs no compression pass. pixelData
 				decompresses on demand and returns tightly-packed rows.
 
-				Lossless codecs preserve the pixels exactly. Lossy reduction takes two
-				forms: format conversion (bufferByConvertingToFormat:compression:
-				converts between any channel counts and component types through a
-				canonical RGBA intermediate — color collapses to Rec.709 luminance for
-				a Gray target, gray replicates to color channels, alpha is added opaque
-				or discarded, and narrower components lose precision) and the lossy
-				image codecs governed by the `quality` setting — a render cache might
-				use JPEG at quality 0.5. Every format lossy-encodes: components
-				down-convert to the codec's internal depth (JPEG carries 8-bit; HEIC
-				carries 16-bit components over its 10/12-bit HEVC internals, so wider
-				sources keep precision beyond 8), floats clamp to 0...1, and alpha
-				always encodes as its own plane alongside the color, so no
-				premultiplication touches the pixels. Only an encoder failure stores
-				raw.
+	Lossless codecs preserve the pixels exactly. Lossy reduction takes two
+	forms: format conversion (bufferByConvertingToFormat:compression:
+	converts between any channel counts and component types through a
+	canonical RGBA intermediate — color collapses to Rec.709 luminance for
+	a Gray target, gray replicates to color channels, alpha is added opaque
+	or discarded, and narrower components lose precision) and the lossy
+	image codecs governed by the `quality` setting — a render cache might
+	use JPEG at quality 0.5. Every format lossy-encodes: components
+	down-convert to the codec's internal depth (JPEG carries 8-bit; HEIC
+	carries 16-bit components over its 10/12-bit HEVC internals, so wider
+	sources keep precision beyond 8), floats clamp to 0...1, and alpha
+	always encodes as its own plane alongside the color, so no
+	premultiplication touches the pixels. Only an encoder failure stores
+	raw.
 
-				Bridges: Metal textures for the 1-, 2-, and 4-channel formats (Gray→R,
-				GrayAlpha→RG, RGBA; Metal has no packed 3-channel storage), and
-				NSBitmapImageRep/NSImage previews through an RGBA8U conversion.
+	Bridges: Metal textures for the 1-, 2-, and 4-channel formats (Gray→R,
+	GrayAlpha→RG, RGBA; Metal has no packed 3-channel storage), and
+	NSBitmapImageRep/NSImage previews through an RGBA8U conversion.
 */
 @interface FxGripImageBuffer : NSObject <NSSecureCoding, NSCopying>
 

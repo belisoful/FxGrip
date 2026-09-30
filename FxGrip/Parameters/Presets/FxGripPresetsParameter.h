@@ -40,21 +40,21 @@
 				is omitted together with its separator. The tag is the parameter
 				configuration's first entry under `tags`.
 
-				Selecting a preset name applies it through the presets API and records
-				the name under kFxMetaProperty_SelectedPreset in the instance record;
-				user presets shadow plugin presets of the same name, matching the menu
-				order. Selecting Default records the default state and applies nothing.
-				The two action entries run their action and restore the previous
-				selection: Reveal opens the managed user preset folder in Finder
-				(creating it on demand), and Save Preset captures the current state and
-				runs the save panel.
+	Selecting a preset name applies it through the presets API and records
+	the name under kFxMetaProperty_SelectedPreset in the instance record;
+	user presets shadow plugin presets of the same name, matching the menu
+	order. Selecting Default records the default state and applies nothing.
+	The two action entries run their action and restore the previous
+	selection: Reveal opens the managed user preset folder in Finder
+	(creating it on demand), and Save Preset captures the current state and
+	runs the save panel.
 
-				The managed per-tag folder is watched (BEPathWatcher): a file added,
-				removed, or renamed there rebuilds the menu on the host through
-				setPopupMenuParameter:entries:defaultValue: and remaps the recorded
-				selection name to its new index. The watcher attaches when the folder
-				exists; the reveal and save actions attach it after creating the folder,
-				and a save refreshes explicitly.
+	The managed per-tag folder is watched (BEPathWatcher): a file added,
+	removed, or renamed there rebuilds the menu on the host through
+	setPopupMenuParameter:entries:defaultValue: and remaps the recorded
+	selection name to its new index. The watcher attaches when the folder
+	exists; the reveal and save actions attach it after creating the folder,
+	and a save refreshes explicitly.
  */
 @interface FxGripPresetsParameter : FxGripMenuParameter
 

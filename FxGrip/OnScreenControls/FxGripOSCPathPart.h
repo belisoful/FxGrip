@@ -28,19 +28,17 @@ NS_ASSUME_NONNULL_BEGIN
 	@discussion One part owns the whole path and resolves which vertex, tangent, or segment a
 				gesture touches from its own recorded hit, the way FxGripOSCEditablePolygonPart
 				does. The flags select which of those interactions are live.
-	@constant   FxGripOSCPathOptionVertexHandles   Draws and drags a handle at each vertex location.
-	@constant   FxGripOSCPathOptionTangentHandles  Draws and drags the in and out tangent handles
-											 of the Bézier-family vertices.
-	@constant   FxGripOSCPathOptionEditable        Inserts a vertex on a segment click, deletes the
-											 selected vertex on Delete or Command-click, and toggles
-											 a vertex between corner and smooth on a double-click.
-											 Available only with the custom-data backing.
-	@constant   FxGripOSCPathOptionBodyDrag        Drags a segment to move the whole path.
 */
 typedef NS_OPTIONS(NSUInteger, FxGripOSCPathOptions) {
+	/*! Draws and drags a handle at each vertex location. */
 	FxGripOSCPathOptionVertexHandles	= 1 << 0,
+	/*! Draws and drags the in and out tangent handles of the Bézier-family vertices. */
 	FxGripOSCPathOptionTangentHandles	= 1 << 1,
+	/*! Inserts a vertex on a segment click, deletes the selected vertex on Delete or
+		Command-click, and toggles a vertex between corner and smooth on a double-click.
+		Available only with the custom-data backing. */
 	FxGripOSCPathOptionEditable			= 1 << 2,
+	/*! Drags a segment to move the whole path. */
 	FxGripOSCPathOptionBodyDrag			= 1 << 3,
 
 	FxGripOSCPathOptionsAll				= NSUIntegerMax,
@@ -53,17 +51,17 @@ typedef NS_OPTIONS(NSUInteger, FxGripOSCPathOptions) {
 				it: moving vertices and tangents, inserting and deleting vertices, and dragging
 				the whole path. It reads and writes its vertices through one of two backings:
 
-				- Custom-data backing (`pathParameterID`): the whole path lives in one
-				  `FxGripPathData` parameter, so the vertex count changes at runtime and the
-				  Editable option is available.
-				- Per-parameter backing (`locationParameterIDs` and the optional tangent, weight,
-				  and style arrays): each field is its own host parameter, individually
-				  keyframeable, at a fixed vertex count.
+	- Custom-data backing (`pathParameterID`): the whole path lives in one
+	  `FxGripPathData` parameter, so the vertex count changes at runtime and the
+	  Editable option is available.
+	- Per-parameter backing (`locationParameterIDs` and the optional tangent, weight,
+	  and style arrays): each field is its own host parameter, individually
+	  keyframeable, at a fixed vertex count.
 
-				Tangents are vectors from the vertex location, matching `FxVertex`, so moving a
-				vertex carries its tangents. Drawing and hit-testing run through
-				``FxGripPathGeometry``, so every `interpStyle` renders correctly. Set one backing;
-				`pathParameterID` wins when both are set.
+	Tangents are vectors from the vertex location, matching `FxVertex`, so moving a
+	vertex carries its tangents. Drawing and hit-testing run through the
+	`FxGripPathGeometry.h` functions, so every `interpStyle` renders correctly. Set one
+	backing; `pathParameterID` wins when both are set.
 */
 @interface FxGripOSCPathPart : FxGripOSCPart
 

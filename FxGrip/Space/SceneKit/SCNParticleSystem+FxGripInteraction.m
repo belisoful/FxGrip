@@ -11,9 +11,9 @@
 	            evaluates the softened field, folds the per-force coupling, and adds the acceleration to
 	            the particle velocities.
 
-	            Gravity and electric share one scalar field evaluation over a unit charge, since the
-	            mass and charge are system constants: the combined coefficient is G·m − k·q²/m. Magnetic
-	            adds a Biot-Savart evaluation, and the acceleration is (magnetic·q/m)·(v × B).
+	Gravity and electric share one scalar field evaluation over a unit charge, since the
+	mass and charge are system constants: the combined coefficient is G·m − k·q²/m. Magnetic
+	adds a Biot-Savart evaluation, and the acceleration is (magnetic·q/m)·(v × B).
 */
 
 #import "SCNParticleSystem+FxGripInteraction.h"

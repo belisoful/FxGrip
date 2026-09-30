@@ -28,10 +28,10 @@ NS_ASSUME_NONNULL_BEGIN
 				per-render scene's own physics world, so a given frame reproduces the same result in
 				any order, with no stored state.
 
-				The cost is one `updateAtTime:` call per step, so the whole simulation reruns for each
-				frame. A later layer caches the result. Particle systems are not made deterministic
-				this way, because `SCNParticleSystem` has no seed; a deterministic particle effect uses
-				a stateless analytic emitter.
+	The cost is one `updateAtTime:` call per step, so the whole simulation reruns for each
+	frame. A later layer caches the result. Particle systems are not made deterministic
+	this way, because `SCNParticleSystem` has no seed; a deterministic particle effect uses
+	a stateless analytic emitter.
 */
 @interface FxGripSceneKitPhysicsBackend : FxGripSceneKitMetalBackend
 

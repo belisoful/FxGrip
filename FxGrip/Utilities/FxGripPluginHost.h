@@ -31,9 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
 				dictionaries, hosts the custom controls, and uses the tags and presets API wrappers,
 				while keeping its own FxTileableEffect implementation.
 
-				This is the smallest adoption step. The next steps up are composing an
-				FxGripTileableEffect inside the plug-in, and subclassing it. See the Adoption
-				article.
+	This is the smallest adoption step. The next steps up are composing an
+	FxGripTileableEffect inside the plug-in, and subclassing it. See the Adoption
+	article.
 */
 @interface FxGripPluginHost : NSObject <FxGripEffectHost>
 

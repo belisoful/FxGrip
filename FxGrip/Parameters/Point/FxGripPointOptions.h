@@ -21,39 +21,39 @@
 /*!
 	@enum       FxGripPointCoordinateMapping
 	@abstract   How a point parameter's value maps onto the frame.
-	@constant   FxGripPointCoordinatePixel          Pixel-based values.
-	@constant   FxGripPointCoordinateQuartzComposer Quartz Composer coordinate system.
 */
 typedef NS_ENUM(NSInteger, FxGripPointCoordinateMapping) {
+	/*! Pixel-based values. */
 	FxGripPointCoordinatePixel			= 0,
+	/*! Quartz Composer coordinate system. */
 	FxGripPointCoordinateQuartzComposer	= 1,
 };
 
 /*!
 	@enum       FxGripPointConstraint
 	@abstract   The direction a point's on-screen control may move.
-	@constant   FxGripPointConstraintAnyDirection  Free movement.
-	@constant   FxGripPointConstraintHorizontal    Locked to the horizontal axis.
-	@constant   FxGripPointConstraintVertical      Locked to the vertical axis.
-	@constant   FxGripPointConstraintDistance      Locked within a distance of a location.
 */
 typedef NS_ENUM(NSInteger, FxGripPointConstraint) {
+	/*! Free movement. */
 	FxGripPointConstraintAnyDirection	= 0,
+	/*! Locked to the horizontal axis. */
 	FxGripPointConstraintHorizontal		= 1,
+	/*! Locked to the vertical axis. */
 	FxGripPointConstraintVertical		= 2,
+	/*! Locked within a distance of a location. */
 	FxGripPointConstraintDistance		= 3,
 };
 
 /*!
 	@enum       FxGripPointDivider
 	@abstract   The divider drawn for an axis-constrained point.
-	@constant   FxGripPointDividerNone               No divider.
-	@constant   FxGripPointDividerThinWithControl    A thin divider with the point control.
-	@constant   FxGripPointDividerThickWithoutControl A thick divider without the point control.
 */
 typedef NS_ENUM(NSInteger, FxGripPointDivider) {
+	/*! No divider. */
 	FxGripPointDividerNone					= 0,
+	/*! A thin divider with the point control. */
 	FxGripPointDividerThinWithControl		= 1,
+	/*! A thick divider without the point control. */
 	FxGripPointDividerThickWithoutControl	= 2,
 };
 

@@ -34,20 +34,20 @@
 				`kFxMetaProperty_ParamMeta` dictionary. Parameter types and flags belong
 				to `FxGripParameterData`.
 
-				Every public method locks the manager's recursive lock. Callers composing
-				multi-step atomic edits use the `lock` / `lockWithinTime:` / `unlock`
-				triple around their call sequence.
+	Every public method locks the manager's recursive lock. Callers composing
+	multi-step atomic edits use the `lock` / `lockWithinTime:` / `unlock`
+	triple around their call sequence.
 
-				Failure conditions on tag and meta methods:
-				- missing record or tag container → `NSError` in domain
-				  `FxGripPlugErrorDomain` (the FxPlug domain inside a host process, the
-				  framework's own constant otherwise), code
-				  `kFxError_ThirdPartyDeveloperStart` plus the parameter ID
-				- `tagCount:` / `metaCountFromParameter:` → −1 for a missing record
+	Failure conditions on tag and meta methods:
+	- missing record or tag container → `NSError` in domain
+	  `FxGripPlugErrorDomain` (the FxPlug domain inside a host process, the
+	  framework's own constant otherwise), code
+	  `kFxError_ThirdPartyDeveloperStart` plus the parameter ID
+	- `tagCount:` / `metaCountFromParameter:` → −1 for a missing record
 
-				Every mutation marks the manager unsaved; `saveMeta` writes the manager
-				to the host through the effect's parameter-setting API and clears the
-				unsaved state.
+	Every mutation marks the manager unsaved; `saveMeta` writes the manager
+	to the host through the effect's parameter-setting API and clears the
+	unsaved state.
 */
 @interface FxGripMetaManager : NSObject <NSSecureCoding, NSCopying, FxGripCustomDataClasses>
 

@@ -26,18 +26,16 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@enum       FxGripWatermarkStyle
 	@abstract   The layout a watermark uses to cover a frame.
-	@constant   FxGripWatermarkStyleSingle One text placement centered on the frame, rotated
-					by the configuration's angle.
-	@constant   FxGripWatermarkStyleDiagonalTiled The text repeated across the whole frame on
-					a grid, rotated 45 degrees.
-	@constant   FxGripWatermarkStyleBanner One text placement scaled to span the frame width,
-					centered vertically, rotated by the configuration's angle.
-	@constant   FxGripWatermarkStyleCorner One text placement pinned to a corner with an inset.
 */
 typedef NS_ENUM(NSInteger, FxGripWatermarkStyle) {
+	/*! One text placement centered on the frame, rotated by the configuration's angle. */
 	FxGripWatermarkStyleSingle = 0,
+	/*! The text repeated across the whole frame on a grid, rotated 45 degrees. */
 	FxGripWatermarkStyleDiagonalTiled,
+	/*! One text placement scaled to span the frame width, centered vertically, rotated by the
+		configuration's angle. */
 	FxGripWatermarkStyleBanner,
+	/*! One text placement pinned to a corner with an inset. */
 	FxGripWatermarkStyleCorner,
 };
 

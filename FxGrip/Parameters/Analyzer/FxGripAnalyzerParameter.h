@@ -36,11 +36,11 @@
 				(default "Analyze"), the analysis location (GPU or CPU), and whether the pass
 				runs backward.
 
-				The click routes through -[FxGripTileableEffect parameterClicked:] to this
-				parameter's defaultParameterAction, which calls startForwardAnalysisAtLocation:
-				(or the backward variant). The effect must conform to the FxPlug FxAnalyzer
-				protocol; when it does not, the click does nothing. This wraps the
-				[[fxgrip-frame-analysis]] subsystem in the FxFactory Analyzer button shape.
+	The click routes through -[FxGripTileableEffect parameterClicked:] to this
+	parameter's defaultParameterAction, which calls startForwardAnalysisAtLocation:
+	(or the backward variant). The effect must conform to the FxPlug FxAnalyzer
+	protocol; when it does not, the click does nothing. This wraps the
+	[[fxgrip-frame-analysis]] subsystem in the FxFactory Analyzer button shape.
 */
 @interface FxGripAnalyzerParameter : FxGripPushButtonParameter
 

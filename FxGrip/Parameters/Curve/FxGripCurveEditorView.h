@@ -52,9 +52,9 @@ typedef NS_ENUM(NSInteger, FxGripCurveBackground) {
 				number of equal parts, leaving `divisions - 1` lines per axis. Finer lines
 				dim by tier so the primary quarter lines stay dominant, matching Final Cut Pro:
 
-				Quarters  → 3 lines, all at the primary weight.
-				Eighths   → 7 lines; the 1/8 lines dim below the 1/4 lines. (Default.)
-				Sixteenths → 15 lines; the 1/16 lines dim below the 1/8 lines.
+	Quarters  → 3 lines, all at the primary weight.
+	Eighths   → 7 lines; the 1/8 lines dim below the 1/4 lines. (Default.)
+	Sixteenths → 15 lines; the 1/16 lines dim below the 1/8 lines.
 */
 typedef NS_ENUM(NSInteger, FxGripCurveGridDivisions) {
 	FxGripCurveGridDivisionsQuarters	= 4,
@@ -176,8 +176,8 @@ typedef NS_ENUM(NSInteger, FxGripCurveReadoutTrigger) {
 				Fritsch-Carlson builders the render uses, at view-width resolution, so
 				the drawn curve equals the applied curve.
 
-				updateFromCustomData: accepts an FxGripCurveData directly, or a curve
-				set from which the editor reads its mappingKey.
+	updateFromCustomData: accepts an FxGripCurveData directly, or a curve
+	set from which the editor reads its mappingKey.
 */
 @interface FxGripCurveEditorView : NSView <FxGripCustomViewDataDelegate>
 

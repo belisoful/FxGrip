@@ -30,14 +30,14 @@
 				(a body transform per dynamic body per frame), so they stay inline in the parameter
 				with no media-folder spill.
 
-				The extension names no render engine. Each 3D Space engine implements
-				`installPhysicsSimulationStore:` for its own backend, so the same bake serves the
-				SceneKit engine and the RealityKit one. An engine whose backend does not simulate
-				refuses the store, which leaves the bake inert.
+	The extension names no render engine. Each 3D Space engine implements
+	`installPhysicsSimulationStore:` for its own backend, so the same bake serves the
+	SceneKit engine and the RealityKit one. An engine whose backend does not simulate
+	refuses the store, which leaves the bake inert.
 
-				A space effect opts in by adding this extension in `loadExtensions`
-				(`newPhysicsBakeExtension`). Without it, a physics backend uses its default in-memory
-				session cache, which does not persist.
+	A space effect opts in by adding this extension in `loadExtensions`
+	(`newPhysicsBakeExtension`). Without it, a physics backend uses its default in-memory
+	session cache, which does not persist.
 */
 @interface FxGripPhysicsBake : FxGripCustomExtension
 

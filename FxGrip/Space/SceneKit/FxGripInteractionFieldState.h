@@ -11,13 +11,13 @@
 	            facade: a companion particle modifier records each bound system's particles here, and
 	            the field evaluator queries the expansion built from them.
 
-	            Several systems may feed one field. SceneKit runs every particle modifier before any
-	            field evaluation within a step, so the expansion is rebuilt lazily at the first query
-	            of a step, by which time every bound system has reported. Sources are concatenated in
-	            bind order, which keeps the summation order, and therefore the result, reproducible.
+	Several systems may feed one field. SceneKit runs every particle modifier before any
+	field evaluation within a step, so the expansion is rebuilt lazily at the first query
+	of a step, by which time every bound system has reported. Sources are concatenated in
+	bind order, which keeps the summation order, and therefore the result, reproducible.
 
-	            The state is private to the framework. It is attached to the physics field as an
-	            associated object, so the field and its companion modifiers share one expansion.
+	The state is private to the framework. It is attached to the physics field as an
+	associated object, so the field and its companion modifiers share one expansion.
 */
 
 #ifndef FxGripInteractionFieldState_h

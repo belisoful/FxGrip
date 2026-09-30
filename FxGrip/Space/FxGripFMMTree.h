@@ -13,9 +13,9 @@
 	            octants create no cell, so every cell holds at least one body and the leaves partition
 	            the particles.
 
-	            The build is a pure function of the input positions: the key order, the sort (stable,
-	            with an original-index tiebreak), and the traversal are deterministic, which the method
-	            relies on for reproducible results.
+	The build is a pure function of the input positions: the key order, the sort (stable,
+	with an original-index tiebreak), and the traversal are deterministic, which the method
+	relies on for reproducible results.
 */
 
 #ifndef FxGripFMMTree_h

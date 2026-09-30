@@ -33,12 +33,12 @@ extern NSString * const FxGripWindowExtensionKey;
 				content view into the host's parent view when the window arrives, and tracks
 				whether a window is presented.
 
-				The host shows its own affordance for an open plug-in window (the plug-in button
-				near the title bar), so presenting the window is the only integration a plug-in
-				performs.
+	The host shows its own affordance for an open plug-in window (the plug-in button
+	near the title bar), so presenting the window is the only integration a plug-in
+	performs.
 
-				The reply from the host arrives asynchronously. State changes and the completion
-				run on the caller's thread of the host's reply; present from the main thread.
+	The reply from the host arrives asynchronously. State changes and the completion
+	run on the caller's thread of the host's reply; present from the main thread.
 */
 @interface FxGripWindow : FxGripExtension
 

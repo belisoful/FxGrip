@@ -40,15 +40,15 @@ extern const unichar kFxGripURLWhitelistAnyString;		// '*'
 				pattern compiles to an anchored, case-insensitive regular expression through
 				regexPatternForGlob:.
 
-				A URL is allowed when any pattern matches its full absolute string or a
-				label-boundary suffix of its host. Host-suffix matching means the pattern
-				`youtube.com` allows the host `www.youtube.com` while rejecting
-				`eviltube.com`, so a bare domain covers its subdomains without opening a
-				look-alike host.
+	A URL is allowed when any pattern matches its full absolute string or a
+	label-boundary suffix of its host. Host-suffix matching means the pattern
+	`youtube.com` allows the host `www.youtube.com` while rejecting
+	`eviltube.com`, so a bare domain covers its subdomains without opening a
+	look-alike host.
 
-				The list is an allow-list: an empty list blocks every URL, and the single
-				pattern `*` allows every URL. `*` is the permissive default; lock the list
-				down to specific domains for security.
+	The list is an allow-list: an empty list blocks every URL, and the single
+	pattern `*` allows every URL. `*` is the permissive default; lock the list
+	down to specific domains for security.
 */
 @interface FxGripURLWhitelist : NSObject <NSSecureCoding, NSCopying>
 

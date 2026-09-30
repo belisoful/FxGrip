@@ -123,8 +123,8 @@ NS_ASSUME_NONNULL_BEGIN
 				API manager (directly or through FxGripPluginHost) creates FxGrip controls with
 				no other FxGrip adoption.
 
-				Every method returns YES when the host accepted the parameter. Call during the
-				plug-in's -addParameters, like Apple's creation API.
+	Every method returns YES when the host accepted the parameter. Call during the
+	plug-in's -addParameters, like Apple's creation API.
 */
 @interface FxGripCustomCreationAPI_v1 : NSObject <FxGripCustomCreationAPI_v1>
 

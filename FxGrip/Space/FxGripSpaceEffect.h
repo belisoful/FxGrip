@@ -39,24 +39,24 @@ NS_ASSUME_NONNULL_BEGIN
 				configuration into plugin state. In the render pass it decodes that state through the
 				helpers declared here and hands the render to the engine subclass.
 
-				The host renders frames concurrently on multiple threads, and re-renders and reorders
-				them. The base holds no per-frame state: every value a render needs travels through
-				plugin state, and every helper here is a pure function of the coder.
+	The host renders frames concurrently on multiple threads, and re-renders and reorders
+	them. The base holds no per-frame state: every value a render needs travels through
+	plugin state, and every helper here is a pure function of the coder.
 
-				Two kinds of subclass fill the seams.
+	Two kinds of subclass fill the seams.
 
-				- An engine subclass, such as `FxGripSceneKitEffect` in Objective-C or
-				  `FxGripRealityKitEffect` in Swift, overrides
-				  `encodeEngineStateIntoCoder:atTime:error:` to add engine-specific state to the
-				  capture and `renderSceneFromCoder:sourceTile:toTexture:atTime:error:` to draw the
-				  frame. The default render copies the source unchanged.
-				- A plugin subclasses an engine subclass and overrides
-				  `encodeSceneParametersIntoCoder:atTime:error:` plus the engine's apply hook.
+	- An engine subclass, such as `FxGripSceneKitEffect` in Objective-C or
+	  `FxGripRealityKitEffect` in Swift, overrides
+	  `encodeEngineStateIntoCoder:atTime:error:` to add engine-specific state to the
+	  capture and `renderSceneFromCoder:sourceTile:toTexture:atTime:error:` to draw the
+	  frame. The default render copies the source unchanged.
+	- A plugin subclasses an engine subclass and overrides
+	  `encodeSceneParametersIntoCoder:atTime:error:` plus the engine's apply hook.
 
-				The host reports matrices as `FxMatrix44` (double, row-major). The decode helpers
-				return them in the simd column-vector convention `FxGripSpaceMotion` documents, and
-				`decodeCameraTransform:fromCoder:` already inverts the host view matrix into the
-				camera-to-world transform an engine places its camera with.
+	The host reports matrices as `FxMatrix44` (double, row-major). The decode helpers
+	return them in the simd column-vector convention `FxGripSpaceMotion` documents, and
+	`decodeCameraTransform:fromCoder:` already inverts the host view matrix into the
+	camera-to-world transform an engine places its camera with.
 */
 @interface FxGripSpaceEffect : FxGripTileableEffect <FxGripTileableEffectCoderState>
 
@@ -101,8 +101,8 @@ NS_ASSUME_NONNULL_BEGIN
 				pairs capture with apply so a plugin never overrides `pluginCoder:atTime:quality:error:`
 				and never risks dropping the host camera and light capture.
 
-				The coder is created fresh for each render, so this hook carries no shared state and is
-				safe under the host's concurrent per-frame rendering.
+	The coder is created fresh for each render, so this hook carries no shared state and is
+	safe under the host's concurrent per-frame rendering.
 */
 - (BOOL)encodeSceneParametersIntoCoder:(NSCoder *)coder
 								atTime:(CMTime)renderTime
@@ -129,9 +129,9 @@ NS_ASSUME_NONNULL_BEGIN
 				engine subclass whose backend simulates physics overrides it, installs `store` on that
 				backend, switches the backend to session-cache mode, and returns YES.
 
-				`FxGripPhysicsBake` calls this when it loads, so the simulation fills lazily as frames
-				render and persists with the document. Returning NO leaves the bake inert, which is
-				what happens when the plugin installed a backend that does not simulate.
+	`FxGripPhysicsBake` calls this when it loads, so the simulation fills lazily as frames
+	render and persists with the document. Returning NO leaves the bake inert, which is
+	what happens when the plugin installed a backend that does not simulate.
 */
 - (BOOL)installPhysicsSimulationStore:(id<FxGripPhysicsSimulationStore>)store;
 

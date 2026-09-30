@@ -170,16 +170,16 @@ typedef enum FxGripParameterPresetFlagOptions {
 				(applyPreset:atTime:options:presetFlags:source:tag:), which owns the tag
 				boundary and section ordering.
 
-				Two preset sources feed the merged listing:
-				- premade, shipped with the plugin: the Info.plist `presets` table and
-				  `.fxpreset` files bundled under the plugin's `Presets` resource folder;
-				- user presets in the managed folder
-				  `~/Library/Application Support/<company>/<plugin name>/<tag>/`, plus
-				  arbitrary files through the save and open panels.
+	Two preset sources feed the merged listing:
+	- premade, shipped with the plugin: the Info.plist `presets` table and
+	  `.fxpreset` files bundled under the plugin's `Presets` resource folder;
+	- user presets in the managed folder
+	  `~/Library/Application Support/<company>/<plugin name>/<tag>/`, plus
+	  arbitrary files through the save and open panels.
 
-				Plist-table presets carry their values, tags, and meta sections in the
-				listing; their flags and names sections apply through automatic rigging
-				only.
+	Plist-table presets carry their values, tags, and meta sections in the
+	listing; their flags and names sections apply through automatic rigging
+	only.
  */
 @interface FxGripPresetsAPI_v1 : FxGripCommonAPI <FxGripPresetsAPI_v1>
 

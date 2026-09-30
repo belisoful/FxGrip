@@ -28,13 +28,13 @@ NS_ASSUME_NONNULL_BEGIN
 				points are the region the analysis pass reads to seed the tracker, and they
 				are the FxFactory-style top-left / bottom-right links other parameters bind to.
 
-				An angle parameter is optional. When it is set the control adds the rotation
-				handle and the region rotates, which is the quadrilateral tracker's surface;
-				an angle parameter of 0 keeps the region axis-aligned. The control composes the
-				shared FxGripOSCRectPart family, so it inherits the standard handle drawing,
-				hit-testing, and modifier behavior. A subclass calls
-				`addTrackerRegionWithLowerLeftParameterID:upperRightParameterID:angleParameterID:`
-				from its initializer, the way FxGripPointOSC adds a point.
+	An angle parameter is optional. When it is set the control adds the rotation
+	handle and the region rotates, which is the quadrilateral tracker's surface;
+	an angle parameter of 0 keeps the region axis-aligned. The control composes the
+	shared FxGripOSCRectPart family, so it inherits the standard handle drawing,
+	hit-testing, and modifier behavior. A subclass calls
+	`addTrackerRegionWithLowerLeftParameterID:upperRightParameterID:angleParameterID:`
+	from its initializer, the way FxGripPointOSC adds a point.
 */
 @interface FxGripObjectTrackerOSC : FxGripOnScreenControl
 

@@ -47,21 +47,21 @@
 				per-frame tracking result, so the whole tracker saves with the host document
 				and travels in a preset.
 
-				The inspector shows an FxGripObjectTrackerView editing the shape, behavior,
-				resolution, and smoothing. The on-canvas surface is the tracker on-screen
-				control, the trigger is an [[FxGripAnalyzerParameter]] button, and a companion
-				[[FxGripStatusParameter]] / [[FxGripProgressParameter]] pair reports progress.
-				The analysis pass writes samples into the value; the render pass reads a
-				resolved transform back by time.
+	The inspector shows an FxGripObjectTrackerView editing the shape, behavior,
+	resolution, and smoothing. The on-canvas surface is the tracker on-screen
+	control, the trigger is an [[FxGripAnalyzerParameter]] button, and a companion
+	[[FxGripStatusParameter]] / [[FxGripProgressParameter]] pair reports progress.
+	The analysis pass writes samples into the value; the render pass reads a
+	resolved transform back by time.
 
-				Coordinate space: the tracker works entirely in Vision's normalized space, a
-				unit square with a lower-left origin. `initialBox`, the linked corner, center,
-				and anchor point values, and every stored sample use it. FxPlug point
-				parameters in Final Cut Pro and Motion are normalized to the frame, so a linked
-				point maps directly; a point parameter declared in another range must be
-				converted to the unit square before analysis and back afterward. The on-screen
-				control places the corners through the host's OSC coordinate API, which is the
-				one mapping that needs verification in a running host.
+	Coordinate space: the tracker works entirely in Vision's normalized space, a
+	unit square with a lower-left origin. `initialBox`, the linked corner, center,
+	and anchor point values, and every stored sample use it. FxPlug point
+	parameters in Final Cut Pro and Motion are normalized to the frame, so a linked
+	point maps directly; a point parameter declared in another range must be
+	converted to the unit square before analysis and back afterward. The on-screen
+	control places the corners through the host's OSC coordinate API, which is the
+	one mapping that needs verification in a running host.
 */
 @interface FxGripObjectTrackerParameter : FxGripCustomParameter
 

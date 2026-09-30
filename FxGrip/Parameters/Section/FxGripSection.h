@@ -22,15 +22,15 @@
 /*!
 	@enum       FxGripSectionTransform
 	@abstract   The letter-case transform applied to a section title before it is drawn.
-	@constant   FxGripSectionTransformNone       The title text is drawn as declared.
-	@constant   FxGripSectionTransformUppercase  The title text is uppercased.
-	@constant   FxGripSectionTransformLowercase  The title text is lowercased.
-	@constant   FxGripSectionTransformCapitalize The title text is title-cased.
 */
 typedef NS_ENUM(NSInteger, FxGripSectionTransform) {
+	/*! The title text is drawn as declared. */
 	FxGripSectionTransformNone			= 0,
+	/*! The title text is uppercased. */
 	FxGripSectionTransformUppercase		= 1,
+	/*! The title text is lowercased. */
 	FxGripSectionTransformLowercase		= 2,
+	/*! The title text is title-cased. */
 	FxGripSectionTransformCapitalize	= 3,
 };
 

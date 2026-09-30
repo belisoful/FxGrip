@@ -96,9 +96,9 @@
 	@abstract	The parameter for a host ID, or for an ordinal position, as `effect[index]`.
 	@discussion	The subscript reads two ways, which the sign selects.
 
-				- index is positive → the parameter carrying that host ID.
-				- index is zero or negative → the parameter at ordinal position `-index` in the
-				  host's parameter list.
+	- index is positive → the parameter carrying that host ID.
+	- index is zero or negative → the parameter at ordinal position `-index` in the
+	  host's parameter list.
 	@param		index	A positive host ID, or a negated ordinal position.
 	@return		The parameter, or nil when the effect holds none there.
 */
@@ -108,10 +108,10 @@
 	@abstract	The parameter or the extension a key names, as `effect[key]`.
 	@discussion	The key's shape selects what is returned.
 
-				- an `NSNumber`, or an `NSString` of digits → the parameter, resolved the way
-				  ``objectAtIndexedSubscript:`` resolves it.
-				- any other `NSString` → the extension registered under that key.
-				- any other object, or nil → nil.
+	- an `NSNumber`, or an `NSString` of digits → the parameter, resolved the way
+	  ``objectAtIndexedSubscript:`` resolves it.
+	- any other `NSString` → the extension registered under that key.
+	- any other object, or nil → nil.
 	@param		key		The parameter ID or the extension key.
 	@return		The parameter, the extension, or nil when neither is found.
 */
@@ -600,9 +600,9 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 	@abstract	The parameter for a host ID, or for an ordinal position, as `effect[index]`.
 	@discussion	The subscript reads two ways, which the sign selects.
 
-				- index is positive → the parameter carrying that host ID.
-				- index is zero or negative → the parameter at ordinal position `-index` in the
-				  host's parameter list.
+	- index is positive → the parameter carrying that host ID.
+	- index is zero or negative → the parameter at ordinal position `-index` in the
+	  host's parameter list.
 	@param		index	A positive host ID, or a negated ordinal position.
 	@return		The parameter, or nil when the effect holds none there.
 */
@@ -613,10 +613,10 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 	@abstract	The parameter or the extension a key names, as `effect[key]`.
 	@discussion	The key's shape selects what is returned.
 
-				- an `NSNumber`, or an `NSString` of digits → the parameter, resolved the way
-				  ``objectAtIndexedSubscript:`` resolves it.
-				- any other `NSString` → the extension registered under that key.
-				- any other object, or nil → nil.
+	- an `NSNumber`, or an `NSString` of digits → the parameter, resolved the way
+	  ``objectAtIndexedSubscript:`` resolves it.
+	- any other `NSString` → the extension registered under that key.
+	- any other object, or nil → nil.
 	@param		key		The parameter ID or the extension key.
 	@return		The parameter, the extension, or nil when neither is found.
 */
@@ -681,16 +681,16 @@ extern NSString * _Nonnull const FxGripTileableEffectExtKey;
 				method, so one entry point serves every button and subclasses do not
 				implement a method per button.
 
-				The dispatch, wrapped in the action API's `startAction:` / `endAction:`
-				when the effect is not an on-screen control:
-				- posts `FxGripTileableEffectParameterClickedName` with
-				  `FxGripTileableEffectParameterClickedIDKey` so extensions observe the click
-				- performs the configuration-declared `"selector"` when the subclass
-				  implements it
-				- otherwise performs the parameter object's `defaultParameterAction`
+	The dispatch, wrapped in the action API's `startAction:` / `endAction:`
+	when the effect is not an on-screen control:
+	- posts `FxGripTileableEffectParameterClickedName` with
+	  `FxGripTileableEffectParameterClickedIDKey` so extensions observe the click
+	- performs the configuration-declared `"selector"` when the subclass
+	  implements it
+	- otherwise performs the parameter object's `defaultParameterAction`
 
-				Subclasses may override to intercept every click; call super to keep the
-				notification and dispatch behavior.
+	Subclasses may override to intercept every click; call super to keep the
+	notification and dispatch behavior.
 	@result     NO when a notification observer reports an error; YES otherwise.
 */
 - (BOOL)parameterClicked:(FxParameterId)parameterID;

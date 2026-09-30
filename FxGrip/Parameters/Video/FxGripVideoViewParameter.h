@@ -27,13 +27,13 @@
 				hosted player page embeds. A remote URL that is off the whitelist is blocked
 				with a placeholder.
 
-				The player is created only when the view enters a window, so no media session
-				or web content process starts until the control is shown.
+	The player is created only when the view enters a window, so no media session
+	or web content process starts until the control is shown.
 
-				Remote content needs the host plugin's XPC service to carry the
-				com.apple.security.network.client entitlement, and non-TLS URLs need an App
-				Transport Security exception. FxGrip provides the control; the plugin declares
-				the entitlements.
+	Remote content needs the host plugin's XPC service to carry the
+	com.apple.security.network.client entitlement, and non-TLS URLs need an App
+	Transport Security exception. FxGrip provides the control; the plugin declares
+	the entitlements.
 */
 @interface FxGripVideoView : NSView <FxGripCustomViewDataDelegate>
 

@@ -24,12 +24,12 @@
 				are FxGripCurveData. An absent key means the mapping's neutral curve,
 				so only edited curves are stored and documents stay small.
 
-				Host keyframing interpolates two sets through the inherited machinery;
-				curve values blend curve-aware: two curves with matching point counts,
-				role, and domain interpolate pairwise, and any mismatch blends the two
-				evaluated curves on a 33-sample grid, so a point added mid-animation
-				cannot drop the curve. Scalar companions (mix, biases, enables) belong
-				in native FxPlug parameters, not in this set.
+	Host keyframing interpolates two sets through the inherited machinery;
+	curve values blend curve-aware: two curves with matching point counts,
+	role, and domain interpolate pairwise, and any mismatch blends the two
+	evaluated curves on a 33-sample grid, so a point added mid-animation
+	cannot drop the curve. Scalar companions (mix, biases, enables) belong
+	in native FxPlug parameters, not in this set.
 */
 @interface FxGripCurveSetData : FxGripInterpolatingDictionary
 

@@ -40,10 +40,10 @@ NS_ASSUME_NONNULL_BEGIN
 				effect base conforms directly, or uses FxGripPluginHost, and gains plist parameter
 				registration and the custom controls without adopting the rest of FxGrip.
 
-				The optional members serve individual parameter classes: the color and RGB
-				parameters read the gamut flags, the font menu reads the default font name, and the
-				presets parameter reads the meta and parameter-data extensions. A host without one
-				of these gets the parameter's neutral behavior.
+	The optional members serve individual parameter classes: the color and RGB
+	parameters read the gamut flags, the font menu reads the default font name, and the
+	presets parameter reads the meta and parameter-data extensions. A host without one
+	of these gets the parameter's neutral behavior.
 */
 @protocol FxGripEffectHost <NSObject>
 

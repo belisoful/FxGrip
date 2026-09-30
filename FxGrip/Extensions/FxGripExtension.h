@@ -250,8 +250,8 @@ extern const NSInteger FxGripExtensionDefaultPriority;
 				index is greater than zero, giving every instance of a class a distinct
 				key; the first instance keeps the bare class name.
 
-				A subclass overrides this getter to return YES when the key must carry
-				the index even for the first instance.
+	A subclass overrides this getter to return YES when the key must carry
+	the index even for the first instance.
 */
 @property (readonly, assign) BOOL			extIndividuate;
 

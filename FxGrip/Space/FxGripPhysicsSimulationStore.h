@@ -37,9 +37,9 @@ typedef NS_ENUM(NSInteger, FxGripPhysicsSimulationMode) {
 				`NSData`. The seam lets the same backend cache to memory for a session or to an
 				`FxGripFrameData` that persists with the document.
 
-				A signature captures the simulation's identity (bodies, gravity, time step, initial
-				conditions). `invalidateIfSignatureChanged:` clears the store when it differs, so a
-				changed scene never replays a stale pose.
+	A signature captures the simulation's identity (bodies, gravity, time step, initial
+	conditions). `invalidateIfSignatureChanged:` clears the store when it differs, so a
+	changed scene never replays a stale pose.
 */
 @protocol FxGripPhysicsSimulationStore <NSObject>
 

@@ -30,18 +30,18 @@ NS_ASSUME_NONNULL_BEGIN
 				subsystem. The plug-in loads the extensions it wants and forwards each FxPlug
 				lifecycle call to the matching dispatch method:
 
-				- -properties: → dispatchProperties:
-				- -addParameters → dispatchAddParameters: (with the plug-in's parameter dictionaries)
-				- the end of setup → dispatchFinishInitialSetup, then dispatchAddedToDocument
-				- -parameterChanged:atTime:error: → dispatchParameterChanged:atTime:
-				- a custom-parameter click → dispatchParameterClicked:
-				- -pluginState:atTime:error: → dispatchPluginStateWithCoder:
-				- after out-of-band writes → flush
+	- -properties: → dispatchProperties:
+	- -addParameters → dispatchAddParameters: (with the plug-in's parameter dictionaries)
+	- the end of setup → dispatchFinishInitialSetup, then dispatchAddedToDocument
+	- -parameterChanged:atTime:error: → dispatchParameterChanged:atTime:
+	- a custom-parameter click → dispatchParameterClicked:
+	- -pluginState:atTime:error: → dispatchPluginStateWithCoder:
+	- after out-of-band writes → flush
 
-				An extension observes the host it was loaded with, so several systems coexist.
-				An extension that reaches beyond the host contract (the analysis pass reads the
-				render pipeline, for example) needs the fuller member it asks for; the
-				parameter-facing extensions (meta, parameter data, toggles) run on the host alone.
+	An extension observes the host it was loaded with, so several systems coexist.
+	An extension that reaches beyond the host contract (the analysis pass reads the
+	render pipeline, for example) needs the fuller member it asks for; the
+	parameter-facing extensions (meta, parameter data, toggles) run on the host alone.
 */
 @interface FxGripExtensionSystem : NSObject
 

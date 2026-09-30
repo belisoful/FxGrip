@@ -55,11 +55,11 @@ typedef NS_ENUM(NSInteger, FxGripCurveRole) {
 				drops (first wins). Edits replace the value; there is no mutable
 				variant.
 
-				buildLUT:count: evaluates with the same Fritsch-Carlson monotone cubic
-				the Metal Forge render uses (FxGripCurveLUT), choosing the periodic
-				builder for the circular domain. copyCurvePointsFloat2:capacity: is the
-				conversion to Metal Forge's input contract; each written pair matches
-				the simd_float2 layout.
+	buildLUT:count: evaluates with the same Fritsch-Carlson monotone cubic
+	the Metal Forge render uses (FxGripCurveLUT), choosing the periodic
+	builder for the circular domain. copyCurvePointsFloat2:capacity: is the
+	conversion to Metal Forge's input contract; each written pair matches
+	the simd_float2 layout.
 */
 @interface FxGripCurveData : NSObject <NSSecureCoding, NSCopying>
 

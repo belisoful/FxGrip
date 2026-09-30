@@ -12,9 +12,9 @@
 	            FxGripInteraction category, which evaluates the force in O(N) with the Fast Multipole
 	            Method.
 
-	            The forces are a bit field, so they combine. Gravity and electric share one field
-	            evaluation and differ only in their coupling; magnetic adds the Biot-Savart term, so
-	            setting electric and magnetic together is the Lorentz force.
+	The forces are a bit field, so they combine. Gravity and electric share one field
+	evaluation and differ only in their coupling; magnetic adds the Biot-Savart term, so
+	setting electric and magnetic together is the Lorentz force.
 */
 
 #ifndef FxGripParticleInteraction_h
@@ -27,28 +27,28 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
 	@enum       FxGripParticleInteractionKind
 	@abstract   The active forces, combinable as a bit field.
-	@constant   FxGripParticleInteractionKindNone      No inter-particle force.
-	@constant   FxGripParticleInteractionKindGravity   Mutual gravity, attractive.
-	@constant   FxGripParticleInteractionKindElectric  Coulomb force, repulsive between like charges.
-	@constant   FxGripParticleInteractionKindMagnetic  The magnetic force of moving charges.
 */
 typedef NS_OPTIONS(NSUInteger, FxGripParticleInteractionKind) {
+	/*! No inter-particle force. */
 	FxGripParticleInteractionKindNone     = 0,
+	/*! Mutual gravity, attractive. */
 	FxGripParticleInteractionKindGravity  = 1u << 0,
+	/*! Coulomb force, repulsive between like charges. */
 	FxGripParticleInteractionKindElectric = 1u << 1,
+	/*! The magnetic force of moving charges. */
 	FxGripParticleInteractionKindMagnetic = 1u << 2,
 };
 
 /*!
 	@enum       FxGripParticleInteractionAccuracy
 	@abstract   The accuracy tier, which sets the multipole order and acceptance ratio.
-	@constant   FxGripParticleInteractionAccuracyDraft     Order 2, the fastest and least accurate.
-	@constant   FxGripParticleInteractionAccuracyStandard  Order 4, the default balance.
-	@constant   FxGripParticleInteractionAccuracyFine      Order 6, the most accurate and slowest.
 */
 typedef NS_ENUM(NSInteger, FxGripParticleInteractionAccuracy) {
+	/*! Order 2, the fastest and least accurate. */
 	FxGripParticleInteractionAccuracyDraft = 0,
+	/*! Order 4, the default balance. */
 	FxGripParticleInteractionAccuracyStandard,
+	/*! Order 6, the most accurate and slowest. */
 	FxGripParticleInteractionAccuracyFine,
 };
 

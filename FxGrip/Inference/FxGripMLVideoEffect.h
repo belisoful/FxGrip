@@ -42,17 +42,17 @@ typedef NS_ENUM(NSInteger, FxGripMLVideoState) {
 				the state into a status or progress parameter, or run the generation behind the
 				host's analysis pass.
 
-				While the clip is not ready, rendering falls back to the inherited path, which
-				draws the source unchanged, so the timeline stays responsive during a generation.
-				Once ready, rendering delegates each frame to
-				renderFrameFromGeneratedClip:toDestinationTile:atTime:error:, which a subclass
-				implements by sampling the clip (AVFoundation frame extraction is host-side work).
+	While the clip is not ready, rendering falls back to the inherited path, which
+	draws the source unchanged, so the timeline stays responsive during a generation.
+	Once ready, rendering delegates each frame to
+	renderFrameFromGeneratedClip:toDestinationTile:atTime:error:, which a subclass
+	implements by sampling the clip (AVFoundation frame extraction is host-side work).
 
-				The backend seam is inherited: hand an InferKit backend to useInferKitBackend:.
-				The generated clip is read from the result's videoOutputName output as an NSURL,
-				a file-path or URL string, or any object with a fileURL, which admits an InferKit
-				video asset without naming its class. The per-frame cache is disabled; the clip
-				file is the cache.
+	The backend seam is inherited: hand an InferKit backend to useInferKitBackend:.
+	The generated clip is read from the result's videoOutputName output as an NSURL,
+	a file-path or URL string, or any object with a fileURL, which admits an InferKit
+	video asset without naming its class. The per-frame cache is disabled; the clip
+	file is the cache.
 */
 @interface FxGripMLVideoEffect : FxGripMLImageEffect
 

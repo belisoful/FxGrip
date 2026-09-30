@@ -30,11 +30,11 @@ NS_ASSUME_NONNULL_BEGIN
 				passthrough mock); a plugin adopts this protocol to bring a heavier runtime
 				(MLX, a C or Rust engine) without FxGrip linking it.
 
-				runInferenceForRequest:error: is synchronous by contract. Inference often
-				takes seconds, too long for a render call, so a caller runs it off the render
-				thread and caches the result by frame. A backend reports readiness through
-				isReady; a caller checks it before a run and falls back or defers when a model
-				is not yet loaded.
+	runInferenceForRequest:error: is synchronous by contract. Inference often
+	takes seconds, too long for a render call, so a caller runs it off the render
+	thread and caches the result by frame. A backend reports readiness through
+	isReady; a caller checks it before a run and falls back or defers when a model
+	is not yet loaded.
 */
 @protocol FxGripInferenceBackend <NSObject>
 

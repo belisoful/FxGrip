@@ -25,18 +25,18 @@ NS_ASSUME_NONNULL_BEGIN
 	@discussion Introduced in FxGrip 0.1.0. A request carries the model's named inputs and a
 				separate bag of parameters, keeping the two roles distinct:
 
-				- inputs are the tensors or media a backend consumes, keyed by the model's
-				  input names. Values are opaque to the request: a CVPixelBuffer, an
-				  MLMultiArray, an FxGripImageBuffer, an NSString prompt, or NSData. The
-				  backend interprets them.
-				- parameters are scalar controls a backend reads, keyed by name: seed,
-				  strength, step count, guidance scale, and similar. Values are typically
-				  NSNumber or NSString.
+	- inputs are the tensors or media a backend consumes, keyed by the model's
+	  input names. Values are opaque to the request: a CVPixelBuffer, an
+	  MLMultiArray, an FxGripImageBuffer, an NSString prompt, or NSData. The
+	  backend interprets them.
+	- parameters are scalar controls a backend reads, keyed by name: seed,
+	  strength, step count, guidance scale, and similar. Values are typically
+	  NSNumber or NSString.
 
-				The split lets one request describe an image-to-image pass (inputs hold the
-				plate and mask, parameters hold strength and seed) or a text pass (inputs
-				hold the prompt) through the same type. The value is immutable; build a new
-				request to change it.
+	The split lets one request describe an image-to-image pass (inputs hold the
+	plate and mask, parameters hold strength and seed) or a text pass (inputs
+	hold the prompt) through the same type. The value is immutable; build a new
+	request to change it.
 */
 @interface FxGripInferenceRequest : NSObject <NSCopying>
 

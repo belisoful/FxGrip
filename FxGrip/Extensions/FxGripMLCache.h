@@ -27,8 +27,8 @@
 				outputs, keyed by frame, so a multi-second model runs once per frame and survives
 				a reopen.
 
-				FxGripMLImageEffect loads this extension and reads and writes the cache through
-				the effect's mlCacheData.
+	FxGripMLImageEffect loads this extension and reads and writes the cache through
+	the effect's mlCacheData.
 */
 @interface FxGripMLCache : FxGripCustomExtension
 

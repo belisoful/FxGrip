@@ -63,25 +63,25 @@ NS_ASSUME_NONNULL_BEGIN
 				the pixels stay in memory and never enter the host document. Creation adds
 				the custom-UI, not-animatable, full-view-width, and no-state flags.
 
-				Publishing is gated on the inspector. A publish is suppressed, storing
-				nothing and returning NO, while no parameter view is on screen. The FxPlug
-				host puts a parameter view on screen only for the interactive timeline
-				render in the inspector's process; a batch export or a background render
-				runs with no inspector and never puts a view on screen, so the strip shows
-				the timeline play point and not an off-screen render.
+	Publishing is gated on the inspector. A publish is suppressed, storing
+	nothing and returning NO, while no parameter view is on screen. The FxPlug
+	host puts a parameter view on screen only for the interactive timeline
+	render in the inspector's process; a batch export or a background render
+	runs with no inspector and never puts a view on screen, so the strip shows
+	the timeline play point and not an off-screen render.
 
-				The effect publishes from any thread. A Metal texture is copied on the GPU
-				into a CPU-readable staging texture, downscaled through its mipmap chain
-				until its longest side is at most snapshotSize, and read back when the
-				command buffer completes; the publish call returns before the copy runs.
-				A slot whose previous copy is still in flight drops the new texture. A
-				frame, CGImage, or image buffer is stored as given. Every path stores the
-				latest frame per slot and coalesces the redraw onto the main thread, so a
-				view attached while another is on screen shows the last frame.
+	The effect publishes from any thread. A Metal texture is copied on the GPU
+	into a CPU-readable staging texture, downscaled through its mipmap chain
+	until its longest side is at most snapshotSize, and read back when the
+	command buffer completes; the publish call returns before the copy runs.
+	A slot whose previous copy is still in flight drops the new texture. A
+	frame, CGImage, or image buffer is stored as given. Every path stores the
+	latest frame per slot and coalesces the redraw onto the main thread, so a
+	view attached while another is on screen shows the last frame.
 
-				The runtime instance is the effect's parameter for the ID
-				(`effect[parameterID]`). The slot count is fixed by the declared
-				configuration.
+	The runtime instance is the effect's parameter for the ID
+	(`effect[parameterID]`). The slot count is fixed by the declared
+	configuration.
 */
 @interface FxGripLiveImageParameter : FxGripCustomParameter
 

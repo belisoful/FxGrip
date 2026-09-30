@@ -30,12 +30,12 @@
 				order, and createViewForParameterID: returns it, so one custom
 				parameter carries the filter's whole curve set.
 
-				The composite multiplexes: updateFromCustomData: hands the set to every
-				child strip (each reads its mappingKey); a strip's continuous edits
-				update the working set, and its commit writes the set to the host
-				through an out-of-band access context, so the host's undo records the
-				gesture. Storing follows the set's neutral rule: a committed identity
-				removes the mapping's key.
+	The composite multiplexes: updateFromCustomData: hands the set to every
+	child strip (each reads its mappingKey); a strip's continuous edits
+	update the working set, and its commit writes the set to the host
+	through an out-of-band access context, so the host's undo records the
+	gesture. Storing follows the set's neutral rule: a committed identity
+	removes the mapping's key.
 */
 @interface FxGripCurveSetEditorView : NSView <FxGripCustomViewDataDelegate, FxGripCurveEditorDelegate>
 

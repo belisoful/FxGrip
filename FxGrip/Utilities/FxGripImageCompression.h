@@ -89,14 +89,14 @@ typedef NS_ENUM(NSInteger, FxGripPixelFormat) {
 				format: LZFSE balances ratio and speed and is the default; LZ4 favors
 				speed; zlib favors interchange; LZMA favors ratio.
 
-				Lossy image codecs (ImageIO) take a quality setting and encode every
-				format through an internal depth: JPEG carries 8-bit components, HEIC
-				and AVIF carry 16-bit components over their 10/12-bit internals.
+	Lossy image codecs (ImageIO) take a quality setting and encode every
+	format through an internal depth: JPEG carries 8-bit components, HEIC
+	and AVIF carry 16-bit components over their 10/12-bit internals.
 
-				Codecs are reached by type identifier, never by linked symbol, so a
-				codec the running OS lacks degrades to an encoder failure. AVIF encoding
-				is newer than the deployment target; consult
-				FxGripCompressionIsAvailable before choosing it. Raw values are stable.
+	Codecs are reached by type identifier, never by linked symbol, so a
+	codec the running OS lacks degrades to an encoder failure. AVIF encoding
+	is newer than the deployment target; consult
+	FxGripCompressionIsAvailable before choosing it. Raw values are stable.
 */
 typedef NS_ENUM(NSInteger, FxGripCompression) {
 	FxGripCompressionNone	= 0,

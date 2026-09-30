@@ -28,15 +28,15 @@
 				and target-preset definitions into per-instance storage), and persists
 				the manager on flush.
 
-				Configuration transfer is additive: values already present in a record,
-				including customizations restored from the document, are kept; the
-				configuration supplies defaults for absent entries only. Target-preset
-				definitions therefore live in the instance storage and are customizable
-				per instance.
+	Configuration transfer is additive: values already present in a record,
+	including customizations restored from the document, are kept; the
+	configuration supplies defaults for absent entries only. Target-preset
+	definitions therefore live in the instance storage and are customizable
+	per instance.
 
-				Activation is driven by the plist `manageMeta` boolean, which defaults
-				to YES, through the standard extension loading path. A plugin opts out
-				with `manageMeta` = NO.
+	Activation is driven by the plist `manageMeta` boolean, which defaults
+	to YES, through the standard extension loading path. A plugin opts out
+	with `manageMeta` = NO.
 */
 @interface FxGripMeta : FxGripCustomExtension
 

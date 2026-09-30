@@ -26,13 +26,13 @@ NS_ASSUME_NONNULL_BEGIN
 				prompt, conditioning data) and the inherited inferenceParametersAtTime:. The
 				per-frame cache applies unchanged, so a slow model still runs once per frame.
 
-				A generator has no source to fall back to. Until the backend is ready, and when it
-				fails, rendering calls writePlaceholderToDestinationTile:atTime:error:, whose
-				default leaves the destination as the host provided it; override it to clear or
-				draw a placeholder.
+	A generator has no source to fall back to. Until the backend is ready, and when it
+	fails, rendering calls writePlaceholderToDestinationTile:atTime:error:, whose
+	default leaves the destination as the host provided it; override it to clear or
+	draw a placeholder.
 
-				The generator tile geometry is inherited from FxGripTileableGenerator's convention:
-				the destination rect is the output's pixel bounds and there is no source tile.
+	The generator tile geometry is inherited from FxGripTileableGenerator's convention:
+	the destination rect is the output's pixel bounds and there is no source tile.
 */
 @interface FxGripMLImageGenerator : FxGripMLImageEffect
 

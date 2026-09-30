@@ -66,9 +66,9 @@
 	@discussion	Introduced in FxGrip 0.1.0. Reads pluginUUID and sessionID from the host manager
 				when it responds to them, and vends wrapped or raw APIs on request.
 
-				The manager and the effect are held unretained. The effect owns this manager, so a
-				retaining back-reference would form a cycle that keeps every effect instance alive
-				for the process lifetime.
+	The manager and the effect are held unretained. The effect owns this manager, so a
+	retaining back-reference would form a cycle that keeps every effect instance alive
+	for the process lifetime.
 */
 @implementation FxGripAPIAccessing
 

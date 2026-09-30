@@ -10,11 +10,11 @@
 	            field between two body ranges. The multipole kernels (P2M, M2M, M2L, L2L, L2P) are added
 	            here as later phases build them.
 
-	            The P2P kernel processes targets eight at a time with the hardware reciprocal square
-	            root. It accumulates into the target field, so the caller sums the near field over
-	            several source ranges by calling it once per range. A nonzero softening is required: it
-	            bounds the near force and makes a body's self term vanish, so a range may be its own
-	            source without an index test.
+	The P2P kernel processes targets eight at a time with the hardware reciprocal square
+	root. It accumulates into the target field, so the caller sums the near field over
+	several source ranges by calling it once per range. A nonzero softening is required: it
+	bounds the near force and makes a body's self term vanish, so a range may be its own
+	source without an index test.
 */
 
 #ifndef FxGripFMMKernels_h

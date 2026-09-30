@@ -32,19 +32,19 @@ NS_ASSUME_NONNULL_BEGIN
 				runs the backend, and writes the backend's image output to the destination tile.
 				A subclass declares the model's specifics and inherits the plumbing.
 
-				The image representation that flows through the backend is an id<MTLTexture> by
-				default, so the backend owns any conversion to a tensor. A subclass overrides
-				imageInputForSourceTile:atTime:error: and writeImageOutput:toDestinationTile:atTime:error:
-				to change the representation.
+	The image representation that flows through the backend is an id<MTLTexture> by
+	default, so the backend owns any conversion to a tensor. A subclass overrides
+	imageInputForSourceTile:atTime:error: and writeImageOutput:toDestinationTile:atTime:error:
+	to change the representation.
 
-				inferenceBackend defaults to an FxGripPassthroughBackend, so the effect renders
-				its source unchanged with no model present and stays green in tests. When the
-				backend is not ready, the template renders the source unchanged rather than
-				failing, so a timeline stays usable while a model loads.
+	inferenceBackend defaults to an FxGripPassthroughBackend, so the effect renders
+	its source unchanged with no model present and stays green in tests. When the
+	backend is not ready, the template renders the source unchanged rather than
+	failing, so a timeline stays usable while a model loads.
 
-				runInferenceForRequest: is synchronous, and inference is often seconds long. A
-				later layer caches the result by frame; a subclass should not treat this template
-				as safe to run per frame with a heavy model until that caching is in place.
+	runInferenceForRequest: is synchronous, and inference is often seconds long. A
+	later layer caches the result by frame; a subclass should not treat this template
+	as safe to run per frame with a heavy model until that caching is in place.
  @todo this should support one or multiple prior frames, or have that feature in a separate class (or sub class)
 */
 @interface FxGripMLImageEffect : FxGripTileableEffect

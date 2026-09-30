@@ -26,13 +26,13 @@ NS_ASSUME_NONNULL_BEGIN
 	@discussion Introduced in FxGrip 0.1.0. It follows Final Cut Pro and macOS so a control feels
 				native:
 
-				- Option drag → fine (slow) adjustment.
-				- Shift drag → constrain to horizontal or vertical.
-				- Command click → delete the point or handle under the cursor.
-				- Control click → contextual menu (AppKit routes this through menuForEvent:).
+	- Option drag → fine (slow) adjustment.
+	- Shift drag → constrain to horizontal or vertical.
+	- Command click → delete the point or handle under the cursor.
+	- Control click → contextual menu (AppKit routes this through menuForEvent:).
 
-				Every control that drags a point or handle reads its modifiers through this class, so
-				the convention is defined once and stays consistent across the parameters.
+	Every control that drags a point or handle reads its modifiers through this class, so
+	the convention is defined once and stays consistent across the parameters.
 */
 @interface FxGripEventModifiers : NSObject
 

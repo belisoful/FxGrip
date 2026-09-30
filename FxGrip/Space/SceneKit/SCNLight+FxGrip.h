@@ -25,12 +25,12 @@ NS_ASSUME_NONNULL_BEGIN
 				and spot lights, pointed along the reported direction (SceneKit lights emit down the
 				node's local -Z axis).
 
-				Type, color, cast-shadows, and spot cone angles map directly. `FxLight.intensity` is a
-				unitless brightness multiplier; it maps to `SCNLight.intensity` (lumens, default 1000)
-				as `intensity * 1000`, so a unit FxPlug light matches a default SceneKit light. The
-				`FxLight` constant/linear/quadratic attenuation model has no direct SceneKit equivalent
-				(SceneKit attenuates by start and end distance) and is not mapped; callers that need
-				distance falloff set `attenuationStartDistance`/`attenuationEndDistance` on the result.
+	Type, color, cast-shadows, and spot cone angles map directly. `FxLight.intensity` is a
+	unitless brightness multiplier; it maps to `SCNLight.intensity` (lumens, default 1000)
+	as `intensity * 1000`, so a unit FxPlug light matches a default SceneKit light. The
+	`FxLight` constant/linear/quadratic attenuation model has no direct SceneKit equivalent
+	(SceneKit attenuates by start and end distance) and is not mapped; callers that need
+	distance falloff set `attenuationStartDistance`/`attenuationEndDistance` on the result.
 */
 @interface SCNLight (FxGrip)
 

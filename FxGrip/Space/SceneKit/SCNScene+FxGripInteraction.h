@@ -10,10 +10,10 @@
 	            reconciliation walks the scene and installs the effective force on each system: the
 	            system's own interaction when it has one, otherwise the scene default.
 
-	            The force is a modifier, and a modifier does not survive an archive or a copy, so the
-	            reconciliation is meant to run once per render after the scene is built, which
-	            reinstalls the force from the current configuration. In the FxGrip render model a fresh
-	            scene is built for each frame, so the reconciliation always starts from clean systems.
+	The force is a modifier, and a modifier does not survive an archive or a copy, so the
+	reconciliation is meant to run once per render after the scene is built, which
+	reinstalls the force from the current configuration. In the FxGrip render model a fresh
+	scene is built for each frame, so the reconciliation always starts from clean systems.
 */
 
 #ifndef SCNScene_FxGripInteraction_h

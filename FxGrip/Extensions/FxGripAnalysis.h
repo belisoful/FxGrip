@@ -26,9 +26,9 @@
 				from the document when the effect is added, and attaches the project media
 				cache so large per-frame records spill to disk.
 
-				The extension is loaded automatically when the effect conforms to the FxPlug
-				`FxAnalyzer` protocol; the analysis pass in FxGripTileableEffect (Analyze)
-				reads and writes the frame data through the effect's `analysisData`.
+	The extension is loaded automatically when the effect conforms to the FxPlug
+	`FxAnalyzer` protocol; the analysis pass in FxGripTileableEffect (Analyze)
+	reads and writes the frame data through the effect's `analysisData`.
 */
 @interface FxGripAnalysis : FxGripCustomExtension
 

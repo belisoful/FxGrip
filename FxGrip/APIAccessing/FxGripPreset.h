@@ -151,11 +151,11 @@
 				through the FxGrip setting wrapper's dynamic API; when no type source is
 				available the encoded value's own shape selects the setter.
 
-				Encodings: RGBA and RGB are dictionaries of `red`/`green`/`blue` with an
-				optional `alpha`; Point is `x`/`y`; String and FontMenu are strings;
-				Toggle, Int, and Menu are numbers; Custom is a dictionary that merges
-				recursively into the parameter's current value so a preset may carry a
-				subset; every other type takes a number as a float.
+	Encodings: RGBA and RGB are dictionaries of `red`/`green`/`blue` with an
+	optional `alpha`; Point is `x`/`y`; String and FontMenu are strings;
+	Toggle, Int, and Menu are numbers; Custom is a dictionary that merges
+	recursively into the parameter's current value so a preset may carry a
+	subset; every other type takes a number as a float.
 	@result     YES when the value is written.
 */
 + (BOOL)setParameterValue:(nonnull id)value toParameter:(FxParameterId)parameterID atTime:(CMTime)time withAPI:(nonnull id<FxParameterSettingAPI_v5>)setterAPI;

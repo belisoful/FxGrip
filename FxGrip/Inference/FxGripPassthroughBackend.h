@@ -26,12 +26,12 @@ NS_ASSUME_NONNULL_BEGIN
 				with no weights, mirroring the framework's test-double conventions. It is always
 				ready.
 
-				With no outputMap set, the result echoes the request's inputs verbatim, so an
-				effect whose input and output share a name (image-to-image) renders its source
-				unchanged. A model whose outputs are named differently from its inputs sets
-				outputMap to route them: for a keyer that consumes "rgb" and "hint" and produces
-				"fg" and "matte", @{ @"fg": @"rgb", @"matte": @"hint" } makes the mock stand in.
-				A mapped input that is absent from the request fails the run with an error.
+	With no outputMap set, the result echoes the request's inputs verbatim, so an
+	effect whose input and output share a name (image-to-image) renders its source
+	unchanged. A model whose outputs are named differently from its inputs sets
+	outputMap to route them: for a keyer that consumes "rgb" and "hint" and produces
+	"fg" and "matte", @{ @"fg": @"rgb", @"matte": @"hint" } makes the mock stand in.
+	A mapped input that is absent from the request fails the run with an error.
 */
 @interface FxGripPassthroughBackend : NSObject <FxGripInferenceBackend>
 

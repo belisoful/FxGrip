@@ -86,15 +86,15 @@
 				changes earlier in the same pass. Each section runs only when its option
 				bit is set and the section is present.
 
-				The tag boundary follows `source`:
-				- FxGripPresetSourcePlugin → every section applies to the IDs the
-				  definition names.
-				- FxGripPresetSourceFile → every section applies to an ID only when
-				  `parametersWithTag:` contains it, unless `presetFlags` carries
-				  `kFxParameterPreset_IgnoreTagBoundary`.
+	The tag boundary follows `source`:
+	- FxGripPresetSourcePlugin → every section applies to the IDs the
+	  definition names.
+	- FxGripPresetSourceFile → every section applies to an ID only when
+	  `parametersWithTag:` contains it, unless `presetFlags` carries
+	  `kFxParameterPreset_IgnoreTagBoundary`.
 
-				Parameters flagged PRESETNOTAGS or PRESETNOMETA opt out of the tags and
-				meta sections. A per-entry failure logs and continues.
+	Parameters flagged PRESETNOTAGS or PRESETNOMETA opt out of the tags and
+	meta sections. A per-entry failure logs and continues.
 	@result     The first error encountered, or nil when every entry succeeds.
 */
 - (NSError *_Nullable)applyPreset:(NSDictionary *_Nonnull)preset

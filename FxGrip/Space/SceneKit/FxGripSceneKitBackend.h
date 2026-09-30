@@ -29,8 +29,8 @@ NS_ASSUME_NONNULL_BEGIN
 				tests; the shipped implementation is `FxGripSceneKitMetalBackend`. Drawing the scene
 				is SceneKit's job, and connecting it to an FxPlug tile is the backend's.
 
-				`atTime` is the render time in seconds, sampled for SceneKit animations and actions.
-				The FxPlug host reports time as a `CMTime`; the effect converts it.
+	`atTime` is the render time in seconds, sampled for SceneKit animations and actions.
+	The FxPlug host reports time as a `CMTime`; the effect converts it.
 */
 @protocol FxGripSceneKitBackend <NSObject>
 

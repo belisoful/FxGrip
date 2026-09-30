@@ -11,15 +11,15 @@
 	            Cartesian derivatives of 1/r up to a given order, which this module builds once by
 	            symbolic differentiation and evaluates at a vector.
 
-	            The potential and its multipole form:
-	              M_α = Σ_j s_j (r_j − c)^α / α!                                   (P2M)
-	              φ(t) = Σ_{|α|≤P} (−1)^{|α|} M_α (D^α g)(t − c),   g = 1/r
-	            and the field is the gradient, E(t) = ∇φ(t), so
-	              E_i(t) = Σ_{|α|≤P} (−1)^{|α|} M_α (D^{α+e_i} g)(t − c).           (M2P)
+	The potential and its multipole form:
+	M_α = Σ_j s_j (r_j − c)^α / α!                                   (P2M)
+	φ(t) = Σ_{|α|≤P} (−1)^{|α|} M_α (D^α g)(t − c),   g = 1/r
+	and the field is the gradient, E(t) = ∇φ(t), so
+	E_i(t) = Σ_{|α|≤P} (−1)^{|α|} M_α (D^{α+e_i} g)(t − c).           (M2P)
 
-	            Moments run to order P; the field evaluation needs derivatives to order P+1. Later
-	            translation operators (M2M, M2L, L2L, L2P) reuse the same derivative tensor and
-	            multi-index tables.
+	Moments run to order P; the field evaluation needs derivatives to order P+1. Later
+	translation operators (M2M, M2L, L2L, L2P) reuse the same derivative tensor and
+	multi-index tables.
 */
 
 #ifndef FxGripFMMExpansion_h
