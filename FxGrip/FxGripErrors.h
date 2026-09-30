@@ -63,4 +63,10 @@
 /*! The 3D Space render pass failed. */
 #define kFxGripError_SpaceRenderFailure		(kFxError_ThirdPartyDeveloperStart + 35001)
 
+/*! A shader metadata block does not parse as a JSON5 object, or it has no comment close. */
+#define kFxGripError_ShaderMetadataMalformed	(kFxError_ThirdPartyDeveloperStart + 36000)
+
+/*! A shader metadata value fails validation. */
+#define kFxGripError_ShaderMetadataInvalid		(kFxError_ThirdPartyDeveloperStart + 36001)
+
 #endif

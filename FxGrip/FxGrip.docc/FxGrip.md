@@ -74,6 +74,10 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 
 - <doc:Inference>
 
+### Shader effects
+
+- <doc:Shaders>
+
 ### Web and video content
 
 - <doc:WebContent>
@@ -139,6 +143,8 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 - ``kFxGripError_InferenceNotReady``
 - ``kFxGripError_InferenceMissingInput``
 - ``kFxGripError_InferenceBackendFailure``
+- ``kFxGripError_ShaderMetadataMalformed``
+- ``kFxGripError_ShaderMetadataInvalid``
 
 ### The framework's version
 

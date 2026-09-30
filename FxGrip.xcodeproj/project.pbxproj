@@ -397,6 +397,8 @@
 				Parameters/Video/FxGripVideoViewParameter.h,
 				Parameters/WebView/FxGripWebView.h,
 				Parameters/WebView/FxGripWebViewParameter.h,
+				Shader/FxGripShaderEffect.h,
+				Shader/FxGripShaderMetadata.h,
 				Space/FxGripFMM.h,
 				Space/FxGripParticleInteraction.h,
 				Space/FxGripParticleRand.h,
