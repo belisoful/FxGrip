@@ -287,8 +287,8 @@ per-class defaults appear with each class in <doc:StandardValueParameters>.
 - ``kFxParameterId_ApplePluginData``
 - ``kFxParameterId_DebugActivator``
 - ``kFxParameterId_DebugMenu``
-- ``kFxParameterId_FxFactoryLicense``
 - ``kFxParameterId_InstanceMeta``
+- ``kFxParameterId_Licensing``
 - ``kFxParameterId_MLCache``
 - ``kFxParameterId_Maximum``
 - ``kFxParameterId_Minimum``

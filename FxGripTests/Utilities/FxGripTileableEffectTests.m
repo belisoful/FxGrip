@@ -1328,7 +1328,7 @@ static NSData *FxGripEffectTestState(void)
 	XCTAssertTrue([classNames containsObject:@"FxGripDebugMenu"]);
 	XCTAssertTrue([classNames containsObject:@"FxGripAboutMenu"]);
 	XCTAssertTrue([classNames containsObject:@"FxGripI18N"]);
-	XCTAssertTrue([classNames containsObject:@"FxGripFxFactory"]);
+	XCTAssertTrue([classNames containsObject:@"FxGripLicensing"], @"the fxFactory property selects the licensing extension with the fxfactory provider");
 }
 
 #pragma mark Observer error payloads

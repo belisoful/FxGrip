@@ -27,8 +27,8 @@
 // Forward declaration
 @protocol FxGripTileableEffect;
 
-// Reserved FxGrip parameter ID for the FxFactory license parameter.
-#define kFxParameterId_FxFactoryLicense		(9980)
+// Reserved FxGrip parameter ID for the licensing parameter; its support parameters follow it.
+#define kFxParameterId_Licensing				(9980)
 
 
 

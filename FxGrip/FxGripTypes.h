@@ -126,6 +126,8 @@ typedef UInt32	FxParameterId;
 #define kProPlugPlugInX_GoogleAnalyticsProperty	@"googleanalytics"
 #define kProPlugPlugInX_RegressionProperty		@"regression"
 #define kProPlugPlugInX_FxFactoryProperty		@"fxFactory"
+// A provider name string, or a dictionary with a "provider" key and licensing settings. Default none.
+#define kProPlugPlugInX_LicensingProperty		@"licensing"
 
 // FxPlug ProtocolNames
 #define kProPlugPlugIn_ProtocolFxBaseEffect		@"FxBaseEffect"

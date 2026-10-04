@@ -104,6 +104,7 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 - <doc:GoogleAnalytics>
 - <doc:InstanceTracker>
 - <doc:Regression>
+- <doc:Licensing>
 - <doc:Analysis>
 - <doc:MLCache>
 - <doc:Window>

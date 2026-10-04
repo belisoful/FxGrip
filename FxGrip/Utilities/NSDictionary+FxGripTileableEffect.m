@@ -313,6 +313,17 @@
 	return NO;
 }
 
+- (id)pluginLicensing
+{
+	isPluginDictionary(nil);
+
+	id value = self[kProPlugPlugInX_LicensingProperty];
+	if ([value isKindOfClass:NSString.class] || [value isKindOfClass:NSDictionary.class]) {
+		return value;
+	}
+	return nil;
+}
+
 - (BOOL)pluginTrackInstances
 {
 	isPluginDictionary(NO);

@@ -164,6 +164,7 @@ extensions come through. ``extensionsFlush`` runs the pending flush across all o
 - ``newFxInstanceTracker``
 - ``newGoogleAnalyticsExtension``
 - ``newI18NExtension``
+- ``newLicensingExtension``
 - ``newMetaExtension``
 - ``newMLCacheExtension``
 - ``newParameterDataExtension``
@@ -193,6 +194,7 @@ extensions come through. ``extensionsFlush`` runs the pending flush across all o
 - ``googleAnalytics``
 - ``i18n``
 - ``instanceTracker``
+- ``licensing``
 - ``meta``
 - ``mlCacheData``
 - ``parameterData``
@@ -207,6 +209,14 @@ extensions come through. ``extensionsFlush`` runs the pending flush across all o
 - ``allowsDebugFeatures``
 - ``pluginDebugActivatorEnabled``
 - ``pluginDebugMenuEnabled``
+
+### Licensing
+
+- ``setLicenseState:``
+- ``licensingStatusDidChange:``
+- ``licensingDidReceiveUpdateInfo:``
+- ``licensingProductID``
+- ``isProductLicensed``
 
 ### Tracking instances
 

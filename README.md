@@ -88,7 +88,7 @@ The *Dependency watch* workflow checks https://fxfactory.com/download/ daily and
 ## Dependencies
 
 - **FxPlug.framework** and **PluginManager.framework** from the FxPlug SDK
-- **FxFactory.framework**, weak-linked, from [FxFactory](https://fxfactory.com) (`FxGripFxFactory` licensing integration)
+- **FxFactory.framework**, weak-linked, from [FxFactory](https://fxfactory.com) (the `FxGripFxFactoryProvider` licensing provider)
 - **BEFoundation.framework**, vendored as a binary in `Frameworks/` from [belisoful/BEFoundation](https://github.com/belisoful/BEFoundation)
 
 ## Contributing

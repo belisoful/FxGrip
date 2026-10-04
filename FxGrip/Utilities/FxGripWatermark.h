@@ -99,6 +99,20 @@ typedef NS_ENUM(NSInteger, FxGripWatermarkCorner) {
 /*! A configuration with the given text and every other field at its default. */
 + (instancetype)configurationWithText:(NSString *)text;
 
+/*!
+	@method		configurationWithDictionary:
+	@abstract	A configuration with the dictionary's values applied over the defaults.
+	@discussion	Introduced in FxGrip 0.1.0. The keys are the property names: `text`, `fontName`,
+				`fontSize`, `color`, `angleDegrees`, `opacity`, `blur`, `shadowColor`, `style`,
+				`tileSpacing`, `corner`, and `inset`. A color is a `#RRGGBB` or `#RRGGBBAA`
+				string. `style` is `single`, `diagonalTiled`, `banner`, or `corner`. `corner` is
+				`bottomLeft`, `bottomRight`, `topLeft`, or `topRight`. `tileSpacing` is a
+				two-number array. A key that is absent or of the wrong type keeps the default. */
++ (instancetype)configurationWithDictionary:(NSDictionary<NSString *, id> *)dictionary;
+
+/*! A copy of the receiver with the dictionary's values applied; see `configurationWithDictionary:`. */
+- (instancetype)configurationByApplyingDictionary:(NSDictionary<NSString *, id> *)dictionary;
+
 /*! A diagonally tiled, semi-transparent trial watermark. The common unlicensed look. */
 + (instancetype)trialConfigurationWithText:(NSString *)text;
 

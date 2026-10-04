@@ -40,7 +40,7 @@
 #import "FxGripI18N.h"
 #import "FxGripRegression.h"
 #import "FxGripGoogleAnalytics.h"
-#import "FxGripFxFactory.h"
+#import "FxGripLicensing.h"
 #import "FxGripAnalysis.h"
 #import "FxGripTileableGenerator.h"
 #import "FxGripImageRefParameter.h"
@@ -298,8 +298,12 @@
 	if (self.isGoogleAnalyticsInstalled) {
 		[extensions addObject:self.newGoogleAnalyticsExtension];
 	}
-	if (self.pluginProperties.pluginFxFactory) {
-		[extensions addObject:self.newFxFactoryExtension];
+	if (self.pluginProperties.pluginLicensing != nil || self.pluginProperties.pluginFxFactory) {
+		// nil when the properties name a provider no loaded framework registered.
+		FxGripLicensing *licensing = self.newLicensingExtension;
+		if (licensing != nil) {
+			[extensions addObject:licensing];
+		}
 	}
 #ifdef DEBUG
 	if (self.isRegression) {

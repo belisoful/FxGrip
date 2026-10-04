@@ -21,7 +21,7 @@ env:
   FXPLUG_SDK_VERSION: ${{ vars.FXPLUG_SDK_VERSION || '4.3.5' }}
   # Private repository whose tag v<version> holds the link-only FxFactory.framework stub.
   FXFACTORY_REPOSITORY: ${{ vars.FXFACTORY_REPOSITORY || 'belisoful/FxFactory-SDK' }}
-  FXFACTORY_VERSION: ${{ vars.FXFACTORY_VERSION || '9.0.5' }}
+  FXFACTORY_VERSION: ${{ vars.FXFACTORY_VERSION || '9.0.6' }}
   # Empty selects the newest release Xcode on the runner.
   XCODE_VERSION: ${{ vars.XCODE_VERSION || '' }}
 

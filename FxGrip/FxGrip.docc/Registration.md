@@ -215,6 +215,7 @@ entries.
 - ``kProPlugPlugInX_RegressionProperty``
 - ``kProPlugPlugInX_TrackInstancesProperty``
 - ``kProPlugPlugInX_FxFactoryProperty``
+- ``kProPlugPlugInX_LicensingProperty``
 
 ### Delocalization
 

@@ -15,6 +15,7 @@
 #import "FxGripErrors.h"
 #import "FxTileImage+FxGrip.h"
 #import <BEFoundation/CIImage+BExtension.h>
+#import <BEFoundation/BEColor+BExtension.h>
 
 /*!
 	@abstract	A declarative description of a watermark's text, typography, and layout.
@@ -67,6 +68,102 @@
 	configuration.fontSize = 96.0;
 	configuration.angleDegrees = -30.0;
 	configuration.opacity = 0.5;
+	return configuration;
+}
+
++ (instancetype)configurationWithDictionary:(NSDictionary<NSString *, id> *)dictionary
+{
+	return [[[self alloc] init] configurationByApplyingDictionary:dictionary];
+}
+
+static NSNumber *FxGripWatermarkNumber(NSDictionary *dictionary, NSString *key)
+{
+	id value = dictionary[key];
+	return [value isKindOfClass:NSNumber.class] ? value : nil;
+}
+
+static NSString *FxGripWatermarkString(NSDictionary *dictionary, NSString *key)
+{
+	id value = dictionary[key];
+	return [value isKindOfClass:NSString.class] ? value : nil;
+}
+
+static NSColor *FxGripWatermarkColor(NSDictionary *dictionary, NSString *key)
+{
+	NSString *hex = FxGripWatermarkString(dictionary, key);
+	return hex != nil ? [NSColor colorWithHexString:hex] : nil;
+}
+
+- (instancetype)configurationByApplyingDictionary:(NSDictionary<NSString *, id> *)dictionary
+{
+	FxGripWatermarkConfiguration *configuration = [self copy];
+	NSString *text = FxGripWatermarkString(dictionary, @"text");
+	if (text != nil) {
+		configuration.text = text;
+	}
+	NSString *fontName = FxGripWatermarkString(dictionary, @"fontName");
+	if (fontName != nil) {
+		configuration.fontName = fontName;
+	}
+	NSNumber *fontSize = FxGripWatermarkNumber(dictionary, @"fontSize");
+	if (fontSize != nil) {
+		configuration.fontSize = fontSize.doubleValue;
+	}
+	NSColor *color = FxGripWatermarkColor(dictionary, @"color");
+	if (color != nil) {
+		configuration.color = color;
+	}
+	NSNumber *angle = FxGripWatermarkNumber(dictionary, @"angleDegrees");
+	if (angle != nil) {
+		configuration.angleDegrees = angle.doubleValue;
+	}
+	NSNumber *opacity = FxGripWatermarkNumber(dictionary, @"opacity");
+	if (opacity != nil) {
+		configuration.opacity = opacity.doubleValue;
+	}
+	NSNumber *blur = FxGripWatermarkNumber(dictionary, @"blur");
+	if (blur != nil) {
+		configuration.blur = blur.doubleValue;
+	}
+	NSColor *shadowColor = FxGripWatermarkColor(dictionary, @"shadowColor");
+	if (shadowColor != nil) {
+		configuration.shadowColor = shadowColor;
+	}
+	NSString *style = FxGripWatermarkString(dictionary, @"style");
+	if (style != nil) {
+		NSDictionary<NSString *, NSNumber *> *styles = @{
+			@"single": @(FxGripWatermarkStyleSingle),
+			@"diagonaltiled": @(FxGripWatermarkStyleDiagonalTiled),
+			@"banner": @(FxGripWatermarkStyleBanner),
+			@"corner": @(FxGripWatermarkStyleCorner),
+		};
+		NSNumber *value = styles[style.lowercaseString];
+		if (value != nil) {
+			configuration.style = value.integerValue;
+		}
+	}
+	NSArray *tileSpacing = dictionary[@"tileSpacing"];
+	if ([tileSpacing isKindOfClass:NSArray.class] && tileSpacing.count == 2
+		&& [tileSpacing[0] isKindOfClass:NSNumber.class] && [tileSpacing[1] isKindOfClass:NSNumber.class]) {
+		configuration.tileSpacing = CGSizeMake([tileSpacing[0] doubleValue], [tileSpacing[1] doubleValue]);
+	}
+	NSString *corner = FxGripWatermarkString(dictionary, @"corner");
+	if (corner != nil) {
+		NSDictionary<NSString *, NSNumber *> *corners = @{
+			@"bottomleft": @(FxGripWatermarkCornerBottomLeft),
+			@"bottomright": @(FxGripWatermarkCornerBottomRight),
+			@"topleft": @(FxGripWatermarkCornerTopLeft),
+			@"topright": @(FxGripWatermarkCornerTopRight),
+		};
+		NSNumber *value = corners[corner.lowercaseString];
+		if (value != nil) {
+			configuration.corner = value.integerValue;
+		}
+	}
+	NSNumber *inset = FxGripWatermarkNumber(dictionary, @"inset");
+	if (inset != nil) {
+		configuration.inset = inset.doubleValue;
+	}
 	return configuration;
 }
 

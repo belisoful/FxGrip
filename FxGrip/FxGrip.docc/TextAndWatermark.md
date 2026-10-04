@@ -8,8 +8,9 @@ watermark onto a render tile.
 ``FxGripTextImage`` draws text into a Metal texture. ``FxGripWatermark`` renders a
 declarative ``FxGripWatermarkConfiguration`` onto a render tile in one of four layouts.
 Both depend only on the base FxGrip tile and the Metal layer, with no dependency on
-FxGrip's extension, notification, or FxFactory subsystems, so a plug-in that drives its
-own licensing or activation logic reuses them directly.
+FxGrip's extension, notification, or licensing subsystems, so a plug-in that drives its
+own licensing or activation logic reuses them directly. <doc:Licensing> renders them by
+license status, from a configuration declared in the plug-in's registration record.
 
 ## Rasterizing text
 

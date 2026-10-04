@@ -152,4 +152,59 @@
 	XCTAssertLessThan(image.extent.size.width, size.width);
 }
 
+#pragma mark Dictionary form
+
+/*! @abstract A dictionary applies every key by its property name, with colors as hex strings and the enums as names. */
+- (void)testConfigurationWithDictionaryAppliesEveryKey
+{
+	FxGripWatermarkConfiguration *configuration = [FxGripWatermarkConfiguration configurationWithDictionary:@{
+		@"text": @"TRIAL", @"fontName": @"Menlo", @"fontSize": @36, @"color": @"#FF0000",
+		@"angleDegrees": @15, @"opacity": @0.25, @"blur": @4, @"shadowColor": @"#00000080",
+		@"style": @"corner", @"tileSpacing": @[@10, @20], @"corner": @"topLeft", @"inset": @8,
+	}];
+	XCTAssertEqualObjects(configuration.text, @"TRIAL");
+	XCTAssertEqualObjects(configuration.fontName, @"Menlo");
+	XCTAssertEqual(configuration.fontSize, 36.0);
+	XCTAssertEqualWithAccuracy([configuration.color colorUsingColorSpace:NSColorSpace.sRGBColorSpace].redComponent, 1.0, 0.001);
+	XCTAssertEqualWithAccuracy([configuration.color colorUsingColorSpace:NSColorSpace.sRGBColorSpace].greenComponent, 0.0, 0.001);
+	XCTAssertEqual(configuration.angleDegrees, 15.0);
+	XCTAssertEqual(configuration.opacity, 0.25);
+	XCTAssertEqual(configuration.blur, 4.0);
+	XCTAssertEqualWithAccuracy([configuration.shadowColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace].alphaComponent, 128.0 / 255.0, 0.01);
+	XCTAssertEqual(configuration.style, FxGripWatermarkStyleCorner);
+	XCTAssertTrue(CGSizeEqualToSize(configuration.tileSpacing, CGSizeMake(10, 20)));
+	XCTAssertEqual(configuration.corner, FxGripWatermarkCornerTopLeft);
+	XCTAssertEqual(configuration.inset, 8.0);
+}
+
+/*! @abstract An absent, mistyped, or unknown value keeps the receiver's field. */
+- (void)testApplyingADictionaryKeepsUnmatchedFields
+{
+	FxGripWatermarkConfiguration *base = [FxGripWatermarkConfiguration centeredConfigurationWithText:@"BASE"];
+	FxGripWatermarkConfiguration *applied = [base configurationByApplyingDictionary:@{
+		@"fontSize": @"big", @"color": @"not a color", @"style": @"spiral", @"corner": @7,
+		@"tileSpacing": @[@1], @"opacity": @0.9,
+	}];
+	XCTAssertEqualObjects(applied.text, @"BASE");
+	XCTAssertEqual(applied.fontSize, 96.0, @"a mistyped number keeps the receiver's value");
+	XCTAssertEqualObjects(applied.color, NSColor.whiteColor, @"a malformed color keeps the receiver's value");
+	XCTAssertEqual(applied.style, FxGripWatermarkStyleSingle, @"an unknown style keeps the receiver's value");
+	XCTAssertEqual(applied.corner, FxGripWatermarkCornerBottomRight);
+	XCTAssertTrue(CGSizeEqualToSize(applied.tileSpacing, CGSizeMake(80, 80)), @"a one-element spacing is ignored");
+	XCTAssertEqual(applied.opacity, 0.9);
+	XCTAssertEqual(base.opacity, 0.5, @"the receiver is left unchanged");
+	XCTAssertEqualObjects([FxGripWatermarkConfiguration configurationWithDictionary:@{}].text, @"");
+}
+
+/*! @abstract The style and corner names match case-insensitively. */
+- (void)testStyleAndCornerNamesAreCaseInsensitive
+{
+	FxGripWatermarkConfiguration *configuration = [FxGripWatermarkConfiguration configurationWithDictionary:@{@"style": @"DiagonalTiled", @"corner": @"BOTTOMLEFT"}];
+	XCTAssertEqual(configuration.style, FxGripWatermarkStyleDiagonalTiled);
+	XCTAssertEqual(configuration.corner, FxGripWatermarkCornerBottomLeft);
+	configuration = [FxGripWatermarkConfiguration configurationWithDictionary:@{@"style": @"banner", @"corner": @"topRight"}];
+	XCTAssertEqual(configuration.style, FxGripWatermarkStyleBanner);
+	XCTAssertEqual(configuration.corner, FxGripWatermarkCornerTopRight);
+}
+
 @end

@@ -120,6 +120,8 @@
 - (BOOL) pluginRegression;
 /*! YES when the plug-in is distributed through FxFactory. Default NO. */
 - (BOOL) pluginFxFactory;
+/*! The plug-in's licensing selection: a provider name string, or a dictionary with a `provider` key and settings. nil when absent. */
+- (nullable id) pluginLicensing;
 
 
 /*! The parameter's factory object. */

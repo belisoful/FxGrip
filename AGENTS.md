@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**FxGrip** is a macOS Objective-C framework for Apple's **FxPlug 4 SDK** that provides advanced features and functionality not built into Apple's implementation. It wraps the standard FxPlug API protocols and adds its own APIs (e.g. `FxPresetsAPI_v1`, `FxParameterTagsAPI_v1`), plugin registrars, parameter management, and host-integration extensions for Final Cut Pro and Motion plugins. The project uses Xcode for building and XCTest for unit testing.
+**FxGrip** is a macOS Objective-C framework for Apple's **FxPlug 4 SDK** that provides advanced features and functionality not built into Apple's implementation. It wraps the standard FxPlug API protocols and adds its own APIs (e.g. `FxGripPresetsAPI_v1`, `FxGripParameterTagsAPI_v1`), plugin registrars, parameter management, and host-integration extensions for Final Cut Pro and Motion plugins. The project uses Xcode for building and XCTest for unit testing.
 
 The framework is **macOS-only** (FxPlug hosts are macOS applications). Two primary base classes are `FxGripTileableEffect` and `FxGripTileableGenerator` (see `FxGrip/FxGrip.docc`).
 
@@ -53,7 +53,7 @@ deploy key:
 	at the root of tag `v<version>`, installed into `/Library/Frameworks`, secret
 	`FXFACTORY_SDK_DEPLOY_KEY`, version from the `FXFACTORY_VERSION` Actions variable.
 
-`FxGripFxFactory.h` imports `<FxFactory/FxFactory.h>` and the target weak-links FxFactory, so every
+`FxGripFxFactoryProvider.m` imports `<FxFactory/FxFactory.h>` and the target weak-links FxFactory, so every
 build needs the framework headers. `Scripts/make-fxfactory-stub.sh --publish <clone>` builds the
 stub from the installed framework and publishes it as a new tag. Fork pull requests receive no
 secrets, so their macOS jobs skip.
@@ -79,7 +79,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 ## SDK and Host Requirements
 
 - **FxPlug SDK** — the project links `FxPlug.framework` from `/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/`. The FxPlug 4 SDK must be installed at that path to build.
-- **FxFactory.framework** — weak-linked from `/Library/Frameworks/` (installed by the FxFactory app); `FxGripFxFactory.h` imports its header.
+- **FxFactory.framework** — weak-linked from `/Library/Frameworks/` (installed by the FxFactory app); `FxGripFxFactoryProvider.m` imports its header, so the public headers compile without the SDK.
 - **PluginManager.framework** — linked from `/Library/Developer/Frameworks/` (installed by the FxPlug SDK / Pro Apps).
 - **Deployment target** — macOS 13.5 (framework target); build with a current Xcode.
 - **No private Apple APIs** — plugins that ship this framework must not call private methods in Apple's APIs; FxPlug hosts (Final Cut Pro, Motion) run plugins out-of-process and Apple validates behavior.
@@ -88,22 +88,38 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 ## Project Structure
 
 - `FxGrip/` — Framework source (synchronized folder groups: files added on disk are picked up by Xcode automatically)
-  - Root: umbrella header `FxGrip.h`, types, errors, registrars, `FxGripMetaManager`, `FxGripTileableEffect` (+ `Analyze`, `Parameters`, `Timing`, `Versioning` categories)
-  - `FxGripAPIAccessing/` — wrappers around FxPlug host API protocols plus FxGrip-added APIs (`FxGripCommonAPI`, versioned parameter creation/retrieval/setting/grouping/tags/timing APIs, `FxGripPresetsAPI_v1`)
-  - `FxGripParameters/` — parameter model (`FxParameter`, `FxGripParameter`, flags, parameter libraries)
-  - `FxGripCustom/` — custom parameter data classes and delegates for custom views
-  - `Extensions/` — host-integration extensions (`FxGripAboutMenu`, `FxGripDebugMenu`, `FxGripFactory`, `FxGripGoogleAnalytics`, `FxGripI18N`, `FxGripInstanceTracker`, `FxGripMeta`, `FxGripParameterData`, `FxGripRegression`)
-  - `Utilities/` — `FxGripMTLDeviceCache`, `FxGripParameterUtility`, `FxGripPluginInfo`
-  - `Resources/`, `FxGrip.docc/` — resources and DocC catalog
+  - Root: umbrella header `FxGrip.h`, shared types `FxGripTypes.h`, error domain `FxGripErrors.h`, memory-management macros `FxGrip_ARC.h`
+  - `APIAccessing/` — wrappers around FxPlug host API protocols plus FxGrip-added APIs (`FxGripAPIAccessing`, `FxGripCommonAPI`, `FxGripAPINotifications`, versioned parameter creation/retrieval/setting/dynamic/timing wrappers, FxGrip-owned `*API_v1` classes for custom creation, grouping, tags, meta, bounds, info, and presets, `FxGripPreset`)
+  - `CustomParameter/` — custom parameter value classes and delegates for custom views (`FxGripDictionary`, `FxGripInterpolatingDictionary`, `FxGripFrameData`, `FxGripPathData`, `FxGripPathGeometry`, `FxGripMetaManager`, `FxGripOOBParameterAccess`)
+  - `Extensions/` — effect extensions (`FxGripExtension`, `FxGripExtensionSystem`, `FxGripAboutMenu`, `FxGripAnalysis`, `FxGripDebugMenu`, `FxGripGoogleAnalytics`, `FxGripI18N`, `FxGripInstanceTracker`, `FxGripMLCache`, `FxGripMeta`, `FxGripParameterData`, `FxGripRegression`, `FxGripWindow`)
+    - `Licensing/` — the store-neutral `FxGripLicensing` extension, the `FxGripLicensingProvider` protocol, `FxGripLicenseEntitlement`, and `FxGripFxFactoryProvider` (the only file that imports the FxFactory SDK)
+    - `ParameterExtensions/` — extensions that are also effect parameters (`FxGripParameterExtension`, `FxGripCustomExtension`, `FxGripToggleExtension`)
+  - `Inference/` — ML inference layer (`FxGripInferenceBackend` protocol, `FxGripInferenceRequest`, `FxGripInferenceResult`, `FxGripInferenceBridge`, `FxGripPassthroughBackend`, and the `FxGripMLImageEffect`, `FxGripMLVideoEffect`, `FxGripMLImageGenerator`, `FxGripMLVideoGenerator` templates)
+  - `OnScreenControls/` — on-screen controls (`FxGripOnScreenControl` base class, `FxGripOSCPart`, `FxGripOSCPathPart`, `FxGripPointOSC`, `FxGripObjectTrackerOSC`, the `FxGripOSC.metal` shader)
+  - `Parameters/` — parameter model (`FxGripParameter`, `FxGripParameterFlags`, the `*Library.m` parameter library fragments, `NSView+FxGrip`)
+    - `Common/` — classes for the standard FxPlug parameter types, plus the convenience header `FxGripAllParameters.h`
+    - `Analyzer/`, `Banner/`, `Capsule/`, `Curve/`, `CurveSet/`, `Divider/`, `LiveImage/`, `ObjectTracker/`, `Point/`, `Presets/`, `Progress/`, `Random/`, `Section/`, `Status/`, `Switch/`, `TrackingOpacity/`, `Video/`, `WebView/` — one folder per FxGrip custom control
+  - `Space/` — engine-neutral base of the 3D Space subsystem (`FxGripSpaceEffect`, `FxGripSpaceMotion`, `FxGripPhysicsBake`, `FxGripPhysicsSimulationStore`, `FxGripParticleInteraction`, `FxGripParticleRand`, the `FxGripFMM*` Fast Multipole Method classes)
+    - `SceneKit/` — SceneKit engine (`FxGripSceneKitEffect`, `FxGripSceneKitBackend`, the Metal and physics backends, `FxGripParticleSystem`, `SCN*` categories)
+  - `Tracking/` — `FxGripObjectTracker`, the Vision-backed object tracking engine
+  - `Utilities/` — base classes `FxGripTileableEffect` (+ `Analyze`, `ColorGamut`, `CustomUI`, `Extensions`, `Notifications`, `OOBParameterAccess`, `Parameters`, `PluginProperties`, `ProjectProperties`, `Timing`, `Versioning` categories) and `FxGripTileableGenerator`, host contracts (`FxGripEffectHost`, `FxGripPluginHost`, `FxGripPrincipalDelegate`), helpers (`FxGripMTLDeviceCache`, `FxGripParameterUtility`, `FxGripPluginInfo`, `FxGripRect`, `FxGripColorGamut`, `FxGripTimecode`, `FxGripEventModifiers`, `FxGripImageBuffer`, `FxGripTextImage`, `FxGripWatermark`, `FxGripURLWhitelist`), categories on FxPlug and Foundation classes
+    - `Registrars/` — plugin registrars (`FxGripStaticRegistrar`, `FxGripClassRegistrar`, `FxGripConfigRegistrar`, `FxGripDynamicRegistrar`) and registration data (`FxGripPluginData`, `FxGripPluginGroupData`, `FxGripRegisteredPlugin`)
+    - `Object Extensions/` — `FxGripPrimeNumbers`, the table of 16-bit primes
+  - `Resources/` — FxPlug timing reference images and a link to Apple's timing documentation
+  - `FxGrip.docc/` — DocC catalog (articles at the root, symbol extension files in `Extensions/`, images in `Resources/`)
 - `FxGripRealityKit/` — **Swift-only** RealityKit render engine for the 3D Space subsystem (separate framework target, macOS 15.0 floor, own DocC catalog)
 - `FxGripRealityKitTests/` — Swift XCTest unit tests for that framework (synchronized group)
+- `FxPlugStub/` — test-only stand-ins for the FxPlug classes FxGrip references directly (`FxPlugStub` target, embedded by the test bundles)
 - `Modules/FxPlug/module.modulemap` — repo-owned clang module map for Apple's FxPlug SDK and PluginManager, which ship none; required for any Swift target that imports FxGrip
-- `FxGripTests/` — XCTest unit tests (synchronized group: files added to this folder are compiled automatically)
-- `FxGrip.xcodeproj/` — Xcode project file (targets: `FxGrip` framework, `FxGripTests` unit-test bundle)
+- `Modules/FxPlugStub/module.modulemap` — test-only clang module for `FxPlugStub`, imported by Swift test targets
+- `FxGripTests/` — XCTest unit tests (synchronized group: files added to this folder are compiled automatically). Subfolders mirror `FxGrip/`. `Support/` holds shared test support code and `Integration/` holds tests that span classes.
+- `FxGrip.xcodeproj/` — Xcode project file (targets: `FxGrip` framework, `FxGripTests` unit-test bundle, `FxGripRealityKit` framework, `FxGripRealityKitTests` unit-test bundle, `FxPlugStub` test framework)
 - `FxGrip.xctestplan` — Test plan configuration (parallelizable)
 - `Frameworks/` — vendored binary frameworks (see below)
-- `Information/` — reference material (FCP preset XML samples)
-- `.github/` — CI workflow, the `setup-fxgrip` composite action, issue and pull request templates, Dependabot
+- `Information/` — reference material (design documents, FCP preset XML samples)
+- `Scripts/` — developer tooling (`make-fxfactory-stub.sh`, `pluginkit-manager.sh`), documented in `Scripts/README.md`
+- `agents/` — `FxPlug_ChangeLog.md`, the symbol-level change log of the FxPlug SDK
+- `.github/` — CI and dependency-watch workflows, the `setup-fxgrip` composite action, issue and pull request templates, Dependabot
 
 ### Vendored: BEFoundation.framework
 
@@ -119,7 +135,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 - **Backward compatibility** — point releases must stay backward compatible. Minor releases may break, but minimize the breaks.
 - Document the introducing version on new public methods and classes.
 - **Category methods on Apple classes must not reuse Apple method names.** Apple attaches private same-named categories at runtime, and duplicate resolution is undefined. Public: descriptive non-Apple names; private helpers should avoid the "common name" or prefix with "fxg_". Verify the selector at runtime, not just in headers.
-- Versioned API classes (`*API_v3` … `*API_v6`) mirror FxPlug protocol versions; add a new versioned class rather than changing the semantics of a shipped one.
+- Versioned API classes (`*API_v3` … `*API_v7`) mirror FxPlug protocol versions. The FxGrip-owned `*API_v1` classes are APIs no host vends, versioned on their own. A semantic change goes in a new versioned class; a shipped class keeps its semantics.
 
 ## Swift-only: FxGripRealityKit
 
@@ -198,7 +214,7 @@ Prefer subject–verb–object declaratives, and bullet lists of `condition → 
 ## Adding New Source Files
 
 1. Add .h and .m files to the appropriate `FxGrip/` subfolder (synchronized groups: the files are picked up automatically)
-2. Add a corresponding test file to `FxGripTests/` (also synchronized — compiled automatically)
+2. Add a corresponding test file to the matching subfolder of `FxGripTests/` (also synchronized — compiled automatically)
 3. Mark new public headers `Public` in the target's build phases when they are part of the framework API
 4. Add the public header to the umbrella `FxGrip.h`. Every `Public` header must appear there, or the module verifier fails.
 5. Inside a framework header, import with angle brackets (`#import <FxGrip/FxGripTypes.h>`), never quotes. Quoted includes fail the module verifier.

@@ -11,7 +11,7 @@ Dispatch is direct. Every notification observer is a selector registered with `N
 Two producers post notifications:
 
 - `FxGripTileableEffect` (`FxGripTileableEffect.m`) → lifecycle notifications (`FxTileableEffect…Name`, declared in `FxGripTileableEffect+Notifications.h`).
-- The `FxGrip…API_v…` wrapper classes in `FxGripAPIAccessing/` → parameter API notifications (`FxGripNotifyAPI_…Name`, declared in `FxGripAPINotifications.h`).
+- The `FxGrip…API_v…` wrapper classes in `APIAccessing/` → parameter API notifications (`FxGripNotifyAPI_…Name`, declared in `FxGripAPINotifications.h`).
 
 All notifications are posted with the effect instance as the notification `object`, so an extension observes only its own effect even though every effect shares `NSPriorityNotificationCenter.defaultCenter`. Exception: `FxGripDynamicParameterAPI_v3` posts its set-name and set-menu notifications with the parameter object (`self.effect[parameterID]`) as the notification object; observers registered against the effect do not receive those four posts.
 
@@ -48,7 +48,7 @@ The host drives the effect through the FxPlug protocol; each stage posts one not
 
 ## API notifications
 
-The versioned API wrappers in `FxGripAPIAccessing/` post an `FxGripNotifyAPI_…Name` notification around each host parameter call so extensions can observe and rewrite parameter traffic. The userInfo layout is uniform:
+The versioned API wrappers in `APIAccessing/` post an `FxGripNotifyAPI_…Name` notification around each host parameter call so extensions can observe and rewrite parameter traffic. The userInfo layout is uniform:
 
 - `FxGripNotifyAPI_ParameterIDKey` (also stored at top level under `kFxParameterProperty_Id`) → `NSNumber` parameter ID.
 - `FxGripNotifyAPI_ParameterKey` (`userInfo.fxParameter` / `userInfo.mutableFxParameter`) → the parameter property dictionary, using the `kFxParameterProperty_…` keys (`NSDictionary+FxGripTileableEffect.h`).
