@@ -179,18 +179,22 @@ no configuration selector overrides the default action. It derives from
 ### FxGripGradientParameter
 
 Maps to `gradient`. Registers a gradient parameter and samples its color ramp at a
-render time. The `fxDepth`, `byteDepth`, and `samples` properties set the sampling
-depth and count. `-valueAtTime:` returns an ``FxGripGradient`` owned by the
-parameter, a header followed by the interleaved RGBA samples. An `NSCoder (FxGripGradient)`
+render time. The `fxDepth` and `samples` properties set the sampling depth and count.
+`-gradientDataAtTime:` returns a new `NSData` holding an ``FxGripGradient``, a header
+followed by the interleaved RGBA samples. `-valueAtTime:` returns a pointer to the same
+layout, valid until the enclosing autorelease pool drains. Both are safe to call from
+concurrent render threads. An `NSCoder (FxGripGradient)`
 category decodes the gradient from the plugin state and builds a one-pixel-tall
 Metal texture from it.
 
 ### FxGripHistogramParameter
 
 Maps to `histogram`. Registers a histogram parameter and reads its per-channel
-levels at a render time. `-valueAtTime:` returns an ``FxGripHistogram`` owned by the
-parameter, holding the black in, black out, white in, white out, and gamma for five
-channels.
+levels at a render time. `-getHistogram:atTime:` fills a caller-supplied
+``FxGripHistogram`` with the black in, black out, white in, white out, and gamma for five
+channels, and returns YES when every channel reads. `-valueAtTime:` returns a pointer to a
+histogram valid until the enclosing autorelease pool drains. Both are safe to call from
+concurrent render threads.
 
 ### FxGripImageRefParameter
 

@@ -34,10 +34,19 @@
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 /*!
+	@method		getHistogram:atTime:
+	@abstract	Reads the histogram levels at a render time into a caller-supplied histogram.
+	@param		histogram	The histogram that receives the levels.
+	@param		renderTime	The time to sample the parameter at.
+	@return		YES when every channel reads.
+	@discussion	Introduced in FxGrip 0.1.0. A channel the host refuses keeps the kZeroHistogram levels. The method is safe to call concurrently. */
+- (BOOL)getHistogram:(FxGripHistogram *_Nonnull)histogram atTime:(CMTime)renderTime;
+/*!
 	@method		valueAtTime:
 	@abstract	Reads the histogram levels at a render time.
 	@param		renderTime	The time to sample the parameter at.
-	@return		A pointer to the sampled histogram owned by the parameter. */
+	@return		A pointer to the sampled histogram, valid until the enclosing autorelease pool drains.
+	@discussion	Introduced in FxGrip 0.1.0. The method is safe to call concurrently. Use getHistogram:atTime: to learn whether every channel read. */
 - (FxGripHistogram*_Nullable)valueAtTime:(CMTime)renderTime;
 /*! @abstract Encodes the histogram into the plugin-state coder. */
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder;

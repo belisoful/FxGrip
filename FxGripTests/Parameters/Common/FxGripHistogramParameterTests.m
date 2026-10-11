@@ -7,8 +7,8 @@
 	@abstract   Tests FxGripHistogramParameter: its FxPlug type identity and the name-ID-flags
 	            payload it hands the creation API.
 	@discussion Introduced in FxGrip 0.1.0. The tests confirm the host-refusal result, the
-	            per-channel value read, and a channel the host refuses keeping its zero
-	            histogram values.
+	            per-channel value read, a channel the host refuses keeping its zero
+	            histogram values, and reads and encoding on concurrent threads.
 */
 
 #import <XCTest/XCTest.h>
@@ -17,6 +17,45 @@
 #import <FxGrip/NSCoder+FxPlug.h>
 
 static const FxParameterId kHistogramTestParameter = 51;
+static const size_t kHistogramTestConcurrentReads = 512;
+
+/*! The black-in level the timed stub answers for a channel at a render time. */
+static double FxGripHistogramTestLevel(int64_t time, int channel)
+{
+	return time + channel / 10.0;
+}
+
+/*!
+	Answers each channel's levels as a function of the requested time and channel, so every
+	concurrent read has one correct histogram. The shared stub records reads into an
+	unsynchronized array, so this subclass answers without recording.
+*/
+@interface FxGripHistogramTestTimedRetrievalAPI : FxGripParamClassTestRetrievalAPI
+@end
+
+@implementation FxGripHistogramTestTimedRetrievalAPI
+
+- (BOOL)getHistogramBlackIn:(double *)blackIn
+				   BlackOut:(double *)blackOut
+					WhiteIn:(double *)whiteIn
+				   WhiteOut:(double *)whiteOut
+					  Gamma:(double *)gammaValue
+				 forChannel:(int)channel
+			  fromParameter:(UInt32)parameterID
+					 atTime:(CMTime)time
+{
+	double level = FxGripHistogramTestLevel(time.value, channel);
+	*blackIn = level;
+	*blackOut = level + 0.01;
+	*whiteIn = level + 0.02;
+	*whiteOut = level + 0.03;
+	*gammaValue = level + 0.04;
+	// Holds the read open so concurrent reads overlap.
+	usleep(5);
+	return YES;
+}
+
+@end
 
 @interface FxGripHistogramParameterTests : XCTestCase
 @property (nonatomic, strong) FxGripParamClassTestEffect *effect;
@@ -47,6 +86,18 @@ static const FxParameterId kHistogramTestParameter = 51;
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kHistogramTestParameter, type, @"Levels", extra);
 	return [parameterClass addParameter:config toEffect:(id)self.effect];
+}
+
+/*! Asserts that a histogram holds the timed stub's levels for a render time. */
+- (void)assertHistogram:(const FxGripHistogram *)histogram holdsTheLevelsForTime:(int64_t)time
+{
+	for (int channel = 0; channel < 5; channel++) {
+		double level = FxGripHistogramTestLevel(time, channel);
+		XCTAssertEqual(histogram->component[channel].blackIn, level, @"time %lld channel %d", time, channel);
+		XCTAssertEqual(histogram->component[channel].whiteOut, level + 0.03, @"time %lld channel %d", time, channel);
+		XCTAssertEqual(histogram->component[channel].gamma, level + 0.04, @"time %lld channel %d", time, channel);
+		XCTAssertEqual(histogram->component[channel].channel, channel);
+	}
 }
 
 - (FxGripHistogramParameter *)makeHistogramParameter
@@ -127,6 +178,71 @@ static const FxParameterId kHistogramTestParameter = 51;
 	XCTAssertEqual(histogram->component[2].gamma, 1.0, @"the zero histogram leaves gamma at one");
 }
 
+/*! @abstract -getHistogram:atTime: fills the supplied histogram and reports that every channel read. */
+- (void)testGetHistogramFillsTheSuppliedHistogram
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	self.effect.apiManager.paramGetAPIv6.gamma = 1.5;
+	FxGripHistogram histogram;
+
+	XCTAssertTrue([parameter getHistogram:&histogram atTime:FxGripParamClassTestTime(0, 1)]);
+
+	XCTAssertEqual(histogram.component[3].gamma, 1.5);
+	XCTAssertEqual(histogram.component[3].channel, 3);
+}
+
+/*! @abstract -getHistogram:atTime: reports a refused channel, which keeps its zero histogram values. */
+- (void)testGetHistogramReportsARefusedChannel
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	FxGripParamClassTestRetrievalAPI *retrieval = self.effect.apiManager.paramGetAPIv6;
+	retrieval.blackIn = 0.05;
+	[retrieval.refusedHistogramChannels addObject:@2];
+	FxGripHistogram histogram;
+
+	XCTAssertFalse([parameter getHistogram:&histogram atTime:FxGripParamClassTestTime(0, 1)]);
+
+	XCTAssertEqual(histogram.component[1].blackIn, 0.05);
+	XCTAssertEqual(histogram.component[2].blackIn, 0.0);
+}
+
+/*! @abstract Concurrent -getHistogram:atTime: reads at different times each return the levels for their own time. */
+- (void)testConcurrentGetHistogramReadsEachReturnTheirOwnLevels
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	self.effect.apiManager.paramGetAPIv6 = FxGripHistogramTestTimedRetrievalAPI.new;
+	NSMutableData *results = [NSMutableData dataWithLength:kHistogramTestConcurrentReads * sizeof(FxGripHistogram)];
+	FxGripHistogram *histograms = results.mutableBytes;
+	NSMutableData *outcomes = [NSMutableData dataWithLength:kHistogramTestConcurrentReads * sizeof(BOOL)];
+	BOOL *everyChannelRead = outcomes.mutableBytes;
+
+	dispatch_apply(kHistogramTestConcurrentReads, DISPATCH_APPLY_AUTO, ^(size_t index) {
+		everyChannelRead[index] = [parameter getHistogram:&histograms[index]
+												   atTime:FxGripParamClassTestTime((int64_t)index, 30)];
+	});
+
+	for (size_t index = 0; index < kHistogramTestConcurrentReads; index++) {
+		XCTAssertTrue(everyChannelRead[index], @"read %zu", index);
+		[self assertHistogram:&histograms[index] holdsTheLevelsForTime:(int64_t)index];
+	}
+}
+
+/*! @abstract Concurrent -valueAtTime: reads at different times each return a histogram for their own time. */
+- (void)testConcurrentValueAtTimeReadsEachReturnTheirOwnHistogram
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	self.effect.apiManager.paramGetAPIv6 = FxGripHistogramTestTimedRetrievalAPI.new;
+	NSMutableData *results = [NSMutableData dataWithLength:kHistogramTestConcurrentReads * sizeof(FxGripHistogram)];
+	FxGripHistogram *histograms = results.mutableBytes;
+
+	dispatch_apply(kHistogramTestConcurrentReads, DISPATCH_APPLY_AUTO, ^(size_t index) {
+		histograms[index] = *[parameter valueAtTime:FxGripParamClassTestTime((int64_t)index, 30)];
+	});
+
+	for (size_t index = 0; index < kHistogramTestConcurrentReads; index++) {
+		[self assertHistogram:&histograms[index] holdsTheLevelsForTime:(int64_t)index];
+	}
+}
 
 #pragma mark Plugin state
 
@@ -179,6 +295,33 @@ static const FxParameterId kHistogramTestParameter = 51;
 	unarchiver.requiresSecureCoding = NO;
 	NSUInteger length = 0;
 	XCTAssertTrue([unarchiver decodeBytesAtIndex:kHistogramTestParameter returnedLength:&length] == NULL);
+}
+
+/*! @abstract Plugin-state coders on concurrent threads each encode the histogram for their own render time. */
+- (void)testConcurrentEncodingEncodesEachCodersOwnHistogram
+{
+	FxGripHistogramParameter *parameter = [self makeHistogramParameter];
+	self.effect.apiManager.paramGetAPIv6 = FxGripHistogramTestTimedRetrievalAPI.new;
+	NSMutableData *results = [NSMutableData dataWithLength:kHistogramTestConcurrentReads * sizeof(FxGripHistogram)];
+	FxGripHistogram *histograms = results.mutableBytes;
+
+	dispatch_apply(kHistogramTestConcurrentReads, DISPATCH_APPLY_AUTO, ^(size_t index) {
+		NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+		archiver.renderTime = FxGripParamClassTestTime((int64_t)index, 30);
+		[parameter encodeWithCoder:archiver];
+		[archiver finishEncoding];
+		NSKeyedUnarchiver *unarchiver = [NSKeyedUnarchiver.alloc initForReadingFromData:archiver.encodedData error:NULL];
+		unarchiver.requiresSecureCoding = NO;
+		NSUInteger length = 0;
+		const void *decoded = [unarchiver decodeBytesAtIndex:kHistogramTestParameter returnedLength:&length];
+		if (decoded && length == sizeof(FxGripHistogram)) {
+			memcpy(&histograms[index], decoded, sizeof(FxGripHistogram));
+		}
+	});
+
+	for (size_t index = 0; index < kHistogramTestConcurrentReads; index++) {
+		[self assertHistogram:&histograms[index] holdsTheLevelsForTime:(int64_t)index];
+	}
 }
 
 @end

@@ -5,7 +5,7 @@
 	@date       2026-09-06
 	@header     FxGripGradientParameter
 	@abstract   Implements the parameter model for a host gradient parameter.
-	@discussion Introduced in FxGrip 0.1.0. The class registers a gradient parameter, samples its color ramp into a heap buffer at a render time, and encodes the sampled gradient into the FxPlug plugin-state coder. The NSCoder category decodes the gradient and builds a Metal texture from it.
+	@discussion Introduced in FxGrip 0.1.0. The class registers a gradient parameter, samples its color ramp into a new buffer at a render time, and encodes the sampled gradient into the FxPlug plugin-state coder. The NSCoder category decodes the gradient and builds a Metal texture from it.
 */
 
 #import "FxGripGradientParameter.h"
@@ -17,12 +17,9 @@
 
 /*!
 	@abstract	The parameter model for a host gradient parameter.
-	@discussion	Introduced in FxGrip 0.1.0. The class registers a gradient parameter, samples its color ramp at a render time, and encodes the samples into the plugin-state coder. The sampled gradient is held in a heap buffer that the parameter frees on the next sample and on deallocation.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers a gradient parameter, samples its color ramp at a render time, and encodes the samples into the plugin-state coder. Each sample fills a new buffer, so concurrent plugin-state calls do not share a gradient.
 */
 @implementation FxGripGradientParameter
-{
-	FxGripGradient *_gradient;
-}
 
 + (nullable NSString*)parameterTypeString
 {
@@ -33,16 +30,6 @@
 {
 	return FxParameterType_Gradient;
 }
-
-- (void)dealloc
-{
-	if (_gradient) {
-		free(_gradient);
-		_gradient = nil;
-	}
-	SUPER_DEALLOC();
-}
-
 
 /*!
 	@method		addParameter:toEffect:
@@ -58,44 +45,56 @@
 }
 
 /*!
+	@method		gradientDataAtTime:
+	@abstract	Samples the gradient at a render time into a new buffer.
+	@param		renderTime	The time to sample the parameter at.
+	@return		The gradient header followed by the samples, or nil when the retrieval API fails.
+	@discussion	Introduced in FxGrip 0.1.0. The buffer holds samples count of RGBA samples at the fxDepth component size. The method reads samples and fxDepth once, so the header always matches the buffer. The method is safe to call concurrently. */
+- (nullable NSData *)gradientDataAtTime:(CMTime)renderTime
+{
+	NSUInteger count = self.samples;
+	FxDepth depth = self.fxDepth;
+	NSMutableData *data = [NSMutableData dataWithLength:sizeof(FxGripGradientHeader) + 4 * count * bytesFromFxDepth(depth)];
+	FxGripGradient *gradient = data.mutableBytes;
+	gradient->count = count;
+	gradient->depth = depth;
+	if (![self.effect.apiManager.paramGetAPIv6 getGradientSamples:gradient->samples
+													   numSamples:count
+															depth:depth
+													fromParameter:self.parameterID
+														   atTime:renderTime]) {
+		return nil;
+	}
+	return data;
+}
+
+/*!
 	@method		valueAtTime:
 	@abstract	Samples the gradient at a render time.
 	@param		renderTime	The time to sample the parameter at.
-	@return		A pointer to the sampled gradient, or nil when the retrieval API fails.
-	@discussion	Introduced in FxGrip 0.1.0. The method allocates a buffer sized for the sample count and depth, frees any prior buffer, and fills the header before reading the samples. */
+	@return		A pointer to the sampled gradient, valid until the enclosing autorelease pool drains, or nil when the retrieval API fails.
+	@discussion	Introduced in FxGrip 0.1.0. The gradient lives in the autoreleased buffer gradientDataAtTime: returns, so the method is safe to call concurrently. */
 - (FxGripGradient*)valueAtTime:(CMTime)renderTime NS_RETURNS_INNER_POINTER
 {
-	if (_gradient) {
-		free(_gradient);
-	}
-	_gradient = malloc(4 * self.samples * self.byteDepth + sizeof(FxGripGradientHeader));
-	_gradient->count = self.samples;
-	_gradient->depth = self.fxDepth;
-	if(![self.effect.apiManager.paramGetAPIv6 getGradientSamples:&_gradient->samples
-							   numSamples:_gradient->count
-									depth:_gradient->depth
-							fromParameter:self.parameterID
-								atTime:renderTime]) {
-		return nil;
-	}
-	return _gradient;
+	// The autorelease pool owns the buffer for the lifetime of the returned pointer.
+	__autoreleasing NSData *data = [self gradientDataAtTime:renderTime];
+	return (FxGripGradient *)data.bytes;
 }
-
 
 /*!
 	@method		encodeWithCoder:
 	@abstract	Encodes the sampled gradient at the coder's render time into the plugin-state coder.
 	@param		coder	The coder that receives the gradient.
-	@discussion	Introduced in FxGrip 0.1.0. The gradient encodes only when the coder is an FxPlug plugin-state encoder. The encoded length is the header size plus the sample bytes at the gradient's depth. */
+	@discussion	Introduced in FxGrip 0.1.0. The gradient encodes only when the coder is an FxPlug plugin-state encoder and the read succeeds. The encoded length is the header size plus the sample bytes at the gradient's depth. */
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder
 {
 	[super encodeWithCoder:coder];
 
 	if (coder.isFxPluginStateEncoder) {
-
-		FxGripGradient *gradient = [self valueAtTime:coder.renderTime];
-		int samplesDepth = bytesFromFxDepth(gradient->depth);
-		[coder encodeBytes:(void*)gradient length:sizeof(FxGripGradientHeader) + 4 * gradient->count * samplesDepth atIndex:self.parameterID];
+		NSData *gradient = [self gradientDataAtTime:coder.renderTime];
+		if (gradient) {
+			[coder encodeBytes:gradient.bytes length:gradient.length atIndex:self.parameterID];
+		}
 	} else {
 		// encode meta
 	}

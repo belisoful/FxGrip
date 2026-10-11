@@ -9,7 +9,8 @@
 	@discussion Introduced in FxGrip 0.1.0. The tests confirm the flag forwarding, the
 	            host-refusal result, the sample count and depth the value read asks of the
 	            retrieval API, the bytes it encodes into a plugin-state coder, the gradient the
-	            NSCoder category decodes back, and the Metal texture it builds from the samples.
+	            NSCoder category decodes back, the Metal texture it builds from the samples, and
+	            reads and encoding on concurrent threads.
 */
 
 #import <XCTest/XCTest.h>
@@ -23,6 +24,38 @@
 typedef void *(*FxGripGradientTestCreateDevice)(void);
 
 static const FxParameterId kGradientTestParameter = 51;
+static const size_t kGradientTestConcurrentReads = 512;
+static const NSUInteger kGradientTestTimedSamples = 16;
+
+/*! The byte the timed stub writes into every sample slot at a render time. */
+static unsigned char FxGripGradientTestFill(int64_t time)
+{
+	return (unsigned char)(time & 0xFF);
+}
+
+/*!
+	Fills every sample byte from the requested time, so every concurrent read has one correct
+	gradient. The shared stub records reads into an unsynchronized array, so this subclass
+	answers without recording.
+*/
+@interface FxGripGradientTestTimedRetrievalAPI : FxGripParamClassTestRetrievalAPI
+@end
+
+@implementation FxGripGradientTestTimedRetrievalAPI
+
+- (BOOL)getGradientSamples:(void *)samples
+				numSamples:(NSUInteger)numSamples
+					 depth:(FxDepth)sampleDepth
+			 fromParameter:(UInt32)parameterID
+					atTime:(CMTime)time
+{
+	memset(samples, FxGripGradientTestFill(time.value), 4 * numSamples * bytesFromFxDepth(sampleDepth));
+	// Holds the read open so concurrent reads overlap.
+	usleep(20);
+	return YES;
+}
+
+@end
 
 @interface FxGripGradientParameterTests : XCTestCase
 @property (nonatomic, strong) FxGripParamClassTestEffect *effect;
@@ -147,6 +180,37 @@ static const FxParameterId kGradientTestParameter = 51;
 
 	XCTAssertTrue(second != NULL);
 	XCTAssertEqual(self.effect.apiManager.paramGetAPIv6.reads.count, (NSUInteger)2);
+}
+
+/*! @abstract -gradientDataAtTime: returns the header followed by the samples the host wrote. */
+- (void)testGradientDataHoldsTheHeaderAndSamples
+{
+	FxGripGradientParameter *parameter = [self parameterWithSamples:5 fxDepth:kFxDepth_UINT8 fill:0xA5];
+
+	NSData *data = [parameter gradientDataAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertEqual(data.length, sizeof(FxGripGradientHeader) + 4 * 5);
+	XCTAssertTrue([self gradient:data.bytes holdsCount:5 fill:0xA5]);
+}
+
+/*! @abstract -gradientDataAtTime: returns nil when the retrieval read fails. */
+- (void)testGradientDataIsNilWhenTheReadFails
+{
+	FxGripGradientParameter *parameter = [self parameterWithSamples:4 fxDepth:kFxDepth_UINT8 fill:0];
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+
+	XCTAssertNil([parameter gradientDataAtTime:FxGripParamClassTestTime(0, 1)]);
+}
+
+/*! @abstract The sample buffer follows fxDepth, the depth the host writes at, when byteDepth disagrees. */
+- (void)testGradientDataSizesItsBufferFromFxDepth
+{
+	FxGripGradientParameter *parameter = [self parameterWithSamples:3 fxDepth:kFxDepth_FLOAT32 fill:0];
+	parameter.byteDepth = 1;
+
+	NSData *data = [parameter gradientDataAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertEqual(data.length, sizeof(FxGripGradientHeader) + 4 * 3 * 4);
 }
 
 #pragma mark Plugin state
@@ -308,6 +372,92 @@ static const FxParameterId kGradientTestParameter = 51;
 	XCTAssertNotNil(texture);
 	XCTAssertEqual(texture.pixelFormat, MTLPixelFormatRGBA32Float);
 	XCTAssertEqual(texture.width, (NSUInteger)4);
+}
+
+/*! @abstract A refused retrieval read encodes nothing. */
+- (void)testARefusedReadEncodesNoGradient
+{
+	FxGripGradientParameter *parameter = [self parameterWithSamples:4 fxDepth:kFxDepth_FLOAT32 fill:0];
+	self.effect.apiManager.paramGetAPIv6.succeeds = NO;
+	CMTime time = FxGripParamClassTestTime(0, 1);
+
+	NSData *state = [self encodedStateForParameter:parameter atTime:time];
+
+	NSUInteger length = 0;
+	XCTAssertTrue([[self stateCoderForData:state atTime:time] decodeBytesAtIndex:kGradientTestParameter
+																returnedLength:&length] == NULL);
+}
+
+#pragma mark Concurrency
+
+/*! YES when a gradient holds count eight-bit samples whose every byte is the fill. */
+- (BOOL)gradient:(const FxGripGradient *)gradient holdsCount:(NSUInteger)count fill:(unsigned char)fill
+{
+	if (gradient == NULL || gradient->count != count || gradient->depth != kFxDepth_UINT8) {
+		return NO;
+	}
+	const unsigned char *bytes = (const unsigned char *)gradient->samples;
+	for (NSUInteger byte = 0; byte < 4 * count; byte++) {
+		if (bytes[byte] != fill) {
+			return NO;
+		}
+	}
+	return YES;
+}
+
+/*! Runs a block on concurrent threads once per render time and asserts each returned YES. */
+- (void)assertConcurrently:(BOOL (^)(size_t index))read
+{
+	NSMutableData *outcomes = [NSMutableData dataWithLength:kGradientTestConcurrentReads * sizeof(BOOL)];
+	BOOL *matched = outcomes.mutableBytes;
+	dispatch_apply(kGradientTestConcurrentReads, DISPATCH_APPLY_AUTO, ^(size_t index) {
+		matched[index] = read(index);
+	});
+	for (size_t index = 0; index < kGradientTestConcurrentReads; index++) {
+		XCTAssertTrue(matched[index], @"read %zu", index);
+	}
+}
+
+- (FxGripGradientParameter *)timedEightBitParameter
+{
+	FxGripGradientParameter *parameter = [self parameterWithSamples:kGradientTestTimedSamples fxDepth:kFxDepth_UINT8 fill:0];
+	self.effect.apiManager.paramGetAPIv6 = FxGripGradientTestTimedRetrievalAPI.new;
+	return parameter;
+}
+
+/*! @abstract Concurrent -gradientDataAtTime: reads at different times each return the samples for their own time. */
+- (void)testConcurrentGradientDataReadsEachReturnTheirOwnSamples
+{
+	FxGripGradientParameter *parameter = [self timedEightBitParameter];
+
+	[self assertConcurrently:^BOOL(size_t index) {
+		NSData *data = [parameter gradientDataAtTime:FxGripParamClassTestTime((int64_t)index, 30)];
+		return [self gradient:data.bytes holdsCount:kGradientTestTimedSamples fill:FxGripGradientTestFill(index)];
+	}];
+}
+
+/*! @abstract Concurrent -valueAtTime: reads at different times each return the samples for their own time. */
+- (void)testConcurrentValueAtTimeReadsEachReturnTheirOwnSamples
+{
+	FxGripGradientParameter *parameter = [self timedEightBitParameter];
+
+	[self assertConcurrently:^BOOL(size_t index) {
+		FxGripGradient *gradient = [parameter valueAtTime:FxGripParamClassTestTime((int64_t)index, 30)];
+		return [self gradient:gradient holdsCount:kGradientTestTimedSamples fill:FxGripGradientTestFill(index)];
+	}];
+}
+
+/*! @abstract Plugin-state coders on concurrent threads each encode the gradient for their own render time. */
+- (void)testConcurrentEncodingEncodesEachCodersOwnGradient
+{
+	FxGripGradientParameter *parameter = [self timedEightBitParameter];
+
+	[self assertConcurrently:^BOOL(size_t index) {
+		CMTime time = FxGripParamClassTestTime((int64_t)index, 30);
+		NSData *state = [self encodedStateForParameter:parameter atTime:time];
+		FxGripGradient *gradient = [[self stateCoderForData:state atTime:time] decodeGradientAtIndex:kGradientTestParameter];
+		return [self gradient:gradient holdsCount:kGradientTestTimedSamples fill:FxGripGradientTestFill(index)];
+	}];
 }
 
 @end

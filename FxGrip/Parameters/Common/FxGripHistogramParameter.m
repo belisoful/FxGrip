@@ -5,7 +5,7 @@
 	@date       2026-09-06
 	@header     FxGripHistogramParameter
 	@abstract   Implements the parameter model for a host histogram parameter.
-	@discussion Introduced in FxGrip 0.1.0. The class registers a histogram parameter through the parameter-creation API and reads its per-channel levels at a render time. A per-channel bitmask records which channels read successfully.
+	@discussion Introduced in FxGrip 0.1.0. The class registers a histogram parameter through the parameter-creation API and reads its per-channel levels at a render time. Each read fills storage the caller owns, so concurrent plugin-state calls do not share a histogram.
 */
 
 #import "FxGripHistogramParameter.h"
@@ -18,11 +18,6 @@
 	@discussion	Introduced in FxGrip 0.1.0. The class registers a histogram parameter, samples its five channels at a render time, and encodes the histogram into the plugin-state coder.
 */
 @implementation FxGripHistogramParameter
-{
-	FxGripHistogram	_histogram;
-	NSUInteger		_goodBits;
-	NSUInteger		_errorBits;
-}
 
 + (nullable NSString*)parameterTypeString
 {
@@ -48,50 +43,65 @@
 }
 
 /*!
+	@method		getHistogram:atTime:
+	@abstract	Reads the histogram levels at a render time into a caller-supplied histogram.
+	@param		histogram	The histogram that receives the levels.
+	@param		renderTime	The time to sample the parameter at.
+	@return		YES when every channel reads.
+	@discussion	Introduced in FxGrip 0.1.0. The method starts from kZeroHistogram, so a channel the host refuses keeps the default levels. The method writes only to the supplied histogram and is safe to call concurrently. */
+- (BOOL)getHistogram:(FxGripHistogram *_Nonnull)histogram atTime:(CMTime)renderTime
+{
+	static const FxGripHistogram defaultHistogram = kZeroHistogram;
+	*histogram = defaultHistogram;
+
+	BOOL everyChannelRead = YES;
+	for (int i = 0; i < 5; i++) {
+		FxGripChannelHistogram *channel = &histogram->component[i];
+		if ([self.effect.apiManager.paramGetAPIv6 getHistogramBlackIn:&channel->blackIn
+															 BlackOut:&channel->blackOut
+															  WhiteIn:&channel->whiteIn
+															 WhiteOut:&channel->whiteOut
+																Gamma:&channel->gamma
+														   forChannel:i
+														fromParameter:self.parameterID
+															   atTime:renderTime]) {
+			channel->channel = i;
+		} else {
+			everyChannelRead = NO;
+		}
+	}
+	return everyChannelRead;
+}
+
+/*!
 	@method		valueAtTime:
 	@abstract	Reads the histogram levels at a render time.
 	@param		renderTime	The time to sample the parameter at.
-	@return		A pointer to the sampled histogram owned by the parameter.
-	@discussion	Introduced in FxGrip 0.1.0. The method reads five channels and records the success or failure of each in a per-channel bitmask. */
+	@return		A pointer to the sampled histogram, valid until the enclosing autorelease pool drains.
+	@discussion	Introduced in FxGrip 0.1.0. The histogram lives in an autoreleased buffer, so the method is safe to call concurrently. A channel the host refuses keeps the kZeroHistogram levels. Use getHistogram:atTime: to learn whether every channel read. */
 -(FxGripHistogram*_Nullable) valueAtTime:(CMTime)renderTime
 {
-	static const FxGripHistogram defaultHistogram = kZeroHistogram;
-	_errorBits = _goodBits = 0;
-	
-	_histogram = defaultHistogram;
-	
-	for(int i = 0; i < 5; i++) {
-		if([self.effect.apiManager.paramGetAPIv6 getHistogramBlackIn:&_histogram.component[i].blackIn
-								   BlackOut:&_histogram.component[i].blackOut
-									WhiteIn:&_histogram.component[i].whiteIn
-								   WhiteOut:&_histogram.component[i].whiteOut
-									  Gamma:&_histogram.component[i].gamma
-								 forChannel:i fromParameter:self.parameterID atTime:renderTime]) {
-			_histogram.component[i].channel = i;
-			_goodBits |= 1 << i;
-		} else {
-			_errorBits |= 1 << i;
-		}
-	}
-	
-	return &_histogram;
+	// The autorelease pool owns the buffer for the lifetime of the returned pointer.
+	__autoreleasing NSMutableData *buffer = [NSMutableData dataWithLength:sizeof(FxGripHistogram)];
+	FxGripHistogram *histogram = buffer.mutableBytes;
+	[self getHistogram:histogram atTime:renderTime];
+	return histogram;
 }
-
 
 /*!
 	@method		encodeWithCoder:
 	@abstract	Encodes the histogram at the coder's render time into the plugin-state coder.
 	@param		coder	The coder that receives the histogram.
-	@discussion	Introduced in FxGrip 0.1.0. The histogram encodes only when the coder is an FxPlug plugin-state encoder and every channel read successfully. */
+	@discussion	Introduced in FxGrip 0.1.0. The histogram encodes only when the coder is an FxPlug plugin-state encoder and every channel of this read succeeds. */
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder
 {
 	[super encodeWithCoder:coder];
 
 	if (coder.isFxPluginStateEncoder) {
-		if (!_errorBits) {
-			FxGripHistogram *histogram = [self valueAtTime:coder.renderTime];
-		 [coder encodeBytes:(void*)histogram length:sizeof(FxGripHistogram) atIndex:self.parameterID];
-	 }
+		FxGripHistogram histogram;
+		if ([self getHistogram:&histogram atTime:coder.renderTime]) {
+			[coder encodeBytes:(void*)&histogram length:sizeof(FxGripHistogram) atIndex:self.parameterID];
+		}
 	} else {
 		// encode meta
 	}

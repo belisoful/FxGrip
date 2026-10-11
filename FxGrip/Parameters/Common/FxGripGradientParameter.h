@@ -24,7 +24,7 @@
 
 /*! @abstract The pixel depth the gradient samples are read at. */
 @property (readwrite, assign) FxDepth	fxDepth;
-/*! @abstract The number of bytes per sample component for the current depth. */
+/*! @abstract The number of bytes per sample component for the current depth. Sampling sizes its buffer from fxDepth and does not read this property. */
 @property (readwrite, assign) uint		byteDepth;
 /*! @abstract The number of samples read across the gradient. */
 @property (readwrite, assign) uint		samples;
@@ -42,11 +42,18 @@
 + (BOOL)addParameter:(nonnull NSDictionary *)parameter toEffect:(nonnull id<FxGripEffectHost>)effect;
 
 /*!
+	@method		gradientDataAtTime:
+	@abstract	Samples the gradient at a render time into a new buffer.
+	@param		renderTime	The time to sample the parameter at.
+	@return		The gradient header followed by the samples, or nil when the retrieval API fails.
+	@discussion	Introduced in FxGrip 0.1.0. The data's bytes form an ``FxGripGradient`` at the fxDepth sample size. The method is safe to call concurrently. */
+- (nullable NSData *)gradientDataAtTime:(CMTime)renderTime;
+/*!
 	@method		valueAtTime:
 	@abstract	Samples the gradient at a render time.
 	@param		renderTime	The time to sample the parameter at.
-	@return		A pointer to the sampled gradient owned by the parameter, or nil when the retrieval API fails.
-	@discussion	Introduced in FxGrip 0.1.0. The returned buffer is valid until the next sample or deallocation. */
+	@return		A pointer to the sampled gradient, valid until the enclosing autorelease pool drains, or nil when the retrieval API fails.
+	@discussion	Introduced in FxGrip 0.1.0. The method is safe to call concurrently. */
 - (FxGripGradient*_Nullable)valueAtTime:(CMTime)renderTime NS_RETURNS_INNER_POINTER;
 /*! @abstract Encodes the sampled gradient into the plugin-state coder. */
 - (void)encodeWithCoder:(NSCoder *_Nonnull)coder;
