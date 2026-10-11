@@ -47,6 +47,7 @@ and needs an effect host, so it answers nil when the manager has none.
 id<FxParameterSettingAPI_v6> setter = self.apiManager.paramSetAPIv6;       // FxGrip's wrapper
 id<FxParameterSettingAPI_v6> host   = self.apiManager.paramSetAPIv6_Raw;   // the host's own object
 id<FxGripPresetsAPI_v1>      presets = self.apiManager.presetsAPIv1;       // FxGrip-implemented
+id<FxGripFCPXMLAPI_v1>       fcpxml  = self.apiManager.fcpxmlAPIv1;        // FxGrip-implemented
 ```
 
 A write through `setter` reaches the host and posts an FxGrip notification. The same write through
@@ -96,6 +97,7 @@ See <doc:APIAccessing> for the subsystem, and <doc:Registration> for how a plug-
 - ``metaAPIv1``
 - ``paramTagsAPIv1``
 - ``presetsAPIv1``
+- ``fcpxmlAPIv1``
 
 ### Acting on a custom parameter
 

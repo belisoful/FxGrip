@@ -86,6 +86,11 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 
 - <doc:Presets>
 
+### Final Cut Pro interchange
+
+- <doc:FCPXML>
+- <doc:WorkflowExtensions>
+
 ### Host APIs and registration
 
 - <doc:APIAccessing>
@@ -146,6 +151,10 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 - ``kFxGripError_InferenceBackendFailure``
 - ``kFxGripError_ShaderMetadataMalformed``
 - ``kFxGripError_ShaderMetadataInvalid``
+- ``kFxGripError_FCPXML``
+- ``kFxGripError_FCPXMLIncompatible``
+- ``kFxGripError_WorkflowUnavailable``
+- ``kFxGripError_WorkflowMailbox``
 
 ### The framework's version
 

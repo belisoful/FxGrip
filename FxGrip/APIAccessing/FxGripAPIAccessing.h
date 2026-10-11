@@ -19,7 +19,7 @@
 #import <FxPlug/FxPlugSDK.h>
 
 @class FxGripCustomCreationAPI_v1;
-@protocol FxGripCustomCreationAPI_v1, FxGripPresetsAPI_v1;
+@protocol FxGripCustomCreationAPI_v1, FxGripPresetsAPI_v1, FxGripFCPXMLAPI_v1;
 #import <FxGrip/FxGripParameterInfoAPI_v1.h>
 #import <FxGrip/FxGripParameterBoundsAPI_v1.h>
 #import <FxGrip/FxGripMetaAPI_v1.h>
@@ -215,6 +215,8 @@ effect:(id<FxGripEffectHost>_Nonnull)effect;
 	@property (assign, readonly) id<FxGripParameterTagsAPI_v1> _Nullable paramTagsAPIv1;
 	/*! Captures, applies, browses, and files presets. FxGrip-implemented, so it is available whatever the host vends. */
 	@property (assign, readonly) id<FxGripPresetsAPI_v1> _Nullable presetsAPIv1;
+	/*! Captures the effect as an FCPXML filter and applies one. FxGrip-implemented, so it is available whatever the host vends. */
+	@property (assign, readonly) id<FxGripFCPXMLAPI_v1> _Nullable fcpxmlAPIv1;
 
 	/*! Creates FxGrip's custom parameters (status, banner, web view, …) in Apple's creation-API
 		style; nil when the manager has no effect host. FxGrip-implemented. */

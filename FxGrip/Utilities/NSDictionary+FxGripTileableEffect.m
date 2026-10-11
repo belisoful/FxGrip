@@ -324,6 +324,17 @@
 	return nil;
 }
 
+- (id)pluginWorkflow
+{
+	isPluginDictionary(nil);
+
+	id value = self[kProPlugPlugInX_WorkflowProperty];
+	if ([value isKindOfClass:NSNumber.class] || [value isKindOfClass:NSDictionary.class]) {
+		return value;
+	}
+	return nil;
+}
+
 - (BOOL)pluginTrackInstances
 {
 	isPluginDictionary(NO);

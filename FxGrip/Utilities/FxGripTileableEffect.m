@@ -39,6 +39,7 @@
 #import "FxGripAboutMenu.h"
 #import "FxGripI18N.h"
 #import "FxGripRegression.h"
+#import "FxGripWorkflowRelay.h"
 #import "FxGripGoogleAnalytics.h"
 #import "FxGripLicensing.h"
 #import "FxGripAnalysis.h"
@@ -360,6 +361,9 @@
 		if (licensing != nil) {
 			[extensions addObject:licensing];
 		}
+	}
+	if (self.isWorkflowEnabled) {
+		[extensions addObject:self.newWorkflowRelay];
 	}
 #ifdef DEBUG
 	if (self.isRegression) {

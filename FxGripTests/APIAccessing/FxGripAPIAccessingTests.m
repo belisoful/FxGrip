@@ -24,6 +24,7 @@
 #import <FxGrip/FxGripMetaAPI_v1.h>
 #import <FxGrip/FxGripParameterTagsAPI_v1.h>
 #import <FxGrip/FxGripPresetsAPI_v1.h>
+#import <FxGrip/FxGripFCPXMLAPI_v1.h>
 #import <FxGrip/FxGripCustomCreationAPI_v1.h>
 
 #pragma mark - Test doubles
@@ -189,6 +190,7 @@ static NSDictionary *FxGripAccessorEntry(Protocol *protocol, NSString *plain, NS
 			 @"metaAPIv1": FxGripMetaAPI_v1.class,
 			 @"paramTagsAPIv1": FxGripParameterTagsAPI_v1.class,
 			 @"presetsAPIv1": FxGripPresetsAPI_v1.class,
+			 @"fcpxmlAPIv1": FxGripFCPXMLAPI_v1.class,
 			 @"customCreationAPIv1": FxGripCustomCreationAPI_v1.class};
 }
 
@@ -426,6 +428,8 @@ static NSDictionary *FxGripAccessorEntry(Protocol *protocol, NSString *plain, NS
 				   [self hostObjectFor:@protocol(FxGripParameterTagsAPI_v1)]);
 	XCTAssertEqual((id)[(FxGripPresetsAPI_v1 *)manager.presetsAPIv1 api],
 				   [self hostObjectFor:@protocol(FxGripPresetsAPI_v1)]);
+	XCTAssertEqual((id)[(FxGripFCPXMLAPI_v1 *)manager.fcpxmlAPIv1 api],
+				   [self hostObjectFor:@protocol(FxGripFCPXMLAPI_v1)]);
 	XCTAssertEqual((id)[(FxGripTimingAPI_v4 *)manager.timingAPIv4 api],
 				   [self hostObjectFor:@protocol(FxTimingAPI_v4)]);
 }

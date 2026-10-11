@@ -13,13 +13,15 @@ FxGrip wraps the FxPlug host API protocols and adds its own APIs, a parameter mo
 
 - **Effect and generator base classes.** `FxGripTileableEffect` and `FxGripTileableGenerator` drive the parameter subsystem, the extensions, presets, analysis, and the render pass.
 - **Versioned host API wrappers.** Parameter creation, retrieval, setting, grouping, tags, and timing mirror each FxPlug protocol version.
-- **FxGrip APIs.** Presets (`FxGripPresetsAPI_v1`, with FxFactory `.fxpreset` interoperability) and parameter tags (`FxGripParameterTagsAPI_v1`).
+- **FxGrip APIs.** Presets (`FxGripPresetsAPI_v1`, with FxFactory `.fxpreset` interoperability), parameter tags (`FxGripParameterTagsAPI_v1`), and FCPXML capture and apply (`FxGripFCPXMLAPI_v1`).
 - **Custom parameter controls.** Sections, dividers, banners, switches, curves, live images, web views, video, and progress and status displays.
 - **On-screen controls.** Cursors, curves, HUDs, and editable polygons.
 - **Frame analysis.** An `FxAnalyzer` pass with per-frame data storage.
 - **Extensions.** About and debug menus, internationalization, instance tracking, metadata, and regression support.
 - **Inference.** Pluggable inference backends and an ML image-effect template.
 - **3D space.** An engine-neutral scene base with a SceneKit engine and a Swift-only RealityKit engine (`FxGripRealityKit`, macOS 15+).
+- **FCPXML.** A model of Final Cut Pro's interchange format, versions 1.0 through 1.14, with schema and DTD validation, `.fcpxml` and `.fcpxmld` files, the pasteboard types, and conversion between an effect's parameters and a `filter-video`.
+- **Workflow extensions.** A mailbox between a plug-in's instances and a Final Cut Pro workflow extension, the plug-in-side relay, and the `FxGripWorkflow` companion framework the extension links.
 
 FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, adopts the parameter subsystem through a host, or subclasses the effect base for the whole framework. The DocC catalog's *Adoption* article maps the levels.
 
@@ -38,7 +40,7 @@ Apple distributes the FxPlug SDK to Apple Developer accounts. This repository in
 xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destination 'platform=macOS' build
 ```
 
-The `FxGrip` scheme builds and tests every target: the `FxGrip` framework, the `FxGripRealityKit` framework, and both test bundles.
+The `FxGrip` scheme builds and tests every target: the `FxGrip` framework, the `FxGripRealityKit`, `FxGripStoreKit`, and `FxGripWorkflow` companion frameworks, and their test bundles.
 
 ## Testing
 
@@ -90,6 +92,7 @@ The *Dependency watch* workflow checks https://fxfactory.com/download/ daily and
 - **FxPlug.framework** and **PluginManager.framework** from the FxPlug SDK
 - **FxFactory.framework**, weak-linked, from [FxFactory](https://fxfactory.com) (the `FxGripFxFactoryProvider` licensing provider)
 - **StoreKit.framework** (the Swift `FxGripStoreKit` framework, the Mac App Store licensing provider)
+- **Security.framework**, for the process entitlements the workflow mailbox reads
 - **BEFoundation.framework**, vendored as a binary in `Frameworks/` from [belisoful/BEFoundation](https://github.com/belisoful/BEFoundation)
 
 ## Contributing

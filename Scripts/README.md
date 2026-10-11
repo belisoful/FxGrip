@@ -20,6 +20,25 @@ Scripts/make-fxfactory-stub.sh --publish ~/Code/FxFactory-SDK
 To upgrade, update FxFactory, launch it once so it installs the new framework, run the script
 with `--publish`, and set the Actions variable `FXFACTORY_VERSION` to the new version.
 
+## `make-fcpxml-schema.py`
+
+Regenerates `FxGrip/FCPXML/FxGripFCPXMLSchemaTable.m`, the FCPXML element and attribute table
+`FxGripFCPXMLSchema` reads, from the DTDs inside the installed Final Cut Pro
+(`Contents/Frameworks/Interchange.framework/Resources/FCPXMLv1_N.dtd`). The table records, for every
+element, the version that introduced it, the version that removed it, its allowed children, and its
+attributes with their kind, enumeration, default, required flag, and introducing version.
+
+```bash
+# Regenerate from the installed Final Cut Pro
+Scripts/make-fcpxml-schema.py
+
+# Read the DTDs from another folder and keep a JSON copy of the merged table
+Scripts/make-fcpxml-schema.py --dtd-dir /path/to/dtds --json /tmp/fcpxml-schema.json
+```
+
+Run it after a Final Cut Pro update adds a DTD version, then update the latest-version pin in
+`FxGripTests/FCPXML/FxGripFCPXMLSchemaTests.m`.
+
 ## `pluginkit-manager.sh`
 
 A thin, developer-friendly wrapper around the macOS `pluginkit(8)` CLI for
