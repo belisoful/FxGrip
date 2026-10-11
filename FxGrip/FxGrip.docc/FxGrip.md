@@ -151,6 +151,9 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 - ``kFxGripError_InferenceBackendFailure``
 - ``kFxGripError_ShaderMetadataMalformed``
 - ``kFxGripError_ShaderMetadataInvalid``
+- ``kFxGripError_ShaderCompileFailed``
+- ``kFxGripError_ShaderBindingInvalid``
+- ``kFxGripError_ShaderRenderFailed``
 - ``kFxGripError_FCPXML``
 - ``kFxGripError_FCPXMLIncompatible``
 - ``kFxGripError_WorkflowUnavailable``

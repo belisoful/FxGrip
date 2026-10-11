@@ -15,6 +15,7 @@
 #import <FxGrip/FxGripShaderMetadata.h>
 #import <FxGrip/FxGripErrors.h>
 #import <FxGrip/FxGripTypes.h>
+#import "FxGripShaderTestSupport.h"
 
 /*! Wraps a JSON5 body in a metadata block comment. */
 static NSString *FxGripShaderBlock(NSString *body)
@@ -62,23 +63,7 @@ static NSString *FxGripShaderParameterBlock(NSString *parameter)
 /*! @abstract The worked example in the Shaders DocC article scans as documented. */
 - (void)testTheDocumentedExampleScans
 {
-	NSString *source =
-		@"/* FxGripShader\n"
-		@"{\n"
-		@"    colorSpace: { transfer: \"linear\", primaries: \"rec709\" },\n"
-		@"    parameters: [\n"
-		@"        { id: 1, type: \"float\", name: \"Radius\", key: \"radius\",\n"
-		@"          default: 8, minimum: 0, maximum: 100 },\n"
-		@"        { id: 2, type: \"integer\", name: \"Taps\", key: \"TAPS\", constant: true,\n"
-		@"          default: 9, minimum: 1, maximum: 33 },\n"
-		@"        { id: 10, type: \"group\", name: \"Tint\", parameters: [\n"
-		@"            { id: 11, type: \"rgb\", name: \"Color\", key: \"tint\" },\n"
-		@"        ] },\n"
-		@"    ],\n"
-		@"}\n"
-		@"*/\n"
-		@"\n"
-		@"constant int TAPS [[function_constant(0)]];\n";
+	NSString *source = FxGripShaderTestDocumentedExampleSource();
 
 	FxGripShaderMetadata *metadata = [self scan:source];
 

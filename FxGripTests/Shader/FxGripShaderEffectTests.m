@@ -4,12 +4,13 @@
 	@author     belisoful
 	@date       2026-09-29
 	@header     FxGripShaderEffectTests
-	@abstract   Verifies the bridge from shader metadata to the effect's parameters and color space.
-	@discussion Introduced in FxGrip 0.1.0. A test effect stages its shader source and registration
-	            record. The tests confirm the lazy single scan, the appended parameter
-	            configuration, the processing color info written to the properties, the refusals
-	            for a failed scan, an ID collision, and an unregistered type, and the lookup of a
-	            created parameter by its shader key.
+	@abstract   Verifies the bridge from shader metadata to the effect's parameters, color space, and render.
+	@discussion Introduced in FxGrip 0.1.0. A test effect stages its shader source, registration
+	            record, API manager, and host primaries. The tests confirm the lazy single scan, the
+	            appended parameter configuration, the processing color info written to the
+	            properties, the refusals for a failed scan, an ID collision, and an unregistered type,
+	            the lookup of a created parameter by its shader key, the values read from the bound
+	            parameters, the plugin state, and the render through the host entry points.
 */
 
 #import <XCTest/XCTest.h>
@@ -19,7 +20,9 @@
 #import <FxGrip/FxGripShaderEffect.h>
 #import <FxGrip/FxGripTileableEffect+Parameters.h>
 #import <FxGrip/FxGripAPINotifications.h>
+#import <FxGrip/FxGripDictionary.h>
 #import "FxGripParameterClassTestSupport.h"
+#import "FxGripShaderTestSupport.h"
 
 static NSString *FxGripShaderEffectTestSource(NSString *body)
 {
@@ -33,6 +36,8 @@ static NSString *FxGripShaderEffectTestSource(NSString *body)
 @property (nonatomic, strong, nullable) NSDictionary<NSString *, id> *stubPluginProperties;
 @property (nonatomic, assign) BOOL stubEffectPropertiesInInfo;
 @property (nonatomic, assign) NSUInteger sourceReads;
+@property (nonatomic, strong, nullable) FxGripParamClassTestAPIManager *stubAPIManager;
+@property (nonatomic, assign) FxColorPrimaries stubColorPrimaries;
 @end
 
 @implementation FxGripShaderTestEffect
@@ -69,6 +74,19 @@ static NSString *FxGripShaderEffectTestSource(NSString *body)
 	return self.stagedSource;
 }
 
+- (id<FxGripAPIAccessing>)apiManager
+{
+	if (_stubAPIManager) {
+		return (id<FxGripAPIAccessing>)_stubAPIManager;
+	}
+	return [super apiManager];
+}
+
+- (FxColorPrimaries)colorPrimaries
+{
+	return self.stubColorPrimaries;
+}
+
 @end
 
 @interface FxGripShaderEffectTests : XCTestCase
@@ -90,6 +108,46 @@ static NSString *FxGripShaderEffectTestSource(NSString *body)
 		kProPlugPlugIn_ClassNameProperty: @"FxGripShaderTestEffect",
 		kProPlugPlugIn_GroupUUIDProperty: @"44440000-FFFF-EEEE-DDDD-CCCCBBBBAAAA",
 	}];
+}
+
+/*! Posts the creation notification for every record, as the creation API does once the host has created each parameter. */
+- (void)createShaderParametersOfEffect:(FxGripShaderTestEffect *)effect
+{
+	for (NSDictionary *record in effect.shaderMetadata.allParameters) {
+		[effect.notifier postNotificationName:FxGripNotifyAPI_ParameterAddName object:effect userInfo:record];
+	}
+}
+
+- (FxGripParamClassTestRetrievalAPI *)stageRetrievalOnEffect:(FxGripShaderTestEffect *)effect
+{
+	FxGripParamClassTestAPIManager *manager = [FxGripParamClassTestAPIManager new];
+	manager.paramGetAPIv6 = [FxGripParamClassTestRetrievalAPI new];
+	manager.paramGetAPIv6.succeeds = YES;
+	effect.stubAPIManager = manager;
+	return manager.paramGetAPIv6;
+}
+
+- (NSString *)gainSource
+{
+	return FxGripShaderTestSource(
+		@"{ parameters: [ { id: 1, type: \"float\", name: \"Gain\", key: \"gain\" } ] }",
+		@"struct Uniforms { float gain; };\n"
+		@"fragment float4 fxGripShaderFragment(FxGripShaderVertexOut in [[stage_in]],\n"
+		@"                                     texture2d<float> source [[texture(0)]],\n"
+		@"                                     constant Uniforms &uniforms [[buffer(0)]])\n"
+		@"{\n"
+		@"    constexpr sampler nearest(filter::nearest);\n"
+		@"    float4 color = source.sample(nearest, in.texCoord);\n"
+		@"    return float4(color.rgb * uniforms.gain, color.a);\n"
+		@"}\n");
+}
+
+- (nullable NSData *)pluginStateOfEffect:(FxGripShaderTestEffect *)effect
+{
+	NSData *state = nil;
+	NSError *error = nil;
+	XCTAssertTrue([effect pluginState:&state atTime:FxGripParamClassTestTime(0, 1) quality:kFxQuality_HIGH error:&error], @"%@", error);
+	return state;
 }
 
 - (NSString *)radiusSource
@@ -275,6 +333,157 @@ static NSString *FxGripShaderEffectTestSource(NSString *body)
 	XCTAssertNotNil(parameter);
 	XCTAssertEqual(parameter.parameterID, (FxParameterId)20);
 	XCTAssertNil([effect shaderParameterForKey:@"missing"]);
+}
+
+#pragma mark Pipeline
+
+/*! @abstract The effect adopts the coder-state render path. */
+- (void)testTheEffectAdoptsTheCoderStateRenderPath
+{
+	FxGripShaderTestEffect *effect = [self effectWithSource:nil];
+
+	XCTAssertTrue([effect conformsToProtocol:@protocol(FxGripTileableEffectCoderState)]);
+	XCTAssertEqualObjects([effect shaderFragmentFunctionName], kFxGripShaderFragmentFunctionName);
+}
+
+/*! @abstract Instances with the same source share one pipeline, and no metadata gives no pipeline. */
+- (void)testInstancesShareOnePipelinePerSource
+{
+	FxGripShaderTestEffect *first = [self effectWithSource:[self gainSource]];
+	FxGripShaderTestEffect *second = [self effectWithSource:[self gainSource]];
+
+	XCTAssertNotNil(first.shaderPipeline);
+	XCTAssertEqual(first.shaderPipeline, second.shaderPipeline);
+	XCTAssertEqualObjects(first.shaderPipeline.fragmentFunctionName, kFxGripShaderFragmentFunctionName);
+	XCTAssertNil([self effectWithSource:nil].shaderPipeline);
+	XCTAssertNil([self effectWithSource:FxGripShaderEffectTestSource(@"{ \"parameters\": [ }")].shaderPipeline);
+}
+
+#pragma mark Values
+
+/*! @abstract Each created keyed parameter contributes its value, and a type with no scalar value contributes none. */
+- (void)testEachCreatedParameterContributesItsValue
+{
+	FxGripShaderTestEffect *effect = [self effectWithSource:FxGripShaderEffectTestSource(
+		@"{ parameters: ["
+		@"  { id: 1, type: \"float\", name: \"Gain\", key: \"gain\" },"
+		@"  { id: 2, type: \"integer\", name: \"Mode\", key: \"MODE\", constant: true },"
+		@"  { id: 3, type: \"toggle\", name: \"Invert\", key: \"invert\" },"
+		@"  { id: 4, type: \"point\", name: \"Center\", key: \"center\" },"
+		@"  { id: 5, type: \"rgb\", name: \"Tint\", key: \"tint\" },"
+		@"  { id: 6, type: \"rgba\", name: \"Fill\", key: \"fill\" },"
+		@"  { id: 7, type: \"switch\", name: \"Enabled\", key: \"enabled\" },"
+		@"  { id: 8, type: \"string\", name: \"Label\", key: \"label\" },"
+		@"  { id: 9, type: \"float\", name: \"Unbound\" },"
+		@"] }")];
+	[self createShaderParametersOfEffect:effect];
+	// A custom parameter answers its value only once the host has reported its creation.
+	[[effect shaderParameterForKey:@"enabled"] createdWithFlags:0 parentID:0];
+	FxGripParamClassTestRetrievalAPI *retrieval = [self stageRetrievalOnEffect:effect];
+	retrieval.floatValue = 2.5;
+	retrieval.intValue = 7;
+	retrieval.boolValue = YES;
+	retrieval.x = 5;
+	retrieval.y = 6;
+	retrieval.red = 0.25;
+	retrieval.green = 0.5;
+	retrieval.blue = 0.75;
+	retrieval.alpha = 1;
+	retrieval.customValue = [FxGripDictionary dictionaryWithDictionary:@{ kCustomAPI_BoolKey: @YES }];
+
+	FxGripShaderValues *values = [effect shaderValuesAtTime:FxGripParamClassTestTime(0, 1)];
+
+	XCTAssertEqualObjects(values.keys, (@[@"MODE", @"center", @"enabled", @"fill", @"gain", @"invert", @"tint"]));
+	XCTAssertEqualObjects([values componentsForKey:@"gain"], (@[@2.5]));
+	XCTAssertEqualObjects([values componentsForKey:@"MODE"], (@[@7]));
+	XCTAssertEqualObjects([values componentsForKey:@"invert"], (@[@1]));
+	XCTAssertEqualObjects([values componentsForKey:@"center"], (@[@5, @6]));
+	XCTAssertEqualObjects([values componentsForKey:@"tint"], (@[@0.25, @0.5, @0.75]));
+	XCTAssertEqualObjects([values componentsForKey:@"fill"], (@[@0.25, @0.5, @0.75, @1]));
+	XCTAssertEqualObjects([values componentsForKey:@"enabled"], (@[@1]));
+}
+
+/*! @abstract A parameter the host has not created contributes no value. */
+- (void)testAnUncreatedParameterContributesNoValue
+{
+	FxGripShaderTestEffect *effect = [self effectWithSource:[self gainSource]];
+
+	XCTAssertEqualObjects([effect shaderValuesAtTime:FxGripParamClassTestTime(0, 1)].keys, @[]);
+}
+
+/*! @abstract The plugin state carries the values, the host primaries, and the processing color info. */
+- (void)testThePluginStateCarriesTheValuesAndColorSpace
+{
+	FxGripShaderTestEffect *effect = [self effectWithSource:[self gainSource]];
+	[self createShaderParametersOfEffect:effect];
+	[self stageRetrievalOnEffect:effect].floatValue = 3;
+	effect.stubColorPrimaries = kFxColorPrimaries_Rec2020;
+	effect.desiredProcessingColorInfo = kFxImageColorInfo_RGB_GAMMA_VIDEO;
+
+	NSData *state = [self pluginStateOfEffect:effect];
+	NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:state error:NULL];
+	FxGripShaderValues *values = [unarchiver decodeObjectOfClass:FxGripShaderValues.class forKey:kFxGripShaderValuesCoderKey];
+
+	XCTAssertEqualObjects([values componentsForKey:@"gain"], (@[@3]));
+	XCTAssertEqual([unarchiver decodeIntegerForKey:kFxGripShaderHostPrimariesCoderKey], (NSInteger)kFxColorPrimaries_Rec2020);
+	XCTAssertEqual([unarchiver decodeIntegerForKey:kFxGripShaderColorInfoCoderKey], (NSInteger)kFxImageColorInfo_RGB_GAMMA_VIDEO);
+}
+
+#pragma mark Render
+
+/*! @abstract The host render entry point draws through the shader with the encoded values. */
+- (void)testTheHostRenderDrawsThroughTheShader
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	FxGripShaderTestEffect *effect = [self effectWithSource:[self gainSource]];
+	[self createShaderParametersOfEffect:effect];
+	[self stageRetrievalOnEffect:effect].floatValue = 2;
+	NSData *state = [self pluginStateOfEffect:effect];
+	FxRect bounds = { 0, 0, 2, 2 };
+	FxImageTile *source = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.25f, 0.125f, 0.5f, 1.0f));
+	FxImageTile *destination = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	NSError *error = nil;
+
+	XCTAssertTrue([effect renderDestinationImage:destination sourceImages:@[source] pluginState:state
+										  atTime:FxGripParamClassTestTime(0, 1) error:&error], @"%@", error);
+
+	simd_float4 pixel = FxGripShaderTestPixel(destination, 1, 1);
+	XCTAssertEqualWithAccuracy(pixel.x, 0.5f, 1e-6f);
+	XCTAssertEqualWithAccuracy(pixel.y, 0.25f, 1e-6f);
+	XCTAssertEqualWithAccuracy(pixel.z, 1.0f, 1e-6f);
+	XCTAssertEqualWithAccuracy(pixel.w, 1.0f, 1e-6f);
+}
+
+/*! @abstract An effect with no shader source passes its first source image through. */
+- (void)testAnEffectWithoutASourcePassesItsInputThrough
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	FxGripShaderTestEffect *effect = [self effectWithSource:nil];
+	NSData *state = [self pluginStateOfEffect:effect];
+	FxRect bounds = { 0, 0, 2, 2 };
+	FxImageTile *source = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.25f, 0.125f, 0.5f, 1.0f));
+	FxImageTile *destination = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	NSError *error = nil;
+
+	XCTAssertTrue([effect renderDestinationImage:destination sourceImages:@[source] pluginState:state
+										  atTime:FxGripParamClassTestTime(0, 1) error:&error], @"%@", error);
+
+	XCTAssertEqualWithAccuracy(FxGripShaderTestPixel(destination, 0, 0).z, 0.5f, 1e-6f);
+}
+
+/*! @abstract A shader that fails to build fails the host render with the pipeline's error. */
+- (void)testAShaderThatFailsToBuildFailsTheHostRender
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	FxGripShaderTestEffect *effect = [self effectWithSource:FxGripShaderEffectTestSource(@"{}")];
+	NSData *state = [self pluginStateOfEffect:effect];
+	FxImageTile *destination = FxGripShaderTestFloatTile((FxRect){ 0, 0, 2, 2 }, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	NSError *error = nil;
+
+	XCTAssertFalse([effect renderDestinationImage:destination sourceImages:@[] pluginState:state
+										   atTime:FxGripParamClassTestTime(0, 1) error:&error]);
+
+	XCTAssertEqual(error.code, (NSInteger)kFxGripError_ShaderCompileFailed);
 }
 
 @end

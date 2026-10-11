@@ -69,6 +69,15 @@
 /*! A shader metadata value fails validation. */
 #define kFxGripError_ShaderMetadataInvalid		(kFxError_ThirdPartyDeveloperStart + 36001)
 
+/*! A shader source fails to compile, or its pipeline fails to build. */
+#define kFxGripError_ShaderCompileFailed		(kFxError_ThirdPartyDeveloperStart + 36002)
+
+/*! A shader's uniform struct or function constant does not match the parameter bound to it. */
+#define kFxGripError_ShaderBindingInvalid		(kFxError_ThirdPartyDeveloperStart + 36003)
+
+/*! A shader render pass has no device, texture, or command queue, or its command buffer fails. */
+#define kFxGripError_ShaderRenderFailed			(kFxError_ThirdPartyDeveloperStart + 36004)
+
 /*! An FCPXML document could not be parsed, validated, written, or handed to Final Cut Pro. */
 #define kFxGripError_FCPXML						(kFxError_ThirdPartyDeveloperStart + 37000)
 
