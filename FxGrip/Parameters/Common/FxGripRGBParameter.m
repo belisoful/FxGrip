@@ -39,7 +39,7 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 
 /*!
 	@abstract	The parameter model for a host RGB color well.
-	@discussion	Introduced in FxGrip 0.1.0. The class registers an RGB color parameter, caches the color value, and reads its alpha from a separately bound parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The class registers an RGB color parameter and stores a static alpha. A bound alpha parameter supplies the alpha in its place.
 */
 @implementation FxGripRGBParameter
 {
@@ -102,24 +102,24 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	@method		valueAtTime:
 	@abstract	Reads the color at a render time.
 	@param		renderTime	The time to sample the parameter at.
-	@return		The color, with alpha read from the bound alpha parameter when one is set.
-	@discussion	Introduced in FxGrip 0.1.0. A retrieval failure sets the parameter's error. */
+	@return		The color, with alpha read from the bound alpha parameter when one is set, or the static alpha otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. A retrieval failure sets the parameter's error. The method leaves the static alpha unchanged and is safe to call concurrently at different render times. */
 -(FxGripColor) valueAtTime:(CMTime)renderTime
 {
-	_colorValue.red = _colorValue.green = _colorValue.blue = 0;
+	FxGripColor colorValue = { .red = 0, .green = 0, .blue = 0, .alpha = self.alpha };
 	if (self.alphaParameter) {
-		if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&_colorValue.alpha fromParameter:self.alphaParameter atTime:renderTime]) {
+		if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&colorValue.alpha fromParameter:self.alphaParameter atTime:renderTime]) {
 			_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxGripParameterErrorBool
 								  userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 		}
 	}
-	if(![self.effect.apiManager.paramGetAPIv6 getRedValue:&_colorValue.red greenValue:&_colorValue.green blueValue:&_colorValue.blue  fromParameter:self.parameterID atTime:renderTime]) {
+	if(![self.effect.apiManager.paramGetAPIv6 getRedValue:&colorValue.red greenValue:&colorValue.green blueValue:&colorValue.blue  fromParameter:self.parameterID atTime:renderTime]) {
 		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}
-	return _colorValue;
+	return colorValue;
 }
 
 
@@ -139,7 +139,7 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 
 /*!
 	@method		setRGBAValue:atTime:
-	@abstract	Writes the red, green, and blue components at a time and caches the alpha.
+	@abstract	Writes the red, green, and blue components at a time and stores the alpha.
 	@param		color	The color to set. A NULL value performs no write.
 	@param		time	The time to set the color at. */
 - (void)setRGBAValue:(FxGripColor*_Nullable)color atTime:(CMTime)time
@@ -153,18 +153,19 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 
 /*!
 	@method		setRedValue:greenValue:blueValue:alphaValue:atTime:
-	@abstract	Caches the alpha and writes the red, green, and blue components at a time.
-	@discussion	Introduced in FxGrip 0.1.0. When an alpha parameter is bound the cached alpha is refreshed from it. */
+	@abstract	Stores the alpha and writes the red, green, and blue components at a time.
+	@discussion	Introduced in FxGrip 0.1.0. When an alpha parameter is bound the static alpha is set from it. */
 - (void)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue alphaValue:(double)alpha atTime:(CMTime)time
 {
-	self.alpha = alpha;
+	double alphaValue = alpha;
 	if (self.alphaParameter) {
-		if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&_colorValue.alpha fromParameter:self.alphaParameter atTime:time]) {
+		if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&alphaValue fromParameter:self.alphaParameter atTime:time]) {
 			_error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxGripParameterErrorBool
 								  userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 		}
 	}
+	self.alpha = alphaValue;
 	[self setRedValue:red greenValue:green blueValue:blue atTime:time];
 }
 

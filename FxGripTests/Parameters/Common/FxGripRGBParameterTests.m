@@ -7,8 +7,8 @@
 	@abstract   Tests FxGripRGBParameter (RGB plus its separate alpha parameter): its FxPlug type
 	            identity and the three-component payload +addParameter:toEffect: derives.
 	@discussion Introduced in FxGrip 0.1.0. The tests confirm the color-space gamma conversion,
-	            the value plumbing through the retrieval and setting APIs, and the companion
-	            alpha-parameter validation.
+	            the value plumbing through the retrieval and setting APIs, the companion
+	            alpha-parameter validation, and concurrent reads at different render times.
 */
 
 #import <XCTest/XCTest.h>
@@ -26,6 +26,39 @@
 static const FxParameterId kRGBTestParameter = 31;
 static const FxParameterId kRGBTestAlphaParameter = 32;
 static const double kRGBTestGamma = 2.2;
+static const size_t kRGBTestConcurrentReads = 512;
+
+/*!
+	Answers each component as a function of the requested time, so every concurrent read has
+	one correct color. The shared stub records reads into an unsynchronized array, so this
+	subclass answers without recording.
+*/
+@interface FxGripRGBParameterTestTimedRetrievalAPI : FxGripParamClassTestRetrievalAPI
+@end
+
+@implementation FxGripRGBParameterTestTimedRetrievalAPI
+
+- (BOOL)getFloatValue:(double *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
+{
+	*value = time.value + 0.75;
+	return YES;
+}
+
+- (BOOL)getRedValue:(double *)red
+		 greenValue:(double *)green
+		  blueValue:(double *)blue
+	  fromParameter:(UInt32)parameterID
+			 atTime:(CMTime)time
+{
+	*red = time.value;
+	*green = time.value + 0.25;
+	*blue = time.value + 0.5;
+	// Holds the read open so concurrent reads overlap.
+	usleep(20);
+	return YES;
+}
+
+@end
 
 @interface FxGripRGBParameterTests : XCTestCase
 @property (nonatomic, strong) FxGripParamClassTestEffect *effect;
@@ -67,6 +100,17 @@ static const double kRGBTestGamma = 2.2;
 {
 	NSDictionary *config = FxGripParamClassTestConfig(kRGBTestParameter, kFxParameterType_RGB, @"Tint", nil);
 	return [FxGripRGBParameter.alloc initWithDictionary:config effect:(id)self.effect];
+}
+
+/*! Reads the parameter concurrently at times 0 through kRGBTestConcurrentReads - 1, indexed by time. */
+- (NSData *)concurrentlyReadParameter:(FxGripRGBParameter *)parameter
+{
+	NSMutableData *results = [NSMutableData dataWithLength:kRGBTestConcurrentReads * sizeof(FxGripColor)];
+	FxGripColor *colors = results.mutableBytes;
+	dispatch_apply(kRGBTestConcurrentReads, DISPATCH_APPLY_AUTO, ^(size_t index) {
+		colors[index] = [parameter valueAtTime:FxGripParamClassTestTime((int64_t)index, 30)];
+	});
+	return results;
 }
 
 - (id)makeFloatParameterWithID:(FxParameterId)parameterID
@@ -179,6 +223,44 @@ static const double kRGBTestGamma = 2.2;
 	XCTAssertEqual(color.alpha, 0.45);
 	XCTAssertEqualObjects(retrieval.reads.firstObject[@"accessor"], @"float");
 	XCTAssertEqualObjects(retrieval.reads.firstObject[@"id"], @(kRGBTestAlphaParameter));
+}
+
+/*! @abstract Concurrent reads at different times each return the color and bound alpha for their own time. */
+- (void)testRGBConcurrentReadsEachReturnTheColorForTheirOwnTime
+{
+	FxGripRGBParameter *parameter = [self makeRGBParameter];
+	parameter.alphaParameter = kRGBTestAlphaParameter;
+	parameter.alpha = 0.9;
+	self.effect.apiManager.paramGetAPIv6 = FxGripRGBParameterTestTimedRetrievalAPI.new;
+
+	const FxGripColor *colors = [self concurrentlyReadParameter:parameter].bytes;
+
+	for (size_t index = 0; index < kRGBTestConcurrentReads; index++) {
+		double time = index;
+		XCTAssertEqual(colors[index].red, time, @"read %zu", index);
+		XCTAssertEqual(colors[index].green, time + 0.25, @"read %zu", index);
+		XCTAssertEqual(colors[index].blue, time + 0.5, @"read %zu", index);
+		XCTAssertEqual(colors[index].alpha, time + 0.75, @"read %zu", index);
+	}
+	XCTAssertEqual(parameter.alpha, 0.9, @"reading leaves the static alpha unchanged");
+	XCTAssertNil(parameter.error);
+}
+
+/*! @abstract Concurrent reads without a bound alpha parameter each return the static alpha. */
+- (void)testRGBConcurrentReadsWithoutAnAlphaParameterReturnTheStaticAlpha
+{
+	FxGripRGBParameter *parameter = [self makeRGBParameter];
+	parameter.alpha = 0.35;
+	self.effect.apiManager.paramGetAPIv6 = FxGripRGBParameterTestTimedRetrievalAPI.new;
+
+	const FxGripColor *colors = [self concurrentlyReadParameter:parameter].bytes;
+
+	for (size_t index = 0; index < kRGBTestConcurrentReads; index++) {
+		double time = index;
+		XCTAssertEqual(colors[index].red, time, @"read %zu", index);
+		XCTAssertEqual(colors[index].blue, time + 0.5, @"read %zu", index);
+		XCTAssertEqual(colors[index].alpha, 0.35, @"read %zu", index);
+	}
 }
 
 /*! @abstract -setValue:atTime: writes only the three color components. */
