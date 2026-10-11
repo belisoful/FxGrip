@@ -217,8 +217,8 @@
 /*!
 	@method		parameterType:
 	@abstract	The type of a parameter.
-	@discussion	The type comes from FxGrip's notification observers rather than from the host,
-				which vends no type query.
+	@discussion	The host vends no type query. The answer starts as the type the effect registered,
+				from FxGripHostParameterType, and get-type notification observers may rewrite it.
 	@param		parameterID		The parameter to read.
 	@return		The parameter's `FxParameterType`.
 */
@@ -253,7 +253,7 @@
 /*! Answers whether the effect holds a parameter with an ID, by walking the host's parameter list. */
 - (BOOL)parameterExists:(FxParameterId)parameterID;
 
-/*! The parameter's type, resolved through FxGrip's notification observers. */
+/*! The parameter's type: the type the effect registered, which get-type notification observers may rewrite. */
 - (FxParameterType)parameterType:(FxParameterId)parameterID;
 
 /*! The IDs of every parameter the effect holds, in host order, boxed as `NSNumber`. */

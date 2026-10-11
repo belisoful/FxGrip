@@ -271,14 +271,15 @@
 	return NO;
 }
 
-/*! @abstract Returns a parameter's type, resolved from the notification observers. */
+/*! @abstract Returns a parameter's type: the registered type from FxGripHostParameterType, which
+	get-type notification observers may rewrite. */
 - (FxParameterType)parameterType:(FxParameterId)parameterID
 {
 	NSMutableDictionary *userInfo = @{
 			kFxParameterProperty_Id: @(parameterID),
 			FxGripNotifyAPI_ParameterKey:@{
 				kFxParameterProperty_Id: @(parameterID),
-				kFxParameterProperty_Type: @0
+				kFxParameterProperty_Type: @(FxGripHostParameterType(self.effect, parameterID))
 			}.mutableCopy
 		}.mutableCopy;
 	[self.effect.notifier postNotificationName:FxGripNotifyAPI_ParameterGetTypeName object:self.effect userInfo:userInfo];

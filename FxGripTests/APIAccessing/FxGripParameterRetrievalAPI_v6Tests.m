@@ -401,6 +401,20 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 
 @end
 
+/*! A stub effect that carries a configuration declaring the test parameter's type. */
+@interface FxGripRetrievalTestConfiguredEffect : FxGripRetrievalTestStubEffect
+@property (nonatomic, copy) NSString *configuredType;
+@end
+
+@implementation FxGripRetrievalTestConfiguredEffect
+
+- (NSDictionary *)configurationForParameter:(UInt32)parameterID
+{
+	return @{ kFxParameterProperty_Id: @(parameterID), kFxParameterProperty_Type: self.configuredType, kFxParameterProperty_Name: @"Configured" };
+}
+
+@end
+
 #pragma mark - Tests
 
 @interface FxGripParameterRetrievalAPI_v6Tests : XCTestCase
@@ -766,6 +780,37 @@ static BOOL FxGripRetrievalTestTimesEqual(CMTime lhs, CMTime rhs)
 															atTime:FxGripRetrievalTestTime()]);
 
 	XCTAssertEqualObjects(self.hostAPI.calls, @[@"float"]);
+	XCTAssertEqualObjects(self.customValue.receivedGetters, @[]);
+}
+
+/*! @abstract A parameter the effect registered as custom is intercepted without an info API. */
+- (void)testARegisteredCustomParameterIsInterceptedWithoutAnInfoAPI
+{
+	FxGripRetrievalTestConfiguredEffect *effect = [FxGripRetrievalTestConfiguredEffect.alloc init];
+	effect.configuredType = kFxParameterType_Custom;
+	self.effect = effect;
+	double value = 0;
+
+	XCTAssertTrue([self.retrievalAPIWithoutDynamicAPI getFloatValue:&value
+													 fromParameter:kRetrievalTestParameter
+															atTime:FxGripRetrievalTestTime()]);
+
+	XCTAssertEqualObjects(self.customValue.receivedGetters, @[@"float"]);
+}
+
+/*! @abstract A registered type decides the routing, so the info API is not asked. */
+- (void)testARegisteredTypeDecidesTheRoutingWithoutAskingTheInfoAPI
+{
+	FxGripRetrievalTestConfiguredEffect *effect = [FxGripRetrievalTestConfiguredEffect.alloc init];
+	effect.configuredType = kFxParameterType_Float;
+	self.effect = effect;
+	[self markParameterCustom];
+	self.hostAPI.floatValue = 0.5;
+	double value = 0;
+
+	XCTAssertTrue([self.retrievalAPI getFloatValue:&value fromParameter:kRetrievalTestParameter atTime:FxGripRetrievalTestTime()]);
+
+	XCTAssertEqual(value, 0.5);
 	XCTAssertEqualObjects(self.customValue.receivedGetters, @[]);
 }
 

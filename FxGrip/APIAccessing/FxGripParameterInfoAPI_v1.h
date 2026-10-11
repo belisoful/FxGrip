@@ -31,7 +31,8 @@
 /*! YES when a parameter with this ID is registered. */
 - (BOOL)parameterExists:(FxParameterId)parameterID;
 
-/*! The parameter's type, or FxParameterType_None when it does not resolve. */
+/*! The parameter's type: the type the effect registered, which get-type notification observers may
+	rewrite. FxParameterType_None when neither resolves it. */
 - (FxParameterType)parameterType:(FxParameterId)parameterID;
 
 /*! Fills `entries` with a menu parameter's item titles. */

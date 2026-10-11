@@ -13,6 +13,8 @@
 
 #import "FxGripEffectHost.h"
 #import "FxGripTileableEffect+Notifications.h"
+#import "FxGripParameter.h"
+#import "NSDictionary+FxGripTileableEffect.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
 #import "FxGrip_ARC.h"
 
@@ -62,4 +64,20 @@ FxGripParameterData * _Nullable FxGripHostParameterData(id<FxGripEffectHost> _Nu
 {
 	return FxGripHostResolveService(host, @selector(parameterData),
 									FxGripTileableEffectResolveParameterDataName);
+}
+
+FxParameterType FxGripHostParameterType(id<FxGripEffectHost> _Nullable host, FxParameterId parameterID)
+{
+	// A non-positive subscript walks the host roster by ordinal, so ID 0 never reaches it.
+	if (host == nil || parameterID == 0) {
+		return FxParameterType_None;
+	}
+	if ([host respondsToSelector:@selector(objectAtIndexedSubscript:)]) {
+		id<FxGripParameter> parameter = [host objectAtIndexedSubscript:(NSInteger)parameterID];
+		if (parameter != nil) {
+			return parameter.parameterType;
+		}
+	}
+	NSDictionary *configuration = FxGripHostConfigurationForParameter(host, parameterID);
+	return configuration ? configuration.parameterType : FxParameterType_None;
 }

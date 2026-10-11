@@ -12,6 +12,23 @@
 #import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripParameterInfoAPI_v1.h>
 
+/*! A stub effect that carries a configuration for the test parameter. */
+@interface FxGripInfoTestConfiguredEffect : FxGripDynamicTestStubEffect
+@property (nonatomic, copy) NSString *configuredType;
+@end
+
+@implementation FxGripInfoTestConfiguredEffect
+
+- (NSDictionary *)configurationForParameter:(UInt32)parameterID
+{
+	if (parameterID != kDynamicTestParameter) {
+		return nil;
+	}
+	return @{ kFxParameterProperty_Id: @(parameterID), kFxParameterProperty_Type: self.configuredType, kFxParameterProperty_Name: @"Configured" };
+}
+
+@end
+
 @interface FxGripParameterInfoAPI_v1Tests : FxGripDynamicAPITestCase
 @end
 
@@ -67,11 +84,38 @@
 
 #pragma mark parameterType:
 
-/*! @abstract parameterType: is None and posts the get-type notification when no observer answers. */
+/*! @abstract parameterType: is None and posts the get-type notification when neither the effect nor an observer knows the type. */
 - (void)testParameterTypeIsNoneWhenNoObserverAnswers
 {
 	XCTAssertEqual([self.apiInfo parameterType:kDynamicTestParameter], FxParameterType_None);
 	XCTAssertEqualObjects(self.postedNames, @[FxGripNotifyAPI_ParameterGetTypeName]);
+}
+
+/*! @abstract parameterType: reports the type the effect registered when no observer rewrites it. */
+- (void)testParameterTypeReportsTheRegisteredType
+{
+	FxGripInfoTestConfiguredEffect *effect = [FxGripInfoTestConfiguredEffect.alloc init];
+	effect.configuredType = kFxParameterType_Custom;
+	self.effect = effect;
+
+	XCTAssertEqual([self.apiInfo parameterType:kDynamicTestParameter], FxParameterType_Custom);
+}
+
+/*! @abstract An observer receives the registered type in the payload and may rewrite it. */
+- (void)testAnObserverSeesAndMayRewriteTheRegisteredType
+{
+	FxGripInfoTestConfiguredEffect *effect = [FxGripInfoTestConfiguredEffect.alloc init];
+	effect.configuredType = kFxParameterType_Float;
+	self.effect = effect;
+	__block NSNumber *seen = nil;
+	id token = [effect.notifier addObserverForName:FxGripNotifyAPI_ParameterGetTypeName object:nil queue:nil usingBlock:^(NSNotification *notification) {
+		seen = notification.userInfo.fxParameter[kFxParameterProperty_Type];
+		notification.userInfo.mutableFxParameter[kFxParameterProperty_Type] = @(FxParameterType_Int);
+	}];
+
+	XCTAssertEqual([self.apiInfo parameterType:kDynamicTestParameter], FxParameterType_Int);
+	XCTAssertEqualObjects(seen, @(FxParameterType_Float));
+	[effect.notifier removeObserver:token];
 }
 
 /*! @abstract parameterType: reports the type an observer writes into the notification payload. */

@@ -63,7 +63,7 @@
 /*! @abstract Writes a Boolean value, routing through the custom value for a Custom parameter and posting the set-bool notification. */
 - (BOOL)setBoolValue:(BOOL)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setBoolValue:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setBoolValue:value]) {
@@ -113,7 +113,7 @@
 /*! @abstract Writes a floating-point value, routing through the custom value for a Custom parameter and posting the set-float notification. */
 - (BOOL)setFloatValue:(double)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setFloatValue:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setFloatValue:value]) {
@@ -143,7 +143,7 @@
 /*! @abstract Writes histogram controls, routing through the custom value for a Custom parameter and posting the set-histogram notification. */
 - (BOOL)setHistogramBlackIn:(double)blackIn blackOut:(double)blackOut whiteIn:(double)whiteIn whiteOut:(double)whiteOut gamma:(double)gamma forChannel:(FxHistogramChannel)channel fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setHistogramBlackIn:blackOut:whiteIn:whiteOut:gamma:forChannel:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setHistogramBlackIn:blackIn blackOut:blackOut whiteIn:whiteIn whiteOut:whiteOut gamma:gamma forChannel:channel]) {
@@ -178,7 +178,7 @@
 /*! @abstract Writes an integer value, routing through the custom value for a Custom parameter and posting the set-int notification. */
 - (BOOL)setIntValue:(int)value toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setIntValue:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setIntValue:value]) {
@@ -250,7 +250,7 @@
 /*! @abstract Writes a path ID, routing through the custom value for a Custom parameter and posting the set-path-ID notification. */
 - (BOOL)setPathID:(nonnull FxPathID)pathID toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setPathID:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setPathID:pathID]) {
@@ -280,7 +280,7 @@
 /*! @abstract Writes an RGBA color, routing through the custom value for a Custom parameter and posting the set-RGBA notification. */
 - (BOOL)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue alphaValue:(double)alpha toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setRedValue:greenValue:blueValue:alphaValue:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setRedValue:red greenValue:green blueValue:blue alphaValue:alpha]) {
@@ -313,7 +313,7 @@
 /*! @abstract Writes an RGB color, routing through the custom value for a Custom parameter and posting the set-RGB notification. */
 - (BOOL)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setRedValue:greenValue:blueValue:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setRedValue:red greenValue:green blueValue:blue]) {
@@ -366,7 +366,7 @@
 	string = userInfo.fxParameter[kFxParameterProperty_Default];
 	userInfo.fxParameter = userInfo.fxParameter.copy;
 	
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:kCMTimeZero] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setStringParameterValue:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setStringParameterValue:string]) {
@@ -388,7 +388,7 @@
 /*! @abstract Writes a 2D point, routing through the custom value for a Custom parameter and posting the set-XY notification. */
 - (BOOL)setXValue:(double)x YValue:(double)y toParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_paramGetAPIv6 getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(setXValue:YValue:)]) {
 			if ([(id<FxGripMutableParameter>)customValue setXValue:x YValue:y]) {

@@ -15,6 +15,7 @@
 #import <FxGrip/FxGripEffectHost.h>
 #import <FxGrip/FxGripTileableEffect+Notifications.h>
 #import <BEFoundation/NSPriorityNotificationCenter.h>
+#import <FxGrip/FxGripTypes.h>
 
 /*! A host with the required members only, so every service resolves through a notification. */
 @interface FxGripEffectHostTestPlainHost : NSObject <FxGripEffectHost>
@@ -63,6 +64,45 @@
 - (id)parameterData
 {
 	return self.parameterDataObject;
+}
+
+@end
+
+
+/*! A parameter object that reports one type. */
+@interface FxGripEffectHostTestParameter : NSObject
+@property (nonatomic, assign) FxParameterType parameterType;
+@end
+
+@implementation FxGripEffectHostTestParameter
+@end
+
+/*! A host that carries parameter objects and configurations by ID. */
+@interface FxGripEffectHostTestParameterHost : FxGripEffectHostTestPlainHost
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, id> *parameterObjects;
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSDictionary *> *configurations;
+@end
+
+@implementation FxGripEffectHostTestParameterHost
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_parameterObjects = [NSMutableDictionary dictionary];
+		_configurations = [NSMutableDictionary dictionary];
+	}
+	return self;
+}
+
+- (id<FxGripParameter>)objectAtIndexedSubscript:(NSInteger)index
+{
+	return self.parameterObjects[@(index)];
+}
+
+- (NSDictionary *)configurationForParameter:(UInt32)parameterID
+{
+	return self.configurations[@(parameterID)];
 }
 
 @end
@@ -165,6 +205,41 @@
 	XCTAssertTrue(FxGripHostParameterData(host) == host.parameterDataObject);
 	XCTAssertFalse(FxGripHostHasMeta(host));
 	XCTAssertFalse(posted);
+}
+
+#pragma mark FxGripHostParameterType
+
+/*! @abstract The parameter object's type wins over the configuration's declared type. */
+- (void)testTheParameterObjectTypeWinsOverTheConfiguration
+{
+	FxGripEffectHostTestParameterHost *host = [[FxGripEffectHostTestParameterHost alloc] init];
+	FxGripEffectHostTestParameter *parameter = [[FxGripEffectHostTestParameter alloc] init];
+	parameter.parameterType = FxParameterType_Custom;
+	host.parameterObjects[@7] = parameter;
+	host.configurations[@7] = @{ kFxParameterProperty_Id: @7, kFxParameterProperty_Type: kFxParameterType_Float, kFxParameterProperty_Name: @"Seven" };
+
+	XCTAssertEqual(FxGripHostParameterType(host, 7), FxParameterType_Custom);
+}
+
+/*! @abstract Without a parameter object the configuration's declared type answers. */
+- (void)testTheConfigurationAnswersWithoutAParameterObject
+{
+	FxGripEffectHostTestParameterHost *host = [[FxGripEffectHostTestParameterHost alloc] init];
+	host.configurations[@7] = @{ kFxParameterProperty_Id: @7, kFxParameterProperty_Type: kFxParameterType_Group, kFxParameterProperty_Name: @"Seven" };
+
+	XCTAssertEqual(FxGripHostParameterType(host, 7), FxParameterType_Group);
+}
+
+/*! @abstract An unknown parameter, ID 0, a nil host, and a host without parameters answer None. */
+- (void)testAnUnknownParameterAnswersNone
+{
+	FxGripEffectHostTestParameterHost *host = [[FxGripEffectHostTestParameterHost alloc] init];
+	host.parameterObjects[@0] = [[FxGripEffectHostTestParameter alloc] init];
+
+	XCTAssertEqual(FxGripHostParameterType(host, 7), FxParameterType_None);
+	XCTAssertEqual(FxGripHostParameterType(host, 0), FxParameterType_None);
+	XCTAssertEqual(FxGripHostParameterType(nil, 7), FxParameterType_None);
+	XCTAssertEqual(FxGripHostParameterType(self.plainHost, 7), FxParameterType_None);
 }
 
 @end

@@ -12,6 +12,7 @@
 
 #import "FxGripCommonAPI.h"
 #import "FxGripEffectHost.h"
+#import "FxGripParameterInfoAPI_v1.h"
 #import "FxGrip_ARC.h"
 
 /*!
@@ -79,6 +80,15 @@
 		_hostParameterData = NARC_RETAIN(FxGripHostParameterData(self.effect));
 	}
 	return _hostParameterData;
+}
+
+- (BOOL)isCustomParameter:(FxParameterId)parameterID infoAPI:(nullable id<FxGripParameterInfoAPI_v1>)infoAPI
+{
+	FxParameterType type = FxGripHostParameterType(self.effect, parameterID);
+	if (type == FxParameterType_None && infoAPI != nil) {
+		type = [infoAPI parameterType:parameterID];
+	}
+	return type == FxParameterType_Custom;
 }
 
 @end

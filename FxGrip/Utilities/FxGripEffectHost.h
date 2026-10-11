@@ -19,6 +19,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreMedia/CoreMedia.h>
+#import <FxGrip/FxGripTypes.h>
 
 @protocol FxGripAPIAccessing;
 @protocol FxGripParameter;
@@ -132,6 +133,23 @@ FOUNDATION_EXPORT BOOL FxGripHostHasMeta(id<FxGripEffectHost> _Nullable host);
 /*! A host's parameter-data store, resolving through the notification seam when the host does not
 	answer directly. nil for a nil host, or when no extension owns one. */
 FOUNDATION_EXPORT FxGripParameterData * _Nullable FxGripHostParameterData(id<FxGripEffectHost> _Nullable host);
+
+/*!
+	@function	FxGripHostParameterType
+	@abstract	The type a host registered for a parameter, read without a notification.
+	@param		host		The parameter's owner, or nil.
+	@param		parameterID	The parameter to look up.
+	@return		The registered type, or FxParameterType_None when the host has no record of it.
+	@discussion	Introduced in FxGrip 0.1.0. The lookup order:
+
+	- The host's parameter object for the ID → its parameterType.
+	- The host's configuration for the ID → the type the configuration declares.
+	- Otherwise → FxParameterType_None.
+
+	FxPlug returns no parameter type, so this is the type FxGrip recorded when the parameter was
+	added or configured.
+*/
+FOUNDATION_EXPORT FxParameterType FxGripHostParameterType(id<FxGripEffectHost> _Nullable host, FxParameterId parameterID);
 
 NS_ASSUME_NONNULL_END
 

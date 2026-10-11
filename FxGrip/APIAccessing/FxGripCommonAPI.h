@@ -18,6 +18,8 @@
 
 #import <FxGrip/FxGripEffectHost.h>
 
+@protocol FxGripParameterInfoAPI_v1;
+
 /*!
 	@class		FxGripCommonAPI
 	@abstract	The base object for FxGrip's API capture layer.
@@ -41,6 +43,19 @@
 
 /*! The host's parameter data, resolved once per vended wrapper and cached. */
 - (nullable FxGripParameterData *)hostParameterData;
+
+/*!
+	@method		isCustomParameter:infoAPI:
+	@abstract	YES when a parameter's type is FxParameterType_Custom.
+	@param		parameterID	The parameter to test.
+	@param		infoAPI		The info API that answers when the effect has no record, or nil.
+	@return		YES for a custom parameter.
+	@discussion	Introduced in FxGrip 0.1.0. The registered type from FxGripHostParameterType
+				decides without a notification. When the effect has no record of the parameter,
+				the info API's parameterType: answers through the get-type notification. The value
+				wrappers call this on every read and write to route a custom value's accessors.
+*/
+- (BOOL)isCustomParameter:(FxParameterId)parameterID infoAPI:(nullable id<FxGripParameterInfoAPI_v1>)infoAPI;
 
 @end
 

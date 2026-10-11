@@ -63,7 +63,7 @@
 /*! @abstract Reads a Boolean value, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getBoolValue:(nonnull BOOL *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getBoolValue:)]) {
 			return [(id<FxGripMutableParameter>)customValue getBoolValue:value];
@@ -95,7 +95,7 @@
 /*! @abstract Reads a floating-point value, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getFloatValue:(nonnull double *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getFloatValue:)]) {
 			return [(id<FxGripMutableParameter>)customValue getFloatValue:value];
@@ -107,7 +107,7 @@
 /*! @abstract Reads a font name, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getFontName:(NSString * _Nullable * _Nonnull)fontName fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getFontName:)]) {
 			return [(id<FxGripMutableParameter>)customValue getFontName:fontName];
@@ -119,7 +119,7 @@
 /*! @abstract Reads gradient samples, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getGradientSamples:(nonnull void *)samples numSamples:(NSUInteger)numSamples depth:(FxDepth)sampleDepth fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getGradientSamples:numSamples:depth:)]) {
 			return [(id<FxGripMutableParameter>)customValue getGradientSamples:samples numSamples:numSamples depth:sampleDepth];
@@ -131,7 +131,7 @@
 /*! @abstract Reads histogram controls, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getHistogramBlackIn:(nonnull double *)blackIn BlackOut:(nonnull double *)blackOut WhiteIn:(nonnull double *)whiteIn WhiteOut:(nonnull double *)whiteOut Gamma:(nonnull double *)gamma forChannel:(FxHistogramChannel)channel fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getHistogramBlackIn:blackOut:whiteIn:whiteOut:gamma:forChannel:)]) {
 			return [(id<FxGripMutableParameter>)customValue getHistogramBlackIn:blackIn
@@ -155,7 +155,7 @@
 /*! @abstract Reads an integer value, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getIntValue:(nonnull int *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getIntValue:)]) {
 			return [(id<FxGripMutableParameter>)customValue getIntValue:value];
@@ -208,7 +208,7 @@
 /*! @abstract Reads a path ID, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getPathID:(FxPathID  _Nullable * _Nonnull)pathID fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getPathID:)]) {
 			return [(id<FxGripMutableParameter>)customValue getPathID:pathID];
@@ -220,7 +220,7 @@
 /*! @abstract Reads an RGBA color, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getRedValue:(nonnull double *)red greenValue:(nonnull double *)green blueValue:(nonnull double *)blue alphaValue:(nonnull double *)alpha fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getRedValue:greenValue:blueValue:alphaValue:)]) {
 			return [(id<FxGripMutableParameter>)customValue getRedValue:red greenValue:green blueValue:blue alphaValue:alpha];
@@ -232,7 +232,7 @@
 /*! @abstract Reads an RGB color, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getRedValue:(nonnull double *)red greenValue:(nonnull double *)green blueValue:(nonnull double *)blue fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getRedValue:greenValue:blueValue:)]) {
 			return [(id<FxGripMutableParameter>)customValue getRedValue:red greenValue:green blueValue:blue];
@@ -251,7 +251,7 @@
 */
 - (BOOL)getStringParameterValue:(NSString * _Nonnull * _Nullable)string fromParameter:(UInt32)parameterID
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:kCMTimeZero] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getStringParameterValue:)]) {
 			return [(id<FxGripMutableParameter>)customValue getStringParameterValue:string];
@@ -276,7 +276,7 @@
 /*! @abstract Reads a 2D point, routing to the custom value's accessor for a Custom parameter. */
 - (BOOL)getXValue:(nonnull double *)x YValue:(nonnull double *)y fromParameter:(UInt32)parameterID atTime:(CMTime)time
 {
-	if (_parameterInfoAPIv1 && [_parameterInfoAPIv1 parameterType:parameterID] == FxParameterType_Custom) {
+	if ([self isCustomParameter:parameterID infoAPI:_parameterInfoAPIv1]) {
 		NSObject<NSSecureCoding, NSCopying> *customValue;
 		if ([_api getCustomParameterValue:&customValue fromParameter:parameterID atTime:time] && [customValue conformsToProtocol:@protocol(FxGripMutableParameter)] && [customValue respondsToSelector:@selector(getXValue:YValue:)]) {
 			return [(id<FxGripMutableParameter>)customValue getXValue:x YValue:y];

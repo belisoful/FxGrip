@@ -199,6 +199,11 @@ static NSNotificationCenter *FxGripI18NTestMakePriorityCenter(void)
 	return nil;
 }
 
+- (id)effectBase
+{
+	return nil;
+}
+
 // The delocalizing name replacement asks the manager for the raw v3 API; a hostless stub
 // reports none, so the replacement leaves the caller's name in place and delocalizes it.
 - (id)apiManager
