@@ -242,6 +242,25 @@ Objective-C sources for the workflow companion go in `FxGripWorkflow/`, tests in
 - Security.framework (the workflow mailbox and the host client read the process entitlements)
 - XCTest.framework (for tests)
 
+## Git Workflow
+
+Several agent sessions work on this repository at once, and the main checkout holds their
+uncommitted files. Each session works in its own git worktree and commits directly on `main`.
+Sessions do not create feature branches, open pull requests, or merge through pull requests.
+
+1. Create a detached worktree at the current `main`. Git checks out a branch in only one worktree,
+	so the worktree stays detached:
+	`git fetch origin && git worktree add --detach <scratch dir>/wt origin/main`
+2. Make the change in that worktree and run the Full Check there with a private
+	`-derivedDataPath`.
+3. Commit in the worktree and push to `main`: `git push origin HEAD:main`. A rejected push →
+	`git fetch && git rebase origin/main`, re-run the affected tests, and push again.
+
+- Never `git checkout`, `git add`, or commit in the main checkout. Other sessions' uncommitted
+	work lives there.
+- A branch left from earlier work → merge it into `main`, then pull `main`.
+- Commits and pushes still require developer approval (see Safeguards).
+
 ## Safeguards (Anti-Patterns)
 
 Required without exception:
