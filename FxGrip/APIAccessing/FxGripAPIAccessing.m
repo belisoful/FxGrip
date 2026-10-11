@@ -29,6 +29,7 @@
 #import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripParameterTagsAPI_v1.h"
 #import "FxGripPresetsAPI_v1.h"
+#import "FxGripFCPXMLAPI_v1.h"
 #import <BEFoundation/NSNumber+BExtension.h>
 
 #import "FxGrip_ARC.h"
@@ -305,6 +306,15 @@
 		}
 		return presets_v1;
 	}
+	// FxGrip-implemented, like the presets API above.
+	if ([FxGripFCPXMLAPI_v1 conformsToProtocol:apiProtocol]) {
+		id fcpxml_v1 = NARC_AUTORELEASE([FxGripFCPXMLAPI_v1.alloc initWithAPI:api effect:self.effect]);
+		if (fcpxml_v1 == nil)
+		{
+			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripFCPXMLAPI_v1", _sessionID);
+		}
+		return fcpxml_v1;
+	}
 	if (api && [FxGripTimingAPI_v4 conformsToProtocol:apiProtocol]) {
 		id timing_v4 = NARC_AUTORELEASE([FxGripTimingAPI_v4.alloc initWithAPI:api effect:self.effect]);
 		if (timing_v4 == nil)
@@ -373,6 +383,17 @@
 		NSLog(@"FxGripAPIManager(%llu)::presetsAPIv1 Unable to load FxGripPresetsAPI_v1", _sessionID);
 	}
 	return presetsAPI;
+}
+
+- (id<FxGripFCPXMLAPI_v1> _Nullable)fcpxmlAPIv1
+{
+	// FxGrip-implemented: always available, independent of the host's API set.
+	id<FxGripFCPXMLAPI_v1> fcpxmlAPI = [self apiForProtocol:@protocol(FxGripFCPXMLAPI_v1)];
+	if (fcpxmlAPI == nil)
+	{
+		NSLog(@"FxGripAPIManager(%llu)::fcpxmlAPIv1 Unable to load FxGripFCPXMLAPI_v1", _sessionID);
+	}
+	return fcpxmlAPI;
 }
 
 - (id<FxGripCustomCreationAPI_v1> _Nullable)customCreationAPIv1

@@ -122,6 +122,8 @@
 - (BOOL) pluginFxFactory;
 /*! The plug-in's licensing selection: a provider name string, or a dictionary with a `provider` key and settings. nil when absent. */
 - (nullable id) pluginLicensing;
+/*! The `workflow` plugin property: an `NSNumber` Boolean or a settings dictionary, else nil. */
+- (nullable id) pluginWorkflow;
 
 
 /*! The parameter's factory object. */

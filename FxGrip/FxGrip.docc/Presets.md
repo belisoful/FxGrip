@@ -37,6 +37,8 @@ The FxGrip additions have no FxFactory equivalent. The seven `FxGripPreset*` key
 
 `savePresetToURL:` writes the property list, and `loadPresetFromURL:` reads a file written by FxGrip or by FxFactory.
 
+A preset also converts to and from an FCPXML `filter-video`, the element an FxPlug effect occupies in a Final Cut Pro project; <doc:FCPXML> covers that form and the capture and apply API behind it.
+
 ## The presets API
 
 ``FxGripPresetsAPI_v1-class`` captures, applies, browses, and files presets. It is constructed without a host API, because FxGrip implements it itself.

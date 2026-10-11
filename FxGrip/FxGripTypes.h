@@ -128,6 +128,9 @@ typedef UInt32	FxParameterId;
 #define kProPlugPlugInX_FxFactoryProperty		@"fxFactory"
 // A provider name string, or a dictionary with a "provider" key and licensing settings. Default none.
 #define kProPlugPlugInX_LicensingProperty		@"licensing"
+// YES, or a dictionary of workflow relay settings, to link the plug-in with a Final Cut Pro
+// workflow extension through the App Group mailbox. Default none.
+#define kProPlugPlugInX_WorkflowProperty		@"workflow"
 
 // FxPlug ProtocolNames
 #define kProPlugPlugIn_ProtocolFxBaseEffect		@"FxBaseEffect"

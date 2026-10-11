@@ -86,7 +86,7 @@ notifications they observe.
 
 Subclass ``FxGripTileableEffect-class`` (or ``FxGripTileableGenerator``) and the whole framework is
 active: the registrars, the plist parameter configuration, the extensions, meta and tags,
-presets, analysis, and the ML effect templates.
+presets, FCPXML capture and the workflow relay, analysis, and the ML effect templates.
 
 ## Choosing a licensing provider
 

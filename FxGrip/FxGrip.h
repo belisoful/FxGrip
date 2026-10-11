@@ -54,6 +54,8 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripExtensionSystem.h>
 #import <FxGrip/FxGripParameterData.h>
 #import <FxGrip/FxGripRegression.h>
+#import <FxGrip/FxGripWorkflowMailbox.h>
+#import <FxGrip/FxGripWorkflowRelay.h>
 
 #import <FxGrip/FxMatrix+FxGrip.h>
 #import <FxGrip/FxGripEffectHost.h>
@@ -74,6 +76,22 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxTileImage+FxGrip.h>
 #import <FxGrip/FxGripTextImage.h>
 #import <FxGrip/FxGripTimecode.h>
+
+#import <FxGrip/FxGripFCPXMLTime.h>
+#import <FxGrip/FxGripFCPXMLVersion.h>
+#import <FxGrip/FxGripFCPXMLSchema.h>
+#import <FxGrip/FxGripFCPXMLElement.h>
+#import <FxGrip/FxGripFCPXMLResources.h>
+#import <FxGrip/FxGripFCPXMLParam.h>
+#import <FxGrip/FxGripFCPXMLFilter.h>
+#import <FxGrip/FxGripFCPXMLStoryElement.h>
+#import <FxGrip/FxGripFCPXMLLibrary.h>
+#import <FxGrip/FxGripFCPXMLText.h>
+#import <FxGrip/FxGripFCPXMLDocument.h>
+#import <FxGrip/FxGripFCPXMLValue.h>
+#import <FxGrip/FxGripFCPXMLPasteboard.h>
+#import <FxGrip/FxGripFinalCutPro.h>
+#import <FxGrip/FxGripPreset+FCPXML.h>
 #import <FxGrip/FxGripWatermark.h>
 
 #import <FxGrip/FxGripImageBuffer.h>
@@ -221,5 +239,6 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripParameterTagsAPI_v1.h>
 #import <FxGrip/FxGripPreset.h>
 #import <FxGrip/FxGripPresetsAPI_v1.h>
+#import <FxGrip/FxGripFCPXMLAPI_v1.h>
 #import <FxGrip/FxGripTimingAPI_v4.h>
 #import <FxGrip/FxGripCustomCreationAPI_v1.h>

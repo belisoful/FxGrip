@@ -69,4 +69,16 @@
 /*! A shader metadata value fails validation. */
 #define kFxGripError_ShaderMetadataInvalid		(kFxError_ThirdPartyDeveloperStart + 36001)
 
+/*! An FCPXML document could not be parsed, validated, written, or handed to Final Cut Pro. */
+#define kFxGripError_FCPXML						(kFxError_ThirdPartyDeveloperStart + 37000)
+
+/*! An FCPXML filter names an effect this plug-in is not compatible with. */
+#define kFxGripError_FCPXMLIncompatible			(kFxError_ThirdPartyDeveloperStart + 37001)
+
+/*! The workflow mailbox is unavailable: the process has no App Group container. */
+#define kFxGripError_WorkflowUnavailable		(kFxError_ThirdPartyDeveloperStart + 38000)
+
+/*! A workflow mailbox record or document could not be read or written. */
+#define kFxGripError_WorkflowMailbox			(kFxError_ThirdPartyDeveloperStart + 38001)
+
 #endif

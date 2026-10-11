@@ -49,6 +49,20 @@
                ReferencedContainer = "container:FxGrip.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "7A5F00000000000000000061"
+               BuildableName = "FxGripWorkflow.framework"
+               BlueprintName = "FxGripWorkflow"
+               ReferencedContainer = "container:FxGrip.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -94,6 +108,17 @@
                BlueprintIdentifier = "5BC5000000000000000000A2"
                BuildableName = "FxGripStoreKitTests.xctest"
                BlueprintName = "FxGripStoreKitTests"
+               ReferencedContainer = "container:FxGrip.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "7A5F00000000000000000062"
+               BuildableName = "FxGripWorkflowTests.xctest"
+               BlueprintName = "FxGripWorkflowTests"
                ReferencedContainer = "container:FxGrip.xcodeproj">
             </BuildableReference>
          </TestableReference>

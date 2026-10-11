@@ -171,6 +171,13 @@ extensions come through. ``extensionsFlush`` runs the pending flush across all o
 - ``newPhysicsBakeExtension``
 - ``newRegressionExtension``
 - ``newWindowExtension``
+- ``newWorkflowRelay``
+
+### Final Cut Pro interchange
+
+- ``fcpxmlAPI``
+- ``workflowRelay``
+- ``isWorkflowEnabled``
 
 ### Testing which extensions loaded
 
