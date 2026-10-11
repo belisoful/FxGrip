@@ -9,6 +9,7 @@
 */
 
 #import "FxGripPointParameter.h"
+#import "FxGripParameter+Protected.h"
 #import "FxGripTileableEffect.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"
@@ -80,7 +81,7 @@
 {
 	FxGripPoint point = {0.0, 0.0};
 	if(![self.effect.apiManager.paramGetAPIv6 getXValue:&point.x YValue:&point.y fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+		self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

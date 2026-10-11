@@ -264,7 +264,7 @@ flagMethodBody(flagIsDefault)
 	if (!_addedToEffect) {
 		return;
 	}
-	_error = [self.effect.apiManager.dynamicParamAPIv3 setParameter:_parameterID name:_parameterName];
+	self.error = [self.effect.apiManager.dynamicParamAPIv3 setParameter:_parameterID name:_parameterName];
 }
 
 

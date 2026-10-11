@@ -4,12 +4,14 @@
 	@author     belisoful
 	@date       2026-09-10
 	@header     FxGripParameterExtensionTests
-	@abstract   Unit tests for the parameter extension's add observer, ID freeze, and change bracket.
+	@abstract   Unit tests for the parameter extension's add observer, ID freeze, change bracket, and
+	            error property.
 	@discussion Introduced in FxGrip 0.1.0. The extension observes the parameter-add notification on
 	            the effect's notifier and tags the matching parameter with its extension key. The
 	            tests drive that observer through a stub effect carrying an isolated priority center,
 	            covering the ID match, the extension-key and factory tagging, and the ID freeze that
-	            follows the first observed add.
+	            follows the first observed add. A toggle extension records the error from refused
+	            reads on concurrent threads.
 */
 
 #import <XCTest/XCTest.h>
@@ -18,6 +20,9 @@
 #import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripParameterUtility.h>
 #import <FxGrip/FxGripCustomExtension.h>
+#import <FxGrip/FxGripToggleExtension.h>
+#import <FxGrip/FxGripParameter.h>
+#import "FxGripParameterClassTestSupport.h"
 
 static const FxParameterId kFxGripParamExtTestParameter = 812;
 
@@ -165,6 +170,25 @@ static const FxParameterId kFxGripParamExtTestParameter = 812;
 	XCTAssertNil(error);
 	XCTAssertTrue([self.extension endChangedTime:time error:&error]);
 	XCTAssertNil(error);
+}
+
+#pragma mark The error property
+
+/*! @abstract Refused reads on concurrent render threads each record the error while other threads read it. */
+- (void)testConcurrentRefusedReadsRecordTheError
+{
+	FxGripParamClassTestEffect *effect = [FxGripParamClassTestEffect.alloc init];
+	effect.apiManager.paramGetAPIv6 = FxGripParamClassTestRefusingRetrievalAPI.new;
+	FxGripToggleExtension *toggle = [FxGripToggleExtension.alloc init];
+	toggle.parameterID = kFxGripParamExtTestParameter;
+	XCTAssertTrue([toggle extLoadWithEffect:(id)effect]);
+
+	dispatch_apply(20000, DISPATCH_APPLY_AUTO, ^(size_t index) {
+		[toggle valueAtTime:FxGripParamClassTestTime((int64_t)index, 30)];
+		XCTAssertEqual(toggle.error.code, kFxGripParameterErrorBool);
+	});
+
+	XCTAssertEqual(toggle.error.code, kFxGripParameterErrorBool);
 }
 
 @end

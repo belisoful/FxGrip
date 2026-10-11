@@ -9,6 +9,7 @@
 */
 
 #import "FxGripFontMenuParameter.h"
+#import "FxGripParameter+Protected.h"
 #import "FxGripTileableEffect+Notifications.h"
 #import "FxGripAPINotifications.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
@@ -78,7 +79,7 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 {
 	NSString* fontNameValue = nil;
 	if(![self.effect.apiManager.paramGetAPIv6 getFontName:&fontNameValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+		self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

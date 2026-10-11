@@ -50,7 +50,7 @@
 {
 	BOOL boolValue = NO;
 	if(![self.effect.apiManager.paramGetAPIv6 getBoolValue:&boolValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+		self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

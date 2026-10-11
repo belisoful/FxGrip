@@ -9,6 +9,7 @@
 */
 
 #import "FxGripToggleParameter.h"
+#import "FxGripParameter+Protected.h"
 #import "FxGripTileableEffect.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"

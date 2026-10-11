@@ -8,7 +8,7 @@
 	            +addParameter:toEffect: derives from a configuration.
 	@discussion Introduced in FxGrip 0.1.0. The tests confirm the defaults applied when the
 	            configuration omits a bound, the slider-bound and delta fallbacks, the flag
-	            forwarding, and the host-refusal result.
+	            forwarding, the host-refusal result, and error recording from concurrent reads.
 */
 
 #import <XCTest/XCTest.h>
@@ -219,6 +219,20 @@ static const FxParameterId kFloatTestParameter = 21;
 	[parameter valueAtTime:FxGripParamClassTestTime(0, 1)];
 
 	XCTAssertNotNil(parameter.error);
+	XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
+}
+
+/*! @abstract Refused reads on concurrent render threads each record the error while other threads read it. */
+- (void)testFloatConcurrentRefusedReadsRecordTheError
+{
+	FxGripFloatParameter *parameter = [self makeFloatParameter];
+	self.effect.apiManager.paramGetAPIv6 = FxGripParamClassTestRefusingRetrievalAPI.new;
+
+	dispatch_apply(20000, DISPATCH_APPLY_AUTO, ^(size_t index) {
+		[parameter valueAtTime:FxGripParamClassTestTime((int64_t)index, 30)];
+		XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
+	});
+
 	XCTAssertEqual(parameter.error.code, kFxGripParameterErrorBool);
 }
 

@@ -9,6 +9,7 @@
 */
 
 #import "FxGripRGBParameter.h"
+#import "FxGripParameter+Protected.h"
 #import "FxGripTileableEffect+Notifications.h"
 #import "FxGripAPINotifications.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
@@ -109,13 +110,13 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	FxGripColor colorValue = { .red = 0, .green = 0, .blue = 0, .alpha = self.alpha };
 	if (self.alphaParameter) {
 		if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&colorValue.alpha fromParameter:self.alphaParameter atTime:renderTime]) {
-			_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+			self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxGripParameterErrorBool
 								  userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 		}
 	}
 	if(![self.effect.apiManager.paramGetAPIv6 getRedValue:&colorValue.red greenValue:&colorValue.green blueValue:&colorValue.blue  fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+		self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}
@@ -160,7 +161,7 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 	double alphaValue = alpha;
 	if (self.alphaParameter) {
 		if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&alphaValue fromParameter:self.alphaParameter atTime:time]) {
-			_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+			self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 										 code:kFxGripParameterErrorBool
 								  userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 		}
