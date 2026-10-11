@@ -1140,7 +1140,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 		NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
 		return NO;
 	} else if (*error) {
-		NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
+		NSLog (@"%s Error: Error returned from Plugin State Notification %@", __func__, *error);
 		return NO;
 	}
 	
@@ -1228,7 +1228,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 		NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
 		return NO;
 	} else if (*error) {
-		NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
+		NSLog (@"%s Error: Error returned from Schedule Inputs Notification %@", __func__, *error);
 		return NO;
 	}
 
@@ -1372,7 +1372,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 		NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
 		return NO;
 	} else if (*error) {
-		NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
+		NSLog (@"%s Error: Error returned from Destination Image Rect Notification %@", __func__, *error);
 		return NO;
 	}
 
@@ -1482,7 +1482,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 		NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
 		return NO;
 	} else if (*error) {
-		NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
+		NSLog (@"%s Error: Error returned from Source Tile Rect Notification %@", __func__, *error);
 		return NO;
 	}
 	
@@ -1586,7 +1586,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 			NSLog (@"%s Error: Error returned from notification is not NSError class but %@.", __func__, (*error).className);
 			success = NO;
 		} else if (*error) {
-			NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
+			NSLog (@"%s Error: Error returned from Render Destination Image Notification %@", __func__, *error);
 			success = NO;
 		}
 	}
