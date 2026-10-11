@@ -9,6 +9,7 @@
 */
 
 #import "FxGripColorParameter.h"
+#import "FxGripParameter+Protected.h"
 #import "FxGripTileableEffect+Notifications.h"
 #import "FxGripAPINotifications.h"
 #import <BEFoundation/NSPriorityNotificationCenter.h>
@@ -107,7 +108,7 @@ static NSMutableDictionary *FxGripPolicyResolvedConfiguration(NSDictionary *para
 {
 	FxGripColor colorValue = kFxGripBlackOpaque;
 	if(![self.effect.apiManager.paramGetAPIv6 getRedValue:&colorValue.r greenValue:&colorValue.g blueValue:&colorValue.b alphaValue:&colorValue.a fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+		self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

@@ -9,6 +9,7 @@
 */
 
 #import "FxGripFloatParameter.h"
+#import "FxGripParameter+Protected.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripTileableEffect.h"
 #import "NSCoder+FxPlug.h"
@@ -102,7 +103,7 @@
 {
 	double floatValue = 0;
 	if(![self.effect.apiManager.paramGetAPIv6 getFloatValue:&floatValue fromParameter:self.parameterID atTime:renderTime]) {
-		_error = [NSError errorWithDomain:FxGripPlugErrorDomain
+		self.error = [NSError errorWithDomain:FxGripPlugErrorDomain
 									 code:kFxGripParameterErrorBool
 								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"Unable to obtain the FxParameterRetrievalAPI_v6" }];
 	}

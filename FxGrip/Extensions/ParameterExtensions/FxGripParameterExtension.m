@@ -12,6 +12,7 @@
 */
 
 #import "FxGripParameterExtension.h"
+#import "FxGripParameter+Protected.h"
 #import "FxGripTileableEffect.h"
 #import "FxGripTileableEffect+Notifications.h"
 #import "NSDictionary+FxGripTileableEffect.h"

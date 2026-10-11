@@ -78,6 +78,13 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void);
 @property (nonatomic, assign) unsigned char gradientFill;
 @end
 
+/*!
+	Refuses every float and bool read without recording it. The base class records into an
+	unsynchronized array, so concurrent reads use this subclass.
+*/
+@interface FxGripParamClassTestRefusingRetrievalAPI : FxGripParamClassTestRetrievalAPI
+@end
+
 /*! Records every write the parameter performs. */
 @interface FxGripParamClassTestSettingAPI : NSObject
 @property (nonatomic, assign) BOOL succeeds;

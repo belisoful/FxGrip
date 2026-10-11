@@ -544,6 +544,24 @@ NSNotificationCenter *FxGripParamClassTestMakePriorityCenter(void)
 @end
 
 /*!
+	@abstract A stub host retrieval API that refuses every float and bool read.
+	@discussion Introduced in FxGrip 0.1.0. The refusals record nothing, so concurrent reads share no mutable state in the stub.
+*/
+@implementation FxGripParamClassTestRefusingRetrievalAPI
+
+- (BOOL)getFloatValue:(double *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
+{
+	return NO;
+}
+
+- (BOOL)getBoolValue:(BOOL *)value fromParameter:(UInt32)parameterID atTime:(CMTime)time
+{
+	return NO;
+}
+
+@end
+
+/*!
 	@abstract A stub host timing API that records each query and vends configured or derived times.
 	@discussion Introduced in FxGrip 0.1.0. Start and duration return the configured times; the timeline and image conversions double and halve the query time so a test verifies the direction of the mapping.
 */

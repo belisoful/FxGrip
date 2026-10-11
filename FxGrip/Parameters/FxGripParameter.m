@@ -14,6 +14,7 @@
 */
 
 #import "FxGripParameter.h"
+#import "FxGripParameter+Protected.h"
 #import "FxGripParameterFlags.h"
 #import "NSDictionary+FxGripTileableEffect.h"
 #import "FxGripAPIAccessing.h"
