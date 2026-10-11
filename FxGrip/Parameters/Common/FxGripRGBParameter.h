@@ -22,7 +22,7 @@
 */
 @interface FxGripRGBParameter : FxGripColorParameter
 
-/*! @abstract The current alpha component of the cached color. */
+/*! @abstract The static alpha component. -valueAtTime: returns it when no alpha parameter is bound. */
 @property (readwrite, nonatomic) double alpha;
 /*! @abstract The parameter ID of the bound alpha source, or 0 when none is bound. */
 @property (assign) FxParameterId alphaParameter;
@@ -44,7 +44,8 @@
 	@method		valueAtTime:
 	@abstract	Reads the color at a render time.
 	@param		renderTime	The time to sample the parameter at.
-	@return		The color, with alpha read from the bound alpha parameter when one is set. */
+	@return		The color, with alpha read from the bound alpha parameter when one is set, or the static alpha otherwise.
+	@discussion	Introduced in FxGrip 0.1.0. The method is safe to call concurrently at different render times. */
 - (FxGripColor)valueAtTime:(CMTime)renderTime;
 /*!
 	@method		setValue:atTime:
@@ -52,7 +53,7 @@
 	@param		color	The color to set. A NULL value performs no write.
 	@param		time	The time to set the color at. */
 - (void)setValue:(FxGripColor*_Nullable)color atTime:(CMTime)time;
-/*! @abstract Writes the red, green, and blue components at a time and caches the alpha. */
+/*! @abstract Writes the red, green, and blue components at a time and stores the alpha. */
 - (void)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue alphaValue:(double)alpha atTime:(CMTime)time;
 /*! @abstract Writes the red, green, and blue components at a time. */
 - (void)setRedValue:(double)red greenValue:(double)green blueValue:(double)blue atTime:(CMTime)time;
