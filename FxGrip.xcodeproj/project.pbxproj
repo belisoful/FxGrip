@@ -521,6 +521,7 @@
 				Parameters/WebView/FxGripWebViewParameter.h,
 				Shader/FxGripShaderEffect.h,
 				Shader/FxGripShaderMetadata.h,
+				Shader/FxGripShaderPipeline.h,
 				Space/FxGripFMM.h,
 				Space/FxGripParticleInteraction.h,
 				Space/FxGripParticleRand.h,
