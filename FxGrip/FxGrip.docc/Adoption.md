@@ -88,6 +88,28 @@ Subclass ``FxGripTileableEffect-class`` (or ``FxGripTileableGenerator``) and the
 active: the registrars, the plist parameter configuration, the extensions, meta and tags,
 presets, analysis, and the ML effect templates.
 
+## Choosing a licensing provider
+
+Licensing is one extension, ``FxGripLicensing``, with one provider per store (see <doc:Licensing>).
+The provider is a build-time choice, made in the plug-in's registration record through the
+`licensing` property, and a product ships with exactly one provider per distribution channel.
+The stores' host requirements exclude each other:
+
+| Channel | Provider | Framework | Sandbox | Library validation |
+| --- | --- | --- | --- | --- |
+| FxFactory | `fxfactory` | FxGrip | off, or on with the FxFactory shared-preference exception | disabled |
+| Mac App Store | `storekit` | FxGripStoreKit (Swift) | on, in an App Group | enabled |
+
+A plug-in sold on both stores builds twice from one source: an FxFactory build that links
+FxGrip alone, and an App Store build that also links `FxGripStoreKit` and whose wrapper app owns the
+StoreKit calls. The provider's host configuration check reports a build whose entitlements do not
+match its store when the regression extension is loaded, so the mismatch shows up in a DEBUG run
+rather than in review.
+
+A plug-in that reaches none of the stores, or that licenses through its own server, adopts
+``FxGripLicensingProvider`` with a provider of its own and registers it under a name; the extension
+drives it like the two shipped providers.
+
 ## Topics
 
 ### The host seam
@@ -101,6 +123,11 @@ presets, analysis, and the ML effect templates.
 
 - ``FxGripTileableEffect-class``
 - ``FxGripTileableGenerator``
+
+### Licensing
+
+- ``FxGripLicensing``
+- ``FxGripLicensingProvider``
 
 ### The host seam
 

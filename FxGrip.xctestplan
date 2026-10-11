@@ -20,6 +20,11 @@
           "containerPath" : "container:FxGrip.xcodeproj",
           "identifier" : "A00AA766D1763322A1473626",
           "name" : "FxGripRealityKit"
+        },
+        {
+          "containerPath" : "container:FxGrip.xcodeproj",
+          "identifier" : "5BC5000000000000000000A1",
+          "name" : "FxGripStoreKit"
         }
       ]
     }
@@ -39,6 +44,14 @@
         "containerPath" : "container:FxGrip.xcodeproj",
         "identifier" : "B1CDD8D4C0992849EE0E74DD",
         "name" : "FxGripRealityKitTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FxGrip.xcodeproj",
+        "identifier" : "5BC5000000000000000000A2",
+        "name" : "FxGripStoreKitTests"
       }
     }
   ],

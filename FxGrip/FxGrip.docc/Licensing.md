@@ -12,8 +12,9 @@ adds the inspector parameters, keeps the toggle in sync, and watermarks the rend
 status.
 
 Providers register by name. ``FxGripFxFactoryProvider`` registers as `fxfactory` when the
-framework loads. A plugin selects its provider in its registration record, and the loader
-installs the extension when the record names one.
+framework loads. `FxGripStoreKitProvider`, in the Swift `FxGripStoreKit` framework, registers as
+`storekit` when that framework loads. A plugin selects its provider in its registration record,
+and the loader installs the extension when the record names one.
 
 ## Choosing a provider
 
@@ -45,6 +46,17 @@ without licensing. `+[FxGripLicensing registeredProviderNames]` lists what is av
 A product ships with one provider per distribution channel. FxFactory requires the app sandbox
 off and library validation disabled; the App Store requires the sandbox on. A plugin sold on both
 builds twice with a different `licensing` property.
+
+## The Mac App Store provider
+
+`FxGripStoreKitProvider` lives in the `FxGripStoreKit` framework, which is Swift because StoreKit 2
+is Swift-only. StoreKit is unsupported in app extensions, so the provider never calls it: the
+plugin's wrapper app owns every StoreKit call through `FxGripStoreKitStore` and writes one
+verified record per product into the App Group container, and the provider reads those records,
+watches them for changes, and opens the wrapper app for a purchase, the product page, or a
+refresh. The provider implements no update checking, because the App Store updates the app, and
+no license entry, because App Store builds sell through in-app purchase only. The
+`FxGripStoreKit` documentation covers the wrapper app's part.
 
 ## Settings
 

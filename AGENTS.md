@@ -6,13 +6,13 @@
 
 The framework is **macOS-only** (FxPlug hosts are macOS applications). Two primary base classes are `FxGripTileableEffect` and `FxGripTileableGenerator` (see `FxGrip/FxGrip.docc`).
 
-FxGrip itself is Objective-C. One companion framework, **`FxGripRealityKit`**, is **Swift-only**, because RealityKit publishes no Objective-C interface. See "Swift-only: FxGripRealityKit" below.
+FxGrip itself is Objective-C. Two companion frameworks are **Swift-only**: **`FxGripRealityKit`**, because RealityKit publishes no Objective-C interface, and **`FxGripStoreKit`**, because StoreKit 2 is Swift-only. See "Swift-only: FxGripRealityKit" below; `FxGripStoreKit` follows the same rules at FxGrip's 13.5 floor.
 
 ## Build & Test Commands
 
 The `FxGrip` scheme builds and tests every target: the `FxGrip` framework, `FxGripTests`, the
-Swift `FxGripRealityKit` framework, and `FxGripRealityKitTests`. The four commands below cover all
-of them, so the Full Check stays at four commands.
+Swift `FxGripRealityKit` and `FxGripStoreKit` frameworks, and their `*Tests` bundles. The four
+commands below cover all of them, so the Full Check stays at four commands.
 
 ```bash
 # Build all targets (macOS)
@@ -109,11 +109,13 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
   - `FxGrip.docc/` — DocC catalog (articles at the root, symbol extension files in `Extensions/`, images in `Resources/`)
 - `FxGripRealityKit/` — **Swift-only** RealityKit render engine for the 3D Space subsystem (separate framework target, macOS 15.0 floor, own DocC catalog)
 - `FxGripRealityKitTests/` — Swift XCTest unit tests for that framework (synchronized group)
+- `FxGripStoreKit/` — **Swift-only** Mac App Store licensing provider (`FxGripStoreKitProvider` for the plugin, `FxGripStoreKitStore` for the wrapper app, the shared `FxGripStoreKitEntitlementRecord` store; separate framework target, macOS 13.5 floor, own DocC catalog). StoreKit is unsupported in app extensions, so the wrapper app owns every StoreKit call and the plugin reads records from the App Group container. `FxGripStoreKitRegistration.m` is the one Objective-C file: its `+load` registers the provider.
+- `FxGripStoreKitTests/` — Swift XCTest unit tests for that framework (synchronized group)
 - `FxPlugStub/` — test-only stand-ins for the FxPlug classes FxGrip references directly (`FxPlugStub` target, embedded by the test bundles)
 - `Modules/FxPlug/module.modulemap` — repo-owned clang module map for Apple's FxPlug SDK and PluginManager, which ship none; required for any Swift target that imports FxGrip
 - `Modules/FxPlugStub/module.modulemap` — test-only clang module for `FxPlugStub`, imported by Swift test targets
 - `FxGripTests/` — XCTest unit tests (synchronized group: files added to this folder are compiled automatically). Subfolders mirror `FxGrip/`. `Support/` holds shared test support code and `Integration/` holds tests that span classes.
-- `FxGrip.xcodeproj/` — Xcode project file (targets: `FxGrip` framework, `FxGripTests` unit-test bundle, `FxGripRealityKit` framework, `FxGripRealityKitTests` unit-test bundle, `FxPlugStub` test framework)
+- `FxGrip.xcodeproj/` — Xcode project file (targets: `FxGrip` framework, `FxGripTests` unit-test bundle, `FxGripRealityKit` framework, `FxGripRealityKitTests` unit-test bundle, `FxGripStoreKit` framework, `FxGripStoreKitTests` unit-test bundle, `FxPlugStub` test framework)
 - `FxGrip.xctestplan` — Test plan configuration (parallelizable)
 - `Frameworks/` — vendored binary frameworks (see below)
 - `Information/` — reference material (design documents, FCP preset XML samples)
@@ -229,6 +231,7 @@ Swift files go in `FxGripRealityKit/`, tests in `FxGripRealityKitTests/` (both s
 - Foundation.framework / AppKit.framework / Cocoa.framework
 - CoreMedia.framework, CoreImage.framework, Metal.framework, Accelerate.framework, WebKit.framework
 - RealityKit.framework / RealityFoundation (Swift-only, `FxGripRealityKit` target, macOS 15.0+)
+- StoreKit.framework (Swift-only, `FxGripStoreKit` target)
 - XCTest.framework (for tests)
 
 ## Safeguards (Anti-Patterns)
