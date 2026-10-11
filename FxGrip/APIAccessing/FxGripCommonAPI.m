@@ -17,8 +17,8 @@
 
 /*!
 	@abstract	The base object for FxGrip's API capture layer.
-	@discussion	Introduced in FxGrip 0.1.0. Retains the effect and caches the resolved host meta
-				manager and parameter data.
+	@discussion	Introduced in FxGrip 0.1.0. Holds the effect weakly and caches the resolved host
+				meta manager and parameter data.
 */
 @implementation FxGripCommonAPI
 {

@@ -28,8 +28,9 @@
 */
 @interface FxGripCommonAPI : NSObject
 
-	/*! The effect that instanced this API wrapper. */
-	@property (readonly, nullable) id<FxGripEffectHost> effect;
+	/*! The effect that instanced this API wrapper, held weakly. The effect's API manager caches
+		some wrappers, so a strong reference would keep the effect alive. */
+	@property (weak, readonly, nullable) id<FxGripEffectHost> effect;
 
 /*! @abstract Creates the wrapper bound to an effect. */
 - (nullable instancetype)initWithEffect:(nonnull id<FxGripEffectHost>)effect;

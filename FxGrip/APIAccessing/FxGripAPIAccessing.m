@@ -31,6 +31,7 @@
 #import "FxGripPresetsAPI_v1.h"
 #import "FxGripFCPXMLAPI_v1.h"
 #import <BEFoundation/NSNumber+BExtension.h>
+#import <os/lock.h>
 
 #import "FxGrip_ARC.h"
 
@@ -63,6 +64,31 @@
 @end
 
 /*!
+	@abstract	A vended wrapper and the host objects it was built over.
+	@discussion	The pointers identify the host objects and are compared, never dereferenced. A
+				wrapper is reused only while the host vends the same objects again. Every cached
+				wrapper is built over the dynamic-parameter API; the setting wrappers also wrap the
+				host's retrieval API. An entry does not change after it enters the cache.
+*/
+@interface FxGripVendedWrapper : NSObject
+@property (nonatomic, strong) id wrapper;
+@property (nonatomic, assign) const void *hostAPI;
+@property (nonatomic, assign) const void *dynamicAPI;
+@property (nonatomic, assign) const void *retrievalAPI;
+@property (nonatomic, assign) BOOL usesRetrievalAPI;
+@end
+
+@implementation FxGripVendedWrapper
+
+- (void)dealloc
+{
+	NARC_RELEASE(_wrapper);
+	SUPER_DEALLOC();
+}
+
+@end
+
+/*!
 	@abstract	The FxGrip layer over the host's PROAPIAccessing manager.
 	@discussion	Introduced in FxGrip 0.1.0. Reads pluginUUID and sessionID from the host manager
 				when it responds to them, and vends wrapped or raw APIs on request.
@@ -70,8 +96,19 @@
 	The manager and the effect are held unretained. The effect owns this manager, so a
 	retaining back-reference would form a cycle that keeps every effect instance alive
 	for the process lifetime.
+
+	The parameter-info, retrieval, and setting wrappers are cached per protocol, because the
+	host's plugin-state pass reads every stateful parameter on every frame. A cached wrapper is
+	vended again while the host returns the same objects it was built over. These wrappers hold
+	no lazily resolved host state and hold the effect weakly, so a cached wrapper neither goes
+	stale nor keeps the effect alive. The host reads on several threads at once, so a lock
+	guards the cache.
 */
 @implementation FxGripAPIAccessing
+{
+	NSMapTable<Protocol *, FxGripVendedWrapper *> *_wrapperCache;
+	os_unfair_lock _wrapperCacheLock;
+}
 
 
 //---------------------------------------------------------
@@ -111,6 +148,9 @@
 		
 		_apiAccessing = (id)apiManager;
 		_effect = effect;
+		_wrapperCache = NARC_RETAIN([NSMapTable mapTableWithKeyOptions:(NSPointerFunctionsOpaqueMemory | NSPointerFunctionsOpaquePersonality)
+														  valueOptions:NSPointerFunctionsStrongMemory]);
+		_wrapperCacheLock = OS_UNFAIR_LOCK_INIT;
 	}
 	return self;
 }
@@ -120,6 +160,7 @@
 	_pluginUUID = nil;
 	_apiAccessing = nil;
 	_effect = nil;
+	NARC_RELEASE(_wrapperCache);
 	
 	SUPER_DEALLOC();
 }
@@ -127,6 +168,79 @@
 
 #pragma mark -
 #pragma mark FxGrip ProPlug API Layer
+
+/*! The cached wrapper for a protocol while the host still vends the objects it was built over;
+	nil otherwise. apiForProtocol:bypass: asks first, which spares the conformance tests of the
+	wrapper branches. */
+- (nullable id)fxg_cachedWrapperForProtocol:(Protocol *)apiProtocol hostAPI:(nullable id)hostAPI
+{
+	os_unfair_lock_lock(&_wrapperCacheLock);
+	// Retained before unlocking: another thread may replace the entry and release it.
+	FxGripVendedWrapper *entry = NARC_RETAIN_AUTORELEASE([_wrapperCache objectForKey:apiProtocol]);
+	os_unfair_lock_unlock(&_wrapperCacheLock);
+
+	if (entry == nil || entry.hostAPI != (__bridge const void *)hostAPI) {
+		return nil;
+	}
+	if (entry.dynamicAPI != (__bridge const void *)self.dynamicParamAPIv3_Raw) {
+		return nil;
+	}
+	if (entry.usesRetrievalAPI
+		&& entry.retrievalAPI != (__bridge const void *)[_apiAccessing apiForProtocol:@protocol(FxParameterRetrievalAPI_v6)]) {
+		return nil;
+	}
+	return entry.wrapper;
+}
+
+/*! The cached wrapper for a protocol when it was built over the same host objects; otherwise a
+	newly built wrapper, which replaces the cached one. nil when the build returns nil. */
+- (nullable id)fxg_wrapperForProtocol:(Protocol *)apiProtocol
+							  hostAPI:(nullable id)hostAPI
+						   dynamicAPI:(nullable id)dynamicAPI
+						 retrievalAPI:(nullable id)retrievalAPI
+					 usesRetrievalAPI:(BOOL)usesRetrievalAPI
+								build:(id _Nullable (^ NS_NOESCAPE)(void))build
+{
+	const void *hostPointer = (__bridge const void *)hostAPI;
+	const void *dynamicPointer = (__bridge const void *)dynamicAPI;
+	const void *retrievalPointer = (__bridge const void *)retrievalAPI;
+
+	os_unfair_lock_lock(&_wrapperCacheLock);
+	FxGripVendedWrapper *entry = NARC_RETAIN_AUTORELEASE([_wrapperCache objectForKey:apiProtocol]);
+	os_unfair_lock_unlock(&_wrapperCacheLock);
+	if (entry.hostAPI == hostPointer && entry.dynamicAPI == dynamicPointer && entry.retrievalAPI == retrievalPointer
+		&& entry.usesRetrievalAPI == usesRetrievalAPI && entry.wrapper != nil) {
+		return entry.wrapper;
+	}
+
+	id wrapper = build();
+	if (wrapper == nil) {
+		return nil;
+	}
+	entry = NARC_AUTORELEASE([FxGripVendedWrapper.alloc init]);
+	entry.wrapper = wrapper;
+	entry.hostAPI = hostPointer;
+	entry.dynamicAPI = dynamicPointer;
+	entry.retrievalAPI = retrievalPointer;
+	entry.usesRetrievalAPI = usesRetrievalAPI;
+	os_unfair_lock_lock(&_wrapperCacheLock);
+	[_wrapperCache setObject:entry forKey:apiProtocol];
+	os_unfair_lock_unlock(&_wrapperCacheLock);
+	return wrapper;
+}
+
+/*! The parameter-info wrapper over the host's dynamic-parameter API, cached like the value wrappers. */
+- (nullable id<FxGripParameterInfoAPI_v1>)fxg_parameterInfoAPIOver:(nullable id)dynamicAPI
+{
+	return [self fxg_wrapperForProtocol:@protocol(FxGripParameterInfoAPI_v1)
+								hostAPI:nil
+							 dynamicAPI:dynamicAPI
+						   retrievalAPI:nil
+					   usesRetrievalAPI:NO
+								  build:^id{
+		return NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:dynamicAPI effect:self.effect]);
+	}];
+}
 
 /*! @abstract Resolves a protocol through the FxGrip wrapper layer. */
 - (id)apiForProtocol:(Protocol *)apiProtocol
@@ -144,7 +258,8 @@
 				the requested protocol and builds it over the host object. FxGrip-implemented APIs,
 				such as the tags and presets APIs, build without a host object. Higher-version
 				wrappers sit after the branch they do not conform to, so a version request lands on
-				its own branch.
+				its own branch. A cached parameter-info, retrieval, or setting wrapper whose host
+				objects are unchanged returns before the branches.
 */
 - (id)apiForProtocol:(Protocol *)apiProtocol bypass:(BOOL)bypassFxGripLayer
 {
@@ -152,6 +267,11 @@
 	
 	if (bypassFxGripLayer) {
 		return api;
+	}
+
+	id cached = [self fxg_cachedWrapperForProtocol:apiProtocol hostAPI:api];
+	if (cached != nil) {
+		return cached;
 	}
 	
 	if (api && [FxGripDynamicParameterAPI_v3 conformsToProtocol:apiProtocol]) {
@@ -166,7 +286,7 @@
 	
 	// FxGrip's own parameter-info queries; wraps Apple's dynamic v3 for the roster walk.
 	if ([FxGripParameterInfoAPI_v1 conformsToProtocol:apiProtocol]) {
-		id paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
+		id paramInfo_v1 = [self fxg_parameterInfoAPIOver:self.dynamicParamAPIv3_Raw];
 		if (paramInfo_v1 == nil)
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", _sessionID);
@@ -216,20 +336,18 @@
 	}
 
 	if (api && [FxGripParameterRetrievalAPI_v6 conformsToProtocol:apiProtocol]) {
-		
-		id paramGetAPI_v6 = nil;
-		if (!paramGetAPI_v6) {
-			id paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
+		id dynamicAPI = self.dynamicParamAPIv3_Raw;
+		id paramGetAPI_v6 = [self fxg_wrapperForProtocol:apiProtocol hostAPI:api dynamicAPI:dynamicAPI retrievalAPI:nil usesRetrievalAPI:NO build:^id{
+			id paramInfo_v1 = [self fxg_parameterInfoAPIOver:dynamicAPI];
 			if (paramInfo_v1 == nil)
 			{
-				NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", _sessionID);
+				NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", self->_sessionID);
 			}
-			
-			paramGetAPI_v6 = NARC_AUTORELEASE([FxGripParameterRetrievalAPI_v6.alloc initWithAPI:api parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
-			if (paramGetAPI_v6 == nil)
-			{
-				NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterRetrievalAPI_v6", _sessionID);
-			}
+			return NARC_AUTORELEASE([FxGripParameterRetrievalAPI_v6.alloc initWithAPI:api parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
+		}];
+		if (paramGetAPI_v6 == nil)
+		{
+			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterRetrievalAPI_v6", _sessionID);
 		}
 		return paramGetAPI_v6;
 	}
@@ -237,8 +355,11 @@
 	// After the v6 branch: the v6 wrapper does not conform to v7, so a v6 request never reaches
 	// here, and a v7 request skips the v6 branch to land on this one.
 	if (api && [FxGripParameterRetrievalAPI_v7 conformsToProtocol:apiProtocol]) {
-		id paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
-		id paramGetAPI_v7 = NARC_AUTORELEASE([FxGripParameterRetrievalAPI_v7.alloc initWithAPI:api parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
+		id dynamicAPI = self.dynamicParamAPIv3_Raw;
+		id paramGetAPI_v7 = [self fxg_wrapperForProtocol:apiProtocol hostAPI:api dynamicAPI:dynamicAPI retrievalAPI:nil usesRetrievalAPI:NO build:^id{
+			id paramInfo_v1 = [self fxg_parameterInfoAPIOver:dynamicAPI];
+			return NARC_AUTORELEASE([FxGripParameterRetrievalAPI_v7.alloc initWithAPI:api parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
+		}];
 		if (paramGetAPI_v7 == nil)
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterRetrievalAPI_v7", _sessionID);
@@ -252,13 +373,15 @@
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxParameterRetrievalAPI_v6", _sessionID);
 		}
-		id<FxGripParameterInfoAPI_v1> paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
-		if (paramInfo_v1 == nil)
-		{
-			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", _sessionID);
-		}
-		
-		id paramSetAPI_v5 = NARC_AUTORELEASE([FxGripParameterSettingAPI_v5.alloc initWithAPI:api paramGetAPIv6:paramGetAPIv6 parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
+		id dynamicAPI = self.dynamicParamAPIv3_Raw;
+		id paramSetAPI_v5 = [self fxg_wrapperForProtocol:apiProtocol hostAPI:api dynamicAPI:dynamicAPI retrievalAPI:paramGetAPIv6 usesRetrievalAPI:YES build:^id{
+			id<FxGripParameterInfoAPI_v1> paramInfo_v1 = [self fxg_parameterInfoAPIOver:dynamicAPI];
+			if (paramInfo_v1 == nil)
+			{
+				NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", self->_sessionID);
+			}
+			return NARC_AUTORELEASE([FxGripParameterSettingAPI_v5.alloc initWithAPI:api paramGetAPIv6:paramGetAPIv6 parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
+		}];
 		if (paramSetAPI_v5 == nil)
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterSettingAPI_v5", _sessionID);
@@ -273,13 +396,15 @@
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxParameterRetrievalAPI_v6", _sessionID);
 		}
-		id<FxGripParameterInfoAPI_v1> paramInfo_v1 = NARC_AUTORELEASE([FxGripParameterInfoAPI_v1.alloc initWithAPI:self.dynamicParamAPIv3_Raw effect:self.effect]);
-		if (paramInfo_v1 == nil)
-		{
-			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", _sessionID);
-		}
-		
-		id paramSetAPI_v6 = NARC_AUTORELEASE([FxGripParameterSettingAPI_v6.alloc initWithAPI:api paramGetAPIv6:paramGetAPIv6 parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
+		id dynamicAPI = self.dynamicParamAPIv3_Raw;
+		id paramSetAPI_v6 = [self fxg_wrapperForProtocol:apiProtocol hostAPI:api dynamicAPI:dynamicAPI retrievalAPI:paramGetAPIv6 usesRetrievalAPI:YES build:^id{
+			id<FxGripParameterInfoAPI_v1> paramInfo_v1 = [self fxg_parameterInfoAPIOver:dynamicAPI];
+			if (paramInfo_v1 == nil)
+			{
+				NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterInfoAPI_v1", self->_sessionID);
+			}
+			return NARC_AUTORELEASE([FxGripParameterSettingAPI_v6.alloc initWithAPI:api paramGetAPIv6:paramGetAPIv6 parameterInfoAPIv1:paramInfo_v1 effect:self.effect]);
+		}];
 		if (paramSetAPI_v6 == nil)
 		{
 			NSLog(@"FxGripAPIManager(%llu)::apiProtocol Unable to load FxGripParameterSettingAPI_v6", _sessionID);

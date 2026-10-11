@@ -445,8 +445,8 @@ static NSDictionary *FxGripAccessorEntry(Protocol *protocol, NSString *plain, NS
 	XCTAssertNil([(FxGripParameterTagsAPI_v1 *)tags api]);
 }
 
-/*! @abstract Each accessor call builds a fresh wrapper over the same host object. */
-- (void)testEachAccessorCallBuildsAFreshWrapper
+/*! @abstract An uncached accessor builds a fresh wrapper over the same host object on each call. */
+- (void)testAnUncachedAccessorBuildsAFreshWrapper
 {
 	self.host.answersEveryProtocol = YES;
 	FxGripAPIAccessing *manager = self.manager;
@@ -456,6 +456,104 @@ static NSDictionary *FxGripAccessorEntry(Protocol *protocol, NSString *plain, NS
 
 	XCTAssertNotEqual(first, second);
 	XCTAssertEqual((id)[(FxGripDynamicParameterAPI_v3 *)first api], (id)[(FxGripDynamicParameterAPI_v3 *)second api]);
+}
+
+#pragma mark Wrapper cache
+
+/*! @abstract The info, retrieval, and setting accessors vend the same wrapper while the host vends the same objects. */
+- (void)testTheValueWrappersAreVendedAgainForTheSameHostObjects
+{
+	self.host.answersEveryProtocol = YES;
+	FxGripAPIAccessing *manager = self.manager;
+
+	XCTAssertEqual((id)manager.parameterInfoAPIv1, (id)manager.parameterInfoAPIv1);
+	XCTAssertEqual((id)manager.paramGetAPIv6, (id)manager.paramGetAPIv6);
+	XCTAssertEqual((id)manager.paramGetAPIv7, (id)manager.paramGetAPIv7);
+	XCTAssertEqual((id)manager.paramSetAPIv5, (id)manager.paramSetAPIv5);
+	XCTAssertEqual((id)manager.paramSetAPIv6, (id)manager.paramSetAPIv6);
+	XCTAssertEqual((id)[(FxGripParameterRetrievalAPI_v6 *)manager.paramGetAPIv6 parameterInfoAPIv1], (id)manager.parameterInfoAPIv1,
+				   @"the retrieval wrapper shares the cached info wrapper");
+}
+
+/*! @abstract A different host object replaces the cached wrapper with one built over it. */
+- (void)testADifferentHostObjectRebuildsTheWrapper
+{
+	self.host.answersEveryProtocol = YES;
+	FxGripAPIAccessing *manager = self.manager;
+	FxGripParameterRetrievalAPI_v6 *first = (FxGripParameterRetrievalAPI_v6 *)manager.paramGetAPIv6;
+	FxGripParameterSettingAPI_v5 *firstSetter = (FxGripParameterSettingAPI_v5 *)manager.paramSetAPIv5;
+	id replacement = NSObject.new;
+
+	self.host.answers[NSStringFromProtocol(@protocol(FxParameterRetrievalAPI_v6))] = replacement;
+	FxGripParameterRetrievalAPI_v6 *second = (FxGripParameterRetrievalAPI_v6 *)manager.paramGetAPIv6;
+	FxGripParameterSettingAPI_v5 *secondSetter = (FxGripParameterSettingAPI_v5 *)manager.paramSetAPIv5;
+
+	XCTAssertNotEqual(first, second);
+	XCTAssertEqual((id)second.api, replacement);
+	XCTAssertNotEqual(firstSetter, secondSetter, @"the setter wraps the host retrieval object too");
+	XCTAssertEqual((id)secondSetter.paramGetAPIv6, replacement);
+}
+
+/*! @abstract The meta, tags, and presets wrappers resolve host state lazily and stay uncached. */
+- (void)testTheLazilyResolvingWrappersStayUncached
+{
+	self.host.answersEveryProtocol = YES;
+	FxGripAPIAccessing *manager = self.manager;
+
+	XCTAssertNotEqual((id)manager.metaAPIv1, (id)manager.metaAPIv1);
+	XCTAssertNotEqual((id)manager.paramTagsAPIv1, (id)manager.paramTagsAPIv1);
+	XCTAssertNotEqual((id)manager.presetsAPIv1, (id)manager.presetsAPIv1);
+}
+
+/*! @abstract A cached wrapper holds its effect weakly, so the effect deallocates. */
+- (void)testACachedWrapperDoesNotKeepTheEffectAlive
+{
+	self.host.answersEveryProtocol = YES;
+	FxGripAPIAccessing *manager = nil;
+	FxGripParameterRetrievalAPI_v6 *wrapper = nil;
+	__weak FxGripAPIAccessingTestEffect *weakEffect = nil;
+	@autoreleasepool {
+		FxGripAPIAccessingTestEffect *effect = FxGripAPIAccessingTestEffect.new;
+		weakEffect = effect;
+		manager = [FxGripAPIAccessing.alloc initWithAPIManager:self.host effect:(id)effect];
+		wrapper = (FxGripParameterRetrievalAPI_v6 *)manager.paramGetAPIv6;
+		XCTAssertEqual((id)wrapper.effect, effect);
+	}
+
+	XCTAssertNil(weakEffect);
+	XCTAssertNil(wrapper.effect);
+}
+
+/*! @abstract Concurrent reads of the cached accessors from many threads vend one wrapper per protocol. */
+- (void)testConcurrentAccessVendsOneWrapperPerProtocol
+{
+	self.host.answersEveryProtocol = YES;
+	FxGripAPIAccessing *manager = self.manager;
+	id expectedGetter = manager.paramGetAPIv6;
+	id expectedSetter = manager.paramSetAPIv5;
+	// The scripted host records each request in an unsynchronized array; its answers are fixed now.
+	FxGripAPIAccessingTestHostManager *host = self.host;
+	NSDictionary *answers = host.answers.copy;
+	host.requested = nil;
+	__block NSUInteger mismatches = 0;
+	NSObject *lock = NSObject.new;
+
+	dispatch_apply(64, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(size_t index) {
+		for (int i = 0; i < 200; i++) {
+			@autoreleasepool {
+				id getter = manager.paramGetAPIv6;
+				id setter = manager.paramSetAPIv5;
+				if (getter != expectedGetter || setter != expectedSetter) {
+					@synchronized (lock) {
+						mismatches++;
+					}
+				}
+			}
+		}
+	});
+
+	XCTAssertEqual(mismatches, (NSUInteger)0);
+	XCTAssertEqualObjects(host.answers, answers);
 }
 
 #pragma mark Version ordering
