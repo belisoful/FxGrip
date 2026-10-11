@@ -165,8 +165,10 @@
 /*!
 	@method		startChangedTime:error:
 	@abstract	Opens a change to the parameter's value at a time.
-	@discussion	A parameter class overrides this to act before its value changes. The base
-				answers YES and does nothing.
+	@discussion	``FxGripTileableEffect-class`` calls this from `parameterChanged:atTime:error:`
+				before the configuration's managed selector and the parameter-changed
+				notification. A parameter class overrides this to act before observers see the
+				change. The base answers YES and does nothing.
 	@param		time	The time the change applies at.
 	@param		error	On return, the reason the parameter refused the change.
 	@return		YES when the change may proceed.
@@ -176,7 +178,9 @@
 /*!
 	@method		endChangedTime:error:
 	@abstract	Closes a change to the parameter's value at a time.
-	@discussion	A parameter class overrides this to act after its value changes. The base
+	@discussion	``FxGripTileableEffect-class`` calls this from `parameterChanged:atTime:error:`
+				after the parameter-changed notification and before the extension flush. A
+				parameter class overrides this to act after observers see the change. The base
 				answers YES and does nothing.
 	@param		time	The time the change applied at.
 	@param		error	On return, the reason the parameter reported a failure.
@@ -273,8 +277,10 @@
 /*!
 	@method		startChangedTime:error:
 	@abstract	Opens a change to the parameter's value at a time.
-	@discussion	A parameter class overrides this to act before its value changes. The base
-				answers YES and does nothing.
+	@discussion	``FxGripTileableEffect-class`` calls this from `parameterChanged:atTime:error:`
+				before the configuration's managed selector and the parameter-changed
+				notification. A parameter class overrides this to act before observers see the
+				change. The base answers YES and does nothing.
 	@param		time	The time the change applies at.
 	@param		error	On return, the reason the parameter refused the change.
 	@return		YES when the change may proceed.
@@ -284,7 +290,9 @@
 /*!
 	@method		endChangedTime:error:
 	@abstract	Closes a change to the parameter's value at a time.
-	@discussion	A parameter class overrides this to act after its value changes. The base
+	@discussion	``FxGripTileableEffect-class`` calls this from `parameterChanged:atTime:error:`
+				after the parameter-changed notification and before the extension flush. A
+				parameter class overrides this to act after observers see the change. The base
 				answers YES and does nothing.
 	@param		time	The time the change applied at.
 	@param		error	On return, the reason the parameter reported a failure.

@@ -104,41 +104,12 @@
 - (BOOL)startChangedTime:(CMTime)time
 				   error:(NSError * _Nullable * _Nullable)error
 {
-	//[self setParameterTargetPreset:paramID atTime:time options:PresetAll ^ PresetName];
-	
-	//Message the parameter Selector
-	/*if ([parameter respondsToSelector:@selector(parameterSelector)]) {
-		SEL selector = parameter.parameterSelector;
-		if (selector) {
-			FxGripManagedSelector func = (FxGripManagedSelector) objc_msgSend;
-			NSObject* object = parameter.parameterSelectorObject;
-			if (!object) {
-				object = self;
-			}
-			if ([object respondsToSelector:selector]) {
-				success = func(self, selector, paramID, time, error);
-			} else {
-				NSLog(@"Error: The selector %@ was not found on object %@", NSStringFromSelector(selector), object.className);
-				success = NO;
-			}
-		}
-	}*/
 	return YES;
 }
-
 
 - (BOOL)endChangedTime:(CMTime)time
 				   error:(NSError * _Nullable * _Nullable)error
 {
-	//Preset name before resetValue
-	/*   [self setParameterTargetPreset:paramID atTime:time options:PresetName];
-	   
-	   
-	   // Parameter gets reset to its resetValue when selected.
-	   id resetValue = paramData.parameterResetValue;
-	   
-	   if (resetValue)
-		   [self setParameter:paramID value:resetValue atTime:time];*/
 	return YES;
 }
 

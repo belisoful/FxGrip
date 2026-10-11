@@ -97,9 +97,11 @@ extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderSourceImagesK
 /*! The userInfo key carrying the render time, as a `CMTime` encoded in a dictionary. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectRenderAtTimeKey;
 
-/*! Posted when the effect is removed from a document. */
+/*! The name for an effect removed from a document. FxGrip never posts it; FxPlug 4 has no removal
+	callback. A subclass or host may post it explicitly. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectRemovedFromDocumentName;
-/*! Posted when the effect is unloaded. */
+/*! The name for an effect that unloads. FxGrip never posts it; `-dealloc` cannot post a notification
+	that carries the deallocating effect. A subclass or host may post it explicitly. */
 extern NSNotificationName	const _Nonnull FxGripTileableEffectUnloadName;
 
 

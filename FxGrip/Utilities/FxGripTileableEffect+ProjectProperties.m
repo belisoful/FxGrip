@@ -61,7 +61,7 @@
 			)) {
 		NSLog(@"%s(%llu) - Document ID is %d", __func__, self.apiManager.sessionID, (int)documentId);
 	} else {
-		NSLog(@"Error: %s(%llu) - Document ID error %@", __func__, self.apiManager.sessionID, *error);
+		NSLog(@"Error: %s(%llu) - Document ID error %@", __func__, self.apiManager.sessionID, error ? *error : nil);
 	}
 #endif
 	return documentId;

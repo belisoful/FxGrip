@@ -7,7 +7,8 @@ Track every live instance of a plugin by its UUID, and answer sibling and timeli
 ``FxGripInstanceTracker`` is an extension in the notification-driven system described in
 <doc:ExtensionArchitecture>. The extension keeps a process-wide registry of effect instances
 keyed by plugin UUID. The loader installs it when `isTrackingInstances` reads the
-`instanceTracker` plugin property as `YES`.
+`trackInstances` plugin property (``kProPlugPlugInX_TrackInstancesProperty``) as `YES`. The
+extension's own key is `instanceTracker` (``kInstanceTrackerKey``).
 
 The registry holds non-retaining pointer values, so a tracked effect is never kept alive. An
 array of live instances links every plugin instance and would form a retain cycle; do not
@@ -19,11 +20,11 @@ The extension observes two lifecycle points:
 
 - Added to document → records the effect under its plugin UUID and captures the UUID and
   pointer for the dealloc-time removal.
-- Removed from document → removes the effect from the registry.
+- Removed from document → removes the effect from the registry. FxGrip never posts this
+  notification, so the removal runs only when a subclass or host posts it.
 
-The captured identity backs the removal in `dealloc`. The effect reference is weak and reads
-nil by then, and the teardown notification does not arrive, because the notification center's
-object filter is nil mid-dealloc. A registration whose UUID is nil is skipped, because a nil
+The captured identity backs the removal in `dealloc`, which is the removal path FxGrip relies on.
+The effect reference is weak and reads nil by then. A registration whose UUID is nil is skipped, because a nil
 key cannot address the registry. Registry mutation is synchronized, and removal is idempotent,
 so the dealloc sweep and an explicit removal never conflict.
 

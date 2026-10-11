@@ -40,7 +40,8 @@
 
 /*! Adds the effect to the registry under its plugin UUID. */
 - (void)extAddedToDocument:(nonnull NSNotification*)notification;
-/*! Removes the effect from the registry. */
+/*! Removes the effect from the registry. FxGrip never posts the removal notification; the tracker's
+	`-dealloc` removes the effect it registered. */
 - (void)extRemovedFromDocument:(nonnull NSNotification*)notification;
 
 /*! The nearest later timeline start time among sibling instances, or kCMTimeInvalid when none. */

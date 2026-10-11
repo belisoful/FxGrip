@@ -34,7 +34,9 @@
 #import <FxGrip/NSCoder+FxPlug.h>
 #import <FxGrip/FxGripImageRefParameter.h>
 #import <FxPlug/FxOnScreenControl.h>
+#import <FxGrip/FxGripFloatParameter.h>
 #import "FxGripParameterClassTestSupport.h"
+#import "FxGripMainBundleTestSupport.h"
 
 /*! Implemented on FxGripTileableEffect but absent from the installed headers. */
 @interface FxGripTileableEffect (FxGripTileableEffectTests)
@@ -45,6 +47,7 @@
 - (BOOL)renderPassthroughDestinationImage:(FxImageTile *)destinationImage
 							 sourceImages:(NSArray<FxImageTile *> *)sourceImages
 									error:(NSError * _Nullable *)error;
++ (NSDictionary *)fxg_registrationForPluginUUID:(nullable NSString *)pluginUUID;
 @end
 
 static const FxParameterId kEffectTestFloat = 11;
@@ -352,6 +355,71 @@ static NSData *FxGripEffectTestState(void)
 		_privateNotifier = (NSNotificationCenter *)FxGripParamClassTestMakePriorityCenter();
 	}
 	return (NSPriorityNotificationCenter *)_privateNotifier;
+}
+
+@end
+
+/*! Implements a managed selector and records each step of a parameter change. */
+@interface FxGripEffectTestManagedEffect : FxGripEffectTestEffect
+@property (nonatomic, strong) NSMutableArray<NSString *> *steps;
+@property (nonatomic, assign) BOOL refusesManagedChange;
+@end
+
+@implementation FxGripEffectTestManagedEffect
+
+- (NSMutableArray<NSString *> *)steps
+{
+	if (!_steps) {
+		_steps = NSMutableArray.array;
+	}
+	return _steps;
+}
+
+- (BOOL)manageEffectTest:(FxParameterId)parameterID atTime:(CMTime)time error:(NSError * _Nullable * _Nullable)error
+{
+	[self.steps addObject:[NSString stringWithFormat:@"manage %u at %lld", parameterID, time.value]];
+	if (self.refusesManagedChange) {
+		if (error) {
+			*error = [NSError errorWithDomain:@"FxGripEffectTest" code:21 userInfo:nil];
+		}
+		return NO;
+	}
+	return YES;
+}
+
+@end
+
+/*! Answers a managed selector in place of the effect when a configuration names it. */
+@interface FxGripEffectTestSelectorObject : NSObject
+@property (nonatomic, assign) NSUInteger calls;
+@end
+
+@implementation FxGripEffectTestSelectorObject
+
+- (BOOL)manageEffectTest:(FxParameterId)parameterID atTime:(CMTime)time error:(NSError * _Nullable * _Nullable)error
+{
+	self.calls += 1;
+	return YES;
+}
+
+@end
+
+/*! Records its change hooks on the owning managed effect's step list. */
+@interface FxGripEffectTestHookedParameter : FxGripFloatParameter
+@end
+
+@implementation FxGripEffectTestHookedParameter
+
+- (BOOL)startChangedTime:(CMTime)time error:(NSError * _Nullable * _Nullable)error
+{
+	[((FxGripEffectTestManagedEffect *)self.effect).steps addObject:@"start"];
+	return YES;
+}
+
+- (BOOL)endChangedTime:(CMTime)time error:(NSError * _Nullable * _Nullable)error
+{
+	[((FxGripEffectTestManagedEffect *)self.effect).steps addObject:@"end"];
+	return YES;
 }
 
 @end
@@ -1938,6 +2006,254 @@ static NSData *FxGripEffectTestState(void)
 	}
 
 	XCTAssertTrue([classNames containsObject:@"FxGripGoogleAnalytics"]);
+}
+
+#pragma mark Parameter change hooks
+
+/*! Declares one float parameter with the hooked class and the given extra configuration keys,
+	and constructs its parameter object. */
+- (void)declareHookedParameterOn:(FxGripEffectTestEffect *)effect extra:(NSDictionary *)extra
+{
+	NSMutableDictionary *properties = [self pluginPropertiesDictionary];
+	NSMutableDictionary *parameter = FxGripParamClassTestConfig(kEffectTestFloat, kFxParameterType_Float, @"Hooked", @{
+		kFxParameterProperty_ClassName: @"FxGripEffectTestHookedParameter",
+	});
+	[parameter addEntriesFromDictionary:extra];
+	properties[kProPlugPlugInX_ParametersProperty] = @[parameter];
+	effect.stubPluginProperties = properties;
+	NSError *error = nil;
+	[effect addParametersWithError:&error];
+	XCTAssertTrue([effect reconstructParametersWithGroupID:kFxParameterId_TopLevelGroup]);
+	XCTAssertTrue([(id)effect.parameters[@(kEffectTestFloat)] isKindOfClass:FxGripEffectTestHookedParameter.class]);
+}
+
+/*! @abstract A change runs the start hook, the managed selector, the notification, then the end hook. */
+- (void)testAParameterChangeRunsItsHooksAndManagedSelectorInOrder
+{
+	FxGripEffectTestManagedEffect *effect =
+		(FxGripEffectTestManagedEffect *)[self makeEffectOfClass:FxGripEffectTestManagedEffect.class];
+	[self declareHookedParameterOn:effect extra:@{ kFxParameterProperty_Selector: @"manageEffectTest" }];
+	__weak FxGripEffectTestManagedEffect *weakEffect = effect;
+	[self onEffect:effect observeName:FxGripTileableEffectParameterChangedName usingBlock:^(NSNotification *notification) {
+		[weakEffect.steps addObject:@"notify"];
+	}];
+	NSError *error = nil;
+
+	XCTAssertTrue([effect parameterChanged:kEffectTestFloat atTime:FxGripEffectTestTime(12, 24) error:&error], @"%@", error);
+
+	NSArray *expected = @[@"start", @"manage 11 at 12", @"notify", @"end"];
+	XCTAssertEqualObjects(effect.steps, expected);
+}
+
+/*! @abstract A managed selector that refuses the change stops it before the notification and reports its error. */
+- (void)testARefusingManagedSelectorStopsTheChange
+{
+	FxGripEffectTestManagedEffect *effect =
+		(FxGripEffectTestManagedEffect *)[self makeEffectOfClass:FxGripEffectTestManagedEffect.class];
+	effect.refusesManagedChange = YES;
+	[self declareHookedParameterOn:effect extra:@{ kFxParameterProperty_Selector: @"manageEffectTest" }];
+	__block BOOL notified = NO;
+	[self onEffect:effect observeName:FxGripTileableEffectParameterChangedName usingBlock:^(NSNotification *notification) {
+		notified = YES;
+	}];
+	NSError *error = nil;
+
+	XCTAssertFalse([effect parameterChanged:kEffectTestFloat atTime:FxGripEffectTestTime(0, 1) error:&error]);
+
+	XCTAssertEqual(error.code, (NSInteger)21);
+	XCTAssertFalse(notified);
+	NSArray *expected = @[@"start", @"manage 11 at 0"];
+	XCTAssertEqualObjects(effect.steps, expected);
+}
+
+/*! @abstract A configuration's selector object answers the managed selector ahead of the effect. */
+- (void)testAConfigurationSelectorObjectAnswersTheManagedSelector
+{
+	FxGripEffectTestManagedEffect *effect =
+		(FxGripEffectTestManagedEffect *)[self makeEffectOfClass:FxGripEffectTestManagedEffect.class];
+	FxGripEffectTestSelectorObject *target = FxGripEffectTestSelectorObject.new;
+	[self declareHookedParameterOn:effect extra:@{
+		kFxParameterProperty_Selector: @"manageEffectTest",
+		kFxParameterProperty_SelectorObject: target,
+	}];
+	NSError *error = nil;
+
+	XCTAssertTrue([effect parameterChanged:kEffectTestFloat atTime:FxGripEffectTestTime(0, 1) error:&error], @"%@", error);
+
+	XCTAssertEqual(target.calls, (NSUInteger)1);
+	NSArray *expected = @[@"start", @"end"];
+	XCTAssertEqualObjects(effect.steps, expected, @"the effect's own handler does not run");
+}
+
+/*! @abstract A selector without the manage prefix is a click selector and is not performed on a change. */
+- (void)testASelectorWithoutTheManagePrefixIsNotPerformedOnAChange
+{
+	FxGripEffectTestManagedEffect *effect =
+		(FxGripEffectTestManagedEffect *)[self makeEffectOfClass:FxGripEffectTestManagedEffect.class];
+	[self declareHookedParameterOn:effect extra:@{ kFxParameterProperty_Selector: @"fxGripEffectTestDeclaredAction" }];
+	NSError *error = nil;
+
+	XCTAssertTrue([effect parameterChanged:kEffectTestFloat atTime:FxGripEffectTestTime(0, 1) error:&error], @"%@", error);
+
+	NSArray *expected = @[@"start", @"end"];
+	XCTAssertEqualObjects(effect.steps, expected);
+}
+
+#pragma mark Nil error out-parameters
+
+/*! @abstract Every entry point accepts a NULL error pointer when an observer reports an error. */
+- (void)testEveryEntryPointAcceptsANullErrorPointerOnAnObserverError
+{
+	FxGripEffectTestEffect *effect = [self makeEffect];
+	NSArray<NSNotificationName> *names = @[
+		FxGripTileableEffectPropertiesName,
+		FxGripTileableEffectFinishInitialSetupName,
+		FxGripTileableEffectParameterChangedName,
+		FxGripTileableEffectPluginStateName,
+		FxGripTileableEffectDestinationImageRectName,
+		FxGripTileableEffectSourceTileRectName,
+		FxGripTileableEffectScheduleInputsName,
+	];
+	NSError *staged = [NSError errorWithDomain:@"FxGripEffectTest" code:31 userInfo:nil];
+	for (NSNotificationName name in names) {
+		[self onEffect:effect observeName:name usingBlock:^(NSNotification *notification) {
+			((NSMutableDictionary *)notification.userInfo).fxError = staged;
+		}];
+	}
+
+	NSDictionary *properties = @{};
+	XCTAssertTrue([effect properties:&properties error:NULL], @"the properties pass reports success despite an observer error");
+	XCTAssertFalse([effect finishInitialSetup:NULL]);
+	XCTAssertFalse([effect parameterChanged:kEffectTestFloat atTime:FxGripEffectTestTime(0, 1) error:NULL]);
+	NSData *state = nil;
+	XCTAssertFalse([effect pluginState:&state atTime:FxGripEffectTestTime(0, 1) quality:kFxQuality_HIGH error:NULL]);
+
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 16, 16 }];
+	FxRect rect = { 0, 0, 0, 0 };
+	XCTAssertFalse([effect destinationImageRect:&rect
+								   sourceImages:@[]
+							   destinationImage:tile
+									pluginState:FxGripEffectTestState()
+										 atTime:FxGripEffectTestTime(0, 1)
+										  error:NULL]);
+	XCTAssertFalse([effect sourceTileRect:&rect
+						 sourceImageIndex:0
+							 sourceImages:@[tile]
+					  destinationTileRect:rect
+						 destinationImage:tile
+							  pluginState:FxGripEffectTestState()
+								   atTime:FxGripEffectTestTime(0, 1)
+									error:NULL]);
+	NSArray<FxImageTileRequest *> *requests = nil;
+	XCTAssertFalse([effect scheduleInputs:&requests
+						  withPluginState:FxGripEffectTestState()
+								   atTime:FxGripEffectTestTime(0, 1)
+									error:NULL]);
+}
+
+/*! @abstract A corrupt plugin state with a NULL error pointer is refused by every render-path entry point. */
+- (void)testACorruptPluginStateWithANullErrorPointerIsRefused
+{
+	FxGripEffectTestCoderEffect *effect =
+		(FxGripEffectTestCoderEffect *)[self makeEffectOfClass:FxGripEffectTestCoderEffect.class];
+	NSData *corrupt = [@"not an archive" dataUsingEncoding:NSUTF8StringEncoding];
+	FxImageTile *tile = [FxImageTile stubTileWithPixelBounds:(FxRect){ 0, 0, 16, 16 }
+												pixelFormat:kCVPixelFormatType_32BGRA
+													 device:MTLCreateSystemDefaultDevice()];
+	FxRect rect = { 0, 0, 0, 0 };
+
+	XCTAssertFalse([effect destinationImageRect:&rect
+								   sourceImages:@[]
+							   destinationImage:tile
+									pluginState:corrupt
+										 atTime:FxGripEffectTestTime(0, 1)
+										  error:NULL]);
+	XCTAssertFalse([effect sourceTileRect:&rect
+						 sourceImageIndex:0
+							 sourceImages:@[tile]
+					  destinationTileRect:rect
+						 destinationImage:tile
+							  pluginState:corrupt
+								   atTime:FxGripEffectTestTime(0, 1)
+									error:NULL]);
+	NSArray<FxImageTileRequest *> *requests = nil;
+	XCTAssertFalse([effect scheduleInputs:&requests withPluginState:corrupt atTime:FxGripEffectTestTime(0, 1) error:NULL]);
+	if (tile.ioSurface != nil) {
+		XCTAssertFalse([effect renderDestinationImage:tile
+										 sourceImages:@[]
+										  pluginState:corrupt
+											   atTime:FxGripEffectTestTime(0, 1)
+												error:NULL]);
+	}
+}
+
+/*! @abstract The plugin state succeeds with a NULL error pointer and refuses a NULL state pointer. */
+- (void)testThePluginStateHandlesNullOutPointers
+{
+	FxGripEffectTestEffect *effect = [self makeEffect];
+	NSData *state = nil;
+	NSError *error = nil;
+
+	XCTAssertTrue([effect pluginState:&state atTime:FxGripEffectTestTime(0, 1) quality:kFxQuality_HIGH error:NULL]);
+	XCTAssertNotNil(state);
+	XCTAssertFalse([effect pluginState:NULL atTime:FxGripEffectTestTime(0, 1) quality:kFxQuality_HIGH error:&error]);
+	XCTAssertEqual(error.code, (NSInteger)kFxError_InvalidParameter);
+}
+
+#pragma mark Registration lookup
+
+/*! Stages the bundle's plugin list for one test. */
+- (void)stagePlugIns:(NSArray<NSDictionary *> *)plugIns
+{
+	[FxGripMainBundleTestSupport stageInfoDictionary:@{ kProPlugPlugInList_Property: plugIns }];
+	[self addTeardownBlock:^{
+		[FxGripMainBundleTestSupport clearStagedValues];
+	}];
+}
+
+/*! @abstract A plugin UUID that matches a registration selects it. */
+- (void)testARegisteredPluginUUIDSelectsItsRegistration
+{
+	[self stagePlugIns:@[
+		@{ kProPlugPlugIn_UuidProperty: @"AAAA0000-0000-0000-0000-000000000001", kProPlugPlugIn_ClassNameProperty: @"FxGripEffectTestEffect" },
+		@{ kProPlugPlugIn_UuidProperty: @"AAAA0000-0000-0000-0000-000000000002", kProPlugPlugIn_ClassNameProperty: @"FxGripEffectTestEffect" },
+	]];
+
+	NSDictionary *registration = [FxGripEffectTestEffect fxg_registrationForPluginUUID:@"aaaa0000-0000-0000-0000-000000000002"];
+
+	XCTAssertEqualObjects(registration[kProPlugPlugIn_UuidProperty], @"AAAA0000-0000-0000-0000-000000000002");
+}
+
+/*! @abstract An effect whose host vends no plugin UUID adopts the one registration naming its class. */
+- (void)testAnEffectWithoutAHostUUIDAdoptsTheOnlyRegistrationForItsClass
+{
+	[self stagePlugIns:@[
+		@{ kProPlugPlugIn_UuidProperty: @"BBBB0000-0000-0000-0000-000000000001", kProPlugPlugIn_ClassNameProperty: @"SomeOtherEffect" },
+		@{ kProPlugPlugIn_UuidProperty: @"BBBB0000-0000-0000-0000-000000000002", kProPlugPlugIn_ClassNameProperty: @"FxGripEffectTestEffect" },
+	]];
+
+	FxGripEffectTestEffect *effect = [self makeEffect];
+
+	XCTAssertEqualObjects(effect.pluginUUID, @"BBBB0000-0000-0000-0000-000000000002");
+	XCTAssertEqualObjects(effect.pluginProperties[kProPlugPlugIn_ClassNameProperty], @"FxGripEffectTestEffect");
+}
+
+/*! @abstract An unmatched UUID falls back to the class only when exactly one registration names the class. */
+- (void)testAnAmbiguousClassFallbackSelectsNoRegistration
+{
+	[self stagePlugIns:@[
+		@{ kProPlugPlugIn_UuidProperty: @"CCCC0000-0000-0000-0000-000000000001", kProPlugPlugIn_ClassNameProperty: @"FxGripEffectTestEffect" },
+		@{ kProPlugPlugIn_UuidProperty: @"CCCC0000-0000-0000-0000-000000000002", kProPlugPlugIn_ClassNameProperty: @"FxGripEffectTestEffect" },
+	]];
+
+	XCTAssertEqualObjects([FxGripEffectTestEffect fxg_registrationForPluginUUID:@"CCCC0000-0000-0000-0000-00000000FFFF"], @{});
+	XCTAssertEqualObjects([FxGripEffectTestEffect fxg_registrationForPluginUUID:nil], @{});
+}
+
+/*! @abstract An unmatched UUID with no registered plugins selects nothing. */
+- (void)testAnEmptyPluginListSelectsNoRegistration
+{
+	XCTAssertEqualObjects([FxGripEffectTestEffect fxg_registrationForPluginUUID:@"DDDD0000-0000-0000-0000-000000000001"], @{});
 }
 
 @end

@@ -144,7 +144,6 @@ static void FxGripInstanceTrackerRemove(NSString *uuid, void *pointer)
 	@method		extRemovedFromDocument:
 	@abstract	Removes the effect from the registry and clears the captured pointer.
 	@discussion	Introduced in FxGrip 0.1.0. Returns when the effect is not an FxGripTileableEffect. */
-// Called in FxTileableEffect::dealloc - instanceRemovedFromDocument
 - (void)extRemovedFromDocument:(nonnull NSNotification*)notification;
 {
 	FxGripTileableEffect *effect = notification.object;

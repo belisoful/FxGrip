@@ -120,9 +120,10 @@ extern const NSInteger FxGripExtensionDefaultPriority;
 - (void)extRenderDestinationImage:(nonnull NSNotification*)notification;
 
 
-/*! The host removed the effect from a document. */
+/*! The effect was removed from a document. Runs only when a subclass or host posts the name;
+	FxGrip never posts it. */
 - (void)extRemovedFromDocument:(nonnull NSNotification*)notification;
-/*! The effect is unloading. */
+/*! The effect is unloading. Runs only when a subclass or host posts the name; FxGrip never posts it. */
 - (void)extUnload:(nonnull NSNotification*)notification;
 
 //API Notifications

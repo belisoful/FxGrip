@@ -98,6 +98,56 @@
 //	@required
 //---------------------------------------------------------
 
+/*!
+	@abstract	The registration record for an effect instance; an empty dictionary when none is found.
+	@param		pluginUUID	The plugin UUID the host vends, or nil when the host vends none.
+	@return		The registration record the lookup selects.
+	@discussion	The host vends the plugin UUID through an undocumented member of its API manager, so
+				the lookup falls back to the effect's class name when the UUID is missing or matches
+				no record:
+
+	- A record's `uuid` matches pluginUUID → that record.
+	- Exactly one record's `className` names the effect's class → that record, with a logged warning.
+	- Otherwise → an empty dictionary, with a logged error when the bundle registers any plugin.
+
+	An empty record leaves the effect without its registered parameters and properties. When
+	pluginUUID is nil, the initializer adopts the fallback record's UUID. */
++ (NSDictionary *)fxg_registrationForPluginUUID:(nullable NSString *)pluginUUID
+{
+	if (pluginUUID != nil) {
+		NSDictionary *registration = [FxGripPluginInfo pluginPropertiesByUUID:pluginUUID];
+		if (registration.count) {
+			return registration;
+		}
+	}
+	NSArray *plugIns = FxGripPluginInfo.plugIns;
+	if (plugIns.count == 0) {
+		return @{};
+	}
+
+	NSString *className = NSStringFromClass(self);
+	NSDictionary *classMatch = nil;
+	NSUInteger classMatches = 0;
+	for (NSDictionary *registration in plugIns) {
+		if (![registration isKindOfClass:NSDictionary.class]) {
+			continue;
+		}
+		NSString *registeredClass = registration[kProPlugPlugIn_ClassNameProperty];
+		if ([registeredClass isKindOfClass:NSString.class] && [registeredClass caseInsensitiveCompare:className] == NSOrderedSame) {
+			classMatch = registration;
+			classMatches++;
+		}
+	}
+
+	if (classMatches == 1) {
+		NSLog(@"%s Warning: no registration matches plugin UUID %@; using the registration for class %@.", __func__, pluginUUID, className);
+		return classMatch;
+	}
+	NSLog(@"%s Error: no registration matches plugin UUID %@, and %lu registrations name class %@. The plugin's registered parameters and properties are unavailable.",
+		  __func__, pluginUUID, (unsigned long)classMatches, className);
+	return @{};
+}
+
 /*! @abstract Constructs an effect with no host, which is what a bare `init` means here. */
 - (nonnull instancetype)init
 {
@@ -111,9 +161,12 @@
 	@return		The initialized effect, or nil when the plugin declines to load.
 	@discussion	Introduced in FxGrip 0.1.0. The initializer wraps the host API accessor, reads the
 				plugin UUID, session ID, and registration properties, and sets the default FxPlug
-				property values. It registers block-based observers for the parameter add, load,
-				flush, policy, group, and remove notifications, then installs the extensions and
-				posts the init notification. The observer blocks capture self weakly so the
+				property values. When the host vends no plugin UUID, or a UUID no registration
+				matches, the registration whose class name names the effect's class is used if it is
+				the only one; otherwise the effect has no registration and the miss is logged. It
+				registers block-based observers for the parameter add, load, flush, policy, group,
+				and remove notifications, then installs the extensions and posts the init
+				notification. The observer blocks capture self weakly so the
 				notification center does not keep the effect alive. */
 
 - (nullable instancetype)initWithAPIManager:(id<PROAPIAccessing>)apiManager;
@@ -127,7 +180,10 @@
 		_pluginUUID = _apiManager.pluginUUID;
 		_sessionID = _apiManager.sessionID;
 		
-		_pluginProperties = [FxGripPluginInfo pluginPropertiesByUUID:_pluginUUID];
+		_pluginProperties = [self.class fxg_registrationForPluginUUID:_pluginUUID];
+		if (_pluginUUID == nil && [_pluginProperties[kProPlugPlugIn_UuidProperty] isKindOfClass:NSString.class]) {
+			_pluginUUID = [_pluginProperties[kProPlugPlugIn_UuidProperty] copy];
+		}
 		_pluginDisplayName = _pluginProperties[kProPlugPlugIn_DisplayNameProperty];
 		_pluginGroupUUID = _pluginProperties[kProPlugPlugIn_GroupUUIDProperty];
 		_pluginInfoString = _pluginProperties[kProPlugPlugIn_InfoStringProperty];
@@ -456,6 +512,10 @@
 		}
 		return NO;
 	}
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
 	
 	NSUInteger initCount = 10;
 	NSDictionary *effectProperties = nil;
@@ -586,6 +646,10 @@
 				flushes the extensions. */
 - (BOOL)addParametersWithError:(NSError**)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
 	_addingParameters = YES;
 	NSMutableArray<NSMutableDictionary*> *parameters = [self parametersConfiguration].mutableCopyRecursive;
 	
@@ -651,6 +715,10 @@
 				finish-initial-setup notification. */
 - (BOOL)finishInitialSetup:(NSError * _Nullable *)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
 	_finishedSetup = YES;
 	
 	NSMutableDictionary *userInfo = @{}.mutableCopy;
@@ -727,20 +795,86 @@
 
 
 
+typedef BOOL (*FxGripManagedSelectorIMP)(id, SEL, FxParameterId, CMTime, NSError **);
+
+/*! The object that implements a parameter's managed selector, or nil when none does. The
+	candidates, in order: the configuration's selector object, the parameter's factory, the
+	effect, then the installed extensions. A configuration reconstructed from a document carries
+	no factory, so the extension that declared the parameter is found by the extension search. */
+- (nullable id)fxg_targetForManagedSelector:(SEL)selector configuration:(NSDictionary *)configuration
+{
+	NSMutableArray *candidates = [NSMutableArray array];
+	if (configuration.parameterSelectorObject) {
+		[candidates addObject:configuration.parameterSelectorObject];
+	}
+	if (configuration[kFxParameterProperty_Factory]) {
+		[candidates addObject:configuration[kFxParameterProperty_Factory]];
+	}
+	[candidates addObject:self];
+	[candidates addObjectsFromArray:self.extensions.allValues];
+	for (id candidate in candidates) {
+		if ([candidate respondsToSelector:selector]) {
+			return candidate;
+		}
+	}
+	return nil;
+}
+
+/*! Performs the managed selector a parameter's configuration declares. A "selector" with the
+	manage prefix names `<selector>:atTime:error:`, which answers NO to refuse the change. A
+	configuration without one, or with a selector of another form, answers YES. */
+- (BOOL)fxg_performManagedSelectorForParameter:(FxParameterId)parameterID
+										atTime:(CMTime)time
+										 error:(NSError **)error
+{
+	NSDictionary *configuration = [self configurationForParameter:parameterID];
+	NSString *declaredName = configuration.parameterSelector;
+	if (![declaredName isKindOfClass:NSString.class] || ![declaredName hasPrefix:kFxParameterProperty_ManagePrefix]) {
+		return YES;
+	}
+	SEL selector = NSSelectorFromString([declaredName stringByAppendingString:@":atTime:error:"]);
+	id target = [self fxg_targetForManagedSelector:selector configuration:configuration];
+	if (target == nil) {
+		NSLog(@"%s Error: no object implements %@ for parameter %u.", __func__, NSStringFromSelector(selector), parameterID);
+		return YES;
+	}
+	return ((FxGripManagedSelectorIMP)objc_msgSend)(target, selector, parameterID, time, error);
+}
+
 /*!
 	@method		parameterChanged:atTime:error:
-	@abstract	Posts the parameter-changed notification and flushes the extensions.
+	@abstract	Runs the changed parameter's hooks, posts the parameter-changed notification, and flushes the extensions.
 	@param		paramID	The ID of the changed parameter.
 	@param		time	The time at which the change occurs.
-	@param		error	On failure, the error returned by a notification observer.
+	@param		error	On failure, the error from a parameter hook, the managed selector, a notification observer, or the flush.
 	@return		YES when the change is processed without error; NO otherwise.
 	@discussion	Introduced in FxGrip 0.1.0. The notification carries the parameter ID and the
-				change time so extensions observe the edit. */
+				change time so extensions observe the edit. The steps run in this order, and a
+				failing step returns NO without running the later steps:
+
+	1. The parameter object's `startChangedTime:error:`.
+	2. The managed selector the parameter's configuration declares, on the first of the selector
+	  object, the factory, the effect, and the extensions that implements it.
+	3. The parameter-changed notification.
+	4. The parameter object's `endChangedTime:error:`.
+	5. The extension flush. */
 // optional
 - (BOOL)parameterChanged:(UInt32)paramID
 				 atTime:(CMTime)time
 				  error:(NSError**)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
+	id<FxGripParameter> parameter = __parameters[@(paramID)];
+	if ([parameter respondsToSelector:@selector(startChangedTime:error:)] && ![parameter startChangedTime:time error:error]) {
+		return NO;
+	}
+	if (![self fxg_performManagedSelectorForParameter:paramID atTime:time error:error]) {
+		return NO;
+	}
+
 	NSMutableDictionary *userInfo = @{}.mutableCopy;
 	userInfo[FxGripTileableEffectParameterChangedIDKey] = @(paramID);
 	NSDictionary *timeDict = (__bridge_transfer NSDictionary *)CMTimeCopyAsDictionary(time, kCFAllocatorDefault);
@@ -756,7 +890,11 @@
 		NSLog (@"%s Error: Error returned from Parameter Changed Notification %@", __func__, *error);
 		return NO;
 	}
-	
+
+	if ([parameter respondsToSelector:@selector(endChangedTime:error:)] && ![parameter endChangedTime:time error:error]) {
+		return NO;
+	}
+
 	*error = [self extensionsFlush];
 
 	return *error == NULL;
@@ -960,6 +1098,16 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
             quality:(FxQuality)qualityLevel
               error:(NSError**)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
+	if (pluginState == NULL) {
+		*error = [NSError errorWithDomain:FxGripPlugErrorDomain
+									 code:kFxError_InvalidParameter
+								 userInfo:@{ NSLocalizedFailureReasonErrorKey : @"pluginState pointer is nil" }];
+		return NO;
+	}
 	NSKeyedArchiver *state = [NSKeyedArchiver.alloc initRequiringSecureCoding:true];
 	state.outputFormat = NSPropertyListBinaryFormat_v1_0;
 	
@@ -976,7 +1124,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 
 	// If the child has a pluginStateWithCoder
 	if ([self conformsToProtocol:@protocol(FxGripTileableEffectCoderState)]) {
-		if (![self pluginCoder:state atTime:renderTime quality:qualityLevel error:error] || (error && *error)) {
+		if (![self pluginCoder:state atTime:renderTime quality:qualityLevel error:error] || *error) {
 			return NO;
 		}
 	}
@@ -997,7 +1145,7 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 											   self.pluginStateCompression,
 											   self.pluginStateCompressionThreshold);
 
-	return pluginState != nil && !(error && *error);
+	return *pluginState != nil;
 }
 
 
@@ -1032,6 +1180,10 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
 				atTime:(CMTime)renderTime
 				 error:(NSError**)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
 	if (pluginState == nil)
 	{
 		if (error != nil)
@@ -1180,6 +1332,10 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
                       atTime:(CMTime)renderTime
                        error:(NSError * _Nullable *)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
 	// Assigned before dispatch so the rect is defined even when neither the subclass
 	// nor an observer writes it.
 	*destinationImageRect = [self fxImageSpaceUnionOfImages:sourceImages
@@ -1255,6 +1411,10 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
                 atTime:(CMTime)renderTime
                  error:(NSError * _Nullable *)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
 	if (!self.changesOutputSize) {
 		// Same-size default: the source tile mirrors the destination tile. The
 		// subclass coder method below still runs so a filter can pad its tiles
@@ -1357,6 +1517,10 @@ static void FxGripParameterClickTrampoline(id self, SEL _cmd)
                         atTime:(CMTime)renderTime
                          error:(NSError * _Nullable *)error
 {
+	NSError * __autoreleasing discardedError = nil;
+	if (error == NULL) {
+		error = &discardedError;
+	}
 	if (pluginState == nil) {
 		NSLog(@"%s Error No pluginState", __func__);
 		NSDictionary*   userInfo    = @{ NSLocalizedDescriptionKey : @"Invalid plugin state received from host" };
