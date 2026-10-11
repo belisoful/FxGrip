@@ -340,6 +340,31 @@ static NSString *FxGripShaderParameterBlock(NSString *parameter)
 	XCTAssertNotNil([[self scan:FxGripShaderParameterBlock(@"{ \"id\": 1, \"type\": \"float\", \"name\": \"A\", \"constant\": false }")] parameterWithID:1]);
 }
 
+#pragma mark Pixel units
+
+/*! @abstract A float or integer record with a key may set pixelUnits. */
+- (void)testAFloatOrIntegerMayUsePixelUnits
+{
+	FxGripShaderMetadata *metadata = [self scan:FxGripShaderBlock(
+		@"{ parameters: ["
+		@"  { id: 1, type: \"float\", name: \"Radius\", key: \"radius\", pixelUnits: true },"
+		@"  { id: 2, type: \"integer\", name: \"Taps\", key: \"TAPS\", constant: true, pixelUnits: true },"
+		@"  { id: 3, type: \"rgb\", name: \"Tint\", key: \"tint\", pixelUnits: false },"
+		@"] }")];
+
+	XCTAssertEqualObjects([metadata parameterForKey:@"radius"][kFxGripShaderProperty_PixelUnits], @YES);
+}
+
+/*! @abstract pixelUnits must be a boolean, needs a key, and applies only to a float or integer. */
+- (void)testPixelUnitsIsValidated
+{
+	[self invalidScanning:FxGripShaderParameterBlock(@"{ id: 1, type: \"float\", name: \"R\", key: \"r\", pixelUnits: 1 }")];
+	[self invalidScanning:FxGripShaderParameterBlock(@"{ id: 1, type: \"float\", name: \"R\", pixelUnits: true }")];
+	NSError *error = [self invalidScanning:FxGripShaderParameterBlock(@"{ id: 1, type: \"point\", name: \"C\", key: \"c\", pixelUnits: true }")];
+
+	XCTAssertTrue([error.localizedDescription containsString:@"pixelUnits"]);
+}
+
 #pragma mark Groups
 
 /*! @abstract A group's nested parameters are validated and indexed, and stay nested in parameters. */

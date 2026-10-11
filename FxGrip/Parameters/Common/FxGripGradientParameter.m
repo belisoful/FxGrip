@@ -114,20 +114,21 @@
 	@method		decodeGradientAtIndex:
 	@abstract	Decodes a gradient from the coder at an index.
 	@param		index	The parameter index the gradient was encoded at.
-	@return		A pointer to the decoded gradient, or NULL when the coder is not a plugin-state encoder.
-	@discussion	Introduced in FxGrip 0.1.0. A decoded length that does not match the header and sample sizes logs an error. */
+	@return		A pointer to the decoded gradient, or NULL when the coder is not a plugin-state encoder or holds no gradient at the index.
+	@discussion	Introduced in FxGrip 0.1.0. A decoded length shorter than its header, or than the samples its header declares, returns NULL. */
 - (nullable FxGripGradient *)decodeGradientAtIndex:(int64_t)index NS_RETURNS_INNER_POINTER
 {
 	if (self.isFxPluginStateEncoder) {
 		NSUInteger size = 0;
 		FxGripGradient *gradient = (FxGripGradient*)[self decodeBytesAtIndex:index returnedLength:&size];
-		
-		int samplesDepth = bytesFromFxDepth(gradient->depth);
-		
-		if (size != sizeof(FxGripGradientHeader) + 4 * gradient->count * samplesDepth) {
-			NSLog(@"Error Gradient decoding is malformed and sizes are different.");
+		if (gradient == NULL || size < sizeof(FxGripGradientHeader)) {
+			return NULL;
 		}
-		
+		NSUInteger samplesDepth = bytesFromFxDepth(gradient->depth);
+		if (size < sizeof(FxGripGradientHeader) + 4 * gradient->count * samplesDepth) {
+			NSLog(@"Error Gradient decoding is malformed and sizes are different.");
+			return NULL;
+		}
 		return gradient;
 	} else {
 		// encode meta
@@ -141,11 +142,14 @@
 	@abstract	Decodes a gradient and builds a Metal texture from it.
 	@param		index	The parameter index the gradient was encoded at.
 	@param		device	The Metal device that allocates the texture.
-	@return		A texture one pixel tall and the sample count wide, in the pixel format for the gradient's depth. */
+	@return		A texture one pixel tall and the sample count wide, in the pixel format for the gradient's depth; nil when the coder holds no gradient at the index. */
 // A MTLTexture that is 1 pixel in height and number of Samples in width
 - (nullable id<MTLTexture>) decodeGradientAtIndex:(int64_t)index device:(nonnull id<MTLDevice>)device NS_RETURNS_RETAINED
 {
 	FxGripGradient *gradient = [self decodeGradientAtIndex:index];
+	if (gradient == NULL || gradient->count == 0) {
+		return nil;
+	}
 	
 	MTLTextureDescriptor*   textureDescriptor   = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:mtlPixelFormatFromFxDepth(gradient->depth)
 																									 width:gradient->count
@@ -160,7 +164,7 @@
 	[gradientTexture replaceRegion:region
 					   mipmapLevel:0
 						 withBytes:gradient->samples // float, half, or char
-					   bytesPerRow:gradient->count * samplesDepth];
+					   bytesPerRow:gradient->count * 4 * samplesDepth];
 	
 	return gradientTexture;
 	

@@ -40,7 +40,7 @@ The body is JSON5, so it accepts trailing commas and `//` comments.
 {
     colorSpace: { transfer: "linear", primaries: "rec709" },
     parameters: [
-        { id: 1, type: "float", name: "Radius", key: "radius",
+        { id: 1, type: "float", name: "Radius", key: "radius", pixelUnits: true,
           default: 8, minimum: 0, maximum: 100 },
         { id: 2, type: "integer", name: "Taps", key: "TAPS", constant: true,
           default: 9, minimum: 1, maximum: 33 },
@@ -81,12 +81,14 @@ pass through in ``FxGripShaderMetadata/properties``.
 
 ### Parameter records
 
-Each record is a parameter configuration dictionary. The scanner adds three keys to the
+Each record is a parameter configuration dictionary. The scanner adds four keys to the
 vocabulary:
 
 - `key` → the C identifier of the shader symbol the value binds to.
 - `constant` → binds the value as a Metal function constant, by the name in `key`.
 - `allowContinuousConstant` → permits a continuous type as a function constant.
+- `pixelUnits` → marks a float or integer value as a length in image-space units, which the
+  render scales to destination pixels. It requires `key`.
 
 The `id` is the parameter's identity in saved projects, and `key` is its binding to the shader.
 Renaming a shader symbol changes `key` and leaves saved values intact. IDs run from 1 through
@@ -95,7 +97,8 @@ Renaming a shader symbol changes `key` and leaves saved values intact. IDs run f
 ### The fragment function
 
 The pipeline compiles the source with a prelude in front of it. The prelude includes
-`metal_stdlib`, declares `FxGripShaderVertexOut`, and supplies the vertex function. A `#line`
+`metal_stdlib`, declares `FxGripShaderVertexOut` and `FxGripShaderTile`, and supplies the
+`fxGripShaderTexCoord` function and the vertex function. A `#line`
 directive at its end restores the source's own line numbers, so a compiler error names the line
 in the shader file. The effect renders the fragment function named
 ``kFxGripShaderFragmentFunctionName``, and a subclass names another through
@@ -104,11 +107,47 @@ in the shader file. The effect renders the fragment function named
 The fragment function receives these bindings:
 
 - `[[stage_in]]` `FxGripShaderVertexOut` → `position`, the destination pixel; `texCoord`, the
-  normalized coordinate of that pixel in source texture 0; `imagePixel`, the pixel's center in
-  image space with y increasing upward.
+  normalized coordinate of that pixel in texture 0; `imagePixel`, the pixel's center in the
+  destination's pixel space, the space of its `tilePixelBounds`, with y increasing upward.
 - `[[texture(n)]]` → source image n.
+- A texture argument named by an image or gradient parameter's `key` → that parameter's image
+  (see "Images and gradients").
 - `[[buffer(0)]]` → the uniform struct.
+- `[[buffer(1)]]` `FxGripShaderTile` → the destination bounds, the pixel scale, and the
+  coordinate maps (see "Coordinates and pixel transforms").
 - A function constant named by a constant parameter's `key` → that parameter's value.
+
+### Coordinates and pixel transforms
+
+A source can cover different bounds than the destination, and an image parameter can arrive at
+another resolution. `fxGripShaderTexCoord(tile, n, in.imagePixel)` returns the normalized
+coordinate in texture n of the current destination pixel. The pipeline builds the map for each
+texture index below ``kFxGripShaderTextureMapLimit`` from the tiles' pixel transforms. A
+destination pixel goes to image space through the destination's inverse pixel transform, then
+to the texture's pixel space through its tile's pixel transform. `texCoord` is the same map for
+texture 0. A texture with no tile, such as a gradient or an empty image, maps the destination
+tile onto 0 through 1.
+
+At a proxy resolution the host renders fewer pixels per image-space unit. `tile.pixelScale`
+holds the destination's pixels per image-space unit along x and y. A record that sets
+`pixelUnits` has its value multiplied by `tile.pixelScale.x` before the pipeline sets the
+constants and packs the uniforms, so a radius declared in full-resolution pixels covers the same
+part of the image at every resolution. A shader that scales x and y separately reads
+`tile.pixelScale` itself.
+
+### Images and gradients
+
+A texture argument whose name matches the `key` of an image or gradient parameter binds that
+parameter's image at the argument's reflected index, and replaces the source image at that
+index. ``FxGripShaderPipelineState/textureIndexes`` reports the bound indexes. The argument must
+be a `texture2d`.
+
+- An image parameter → the source tile whose `parameterID` matches. The effect schedules an
+  image parameter's tile with the effect clip, so its tile is among the source images.
+- A gradient parameter → a texture one pixel tall with a sample per column, decoded from the
+  plugin state the gradient parameter encodes itself into. Read it with
+  `ramp.sample(sampler, float2(t, 0.5))` or `ramp.read(uint2(column, 0))`.
+- A parameter that supplies no image, such as an empty image well → a transparent black texture.
 
 ### The uniform struct
 
@@ -135,7 +174,9 @@ it specializes the fragment function with, converted to the constant's declared 
 one pipeline per device, destination pixel format, and constant signature, and keeps
 ``kFxGripShaderPipelineStateCacheLimit`` of them. ``FxGripShaderPipeline/constantSignatureForValues:``
 reports the signature that keys the cache. Every instance of an effect that renders the same
-source shares one pipeline, so each device compiles the source once per process.
+source shares one pipeline, so each device compiles the source once per process. A compile runs
+outside the cache lock. A render that needs a pipeline under construction waits for that compile,
+and a render that needs any other pipeline proceeds.
 
 A discrete type (integer, toggle, menu, switch) has few values and is allowed as a constant. A
 continuous type (float, percent, angle, rgb, rgba, point) produces a new value on every slider
@@ -168,8 +209,9 @@ subclass overrides ``FxGripShaderEffect/shaderValuesAtTime:`` to adjust or add v
 When the declared primaries differ from the host's working primaries, the pipeline converts. A
 conversion pass converts each source texture into the declared primaries, the fragment function
 renders into an intermediate texture, and a final pass converts the result back into the
-destination. A gamma-encoded image is unpremultiplied, decoded with the sRGB transfer,
-converted, encoded, and premultiplied again. Equal primaries render with no conversion pass.
+destination. Every bound texture converts, keyed images and gradients included. A gamma-encoded
+image is unpremultiplied, decoded with the sRGB transfer, converted, encoded, and premultiplied
+again. Equal primaries render with no conversion pass.
 
 ### Failures
 
@@ -183,8 +225,8 @@ A render fails with one of these errors:
 
 - ``kFxGripError_ShaderCompileFailed`` → the source fails to compile, the fragment function is
   missing, or the pipeline fails to build. The compiler's error is under `NSUnderlyingErrorKey`.
-- ``kFxGripError_ShaderBindingInvalid`` → a uniform member or a function constant does not match
-  the parameter bound to it, or a required constant has no value.
+- ``kFxGripError_ShaderBindingInvalid`` → a uniform member, texture argument, or function
+  constant does not match the parameter bound to it, or a required constant has no value.
 - ``kFxGripError_ShaderRenderFailed`` → the tile has no device or texture, no command queue is
   available, or the command buffer fails.
 
@@ -215,6 +257,8 @@ a broken shader reports the same error on every render without compiling again.
 - ``kFxGripShaderFragmentFunctionName``
 - ``kFxGripShaderVertexFunctionName``
 - ``kFxGripShaderUniformBufferIndex``
+- ``kFxGripShaderTileBufferIndex``
+- ``kFxGripShaderTextureMapLimit``
 - ``kFxGripShaderPipelineStateCacheLimit``
 
 ### Plugin-state keys
@@ -233,6 +277,7 @@ a broken shader reports the same error on every render without compiling again.
 - ``kFxGripShaderProperty_Key``
 - ``kFxGripShaderProperty_Constant``
 - ``kFxGripShaderProperty_AllowContinuousConstant``
+- ``kFxGripShaderProperty_PixelUnits``
 
 ### Color-space values
 

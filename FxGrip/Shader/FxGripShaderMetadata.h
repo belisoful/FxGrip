@@ -47,6 +47,8 @@ NS_ASSUME_NONNULL_BEGIN
 #define kFxGripShaderProperty_Constant			@"constant"
 /*! The parameter key that permits a continuous parameter type as a function constant. */
 #define kFxGripShaderProperty_AllowContinuousConstant	@"allowContinuousConstant"
+/*! The parameter key that marks a float or integer value as a length the render scales to destination pixels. */
+#define kFxGripShaderProperty_PixelUnits		@"pixelUnits"
 
 /*! The transfer value for linear-light processing. */
 #define kFxGripShaderTransfer_Linear			@"linear"
@@ -97,6 +99,7 @@ typedef NS_ENUM(NSInteger, FxGripShaderPrimaries) {
 	- A continuous type (float, percent, angle, rgb, rgba, point) → allowed as a constant only
 	  with `allowContinuousConstant`, because each distinct value compiles a pipeline.
 	- Any other type → never a constant.
+	- `pixelUnits` → optional boolean; requires `key`; true only on a float or integer type.
 	- A group's nested parameters → an array whose children follow the same rules.
 	- `colorSpace` → an object holding only `transfer` and `primaries`.
 	- `version` → optional; an integer from 1 through kFxGripShaderMetadataVersion.

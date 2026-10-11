@@ -39,7 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 	The effect conforms to FxGripTileableEffectCoderState. pluginCoder:atTime:quality:error:
 	encodes shaderValuesAtTime:, the host's working primaries, and the processing color info,
 	because the render thread cannot use the retrieval API.
-	renderDestinationImage:sourceImages:pluginCoder:atTime:error: decodes them and renders
+	renderDestinationImage:sourceImages:pluginCoder:atTime:error: decodes them, decodes the
+	texture of each keyed gradient from the state the gradient parameter encodes, and renders
 	through shaderPipeline. The pipeline sets each constant parameter as a Metal function
 	constant, packs the other bound parameters into the uniform struct by key, and converts
 	the primaries when the metadata declares rec709 or rec2020. An effect with no shader

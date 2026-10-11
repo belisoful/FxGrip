@@ -72,7 +72,7 @@
 	@method		decodeGradientAtIndex:
 	@abstract	Decodes a gradient from the coder at an index.
 	@param		index	The parameter index the gradient was encoded at.
-	@return		A pointer to the decoded gradient owned by the coder, or NULL when the coder is not a plugin-state encoder. */
+	@return		A pointer to the decoded gradient owned by the coder, or NULL when the coder is not a plugin-state encoder or holds no complete gradient at the index. */
 - (nullable FxGripGradient *)decodeGradientAtIndex:(int64_t)index NS_RETURNS_INNER_POINTER;
 
 /*!
@@ -82,8 +82,8 @@
 	@param		device	The Metal device that allocates the texture.
 	@return		A texture one pixel tall and the sample count wide. */
 // A MTLTexture that is 1 pixel in height and number of Samples in width
-/*! A 1D Metal texture holding the gradient's samples; nil when the index names no gradient or
-	the device cannot make the texture. */
+/*! A texture one pixel tall holding the gradient's samples; nil when the index names no gradient
+	or the device cannot make the texture. */
 - (nullable id<MTLTexture>) decodeGradientAtIndex:(int64_t)index device:(nonnull id<MTLDevice>)device NS_RETURNS_RETAINED;
 
 @end

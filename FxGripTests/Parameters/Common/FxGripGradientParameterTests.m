@@ -460,4 +460,55 @@ static unsigned char FxGripGradientTestFill(int64_t time)
 	}];
 }
 
+/*! @abstract A plugin-state coder with no gradient at the index decodes none and builds no texture. */
+- (void)testAStateCoderWithoutTheGradientDecodesNone
+{
+	CMTime time = FxGripParamClassTestTime(0, 1);
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = time;
+	[archiver finishEncoding];
+	NSKeyedUnarchiver *unarchiver = [self stateCoderForData:archiver.encodedData atTime:time];
+
+	XCTAssertTrue([unarchiver decodeGradientAtIndex:kGradientTestParameter] == NULL);
+	id<MTLDevice> device = [self metalDevice];
+	if (device != nil) {
+		XCTAssertNil([unarchiver decodeGradientAtIndex:kGradientTestParameter device:device]);
+	}
+}
+
+/*! @abstract A gradient shorter than the samples its header declares decodes none. */
+- (void)testATruncatedGradientDecodesNone
+{
+	CMTime time = FxGripParamClassTestTime(0, 1);
+	FxGripGradientHeader header = { 0 };
+	header.count = 8;
+	header.depth = kFxDepth_FLOAT32;
+	NSKeyedArchiver *archiver = [NSKeyedArchiver.alloc initRequiringSecureCoding:NO];
+	archiver.renderTime = time;
+	[archiver encodeBytes:(const uint8_t *)&header length:sizeof(header) atIndex:kGradientTestParameter];
+	[archiver finishEncoding];
+
+	XCTAssertTrue([[self stateCoderForData:archiver.encodedData atTime:time] decodeGradientAtIndex:kGradientTestParameter] == NULL);
+}
+
+/*! @abstract The texture holds every sample the gradient encoded. */
+- (void)testTheTextureHoldsEverySample
+{
+	id<MTLDevice> device = [self metalDevice];
+	if (device == nil) {
+		XCTSkip(@"no Metal device on this machine");
+	}
+	FxGripGradientParameter *parameter = [self parameterWithSamples:6 fxDepth:kFxDepth_UINT8 fill:0x7F];
+	CMTime time = FxGripParamClassTestTime(9, 30);
+	NSData *data = [self encodedStateForParameter:parameter atTime:time];
+
+	id<MTLTexture> texture = [[self stateCoderForData:data atTime:time] decodeGradientAtIndex:kGradientTestParameter device:device];
+	uint8_t texels[6 * 4] = { 0 };
+	[texture getBytes:texels bytesPerRow:sizeof(texels) fromRegion:MTLRegionMake2D(0, 0, 6, 1) mipmapLevel:0];
+
+	for (NSUInteger byte = 0; byte < sizeof(texels); byte++) {
+		XCTAssertEqual(texels[byte], (uint8_t)0x7F, @"byte %lu", (unsigned long)byte);
+	}
+}
+
 @end

@@ -20,7 +20,7 @@ NSString *FxGripShaderTestDocumentedExampleSource(void)
 		@"{\n"
 		@"    colorSpace: { transfer: \"linear\", primaries: \"rec709\" },\n"
 		@"    parameters: [\n"
-		@"        { id: 1, type: \"float\", name: \"Radius\", key: \"radius\",\n"
+		@"        { id: 1, type: \"float\", name: \"Radius\", key: \"radius\", pixelUnits: true,\n"
 		@"          default: 8, minimum: 0, maximum: 100 },\n"
 		@"        { id: 2, type: \"integer\", name: \"Taps\", key: \"TAPS\", constant: true,\n"
 		@"          default: 9, minimum: 1, maximum: 33 },\n"

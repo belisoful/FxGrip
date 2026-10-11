@@ -23,6 +23,8 @@
 #import "FxGripColorParameter.h"
 #import "FxGripRGBParameter.h"
 #import "FxGripSwitchParameter.h"
+#import "FxGripGradientParameter.h"
+#import "FxGripMTLDeviceCache.h"
 #import "FxGripDictionary.h"
 #import "FxGripErrors.h"
 #import "FxGrip_ARC.h"
@@ -212,6 +214,28 @@
 	return YES;
 }
 
+/*! The texture of each keyed gradient, decoded from the plugin state the gradient parameter encodes itself into. */
+- (NSDictionary<NSString *, id<MTLTexture>> *)shaderGradientTexturesInCoder:(NSCoder *)pluginCoder
+														   destinationImage:(FxImageTile *)destinationImage
+{
+	NSMutableDictionary<NSString *, id<MTLTexture>> *textures = [NSMutableDictionary dictionary];
+	id<MTLDevice> device = nil;
+	for (NSDictionary *record in self.shaderMetadata.allParameters) {
+		NSString *key = record[kFxGripShaderProperty_Key];
+		if (key == nil || record.parameterType != FxParameterType_Gradient) {
+			continue;
+		}
+		if (device == nil) {
+			device = [FxGripMTLDeviceCache metalDeviceFromID:destinationImage.deviceRegistryID];
+		}
+		id<MTLTexture> texture = device != nil ? [pluginCoder decodeGradientAtIndex:record.parameterID device:device] : nil;
+		if (texture != nil) {
+			textures[key] = texture;
+		}
+	}
+	return textures;
+}
+
 - (BOOL)renderDestinationImage:(FxImageTile *)destinationImage
 				  sourceImages:(nullable NSArray<FxImageTile *> *)sourceImages
 				   pluginCoder:(NSCoder *)pluginCoder
@@ -230,6 +254,7 @@
 	FxImageColorInfo colorInfo = (FxImageColorInfo)[pluginCoder decodeIntegerForKey:kFxGripShaderColorInfoCoderKey];
 	return [pipeline renderDestinationImage:destinationImage
 							   sourceImages:sourceImages
+							  keyedTextures:[self shaderGradientTexturesInCoder:pluginCoder destinationImage:destinationImage]
 									 values:values
 							  hostPrimaries:hostPrimaries
 								  colorInfo:colorInfo

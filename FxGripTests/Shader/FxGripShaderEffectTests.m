@@ -21,6 +21,8 @@
 #import <FxGrip/FxGripTileableEffect+Parameters.h>
 #import <FxGrip/FxGripAPINotifications.h>
 #import <FxGrip/FxGripDictionary.h>
+#import <FxGrip/NSCoder+FxPlug.h>
+#import <BEFoundation/NSCoder+AtIndex.h>
 #import "FxGripParameterClassTestSupport.h"
 #import "FxGripShaderTestSupport.h"
 
@@ -484,6 +486,36 @@ static NSString *FxGripShaderEffectTestSource(NSString *body)
 										   atTime:FxGripParamClassTestTime(0, 1) error:&error]);
 
 	XCTAssertEqual(error.code, (NSInteger)kFxGripError_ShaderCompileFailed);
+}
+
+/*! @abstract The render binds a keyed gradient decoded from the plugin state the gradient parameter encodes. */
+- (void)testTheRenderBindsAGradientFromThePluginState
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	FxGripShaderTestEffect *effect = [self effectWithSource:FxGripShaderEffectTestSource(
+		@"{ parameters: [ { id: 7, type: \"gradient\", name: \"Ramp\", key: \"ramp\" } ] }")];
+	effect.stagedSource = [effect.stagedSource stringByAppendingString:
+		@"fragment float4 fxGripShaderFragment(texture2d<float> ramp [[texture(0)]]) { return ramp.read(uint2(1, 0)); }\n"];
+	CMTime time = FxGripParamClassTestTime(0, 1);
+	NSMutableData *gradient = [NSMutableData dataWithLength:sizeof(FxGripGradientHeader) + 2 * sizeof(simd_float4)];
+	FxGripGradientFloat *samples = gradient.mutableBytes;
+	samples->count = 2;
+	samples->depth = kFxDepth_FLOAT32;
+	samples->samples[1] = (FxGripFloat4){ .r = 0.25f, .g = 0.5f, .b = 0.75f, .a = 1.0f };
+	NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
+	archiver.renderTime = time;
+	[archiver encodeObject:[FxGripShaderValues new] forKey:kFxGripShaderValuesCoderKey];
+	[archiver encodeBytes:gradient.bytes length:gradient.length atIndex:7];
+	[archiver finishEncoding];
+	FxImageTile *destination = FxGripShaderTestFloatTile((FxRect){ 0, 0, 2, 2 }, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	NSError *error = nil;
+
+	XCTAssertTrue([effect renderDestinationImage:destination sourceImages:@[] pluginState:archiver.encodedData
+										  atTime:time error:&error], @"%@", error);
+
+	simd_float4 pixel = FxGripShaderTestPixel(destination, 0, 0);
+	XCTAssertEqualWithAccuracy(pixel.x, 0.25f, 1e-6f);
+	XCTAssertEqualWithAccuracy(pixel.z, 0.75f, 1e-6f);
 }
 
 @end

@@ -266,6 +266,11 @@ static BOOL FxGripShaderTypeIsContinuous(FxParameterType type)
 		}
 	}
 
+	NSError *failure = [self validatePixelUnitsOfParameter:parameter type:type label:label line:line];
+	if (failure != nil) {
+		return failure;
+	}
+
 	id constant = parameter[kFxGripShaderProperty_Constant];
 	id allowContinuous = parameter[kFxGripShaderProperty_AllowContinuousConstant];
 	if (constant != nil && !FxGripShaderIsBoolean(constant)) {
@@ -291,6 +296,30 @@ static BOOL FxGripShaderTypeIsContinuous(FxParameterType type)
 			@"%@ is a continuous type and compiles a pipeline for each value as a constant. Set \"allowContinuousConstant\" to permit it.", label]];
 	}
 	return [self invalidAtLine:line reason:[NSString stringWithFormat:@"%@ has a type that cannot be a constant.", label]];
+}
+
+- (nullable NSError *)validatePixelUnitsOfParameter:(NSDictionary *)parameter
+											   type:(FxParameterType)type
+											  label:(NSString *)label
+											   line:(NSUInteger)line
+{
+	id pixelUnits = parameter[kFxGripShaderProperty_PixelUnits];
+	if (pixelUnits == nil) {
+		return nil;
+	}
+	if (!FxGripShaderIsBoolean(pixelUnits)) {
+		return [self invalidAtLine:line reason:[NSString stringWithFormat:@"%@ has a \"pixelUnits\" that is not a boolean.", label]];
+	}
+	if (![pixelUnits boolValue]) {
+		return nil;
+	}
+	if (parameter[kFxGripShaderProperty_Key] == nil) {
+		return [self invalidAtLine:line reason:[NSString stringWithFormat:@"%@ sets \"pixelUnits\" and needs a \"key\".", label]];
+	}
+	if (type != FxParameterType_Float && type != FxParameterType_Int) {
+		return [self invalidAtLine:line reason:[NSString stringWithFormat:@"%@ sets \"pixelUnits\" on a type that is not float or integer.", label]];
+	}
+	return nil;
 }
 
 - (nullable NSError *)addChildrenOfParameter:(NSDictionary *)parameter

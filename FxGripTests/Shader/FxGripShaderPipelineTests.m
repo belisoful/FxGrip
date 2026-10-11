@@ -4,10 +4,11 @@
 	@author     belisoful
 	@date       2026-10-10
 	@header     FxGripShaderPipelineTests
-	@abstract   Verifies the shader value snapshot, the reflected uniform layout, the constant cache, and the render.
+	@abstract   Verifies the shader value snapshot, the reflected uniform and texture layout, the constant cache, and the render.
 	@discussion Introduced in FxGrip 0.1.0. The value tests need no device. The pipeline tests compile
 	            real Metal shaders and skip on a machine with no Metal device. The render tests draw
-	            into RGBA32Float stub tiles and read the output back as exact floats.
+	            into RGBA32Float stub tiles and read the output back as exact floats. A pipeline whose
+	            state build blocks on a semaphore shows that a build runs outside the cache lock.
 */
 
 #import <XCTest/XCTest.h>
@@ -88,6 +89,65 @@ static simd_float3 FxGripShaderPipelineDecodeSRGB3(simd_float3 value)
 {
 	return simd_make_float3(FxGripShaderPipelineDecodeSRGB(value.x), FxGripShaderPipelineDecodeSRGB(value.y), FxGripShaderPipelineDecodeSRGB(value.z));
 }
+
+/*! A shader whose fragment function reads the tile description and returns the given Metal expression. */
+static NSString *FxGripShaderPipelineTileSource(NSString *metadataBody, NSString *textures, NSString *expression)
+{
+	return FxGripShaderTestSource(metadataBody, [NSString stringWithFormat:
+		@"fragment float4 fxGripShaderFragment(FxGripShaderVertexOut in [[stage_in]],\n"
+		@"                                     %@\n"
+		@"                                     constant FxGripShaderTile &tile [[buffer(1)]])\n"
+		@"{\n"
+		@"    constexpr sampler nearest(filter::nearest);\n"
+		@"    return %@;\n"
+		@"}\n", textures, expression]);
+}
+
+/*! A float tile with a uniform pixel scale and its inverse, as the host delivers a proxy-resolution tile. */
+static FxImageTile *FxGripShaderPipelineScaledTile(FxRect bounds, double scaleX, double scaleY, simd_float4 fill)
+{
+	FxImageTile *tile = FxGripShaderTestFloatTile(bounds, fill);
+	tile.pixelTransform = [FxMatrix44 stubMatrixWithScaleX:scaleX scaleY:scaleY translationX:0.0 translationY:0.0];
+	tile.inversePixelTransform = [FxMatrix44 stubMatrixWithScaleX:1.0 / scaleX scaleY:1.0 / scaleY translationX:0.0 translationY:0.0];
+	return tile;
+}
+
+/*! The pipeline's private state build, exposed so a subclass can block it. */
+@interface FxGripShaderPipeline (FxGripShaderPipelineTesting)
+- (nullable FxGripShaderPipelineState *)buildStateForDevice:(id<MTLDevice>)device
+												pixelFormat:(MTLPixelFormat)pixelFormat
+													 values:(FxGripShaderValues *)values
+												  signature:(NSString *)signature
+													  error:(NSError **)error;
+@end
+
+/*! Counts state builds, and holds the build of one signature until the test releases it. */
+@interface FxGripShaderBlockingPipeline : FxGripShaderPipeline
+@property (nonatomic, copy) NSString *blockedSignature;
+@property (nonatomic, strong) dispatch_semaphore_t entered;
+@property (nonatomic, strong) dispatch_semaphore_t released;
+@property (nonatomic, strong) NSCountedSet<NSString *> *builds;
+@end
+
+@implementation FxGripShaderBlockingPipeline
+
+- (nullable FxGripShaderPipelineState *)buildStateForDevice:(id<MTLDevice>)device
+												pixelFormat:(MTLPixelFormat)pixelFormat
+													 values:(FxGripShaderValues *)values
+												  signature:(NSString *)signature
+													  error:(NSError **)error
+{
+	@synchronized (self.builds) {
+		[self.builds addObject:signature];
+	}
+	if ([signature isEqualToString:self.blockedSignature]) {
+		dispatch_semaphore_signal(self.entered);
+		dispatch_semaphore_wait(self.released, DISPATCH_TIME_FOREVER);
+	}
+	return [super buildStateForDevice:device pixelFormat:pixelFormat values:values signature:signature error:error];
+}
+
+@end
 
 @interface FxGripShaderPipelineTests : XCTestCase
 @end
@@ -872,6 +932,294 @@ static simd_float3 FxGripShaderPipelineDecodeSRGB3(simd_float3 value)
 									  hostPrimaries:kFxColorPrimaries_Rec709 colorInfo:kFxImageColorInfo_RGB_LINEAR error:&error]);
 
 	XCTAssertEqual(error.code, (NSInteger)kFxGripError_ShaderCompileFailed);
+}
+
+#pragma mark Texture coordinates
+
+/*! @abstract The tile maps a destination pixel into each source of its own bounds. */
+- (void)testTheTileMapsEachSourceByItsOwnBounds
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderPipelineTileSource(@"{}",
+		@"texture2d<float> first [[texture(0)]], texture2d<float> second [[texture(1)]],",
+		@"float4(second.sample(nearest, fxGripShaderTexCoord(tile, 1u, in.imagePixel)).rg, float(tile.textureCount), 1.0)");
+	FxImageTile *first = FxGripShaderTestFloatTile((FxRect){ 2, 2, 6, 6 }, simd_make_float4(0.0f, 0.0f, 0.0f, 1.0f));
+	FxImageTile *second = FxGripShaderTestFloatTile((FxRect){ 0, 0, 8, 8 }, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	FxGripShaderTestFillTile(second, ^simd_float4(NSUInteger column, NSUInteger row) {
+		return simd_make_float4((float)column, (float)row, 0.0f, 1.0f);
+	});
+	FxImageTile *destination = FxGripShaderTestFloatTile((FxRect){ 2, 2, 6, 6 }, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+
+	[self renderSource:shader destination:destination sources:@[first, second]
+				values:[FxGripShaderValues new] hostPrimaries:kFxColorPrimaries_Rec709 colorInfo:kFxImageColorInfo_RGB_LINEAR];
+
+	[self assertPixel:FxGripShaderTestPixel(destination, 0, 0) equals:simd_make_float4(2.0f, 2.0f, 2.0f, 1.0f) accuracy:1e-6f];
+	[self assertPixel:FxGripShaderTestPixel(destination, 3, 3) equals:simd_make_float4(5.0f, 5.0f, 2.0f, 1.0f) accuracy:1e-6f];
+}
+
+/*! @abstract A source at full resolution maps through the destination's proxy pixel transform. */
+- (void)testAFullResolutionSourceMapsThroughAProxyDestination
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderPipelineTileSource(@"{}",
+		@"texture2d<float> source [[texture(0)]],",
+		@"float4(fxGripShaderTexCoord(tile, 0u, in.imagePixel), in.texCoord)");
+	FxImageTile *source = FxGripShaderTestFloatTile((FxRect){ 0, 0, 8, 8 }, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	FxImageTile *destination = FxGripShaderPipelineScaledTile((FxRect){ 0, 0, 4, 4 }, 0.5, 0.5, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+
+	[self renderSource:shader destination:destination sources:@[source]
+				values:[FxGripShaderValues new] hostPrimaries:kFxColorPrimaries_Rec709 colorInfo:kFxImageColorInfo_RGB_LINEAR];
+
+	// Destination pixel (1, 2) has its center at (1.5, 1.5); image space (3, 3); source pixel (3, 3), so u = 3/8 and v = (8 - 3)/8.
+	[self assertPixel:FxGripShaderTestPixel(destination, 1, 2) equals:simd_make_float4(0.375f, 0.625f, 0.375f, 0.625f) accuracy:1e-5f];
+}
+
+/*! @abstract The tile carries the destination's pixels per image-space unit along each axis. */
+- (void)testTheTileCarriesThePixelScale
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderPipelineTileSource(@"{}", @"", @"float4(tile.pixelScale, 0.0, 1.0)");
+	FxImageTile *destination = FxGripShaderPipelineScaledTile((FxRect){ 0, 0, 2, 2 }, 0.5, 0.25, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+
+	[self renderSource:shader destination:destination sources:@[]
+				values:[FxGripShaderValues new] hostPrimaries:kFxColorPrimaries_Rec709 colorInfo:kFxImageColorInfo_RGB_LINEAR];
+
+	[self assertPixel:FxGripShaderTestPixel(destination, 0, 0) equals:simd_make_float4(0.5f, 0.25f, 0.0f, 1.0f) accuracy:1e-6f];
+}
+
+/*! @abstract A pixelUnits uniform and constant scale by the destination's horizontal pixel scale, and other values do not. */
+- (void)testPixelUnitValuesScaleToTheDestination
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderTestSource(
+		@"{ parameters: ["
+		@"  { id: 1, type: \"float\", name: \"Radius\", key: \"radius\", pixelUnits: true },"
+		@"  { id: 2, type: \"float\", name: \"Gain\", key: \"gain\" },"
+		@"  { id: 3, type: \"integer\", name: \"Taps\", key: \"TAPS\", constant: true, pixelUnits: true },"
+		@"] }",
+		@"constant int TAPS [[function_constant(0)]];\n"
+		@"struct Uniforms { float radius; float gain; };\n"
+		@"fragment float4 fxGripShaderFragment(constant Uniforms &u [[buffer(0)]]) { return float4(u.radius, u.gain, float(TAPS), 1.0); }\n");
+	FxImageTile *destination = FxGripShaderPipelineScaledTile((FxRect){ 0, 0, 2, 2 }, 0.5, 0.5, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	FxGripShaderValues *values = [self valuesWithComponents:@{ @"radius": @[@8], @"gain": @[@8], @"TAPS": @[@8] }];
+
+	[self renderSource:shader destination:destination sources:@[]
+				values:values hostPrimaries:kFxColorPrimaries_Rec709 colorInfo:kFxImageColorInfo_RGB_LINEAR];
+
+	[self assertPixel:FxGripShaderTestPixel(destination, 1, 1) equals:simd_make_float4(4.0f, 8.0f, 4.0f, 1.0f) accuracy:1e-6f];
+	XCTAssertEqualObjects([values componentsForKey:@"radius"], (@[@8]), @"the render scales a copy of the values");
+}
+
+#pragma mark Keyed textures
+
+/*! An image parameter keyed "mask" and a gradient parameter keyed "ramp", read through texture indexes 4 and 5. */
+static NSString *FxGripShaderPipelineKeyedTextureSource(NSString *colorSpace, NSString *expression)
+{
+	return FxGripShaderPipelineTileSource(
+		[NSString stringWithFormat:@"{ colorSpace: %@, parameters: ["
+			@"  { id: 5, type: \"imageref\", name: \"Mask\", key: \"mask\" },"
+			@"  { id: 6, type: \"gradient\", name: \"Ramp\", key: \"ramp\" },"
+			@"] }", colorSpace],
+		@"texture2d<float> source [[texture(0)]], texture2d<float> mask [[texture(4)]], texture2d<float> ramp [[texture(5)]],",
+		expression);
+}
+
+/*! A 4×1 RGBA32Float texture holding the given samples. */
+- (id<MTLTexture>)rampTextureWithSamples:(const simd_float4 *)samples
+{
+	MTLTextureDescriptor *descriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA32Float width:4 height:1 mipmapped:NO];
+	id<MTLTexture> texture = [FxGripShaderTestDevice() newTextureWithDescriptor:descriptor];
+	[texture replaceRegion:MTLRegionMake2D(0, 0, 4, 1) mipmapLevel:0 withBytes:samples bytesPerRow:4 * sizeof(simd_float4)];
+	return texture;
+}
+
+/*! @abstract Reflection reports the texture index of each keyed texture argument. */
+- (void)testReflectionReportsEachKeyedTextureIndex
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderPipelineKeyedTextureSource(@"{}", @"mask.sample(nearest, in.texCoord) + ramp.read(uint2(0, 0)) + source.sample(nearest, in.texCoord)");
+	NSError *error = nil;
+
+	FxGripShaderPipelineState *state = [self stateForSource:shader values:[FxGripShaderValues new] error:&error];
+
+	XCTAssertNotNil(state, @"%@", error);
+	XCTAssertEqualObjects(state.textureIndexes, (@{ @"mask": @4, @"ramp": @5 }));
+}
+
+/*! @abstract An image parameter's tile binds to its keyed argument and maps by its own bounds, and a gradient binds its texture. */
+- (void)testKeyedImageAndGradientBindByKey
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderPipelineKeyedTextureSource(@"{}",
+		@"float4(mask.sample(nearest, fxGripShaderTexCoord(tile, 4u, in.imagePixel)).rg, ramp.read(uint2(2, 0)).b, float(tile.textureCount))");
+	FxRect bounds = { 0, 0, 2, 2 };
+	FxImageTile *source = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.0f, 0.0f, 0.0f, 1.0f));
+	FxImageTile *mask = FxGripShaderTestFloatTile((FxRect){ 0, 0, 4, 4 }, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	FxGripShaderTestFillTile(mask, ^simd_float4(NSUInteger column, NSUInteger row) {
+		return simd_make_float4((float)column, (float)row, 0.0f, 1.0f);
+	});
+	mask.parameterID = 5;
+	FxImageTile *destination = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	const simd_float4 samples[4] = { { 0, 0, 0.1f, 1 }, { 0, 0, 0.2f, 1 }, { 0, 0, 0.3f, 1 }, { 0, 0, 0.4f, 1 } };
+	NSError *error = nil;
+
+	BOOL rendered = [[self pipelineWithSource:shader] renderDestinationImage:destination
+																sourceImages:@[source, mask]
+															   keyedTextures:@{ @"ramp": [self rampTextureWithSamples:samples] }
+																	  values:[FxGripShaderValues new]
+															   hostPrimaries:kFxColorPrimaries_Rec709
+																   colorInfo:kFxImageColorInfo_RGB_LINEAR
+																	   error:&error];
+
+	XCTAssertTrue(rendered, @"%@", error);
+	// Destination pixel (1, 0) is image pixel (1.5, 1.5), which is mask texel column 1, row 2 of its 4×4 tile.
+	[self assertPixel:FxGripShaderTestPixel(destination, 1, 0) equals:simd_make_float4(1.0f, 2.0f, 0.3f, 6.0f) accuracy:1e-6f];
+}
+
+/*! @abstract A keyed argument whose parameter supplies no image binds transparent black. */
+- (void)testAKeyedArgumentWithoutAnImageBindsTransparentBlack
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderPipelineKeyedTextureSource(@"{}",
+		@"mask.sample(nearest, in.texCoord) + ramp.read(uint2(0, 0)) + float4(0.0, 0.0, 0.0, 0.25)");
+	FxRect bounds = { 0, 0, 2, 2 };
+	FxImageTile *source = FxGripShaderTestFloatTile(bounds, simd_make_float4(1.0f, 1.0f, 1.0f, 1.0f));
+	FxImageTile *destination = FxGripShaderTestFloatTile(bounds, simd_make_float4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	[self renderSource:shader destination:destination sources:@[source]
+				values:[FxGripShaderValues new] hostPrimaries:kFxColorPrimaries_Rec709 colorInfo:kFxImageColorInfo_RGB_LINEAR];
+
+	[self assertPixel:FxGripShaderTestPixel(destination, 0, 0) equals:simd_make_float4(0.0f, 0.0f, 0.0f, 0.25f) accuracy:1e-6f];
+}
+
+/*! @abstract A keyed gradient converts with the sources when the primaries differ. */
+- (void)testAKeyedGradientConvertsWithTheSources
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderPipelineKeyedTextureSource(@"{ primaries: \"rec2020\" }", @"float4(ramp.read(uint2(0, 0)).r, 0.0, 0.0, 1.0)");
+	FxRect bounds = { 0, 0, 2, 2 };
+	FxImageTile *source = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.0f, 0.0f, 0.0f, 1.0f));
+	FxImageTile *destination = FxGripShaderTestFloatTile(bounds, simd_make_float4(0.0f, 0.0f, 0.0f, 0.0f));
+	const simd_float4 red[4] = { { 1, 0, 0, 1 }, { 1, 0, 0, 1 }, { 1, 0, 0, 1 }, { 1, 0, 0, 1 } };
+	simd_float3x3 toShader = FxGripGamutConversionMatrix(kFxColorPrimaries_Rec709, kFxColorPrimaries_Rec2020);
+	simd_float3x3 toHost = FxGripGamutConversionMatrix(kFxColorPrimaries_Rec2020, kFxColorPrimaries_Rec709);
+	simd_float3 expected = simd_mul(toHost, simd_make_float3(simd_mul(toShader, simd_make_float3(1.0f, 0.0f, 0.0f)).x, 0.0f, 0.0f));
+	NSError *error = nil;
+
+	XCTAssertTrue([[self pipelineWithSource:shader] renderDestinationImage:destination
+															  sourceImages:@[source]
+															 keyedTextures:@{ @"ramp": [self rampTextureWithSamples:red] }
+																	values:[FxGripShaderValues new]
+															 hostPrimaries:kFxColorPrimaries_Rec709
+																 colorInfo:kFxImageColorInfo_RGB_LINEAR
+																	 error:&error], @"%@", error);
+
+	[self assertPixel:FxGripShaderTestPixel(destination, 0, 1) equals:simd_make_float4(expected.x, expected.y, expected.z, 1.0f) accuracy:1e-4f];
+}
+
+/*! @abstract A texture argument named by a scalar parameter's key refuses the state. */
+- (void)testAScalarKeyOnATextureRefusesTheState
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderTestSource(
+		@"{ parameters: [ { id: 1, type: \"float\", name: \"Gain\", key: \"gain\" } ] }",
+		@"fragment float4 fxGripShaderFragment(texture2d<float> gain [[texture(0)]]) { return gain.read(uint2(0, 0)); }\n");
+
+	[self stateFailureForSource:shader values:[FxGripShaderValues new] code:kFxGripError_ShaderBindingInvalid];
+}
+
+/*! @abstract An image key on a texture argument that is not a texture2d refuses the state. */
+- (void)testAnImageKeyOnANonTexture2DRefusesTheState
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	NSString *shader = FxGripShaderTestSource(
+		@"{ parameters: [ { id: 5, type: \"imageref\", name: \"Mask\", key: \"mask\" } ] }",
+		@"fragment float4 fxGripShaderFragment(texture1d<float> mask [[texture(0)]]) { return mask.read(0u); }\n");
+
+	NSError *error = [self stateFailureForSource:shader values:[FxGripShaderValues new] code:kFxGripError_ShaderBindingInvalid];
+
+	XCTAssertTrue([error.localizedDescription containsString:@"mask"]);
+}
+
+#pragma mark Concurrent builds
+
+- (FxGripShaderBlockingPipeline *)blockingPipeline
+{
+	NSString *source = FxGripShaderTestSource(
+		@"{ parameters: [ { id: 1, type: \"integer\", name: \"Level\", key: \"LEVEL\", constant: true } ] }",
+		@"constant int LEVEL [[function_constant(0)]];\n"
+		@"fragment float4 fxGripShaderFragment() { return float4(float(LEVEL)); }\n");
+	FxGripShaderMetadata *metadata = [FxGripShaderMetadata metadataWithSource:source error:NULL];
+	FxGripShaderBlockingPipeline *pipeline = [[FxGripShaderBlockingPipeline alloc] initWithSource:source
+																						 metadata:metadata
+																			 fragmentFunctionName:kFxGripShaderFragmentFunctionName];
+	pipeline.blockedSignature = @"LEVEL=1";
+	pipeline.entered = dispatch_semaphore_create(0);
+	pipeline.released = dispatch_semaphore_create(0);
+	pipeline.builds = [NSCountedSet set];
+	return pipeline;
+}
+
+- (FxGripShaderValues *)levelValues:(NSInteger)level
+{
+	return [self valuesWithComponents:@{ @"LEVEL": @[@(level)] }];
+}
+
+/*! @abstract Another constant set builds and returns while one build is still in progress. */
+- (void)testAnotherStateBuildsWhileOneBuildIsInProgress
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	FxGripShaderBlockingPipeline *pipeline = [self blockingPipeline];
+	id<MTLDevice> device = FxGripShaderTestDevice();
+	XCTestExpectation *blockedDone = [self expectationWithDescription:@"the blocked build finishes"];
+	__block FxGripShaderPipelineState *blocked = nil;
+	dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+		blocked = [pipeline stateForDevice:device pixelFormat:MTLPixelFormatRGBA32Float values:[self levelValues:1] error:NULL];
+		[blockedDone fulfill];
+	});
+	XCTAssertEqual(dispatch_semaphore_wait(pipeline.entered, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)), 0L);
+
+	XCTestExpectation *otherDone = [self expectationWithDescription:@"another constant set builds"];
+	__block FxGripShaderPipelineState *other = nil;
+	dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+		other = [pipeline stateForDevice:device pixelFormat:MTLPixelFormatRGBA32Float values:[self levelValues:2] error:NULL];
+		[otherDone fulfill];
+	});
+	XCTWaiterResult otherResult = [XCTWaiter waitForExpectations:@[otherDone] timeout:10.0];
+	dispatch_semaphore_signal(pipeline.released);
+	[self waitForExpectations:@[blockedDone] timeout:10.0];
+
+	XCTAssertEqual(otherResult, XCTWaiterResultCompleted, @"the other build waited for the blocked one");
+	XCTAssertNotNil(other);
+	XCTAssertNotNil(blocked);
+}
+
+/*! @abstract Concurrent requests for one constant set wait for a single build and share its state. */
+- (void)testConcurrentRequestsForOneStateShareOneBuild
+{
+	XCTSkipIf(FxGripShaderTestDevice() == nil, @"No Metal device.");
+	FxGripShaderBlockingPipeline *pipeline = [self blockingPipeline];
+	id<MTLDevice> device = FxGripShaderTestDevice();
+	const NSUInteger requests = 4;
+	NSMutableArray *states = [NSMutableArray array];
+	NSLock *statesLock = [NSLock new];
+	dispatch_group_t group = dispatch_group_create();
+	for (NSUInteger index = 0; index < requests; index++) {
+		dispatch_group_async(group, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+			FxGripShaderPipelineState *state = [pipeline stateForDevice:device pixelFormat:MTLPixelFormatRGBA32Float values:[self levelValues:1] error:NULL];
+			[statesLock lock];
+			[states addObject:state ?: NSNull.null];
+			[statesLock unlock];
+		});
+	}
+	XCTAssertEqual(dispatch_semaphore_wait(pipeline.entered, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)), 0L);
+	dispatch_semaphore_signal(pipeline.released);
+	XCTAssertEqual(dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)), 0L);
+
+	XCTAssertEqual([pipeline.builds countForObject:@"LEVEL=1"], (NSUInteger)1);
+	XCTAssertEqual(states.count, requests);
+	XCTAssertEqual([NSSet setWithArray:states].count, (NSUInteger)1);
+	XCTAssertFalse([states containsObject:NSNull.null]);
 }
 
 @end
