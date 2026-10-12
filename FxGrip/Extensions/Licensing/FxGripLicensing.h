@@ -37,8 +37,10 @@
 #define kFxGripLicensingProperty_ProductID				@"productID"
 /*! String: the product version. `YES` means the plugin's own version. */
 #define kFxGripLicensingProperty_ProductVersion			@"productVersion"
-/*! String: the version a license must cover for this build. `YES` means the plugin's own version. */
+/*! String: the version a license must cover for this build, normally a major version such as `@"2"`. `YES` means the plugin's own major version. */
 #define kFxGripLicensingProperty_LicensedVersion		@"licensedVersion"
+/*! NSDate or ISO 8601 date string: the day this build was released, compared with the entitlement's `updatesUntil`. */
+#define kFxGripLicensingProperty_ReleaseDate			@"releaseDate"
 /*! Boolean: unlicensed frames carry the unlicensed watermark. Default YES. */
 #define kFxGripLicensingProperty_WatermarkUnlicensed		@"watermarkUnlicensed"
 /*! Boolean: trial frames carry the trial watermark. Default NO. */
@@ -148,6 +150,8 @@ extern NSString *const _Nonnull FxGripLicensingErrorKey;
 - (nonnull NSString *)licensingProductVersion;
 /*! The version a license must cover for this build. */
 - (nonnull NSString *)licensingLicensedVersion;
+/*! The day this build was released. */
+- (nonnull NSDate *)licensingReleaseDate;
 /*! YES when unlicensed frames carry the unlicensed watermark. */
 - (BOOL)licensingWatermarkUnlicensed;
 /*! YES when trial frames carry the trial watermark. */
@@ -213,13 +217,25 @@ extern NSString *const _Nonnull FxGripLicensingErrorKey;
 	@discussion	Introduced in FxGrip 0.1.0. When set and the provider gates licenses by version,
 				`licenseStatus` asks for this version, so a license for an earlier major version
 				reports Unlicensed and the holder is offered an upgrade. A provider without
-				version gating reports the product's status. */
+				version gating reports the product's status. The declaration is normally a major
+				version such as `@"2"`, and `YES` resolves to the plugin's major version, because a
+				provider covers every version at least as recent as the one asked for, and a point
+				release must not ask for a newer license than the one its customers bought. */
 @property (readonly, nonatomic, nullable) NSString *licensedVersion;
+/*!
+	@property	releaseDate
+	@abstract	The day this build was released, or nil when the entitlement's update window is not checked.
+	@discussion	Introduced in FxGrip 0.1.0. A provider whose licenses stay valid for the versions
+				released inside an update window fills the entitlement's `updatesUntil`. When this
+				date is set and falls after that window, a licensed status reads Expired and
+				`upgradeAvailable` is YES. A release inside the window, an entitlement without a
+				window, or a provider without entitlements leaves the provider's status alone. */
+@property (readonly, nonatomic, nullable) NSDate *releaseDate;
 /*! The cached license status. Unknown without a provider. */
 @property (readonly) FxGripLicenseStatus licenseStatus;
 /*! The status for a version, from the provider; Unknown when the provider cannot gate by version. */
 - (FxGripLicenseStatus)licenseStatusForVersion:(NSOperatingSystemVersion)version;
-/*! YES when the holder is licensed for an earlier version only, so a paid upgrade applies. */
+/*! YES when the holder is licensed for an earlier version only, or the update window closed before this release, so a paid upgrade applies. */
 @property (readonly) BOOL upgradeAvailable;
 /*! The entitlement behind the status, when the provider reports one. */
 @property (readonly, nullable) FxGripLicenseEntitlement *entitlement;

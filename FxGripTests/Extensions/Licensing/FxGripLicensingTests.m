@@ -293,6 +293,15 @@
 - (FxGripWatermarkConfiguration *)licensingTrialWatermarkConfiguration { return self.trialConfiguration; }
 @end
 
+@interface FxGripLicensingReleaseDateSettings : NSObject
+@property (nonatomic, strong) NSDate *releaseDate;
+@end
+@implementation FxGripLicensingReleaseDateSettings
+- (BOOL)licensingActive { return YES; }
+- (NSString *)licensingProductID { return @"p"; }
+- (NSDate *)licensingReleaseDate { return self.releaseDate; }
+@end
+
 #pragma mark - Extension doubles
 
 /*! Records the toggle writes and the watermark renders, so the pipeline runs without a host or a GPU. */
@@ -569,11 +578,17 @@
 	XCTAssertEqual(self.provider.recordedVersionQuery.minorVersion, (NSInteger)1);
 	XCTAssertEqual(self.provider.recordedVersionQuery.patchVersion, (NSInteger)0);
 
-	// YES means the plugin's own version; a minimal provider ignores the gate.
+	// YES means the plugin's major version, so a point release never asks for a newer license than its customers bought.
 	FxGripLicensing *own = [FxGripLicensing.alloc initWithProvider:self.provider];
 	[own extLoadWithEffect:(id)self.effect];
 	[self parametersAddedBy:own seededBy:@{kFxParameterProperty_Type: kFxParameterType_Licensing, kFxGripLicensingProperty_LicensedVersion: @YES}.mutableCopy];
-	XCTAssertEqualObjects(own.licensedVersion, @"1.2.3");
+	XCTAssertEqualObjects(own.licensedVersion, @"1");
+	(void)own.licenseStatus;
+	XCTAssertEqual(self.provider.recordedVersionQuery.majorVersion, (NSInteger)1);
+	XCTAssertEqual(self.provider.recordedVersionQuery.minorVersion, (NSInteger)0);
+	XCTAssertEqual(self.provider.recordedVersionQuery.patchVersion, (NSInteger)0);
+
+	// A minimal provider ignores the gate.
 
 	FxGripLicensingMinimalProvider *minimalProvider = [FxGripLicensingMinimalProvider.alloc init];
 	minimalProvider.status = FxGripLicenseStatusLicensed;
@@ -594,6 +609,117 @@
 	XCTAssertFalse(self.licensing.upgradeAvailable);
 	self.provider.upgradable = YES;
 	XCTAssertTrue(self.licensing.upgradeAvailable);
+}
+
+#pragma mark Release date
+
+- (NSDate *)day:(NSString *)iso8601Date
+{
+	NSISO8601DateFormatter *formatter = NSISO8601DateFormatter.new;
+	formatter.formatOptions = NSISO8601DateFormatWithFullDate;
+	return [formatter dateFromString:iso8601Date];
+}
+
+- (FxGripLicenseEntitlement *)licensedEntitlementWithUpdatesUntil:(NSDate *)updatesUntil
+{
+	return [FxGripLicenseEntitlement.alloc initWithProductID:@"p" providerName:@"mock" status:FxGripLicenseStatusLicensed
+														kind:FxGripLicenseKindPerpetual email:nil issuedAt:nil expiresAt:nil
+												updatesUntil:updatesUntil willRenew:NO inBillingRetry:NO activationID:nil machineID:nil];
+}
+
+- (NSMutableDictionary *)productSeedWithReleaseDate:(id)releaseDate
+{
+	NSMutableDictionary *seed = @{kFxParameterProperty_Type: kFxParameterType_Licensing, kFxGripLicensingProperty_ProductID: @"p"}.mutableCopy;
+	seed[kFxGripLicensingProperty_ReleaseDate] = releaseDate;
+	return seed;
+}
+
+/*! @abstract A build released after the entitlement's update window reads Expired on both status paths, unlocks nothing, and offers an upgrade. */
+- (void)testAReleaseAfterTheUpdateWindowReportsExpiredAndAnUpgrade
+{
+	self.provider.status = FxGripLicenseStatusLicensed;
+	self.provider.entitlement = [self licensedEntitlementWithUpdatesUntil:[self day:@"2026-01-01"]];
+	[self.licensing extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:self.licensing seededBy:[self productSeedWithReleaseDate:@"2026-06-01"]];
+
+	XCTAssertEqualObjects(self.licensing.releaseDate, [self day:@"2026-06-01"]);
+	XCTAssertEqual(self.licensing.licenseStatus, FxGripLicenseStatusExpired);
+	XCTAssertFalse(self.licensing.isLicensed);
+	XCTAssertTrue(self.licensing.upgradeAvailable, @"the renewal is the upgrade");
+
+	[self addedToDocument:self.licensing];
+	self.provider.handler(FxGripLicenseStatusLicensed);
+	XCTAssertEqualObjects(self.effect.statusChanges.lastObject, @(FxGripLicenseStatusExpired));
+	XCTAssertFalse(self.licensing.recordedBoolValue);
+	XCTAssertEqual(self.licensing.licenseStatus, FxGripLicenseStatusExpired);
+
+	self.provider.handler(FxGripLicenseStatusRevoked);
+	XCTAssertEqualObjects(self.effect.statusChanges.lastObject, @(FxGripLicenseStatusRevoked), @"an unlicensed status passes through");
+}
+
+/*! @abstract A release inside the window, an entitlement without one, or a provider without entitlements keeps the provider's status. */
+- (void)testAReleaseInsideTheUpdateWindowKeepsTheStatus
+{
+	self.provider.status = FxGripLicenseStatusLicensed;
+	self.provider.entitlement = [self licensedEntitlementWithUpdatesUntil:[self day:@"2026-12-31"]];
+	[self.licensing extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:self.licensing seededBy:[self productSeedWithReleaseDate:[self day:@"2026-06-01"]]];
+	XCTAssertEqualObjects(self.licensing.releaseDate, [self day:@"2026-06-01"], @"an NSDate is taken as is");
+	XCTAssertEqual(self.licensing.licenseStatus, FxGripLicenseStatusLicensed);
+	XCTAssertFalse(self.licensing.upgradeAvailable);
+
+	self.provider.entitlement = [FxGripLicenseEntitlement entitlementWithProductID:@"p" providerName:@"mock" status:FxGripLicenseStatusLicensed];
+	FxGripLicensing *open = [FxGripLicensing.alloc initWithProvider:self.provider];
+	[open extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:open seededBy:[self productSeedWithReleaseDate:@"2026-06-01"]];
+	XCTAssertEqual(open.licenseStatus, FxGripLicenseStatusLicensed, @"no window, no check");
+	XCTAssertFalse(open.upgradeAvailable);
+
+	FxGripLicensingMinimalProvider *minimalProvider = [FxGripLicensingMinimalProvider.alloc init];
+	minimalProvider.status = FxGripLicenseStatusLicensed;
+	FxGripLicensing *minimal = [FxGripLicensing.alloc initWithProvider:minimalProvider];
+	[minimal extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:minimal seededBy:[self productSeedWithReleaseDate:@"2026-06-01"]];
+	XCTAssertEqual(minimal.licenseStatus, FxGripLicenseStatusLicensed, @"a provider without entitlements has no window");
+	XCTAssertFalse(minimal.upgradeAvailable);
+}
+
+/*! @abstract Without a declared release date the window is not checked, and an unparseable declaration reads as none. */
+- (void)testNoReleaseDateLeavesTheWindowUnchecked
+{
+	self.provider.status = FxGripLicenseStatusLicensed;
+	self.provider.entitlement = [self licensedEntitlementWithUpdatesUntil:[self day:@"2026-01-01"]];
+	[self.licensing extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:self.licensing seededBy:[self productSeedWithReleaseDate:nil]];
+	XCTAssertNil(self.licensing.releaseDate);
+	XCTAssertEqual(self.licensing.licenseStatus, FxGripLicenseStatusLicensed);
+	XCTAssertFalse(self.licensing.upgradeAvailable);
+
+	FxGripLicensing *garbled = [FxGripLicensing.alloc initWithProvider:self.provider];
+	[garbled extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:garbled seededBy:[self productSeedWithReleaseDate:@"June 2026"]];
+	XCTAssertNil(garbled.releaseDate);
+	XCTAssertEqual(garbled.licenseStatus, FxGripLicenseStatusLicensed);
+}
+
+/*! @abstract The release date resolves from the settings object first and accepts a date and time string. */
+- (void)testTheReleaseDateResolvesFromTheSettingsObjectAndADateTimeString
+{
+	self.provider.status = FxGripLicenseStatusLicensed;
+	self.provider.entitlement = [self licensedEntitlementWithUpdatesUntil:[self day:@"2026-01-01"]];
+	FxGripLicensingReleaseDateSettings *settings = [FxGripLicensingReleaseDateSettings.alloc init];
+	settings.releaseDate = [self day:@"2026-06-01"];
+	[self.licensing setSettingsObject:(id)settings];
+	[self.licensing extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:self.licensing seededBy:[self productSeedWithReleaseDate:@"2025-06-01"]];
+	XCTAssertEqualObjects(self.licensing.releaseDate, settings.releaseDate, @"the settings object outranks the declaration");
+	XCTAssertEqual(self.licensing.licenseStatus, FxGripLicenseStatusExpired);
+
+	FxGripLicensing *timed = [FxGripLicensing.alloc initWithProvider:self.provider];
+	[timed extLoadWithEffect:(id)self.effect];
+	[self parametersAddedBy:timed seededBy:[self productSeedWithReleaseDate:@"2026-01-01T12:00:00Z"]];
+	XCTAssertEqualObjects(timed.releaseDate, [[self day:@"2026-01-01"] dateByAddingTimeInterval:12 * 60 * 60]);
+	XCTAssertEqual(timed.licenseStatus, FxGripLicenseStatusExpired, @"a release later on the window's last day is after it");
 }
 
 /*! @abstract A product information fetch reports through the handler and the notification, carrying an error when the store fails. */

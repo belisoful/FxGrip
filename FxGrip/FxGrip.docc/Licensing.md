@@ -31,6 +31,7 @@ kProPlugPlugInX_LicensingProperty: @{
     @"provider":            @"fxfactory",
     @"productID":           @"3F2504E0-4F89-11D3-9A0C-0305E82C3301",
     @"productVersion":      @"1.2.0",
+    @"licensedVersion":     @"1",
     @"watermarkUnlicensed": @YES,
     @"watermarkTrial":      @YES,
     @"trialWatermark":      @{ @"style": @"corner", @"corner": @"topRight", @"opacity": @0.4 },
@@ -71,7 +72,8 @@ parameter the plugin can drive at run time.
 | `active` | The integration is on | On when a product is declared; otherwise the hidden Licensing Active toggle |
 | `productID` | The product identifier; `YES` means the plugin's UUID | The Product ID parameter |
 | `productVersion` | The product version; `YES` means the plugin's version | The plugin's version |
-| `licensedVersion` | The version a license must cover for this build; `YES` means the plugin's version | None: every version shares one status |
+| `licensedVersion` | The version a license must cover for this build, normally a major version such as `1`; `YES` means the plugin's major version | None: every version shares one status |
+| `releaseDate` | The day this build was released, as an `NSDate` or an ISO 8601 date string such as `2026-10-11` | None: the entitlement's update window is not checked |
 | `watermarkUnlicensed` | Unlicensed frames carry the unlicensed watermark | YES |
 | `watermarkTrial` | Trial frames carry the trial watermark | NO |
 | `unlicensedWatermark` | The unlicensed watermark, as a configuration dictionary | Single, 99 pt, 10°, white with a blue shadow, 0.73 opacity |
@@ -134,6 +136,20 @@ plugin declares `licensedVersion`, the extension asks for that version, so a cus
 1.x sees a 2.0 build as Unlicensed. `upgradeAvailable` is YES when the holder is licensed for an
 earlier version only, which is the cue to label the Buy button as an upgrade. A provider without
 version gating reports the product's status and no upgrade.
+
+Declare the major version, such as `@"2"`; `YES` resolves to the plugin's major version. A
+provider covers every version at least as recent as the one asked for, so a declaration that
+carried the full build version would ask a 2.1.3 build for a license newer than the one its 2.1.0
+customers bought.
+
+### Time-gated updates
+
+A provider whose licenses stay valid for the versions released inside an update window fills the
+entitlement's `updatesUntil`. When the plugin declares `releaseDate`, a licensed status reads
+Expired for a build released after that window closes: `isLicensed` is NO, the unlicensed
+watermark applies, and `upgradeAvailable` is YES, so the Buy button can offer the renewal. A
+release inside the window, an entitlement without a window, or a provider without entitlements
+leaves the provider's status alone. FxFactory and the App Store report no window.
 
 ### Product information
 
@@ -209,6 +225,7 @@ two processes, and either the app sandbox off or the read-only shared-preference
 - ``kFxGripLicensingProperty_ProductID``
 - ``kFxGripLicensingProperty_ProductVersion``
 - ``kFxGripLicensingProperty_LicensedVersion``
+- ``kFxGripLicensingProperty_ReleaseDate``
 - ``kFxGripLicensingProperty_WatermarkUnlicensed``
 - ``kFxGripLicensingProperty_WatermarkTrial``
 - ``kFxGripLicensingProperty_UnlicensedWatermark``

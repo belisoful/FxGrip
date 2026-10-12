@@ -71,6 +71,32 @@ static NSOperatingSystemVersion FxGripLicensingVersionFromString(NSString *strin
 	return version;
 }
 
+/*! The major component of "major.minor.patch". */
+static NSString *FxGripLicensingMajorVersionString(NSString *string)
+{
+	return [string componentsSeparatedByString:@"."].firstObject ?: @"";
+}
+
+/*! An NSDate as is, or an ISO 8601 string: a date such as "2026-10-11", or a date and time. */
+static NSDate *FxGripLicensingDateFromValue(id value)
+{
+	if ([value isKindOfClass:NSDate.class]) {
+		return value;
+	}
+	if (![value isKindOfClass:NSString.class]) {
+		return nil;
+	}
+	// The date-only form is tried second: it matches a date-time string by prefix and drops the time.
+	NSISO8601DateFormatter *formatter = NSISO8601DateFormatter.new;
+	formatter.formatOptions = NSISO8601DateFormatWithInternetDateTime;
+	NSDate *date = [formatter dateFromString:value];
+	if (date == nil) {
+		formatter.formatOptions = NSISO8601DateFormatWithFullDate;
+		date = [formatter dateFromString:value];
+	}
+	return date;
+}
+
 static NSMutableDictionary<NSString *, Class> *FxGripLicensingProviderRegistry(void)
 {
 	static NSMutableDictionary<NSString *, Class> *registry = nil;
@@ -96,6 +122,7 @@ static NSMutableDictionary<NSString *, Class> *FxGripLicensingProviderRegistry(v
 	NSString *_productID;
 	NSString *_productVersion;
 	NSString *_licensedVersion;
+	NSDate *_releaseDate;
 	NSNumber *_active;
 	NSNumber *_watermarkUnlicensed;
 	NSNumber *_watermarkTrial;
@@ -122,6 +149,7 @@ static NSMutableDictionary<NSString *, Class> *FxGripLicensingProviderRegistry(v
 
 @synthesize provider = _provider;
 @synthesize licensedVersion = _licensedVersion;
+@synthesize releaseDate = _releaseDate;
 @synthesize hasActive = _hasActive;
 @synthesize hasWatermarkUnlicensed = _hasWatermarkUnlicensed;
 @synthesize hasWatermarkTrial = _hasWatermarkTrial;
@@ -255,11 +283,12 @@ static NSMutableDictionary<NSString *, Class> *FxGripLicensingProviderRegistry(v
 /*!
 	@method		providerDidReportStatus:
 	@abstract	Applies a status the provider reports from its observation or a completion.
-	@discussion	Introduced in FxGrip 0.1.0. Runs on the reporting thread. The status is cached, the
-				toggle and button flags are written out of band, the effect hook runs, and the
-				status change notification is posted. */
+	@discussion	Introduced in FxGrip 0.1.0. Runs on the reporting thread. The status is checked
+				against the release date, cached, the toggle and button flags are written out of
+				band, the effect hook runs, and the status change notification is posted. */
 - (void)providerDidReportStatus:(FxGripLicenseStatus)status
 {
+	status = [self statusCoveringReleaseDate:status];
 	[self setCachedStatus:@(status)];
 
 	FxGripOOBParameterAccess *__attribute__((unused)) accessor = [FxGripOOBParameterAccess access:self.effect];
@@ -305,11 +334,13 @@ static NSMutableDictionary<NSString *, Class> *FxGripLicensingProviderRegistry(v
 			if (_provider == nil) {
 				return FxGripLicenseStatusUnknown;
 			}
+			FxGripLicenseStatus status;
 			if (_licensedVersion != nil && [_provider respondsToSelector:@selector(licenseStatusForProduct:version:)]) {
-				_cachedStatus = @([_provider licenseStatusForProduct:self.productID version:FxGripLicensingVersionFromString(_licensedVersion)]);
+				status = [_provider licenseStatusForProduct:self.productID version:FxGripLicensingVersionFromString(_licensedVersion)];
 			} else {
-				_cachedStatus = @([_provider licenseStatusForProduct:self.productID]);
+				status = [_provider licenseStatusForProduct:self.productID];
 			}
+			_cachedStatus = @([self statusCoveringReleaseDate:status]);
 		}
 		return _cachedStatus.integerValue;
 	}
@@ -337,10 +368,32 @@ static NSMutableDictionary<NSString *, Class> *FxGripLicensingProviderRegistry(v
 
 - (BOOL)upgradeAvailable
 {
-	if ([self providerResponds:@selector(upgradeAvailableForProduct:)]) {
-		return [_provider upgradeAvailableForProduct:self.productID];
+	if ([self providerResponds:@selector(upgradeAvailableForProduct:)] && [_provider upgradeAvailableForProduct:self.productID]) {
+		return YES;
 	}
-	return NO;
+	return [self updatesLapsedBeforeRelease];
+}
+
+/*! YES when the holder's license is current but its update window closed before this build's release date. */
+- (BOOL)updatesLapsedBeforeRelease
+{
+	if (_releaseDate == nil) {
+		return NO;
+	}
+	FxGripLicenseEntitlement *entitlement = self.entitlement;
+	if (entitlement.updatesUntil == nil || !FxGripLicenseStatusIsLicensed(entitlement.status)) {
+		return NO;
+	}
+	return [_releaseDate compare:entitlement.updatesUntil] == NSOrderedDescending;
+}
+
+/*! A licensed status reads Expired when the update window closed before this build. */
+- (FxGripLicenseStatus)statusCoveringReleaseDate:(FxGripLicenseStatus)status
+{
+	if (FxGripLicenseStatusIsLicensed(status) && [self updatesLapsedBeforeRelease]) {
+		return FxGripLicenseStatusExpired;
+	}
+	return status;
 }
 
 - (FxGripLicenseEntitlement *)entitlement
@@ -876,7 +929,13 @@ static NSMutableDictionary<NSString *, Class> *FxGripLicensingProviderRegistry(v
 		_licensedVersion = [settings licensingLicensedVersion];
 	}
 	if (_licensedVersion == nil) {
-		_licensedVersion = [self declaredProductStringForKey:kFxGripLicensingProperty_LicensedVersion inParameter:parameter pluginValue:self.fxEffect.pluginStringVersion];
+		_licensedVersion = [self declaredProductStringForKey:kFxGripLicensingProperty_LicensedVersion inParameter:parameter pluginValue:FxGripLicensingMajorVersionString(self.fxEffect.pluginStringVersion)];
+	}
+	if ([settings respondsToSelector:@selector(licensingReleaseDate)]) {
+		_releaseDate = [settings licensingReleaseDate];
+	}
+	if (_releaseDate == nil) {
+		_releaseDate = FxGripLicensingDateFromValue([self declaredValueForKey:kFxGripLicensingProperty_ReleaseDate inParameter:parameter]);
 	}
 
 	// Watermarks.
