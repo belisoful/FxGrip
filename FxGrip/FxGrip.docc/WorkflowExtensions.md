@@ -21,7 +21,9 @@ distributed notification:
 - ``FxGripWorkflowRelay`` is the plug-in-side extension. The loader installs it when the `workflow`
   plugin property (``kProPlugPlugInX_WorkflowProperty``) is `YES` or a settings dictionary.
 - `FxGripWorkflowClient` and `FxGripWorkflowViewController`, in the `FxGripWorkflow` companion
-  framework, are the extension side.
+  framework, are the extension side. `FxGripFinalCutHost` there reaches Final Cut Pro through
+  Apple Events and through the `FCPXHost` object of Apple's Workflow Extensions SDK, whose library
+  the extension executable links.
 
 The relay never runs on a render path. It applies documents out of band on the main thread and
 reads nothing during a render.
@@ -71,7 +73,8 @@ and `statusDescription` is the sentence to show.
 
 Both the plug-in's extension and the workflow extension carry
 `com.apple.security.application-groups` with the same group. The workflow extension adds the Apple
-Events entitlements that library inspection needs; the `FxGripWorkflow` documentation lists them.
+Events entitlements that library inspection needs; the `FxGripWorkflow` documentation lists them
+with the extension target's build settings.
 
 ## Topics
 

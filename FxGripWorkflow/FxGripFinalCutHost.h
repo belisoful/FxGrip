@@ -10,9 +10,12 @@
 	            events, projects, sequences) read-only behind the
 	            `com.apple.FinalCut.library.inspection` access group; the host client reads it
 	            through Apple Events. Final Cut Pro imports an FCPXML file the extension opens, and
-	            accepts FCPXML drags. Apple's optional ProExtensionHost framework, when the extension
-	            links it, reports the playhead and the active sequence; without it the client
-	            observes the host's distributed timeline notification and forwards it unparsed.
+	            accepts FCPXML drags. Apple's Workflow Extensions SDK gives the extension executable
+	            `ProExtensionHostSingleton()`, an `FCPXHost` whose `FCPXTimeline` reports the
+	            playhead, the active sequence, and the sequence time range, and moves the playhead;
+	            the client attaches that host when the extension links the SDK's library. Without it
+	            the client observes the host's distributed timeline notification and forwards it
+	            unparsed.
 */
 
 #ifndef FxGripFinalCutHost_h
@@ -45,7 +48,10 @@ typedef NS_ENUM(NSInteger, FxGripFinalCutTimecodeFormat) {
 /*!
 	@class      FxGripFinalCutSequence
 	@abstract   A sequence in a Final Cut Pro library.
-	@discussion Introduced in FxGrip 0.1.0.
+	@discussion Introduced in FxGrip 0.1.0. Library inspection fills every property from the
+	            scripting dictionary. The ProExtensionHost timeline reports its active sequence
+	            without an identifier of its own, so `identifier` then carries the containing
+	            project's UID.
 */
 @interface FxGripFinalCutSequence : NSObject
 /*! The display name. */
@@ -115,9 +121,9 @@ typedef NS_ENUM(NSInteger, FxGripFinalCutTimecodeFormat) {
 /*!
 	@protocol   FxGripFinalCutTimelineObserving
 	@abstract   Receives timeline changes from the host.
-	@discussion Introduced in FxGrip 0.1.0. The three typed callbacks arrive when the extension
-				links Apple's ProExtensionHost framework. The raw callback arrives from the
-				distributed notification in every configuration.
+	@discussion Introduced in FxGrip 0.1.0. The three typed callbacks arrive from the
+				ProExtensionHost timeline, so they need an attached host. The raw callback
+				arrives from the distributed notification in every configuration.
 */
 @protocol FxGripFinalCutTimelineObserving <NSObject>
 @optional
@@ -133,7 +139,8 @@ typedef NS_ENUM(NSInteger, FxGripFinalCutTimecodeFormat) {
 
 /*!
 	@class      FxGripFinalCutHost
-	@abstract   The running Final Cut Pro, read through Apple Events and the optional ProExtensionHost.
+	@abstract   The running Final Cut Pro, read through Apple Events and the ProExtensionHost of the
+	            Workflow Extensions SDK.
 	@discussion Introduced in FxGrip 0.1.0. Library inspection needs the sandbox entitlements
 				`com.apple.security.automation.apple-events` and
 				`com.apple.security.scripting-targets` with the
@@ -142,6 +149,13 @@ typedef NS_ENUM(NSInteger, FxGripFinalCutTimecodeFormat) {
 				Info.plist; `canInspectLibraries` reports whether the process carries them. Each
 				inspection is one Apple Event script, so it blocks the calling thread for the
 				host's round trip; call it off the main thread or on user action.
+
+				The timeline route needs the host object the SDK's `ProExtensionHostSingleton()`
+				returns. The function is defined in `libProExtension.a`, which the extension
+				executable links, so the framework resolves it with `dlsym` on first use;
+				`attachProExtensionHost:` takes the object from an extension that calls the function
+				itself. The `FCPXHost` protocol publishes only the timeline and the host's name,
+				version, and bundle identifier, so library listing stays on the Apple Events route.
 */
 @interface FxGripFinalCutHost : NSObject
 
@@ -192,21 +206,49 @@ typedef NS_ENUM(NSInteger, FxGripFinalCutTimecodeFormat) {
 
 #pragma mark Timeline
 
-/*! YES when Apple's ProExtensionHost framework is loaded in the process. */
+/*!
+	@property   proExtensionHost
+	@abstract   The `FCPXHost` object of the Workflow Extensions SDK, or nil.
+	@discussion Introduced in FxGrip 0.1.0. On first access the client resolves
+				`ProExtensionHostSingleton` with `dlsym` and keeps the object it returns when it
+				conforms to `FCPXHost`. The function is defined in the SDK's `libProExtension.a`,
+				which the extension executable links, so a process that does not link the library
+				reads nil. `attachProExtensionHost:` sets it directly.
+*/
+@property (readonly, nullable, strong, nonatomic) id<NSObject> proExtensionHost;
+
+/*! YES when `proExtensionHost` resolves. */
 @property (readonly) BOOL hasProExtensionHost;
 
-/*! Starts delivering timeline changes to an observer, held weakly. */
+/*!
+	@method     attachProExtensionHost:
+	@abstract   Attaches an `FCPXHost` object: the singleton's, or one a test supplies.
+	@discussion Introduced in FxGrip 0.1.0. The client observes the host's timeline, reads the
+				current playhead time, active sequence, and sequence time range, and delivers each
+				later change to its timeline observers. Returns NO, attaching nothing, when the
+				object does not conform to `FCPXHost`; a host whose timeline is nil attaches with
+				no timeline, and `movePlayheadToTime:error:` then fails.
+*/
+- (BOOL)attachProExtensionHost:(nullable id<NSObject>)host;
+
+/*! Starts delivering timeline changes to an observer, held weakly. Attaches the SDK host on
+	the first call when it resolves. */
 - (void)addTimelineObserver:(nullable id<FxGripFinalCutTimelineObserving>)observer;
 /*! Stops delivering timeline changes to an observer. */
 - (void)removeTimelineObserver:(id<FxGripFinalCutTimelineObserving>)observer;
 
-/*! The playhead time ProExtensionHost last reported, or `kCMTimeInvalid` without it. */
+/*! The playhead time the attached host's timeline last reported, or `kCMTimeInvalid`. */
 @property (readonly) CMTime playheadTime;
+/*! The active sequence the attached host's timeline last reported, or nil. */
+@property (readonly, nullable, strong) FxGripFinalCutSequence *activeSequence;
+/*! The sequence time range the attached host's timeline last reported, or `kCMTimeRangeInvalid`. */
+@property (readonly) CMTimeRange sequenceTimeRange;
 
 /*!
 	@method     movePlayheadToTime:error:
-	@abstract   Moves the host's playhead through ProExtensionHost.
-	@return     NO with an error when the framework is not loaded.
+	@abstract   Moves the host's playhead through the attached host's timeline.
+	@discussion Updates `playheadTime` with the time the host reports back.
+	@return     NO with an error when no host with a timeline is attached.
 */
 - (BOOL)movePlayheadToTime:(CMTime)time error:(NSError * _Nullable * _Nullable)error;
 

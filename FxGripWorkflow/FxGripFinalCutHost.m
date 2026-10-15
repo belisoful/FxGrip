@@ -11,8 +11,10 @@
 #import <FxGripWorkflow/FxGripFinalCutHost.h>
 #import <FxGrip/FxGripFinalCutPro.h>
 #import <FxGrip/FxGripErrors.h>
+#import <ProExtensionHost/FCPXHost.h>
+#import <ProExtension/ProExtension.h>
 #import <Security/Security.h>
-#import <objc/message.h>
+#import <dlfcn.h>
 
 NSNotificationName const FxGripFinalCutTimelineNotification = @"com.apple.finalcut.timelineNotification";
 
@@ -106,30 +108,31 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 
 #pragma mark - ProExtensionHost bridge
 
-/*! Receives the ProExtensionHost timeline callbacks, whichever selector form the framework uses,
-	and forwards them to the host client. */
-@interface FxGripFinalCutTimelineBridge : NSObject
+/*! The `FCPXTimeline` observer. Each callback carries no argument, so the bridge reads the new
+	value from the timeline and hands it to the host client. */
+@interface FxGripFinalCutTimelineBridge : NSObject <FCPXTimelineObserver>
 @property (weak) FxGripFinalCutHost *host;
+@property (strong) FCPXTimeline *timeline;
 @end
 
 @interface FxGripFinalCutHost ()
 @property (strong) NSHashTable<id<FxGripFinalCutTimelineObserving>> *observers;
 @property (strong, nullable) id distributedToken;
 @property (strong, nullable) FxGripFinalCutTimelineBridge *bridge;
-@property (strong, nullable) id proTimeline;
+@property (readwrite, nullable, strong, nonatomic) id<NSObject> proExtensionHost;
+@property (strong, nullable) FCPXTimeline *proTimeline;
 @property (readwrite) CMTime playheadTime;
+@property (readwrite, nullable, strong) FxGripFinalCutSequence *activeSequence;
+@property (readwrite) CMTimeRange sequenceTimeRange;
 - (void)bridgePlayheadTime:(CMTime)time;
-- (void)bridgeActiveSequence:(id)sequence;
+- (void)bridgeActiveSequence:(nullable FCPXSequence *)sequence;
 - (void)bridgeSequenceTimeRange:(CMTimeRange)range;
 @end
 
 @implementation FxGripFinalCutTimelineBridge
-- (void)playheadTimeChanged:(CMTime)time { [self.host bridgePlayheadTime:time]; }
-- (void)observePlayheadTimeChanged:(CMTime)time { [self.host bridgePlayheadTime:time]; }
-- (void)activeSequenceChanged:(id)sequence { [self.host bridgeActiveSequence:sequence]; }
-- (void)observeActiveSequenceChanged:(id)sequence { [self.host bridgeActiveSequence:sequence]; }
-- (void)sequenceTimeRangeChanged:(CMTimeRange)range { [self.host bridgeSequenceTimeRange:range]; }
-- (void)observeSequenceTimeRangeChanged:(CMTimeRange)range { [self.host bridgeSequenceTimeRange:range]; }
+- (void)playheadTimeChanged { [self.host bridgePlayheadTime:self.timeline.playheadTime]; }
+- (void)activeSequenceChanged { [self.host bridgeActiveSequence:self.timeline.activeSequence]; }
+- (void)sequenceTimeRangeChanged { [self.host bridgeSequenceTimeRange:self.timeline.sequenceTimeRange]; }
 @end
 
 #pragma mark - Host
@@ -152,6 +155,7 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 	if (self) {
 		_observers = [NSHashTable weakObjectsHashTable];
 		_playheadTime = kCMTimeInvalid;
+		_sequenceTimeRange = kCMTimeRangeInvalid;
 	}
 	return self;
 }
@@ -160,6 +164,9 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 {
 	if (_distributedToken != nil) {
 		[NSDistributedNotificationCenter.defaultCenter removeObserver:_distributedToken];
+	}
+	if (_bridge != nil) {
+		[_proTimeline removeTimelineObserver:_bridge];
 	}
 }
 
@@ -389,9 +396,61 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 
 #pragma mark Timeline
 
++ (nullable id<NSObject>)proExtensionHostFromSingleton
+{
+	__typeof__(&ProExtensionHostSingleton) singleton = (__typeof__(&ProExtensionHostSingleton))dlsym(RTLD_DEFAULT, "ProExtensionHostSingleton");
+	if (singleton == NULL) {
+		return nil;
+	}
+	id<NSObject> host = singleton();
+	return [host conformsToProtocol:@protocol(FCPXHost)] ? host : nil;
+}
+
+- (id<NSObject>)proExtensionHost
+{
+	@synchronized (self) {
+		if (_proExtensionHost == nil) {
+			_proExtensionHost = [self.class proExtensionHostFromSingleton];
+		}
+		return _proExtensionHost;
+	}
+}
+
 - (BOOL)hasProExtensionHost
 {
-	return NSClassFromString(@"FCPXHost") != nil;
+	return self.proExtensionHost != nil;
+}
+
+- (BOOL)attachProExtensionHost:(id<NSObject>)host
+{
+	if (![host conformsToProtocol:@protocol(FCPXHost)]) {
+		return NO;
+	}
+	[self detachProExtensionTimeline];
+	self.proExtensionHost = host;
+	FCPXTimeline *timeline = ((id<FCPXHost>)host).timeline;
+	if (timeline == nil) {
+		return YES;
+	}
+	FxGripFinalCutTimelineBridge *bridge = [[FxGripFinalCutTimelineBridge alloc] init];
+	bridge.host = self;
+	bridge.timeline = timeline;
+	self.bridge = bridge;
+	self.proTimeline = timeline;
+	self.playheadTime = timeline.playheadTime;
+	self.activeSequence = [self.class sequenceFromProSequence:timeline.activeSequence];
+	self.sequenceTimeRange = timeline.sequenceTimeRange;
+	[timeline addTimelineObserver:bridge];
+	return YES;
+}
+
+- (void)detachProExtensionTimeline
+{
+	if (self.bridge != nil) {
+		[self.proTimeline removeTimelineObserver:self.bridge];
+	}
+	self.bridge = nil;
+	self.proTimeline = nil;
 }
 
 - (void)addTimelineObserver:(id<FxGripFinalCutTimelineObserving>)observer
@@ -434,34 +493,39 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 			}
 		}];
 	}
-	if (self.bridge == nil && self.hasProExtensionHost) {
-		[self attachProExtensionHost];
+	if (self.bridge == nil) {
+		[self attachProExtensionHost:self.proExtensionHost];
 	}
 }
 
-/*! Reaches Apple's ProExtensionHost by name: `[FCPXHost defaultHost].timeline` and its observer list. */
-- (void)attachProExtensionHost
++ (FxGripFinalCutTimecodeFormat)timecodeFormatFromProFormat:(FCPXSequenceTimecodeFormat)format
 {
-	Class hostClass = NSClassFromString(@"FCPXHost");
-	SEL defaultHost = NSSelectorFromString(@"defaultHost");
-	if (![hostClass respondsToSelector:defaultHost]) {
-		return;
+	switch (format) {
+		case kFCPXSequenceTimecodeFormat_DropFrame:
+			return FxGripFinalCutTimecodeFormatDropFrame;
+		case kFCPXSequenceTimecodeFormat_NonDropFrame:
+			return FxGripFinalCutTimecodeFormatNonDropFrame;
+		default:
+			return FxGripFinalCutTimecodeFormatUnspecified;
 	}
-	id host = ((id (*)(Class, SEL))objc_msgSend)(hostClass, defaultHost);
-	SEL timelineSelector = NSSelectorFromString(@"timeline");
-	if (![host respondsToSelector:timelineSelector]) {
-		return;
+}
+
++ (nullable FxGripFinalCutSequence *)sequenceFromProSequence:(nullable FCPXSequence *)proSequence
+{
+	if (proSequence == nil) {
+		return nil;
 	}
-	id timeline = ((id (*)(id, SEL))objc_msgSend)(host, timelineSelector);
-	SEL addObserver = NSSelectorFromString(@"addTimelineObserver:");
-	if (![timeline respondsToSelector:addObserver]) {
-		return;
+	FxGripFinalCutSequence *sequence = [[FxGripFinalCutSequence alloc] init];
+	sequence.name = proSequence.name;
+	sequence.startTime = proSequence.startTime;
+	sequence.duration = proSequence.duration;
+	sequence.frameDuration = proSequence.frameDuration;
+	sequence.timecodeFormat = [self timecodeFormatFromProFormat:proSequence.timecodeFormat];
+	FCPXObject *container = proSequence.container;
+	if (container.objectType == kFCPXObjectType_Project) {
+		sequence.identifier = ((FCPXProject *)container).UID;
 	}
-	FxGripFinalCutTimelineBridge *bridge = [[FxGripFinalCutTimelineBridge alloc] init];
-	bridge.host = self;
-	((void (*)(id, SEL, id))objc_msgSend)(timeline, addObserver, bridge);
-	self.bridge = bridge;
-	self.proTimeline = timeline;
+	return sequence;
 }
 
 - (void)bridgePlayheadTime:(CMTime)time
@@ -474,19 +538,10 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 	}
 }
 
-- (void)bridgeActiveSequence:(id)proSequence
+- (void)bridgeActiveSequence:(FCPXSequence *)proSequence
 {
-	FxGripFinalCutSequence *sequence = nil;
-	if (proSequence != nil) {
-		sequence = [[FxGripFinalCutSequence alloc] init];
-		if ([proSequence respondsToSelector:@selector(name)]) {
-			sequence.name = [proSequence performSelector:@selector(name)];
-		}
-		SEL uid = NSSelectorFromString(@"UID");
-		if ([proSequence respondsToSelector:uid]) {
-			sequence.identifier = ((id (*)(id, SEL))objc_msgSend)(proSequence, uid);
-		}
-	}
+	FxGripFinalCutSequence *sequence = [self.class sequenceFromProSequence:proSequence];
+	self.activeSequence = sequence;
 	for (id<FxGripFinalCutTimelineObserving> observer in self.currentObservers) {
 		if ([observer respondsToSelector:@selector(finalCutHost:activeSequenceDidChange:)]) {
 			[observer finalCutHost:self activeSequenceDidChange:sequence];
@@ -496,6 +551,7 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 
 - (void)bridgeSequenceTimeRange:(CMTimeRange)range
 {
+	self.sequenceTimeRange = range;
 	for (id<FxGripFinalCutTimelineObserving> observer in self.currentObservers) {
 		if ([observer respondsToSelector:@selector(finalCutHost:sequenceTimeRangeDidChange:)]) {
 			[observer finalCutHost:self sequenceTimeRangeDidChange:range];
@@ -505,17 +561,20 @@ static NSError *FxGripFinalCutError(NSInteger code, NSString *description)
 
 - (BOOL)movePlayheadToTime:(CMTime)time error:(NSError **)error
 {
-	if (self.proTimeline == nil && self.hasProExtensionHost) {
-		[self attachProExtensionHost];
+	if (self.proTimeline == nil) {
+		[self attachProExtensionHost:self.proExtensionHost];
 	}
-	SEL move = NSSelectorFromString(@"movePlayheadTo:");
-	if (self.proTimeline == nil || ![self.proTimeline respondsToSelector:move]) {
+	if (self.proTimeline == nil) {
 		if (error) {
-			*error = FxGripFinalCutError(kFxGripError_FCPXML, @"Moving the playhead needs Apple's ProExtensionHost framework.");
+			*error = FxGripFinalCutError(kFxGripError_FCPXML,
+										 @"Moving the playhead needs the ProExtensionHost timeline; the extension links libProExtension.");
 		}
 		return NO;
 	}
-	((void (*)(id, SEL, CMTime))objc_msgSend)(self.proTimeline, move, time);
+	CMTime moved = [self.proTimeline movePlayheadTo:time];
+	if (CMTIME_IS_VALID(moved)) {
+		self.playheadTime = moved;
+	}
 	return YES;
 }
 

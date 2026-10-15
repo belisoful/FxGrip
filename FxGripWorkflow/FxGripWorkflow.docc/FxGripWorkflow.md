@@ -14,8 +14,9 @@ things:
   bundle's configuration.
 - ``FxGripFinalCutHost``, the running Final Cut Pro. It reads the open libraries, events, projects,
   and sequences through the host's scripting dictionary, imports FCPXML documents, and forwards the
-  host's timeline notification. When the extension links Apple's ProExtensionHost framework it
-  also reports the playhead and moves it.
+  host's timeline notification. Through the `FCPXHost` object of Apple's Workflow Extensions SDK,
+  which the extension executable supplies, it reports the playhead, the active sequence, and the
+  sequence time range, and moves the playhead.
 - ``FxGripWorkflowClient``, the extension's side of the mailbox to the plug-in instances built on
   FxGrip. It announces the extension's presence, lists the live instances, sends them FCPXML
   documents to apply, and collects the documents they publish.

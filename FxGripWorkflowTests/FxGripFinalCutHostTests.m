@@ -7,8 +7,8 @@
 	@abstract   Tests the Final Cut Pro host client without a running host.
 	@discussion Introduced in FxGrip 0.1.0. The tests build the Apple Event descriptors the library
 	            inspection script returns and check the parsed model, the media time record decoding,
-	            the script seam, the entitlement gate, the timeline observer registry, and the
-	            ProExtensionHost absence paths.
+	            the script seam, the entitlement gate, the timeline observer registry, the
+	            ProExtensionHost bridge over a fake `FCPXHost`, and the paths without one.
 */
 
 #import <XCTest/XCTest.h>
@@ -16,6 +16,7 @@
 #import <FxGripWorkflow/FxGripWorkflow.h>
 #import <FxGrip/FxGripFinalCutPro.h>
 #import <FxGrip/FxGripErrors.h>
+#import <ProExtensionHost/FCPXHost.h>
 
 #pragma mark - Doubles
 
@@ -44,14 +45,94 @@
 @interface FxGripFinalCutTestObserver : NSObject <FxGripFinalCutTimelineObserving>
 @property (nonatomic, strong) NSMutableArray<NSNotification *> *notifications;
 @property (nonatomic, assign) CMTime playhead;
+@property (nonatomic, strong) FxGripFinalCutSequence *sequence;
+@property (nonatomic, assign) NSUInteger sequenceChanges;
+@property (nonatomic, assign) CMTimeRange range;
 @end
 @implementation FxGripFinalCutTestObserver
-- (instancetype)init { self = [super init]; if (self) { _notifications = NSMutableArray.new; _playhead = kCMTimeInvalid; } return self; }
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_notifications = NSMutableArray.new;
+		_playhead = kCMTimeInvalid;
+		_range = kCMTimeRangeInvalid;
+	}
+	return self;
+}
 - (void)finalCutHost:(FxGripFinalCutHost *)host didReceiveTimelineNotification:(NSNotification *)notification
 {
 	[self.notifications addObject:notification];
 }
 - (void)finalCutHost:(FxGripFinalCutHost *)host playheadDidMoveTo:(CMTime)time { self.playhead = time; }
+- (void)finalCutHost:(FxGripFinalCutHost *)host activeSequenceDidChange:(FxGripFinalCutSequence *)sequence
+{
+	self.sequence = sequence;
+	self.sequenceChanges += 1;
+}
+- (void)finalCutHost:(FxGripFinalCutHost *)host sequenceTimeRangeDidChange:(CMTimeRange)range { self.range = range; }
+@end
+
+#pragma mark - ProExtensionHost doubles
+
+/*! The project that contains the fake sequence; the bridge reads its UID and object type. */
+@interface FxGripFinalCutFakeProject : NSObject
+@property (nonatomic, copy) NSString *UID;
+@end
+@implementation FxGripFinalCutFakeProject
+- (FCPXObjectType)objectType { return kFCPXObjectType_Project; }
+@end
+
+@interface FxGripFinalCutFakeSequence : NSObject
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, assign) CMTime startTime;
+@property (nonatomic, assign) CMTime duration;
+@property (nonatomic, assign) CMTime frameDuration;
+@property (nonatomic, assign) FCPXSequenceTimecodeFormat timecodeFormat;
+@property (nonatomic, strong) FxGripFinalCutFakeProject *container;
+@end
+@implementation FxGripFinalCutFakeSequence
+@end
+
+/*! Stands in for `FCPXTimeline`: the observer list and the values the bridge reads. */
+@interface FxGripFinalCutFakeTimeline : NSObject
+@property (nonatomic, assign) CMTime playheadTime;
+@property (nonatomic, strong) FxGripFinalCutFakeSequence *activeSequence;
+@property (nonatomic, assign) CMTimeRange sequenceTimeRange;
+@property (nonatomic, strong) NSMutableArray<NSObject<FCPXTimelineObserver> *> *observers;
+@property (nonatomic, assign) CMTime movedTo;
+@end
+@implementation FxGripFinalCutFakeTimeline
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_observers = NSMutableArray.new;
+		_playheadTime = kCMTimeInvalid;
+		_sequenceTimeRange = kCMTimeRangeInvalid;
+		_movedTo = kCMTimeInvalid;
+	}
+	return self;
+}
+- (void)addTimelineObserver:(NSObject<FCPXTimelineObserver> *)observer { [self.observers addObject:observer]; }
+- (void)removeTimelineObserver:(NSObject<FCPXTimelineObserver> *)observer { [self.observers removeObject:observer]; }
+- (CMTime)movePlayheadTo:(CMTime)newTime
+{
+	self.movedTo = newTime;
+	self.playheadTime = newTime;
+	return newTime;
+}
+@end
+
+/*! Conforms to `FCPXHost` over the fake timeline. */
+@interface FxGripFinalCutFakeHost : NSObject <FCPXHost>
+@property (nonatomic, strong) FxGripFinalCutFakeTimeline *fakeTimeline;
+@end
+@implementation FxGripFinalCutFakeHost
+- (FCPXTimeline *)timeline { return (FCPXTimeline *)self.fakeTimeline; }
+- (NSString *)versionString { return @"12.4"; }
+- (NSString *)bundleIdentifier { return FxGripFinalCutProBundleIdentifier; }
+- (NSString *)name { return @"Final Cut Pro"; }
 @end
 
 #pragma mark - Descriptor builders
@@ -200,7 +281,7 @@ static NSAppleEventDescriptor *FxGripTestLibraries(void)
 - (void)testTimelineObserversAndNotificationForwarding
 {
 	FxGripFinalCutHost *host = [[FxGripFinalCutHost alloc] init];
-	XCTAssertFalse(host.hasProExtensionHost, @"the SDK is not linked by the tests");
+	XCTAssertFalse(host.hasProExtensionHost, @"the test process does not link libProExtension");
 	XCTAssertFalse(CMTIME_IS_VALID(host.playheadTime));
 	FxGripFinalCutTestObserver *observer = [[FxGripFinalCutTestObserver alloc] init];
 	[host addTimelineObserver:observer];
@@ -217,6 +298,96 @@ static NSAppleEventDescriptor *FxGripTestLibraries(void)
 	[self waitForExpectations:@[forwarded] timeout:5];
 	XCTAssertEqualObjects(observer.notifications.firstObject.name, FxGripFinalCutTimelineNotification);
 	[host removeTimelineObserver:observer];
+	NSError *error = nil;
+	XCTAssertFalse([host movePlayheadToTime:CMTimeMake(1, 1) error:&error]);
+	XCTAssertEqual(error.code, kFxGripError_FCPXML);
+	XCTAssertTrue([error.localizedDescription containsString:@"ProExtensionHost"]);
+}
+
+- (void)testProExtensionHostBridgeReadsTheTimeline
+{
+	FxGripFinalCutFakeProject *project = [[FxGripFinalCutFakeProject alloc] init];
+	project.UID = @"P-UID";
+	FxGripFinalCutFakeSequence *proSequence = [[FxGripFinalCutFakeSequence alloc] init];
+	proSequence.name = @"Cut";
+	proSequence.startTime = CMTimeMake(3600, 1);
+	proSequence.duration = CMTimeMake(600600, 30000);
+	proSequence.frameDuration = CMTimeMake(1001, 30000);
+	proSequence.timecodeFormat = kFCPXSequenceTimecodeFormat_DropFrame;
+	proSequence.container = project;
+	FxGripFinalCutFakeTimeline *timeline = [[FxGripFinalCutFakeTimeline alloc] init];
+	timeline.playheadTime = CMTimeMake(48, 24);
+	timeline.activeSequence = proSequence;
+	timeline.sequenceTimeRange = CMTimeRangeMake(CMTimeMake(3600, 1), CMTimeMake(20, 1));
+	FxGripFinalCutFakeHost *proHost = [[FxGripFinalCutFakeHost alloc] init];
+	proHost.fakeTimeline = timeline;
+
+	FxGripFinalCutHost *host = [[FxGripFinalCutHost alloc] init];
+	XCTAssertFalse([host attachProExtensionHost:nil]);
+	XCTAssertFalse([host attachProExtensionHost:[[NSObject alloc] init]]);
+	XCTAssertFalse(host.hasProExtensionHost);
+	XCTAssertTrue([host attachProExtensionHost:proHost]);
+	XCTAssertTrue(host.hasProExtensionHost);
+	XCTAssertEqual(host.proExtensionHost, proHost);
+	XCTAssertEqual(timeline.observers.count, (NSUInteger)1);
+	XCTAssertEqual(CMTimeCompare(host.playheadTime, CMTimeMake(48, 24)), 0);
+	XCTAssertEqualObjects(host.activeSequence.name, @"Cut");
+	XCTAssertEqualObjects(host.activeSequence.identifier, @"P-UID");
+	XCTAssertEqual(host.activeSequence.timecodeFormat, FxGripFinalCutTimecodeFormatDropFrame);
+	XCTAssertEqualWithAccuracy(host.activeSequence.frameRate, 29.97, 0.001);
+	XCTAssertEqual(CMTimeCompare(host.activeSequence.startTime, CMTimeMake(3600, 1)), 0);
+	XCTAssertTrue(CMTimeRangeEqual(host.sequenceTimeRange, timeline.sequenceTimeRange));
+
+	NSObject<FCPXTimelineObserver> *bridge = timeline.observers.firstObject;
+	XCTAssertTrue([bridge respondsToSelector:@selector(playheadTimeChanged)]);
+	XCTAssertTrue([bridge respondsToSelector:@selector(activeSequenceChanged)]);
+	XCTAssertTrue([bridge respondsToSelector:@selector(sequenceTimeRangeChanged)]);
+	XCTAssertFalse([bridge respondsToSelector:NSSelectorFromString(@"playheadTimeChanged:")]);
+
+	FxGripFinalCutTestObserver *observer = [[FxGripFinalCutTestObserver alloc] init];
+	[host addTimelineObserver:observer];
+	XCTAssertEqual(timeline.observers.count, (NSUInteger)1, @"an attached host is not attached again");
+	timeline.playheadTime = CMTimeMake(96, 24);
+	[bridge playheadTimeChanged];
+	XCTAssertEqual(CMTimeCompare(observer.playhead, CMTimeMake(96, 24)), 0);
+	XCTAssertEqual(CMTimeCompare(host.playheadTime, CMTimeMake(96, 24)), 0);
+	timeline.activeSequence = nil;
+	[bridge activeSequenceChanged];
+	XCTAssertEqual(observer.sequenceChanges, (NSUInteger)1);
+	XCTAssertNil(observer.sequence);
+	XCTAssertNil(host.activeSequence);
+	CMTimeRange range = CMTimeRangeMake(CMTimeMake(0, 1), CMTimeMake(5, 1));
+	timeline.sequenceTimeRange = range;
+	[bridge sequenceTimeRangeChanged];
+	XCTAssertTrue(CMTimeRangeEqual(observer.range, range));
+	XCTAssertTrue(CMTimeRangeEqual(host.sequenceTimeRange, range));
+
+	NSError *error = nil;
+	XCTAssertTrue([host movePlayheadToTime:CMTimeMake(10, 1) error:&error]);
+	XCTAssertNil(error);
+	XCTAssertEqual(CMTimeCompare(timeline.movedTo, CMTimeMake(10, 1)), 0);
+	XCTAssertEqual(CMTimeCompare(host.playheadTime, CMTimeMake(10, 1)), 0);
+}
+
+- (void)testProExtensionHostDetachesOnDeallocationAndNeedsATimelineToMoveThePlayhead
+{
+	FxGripFinalCutFakeTimeline *timeline = [[FxGripFinalCutFakeTimeline alloc] init];
+	FxGripFinalCutFakeHost *proHost = [[FxGripFinalCutFakeHost alloc] init];
+	proHost.fakeTimeline = timeline;
+	@autoreleasepool {
+		FxGripFinalCutHost *host = [[FxGripFinalCutHost alloc] init];
+		XCTAssertTrue([host attachProExtensionHost:proHost]);
+		XCTAssertEqual(timeline.observers.count, (NSUInteger)1);
+		XCTAssertTrue([host attachProExtensionHost:proHost], @"attaching again replaces the bridge");
+		XCTAssertEqual(timeline.observers.count, (NSUInteger)1);
+	}
+	XCTAssertEqual(timeline.observers.count, (NSUInteger)0);
+
+	FxGripFinalCutFakeHost *hostWithoutTimeline = [[FxGripFinalCutFakeHost alloc] init];
+	FxGripFinalCutHost *host = [[FxGripFinalCutHost alloc] init];
+	XCTAssertTrue([host attachProExtensionHost:hostWithoutTimeline]);
+	XCTAssertTrue(host.hasProExtensionHost);
+	XCTAssertFalse(CMTIME_IS_VALID(host.playheadTime));
 	NSError *error = nil;
 	XCTAssertFalse([host movePlayheadToTime:CMTimeMake(1, 1) error:&error]);
 	XCTAssertEqual(error.code, kFxGripError_FCPXML);

@@ -4,13 +4,40 @@ Add a Final Cut Pro workflow extension target to a plug-in's wrapper application
 
 ## Overview
 
-A workflow extension ships inside the same wrapper application as the FxPlug plug-in. Apple's
-Workflow Extensions SDK is optional: the extension point, the Info.plist keys, and the entitlements
-below are what Final Cut Pro reads, and FxGripWorkflow supplies the rest.
+A workflow extension ships inside the same wrapper application as the FxPlug plug-in. Its target
+starts from the "FCP Workflow Extension" template that Apple's Workflow Extensions SDK installs
+under `/Library/Developer/Xcode/Templates/ProVideo`. The SDK, at
+`/Library/Developer/SDKs/WorkflowExtensionSDK.sdk`, holds the `ProExtensionHost.framework` headers
+with a `.tbd` stub, `ProExtension/ProExtension.h`, and `libProExtension.a`. The extension links the
+static library: its `ProExtensionMain` is the executable's entry point, and its
+`ProExtensionHostSingleton()` returns the `FCPXHost` object through which Final Cut Pro reports and
+moves the timeline. FxGripWorkflow supplies the rest.
 
 ## The extension target
 
-Add a macOS app extension target to the wrapper application and set its Info.plist:
+The template's build settings are the contract with Final Cut Pro:
+
+| Setting | Value |
+| --- | --- |
+| `ADDITIONAL_SDKS` | `/Library/Developer/SDKs/WorkflowExtensionSDK.sdk` |
+| `OTHER_LDFLAGS` | `-fapplication-extension -lProExtension` |
+| `LD_ENTRY_POINT` | `_ProExtensionMain` |
+| `MACH_O_TYPE` | `mh_execute` |
+| `FRAMEWORK_SEARCH_PATHS` | `/Library/Frameworks $(inherited)` |
+| `HEADER_SEARCH_PATHS` | `/usr/include $(inherited)` |
+| `LIBRARY_SEARCH_PATHS` | `/usr/lib $(inherited)` |
+
+Xcode resolves the three search paths inside the additional SDK as well as on the system, which
+is how `-lProExtension` finds the static library and `#import <ProExtension/ProExtension.h>`
+finds the header. The target links the library and never the stub framework: the library loads
+Final Cut Pro's own ProExtensionHost framework into the extension process and connects it to the
+host. Xcode 27 honors `LD_ENTRY_POINT` in both configurations. A Release link passes
+`-e _ProExtensionMain` and the executable exports `ProExtensionHostSingleton`. A Debug link builds
+the code into `<name>.debug.dylib` behind a stub executable, aliases the symbol as the dylib's
+entry point, and the dylib exports the function, so `dlsym` finds it either way. Written by hand
+in `OTHER_LDFLAGS`, the entry point is the two words `-e _ProExtensionMain`, with the space.
+
+The Info.plist names the extension point and the principal view controller:
 
 ```xml
 <key>NSExtension</key>
@@ -112,6 +139,40 @@ Library inspection is one Apple Event round trip, so run it off the main thread 
 action. Importing writes the document to a temporary `.fcpxml` file and opens it in Final Cut
 Pro, which imports it into the open library. To drop a document into the timeline instead, start a
 drag with ``FxGripWorkflowViewController/draggingItemForDocument:inView:image:``.
+
+## The timeline
+
+The host client reaches the timeline through the `FCPXHost` object. On the first timeline
+observer it resolves `ProExtensionHostSingleton` with `dlsym` from the extension executable, which
+exports the function when the extension links `libProExtension.a`. An extension that calls the
+function itself hands the object over, which also keeps a dead-stripping linker from dropping it:
+
+```objc
+#import <ProExtension/ProExtension.h>
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    [self.host attachProExtensionHost:ProExtensionHostSingleton()];
+    [self.host addTimelineObserver:self];
+}
+
+- (void)finalCutHost:(FxGripFinalCutHost *)host playheadDidMoveTo:(CMTime)time
+{
+    // host.activeSequence and host.sequenceTimeRange hold the rest of the timeline state.
+}
+
+- (IBAction)rewind:(id)sender
+{
+    NSError *error = nil;
+    [self.host movePlayheadToTime:self.host.sequenceTimeRange.start error:&error];
+}
+```
+
+``FxGripFinalCutTimelineObserving`` delivers the playhead time, the active sequence, and the
+sequence time range as the timeline reports them. Without an attached host the client still
+forwards Final Cut Pro's distributed timeline notification, unparsed, through
+`finalCutHost:didReceiveTimelineNotification:`.
 
 ## The plug-in side
 

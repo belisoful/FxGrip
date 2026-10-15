@@ -53,6 +53,9 @@ deploy key:
 - `belisoful/FxFactory-SDK` → a link-only `FxFactory.framework` stub (headers, module map, `.tbd`)
 	at the root of tag `v<version>`, installed into `/Library/Frameworks`, secret
 	`FXFACTORY_SDK_DEPLOY_KEY`, version from the `FXFACTORY_VERSION` Actions variable.
+- `belisoful/FxPlug-SDK` tag `workflow-v<version>` → Apple's `WorkflowExtensionSDK.sdk` folder at
+	the root, installed into `/Library/Developer/SDKs`, the same deploy key, version from the
+	`WORKFLOW_SDK_VERSION` Actions variable.
 
 `FxGripFxFactoryProvider.m` imports `<FxFactory/FxFactory.h>` and the target weak-links FxFactory, so every
 build needs the framework headers. `Scripts/make-fxfactory-stub.sh --publish <clone>` builds the
@@ -82,6 +85,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 - **FxPlug SDK** — the project links `FxPlug.framework` from `/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/`. The FxPlug 4 SDK must be installed at that path to build.
 - **FxFactory.framework** — weak-linked from `/Library/Frameworks/` (installed by the FxFactory app); `FxGripFxFactoryProvider.m` imports its header, so the public headers compile without the SDK.
 - **PluginManager.framework** — linked from `/Library/Developer/Frameworks/` (installed by the FxPlug SDK / Pro Apps).
+- **Workflow Extensions SDK** — the `FxGripWorkflow` and `FxGripWorkflowTests` targets add `/Library/Developer/SDKs/WorkflowExtensionSDK.sdk` to `ADDITIONAL_SDKS` and compile against its `ProExtensionHost.framework` headers (`FCPXHost.h`) and `usr/include/ProExtension/ProExtension.h`. Nothing in this project links the SDK's `.tbd` stub or its `libProExtension.a`: the library belongs in a workflow extension's executable, and `FxGripFinalCutHost` resolves its `ProExtensionHostSingleton` with `dlsym`. SDK 1.0.3 is installed on the dev Mac (receipt `com.apple.pkg.WorkflowExtensionsSDK`); CI installs it from the FxPlug SDK repository.
 - **Deployment target** — macOS 13.5 (framework target); build with a current Xcode.
 - **No private Apple APIs** — plugins that ship this framework must not call private methods in Apple's APIs; FxPlug hosts (Final Cut Pro, Motion) run plugins out-of-process and Apple validates behavior.
 - **FxPlug ships no clang module map.** `Modules/FxPlug/module.modulemap` supplies one for both `FxPlug` and `PluginManager`, using absolute paths into the SDK. The `FxGrip` target defines a module (`DEFINES_MODULE = YES`) so Swift can import it, and passes this file to the module verifier through `OTHER_MODULE_VERIFIER_FLAGS`. Keep `/Library/Developer/Frameworks` out of `FRAMEWORK_SEARCH_PATHS`: its `FxPlug.framework` and `PluginManager.framework` carry no headers and would shadow the SDK copies.
@@ -114,7 +118,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 - `FxGripRealityKitTests/` — Swift XCTest unit tests for that framework (synchronized group)
 - `FxGripStoreKit/` — **Swift-only** Mac App Store licensing provider (`FxGripStoreKitProvider` for the plugin, `FxGripStoreKitStore` for the wrapper app, the shared `FxGripStoreKitEntitlementRecord` store; separate framework target, macOS 13.5 floor, own DocC catalog). StoreKit is unsupported in app extensions, so the wrapper app owns every StoreKit call and the plugin reads records from the App Group container. `FxGripStoreKitRegistration.m` is the one Objective-C file: its `+load` registers the provider.
 - `FxGripStoreKitTests/` — Swift XCTest unit tests for that framework (synchronized group)
-- `FxGripWorkflow/` — **Objective-C** companion framework for a Final Cut Pro workflow extension (`FxGripWorkflowViewController`, the principal view controller base with FCPXML drag and drop; `FxGripFinalCutHost`, the host client over Apple Events and the optional ProExtensionHost; `FxGripWorkflowClient`, the extension's side of the mailbox; separate framework target that links FxGrip, macOS 13.5 floor, own DocC catalog). Apple's Workflow Extensions SDK is not required and is not installed on the dev Mac.
+- `FxGripWorkflow/` — **Objective-C** companion framework for a Final Cut Pro workflow extension (`FxGripWorkflowViewController`, the principal view controller base with FCPXML drag and drop; `FxGripFinalCutHost`, the host client over Apple Events and the optional ProExtensionHost; `FxGripWorkflowClient`, the extension's side of the mailbox; separate framework target that links FxGrip, macOS 13.5 floor, own DocC catalog). `FxGripFinalCutHost.m` compiles against the headers of Apple's Workflow Extensions SDK (see SDK and Host Requirements) and links nothing from it; the extension executable links the SDK's `libProExtension.a`.
 - `FxGripWorkflowTests/` — XCTest unit tests for that framework (synchronized group)
 - `FxPlugStub/` — test-only stand-ins for the FxPlug classes FxGrip references directly (`FxPlugStub` target, embedded by the test bundles)
 - `Modules/FxPlug/module.modulemap` — repo-owned clang module map for Apple's FxPlug SDK and PluginManager, which ship none; required for any Swift target that imports FxGrip
@@ -234,6 +238,7 @@ Objective-C sources for the workflow companion go in `FxGripWorkflow/`, tests in
 
 - FxPlug.framework (FxPlug 4 SDK, `/Library/Developer/SDKs/FxPlug.sdk`)
 - PluginManager.framework (`/Library/Developer/Frameworks`)
+- ProExtensionHost.framework headers and ProExtension.h (Workflow Extensions SDK, `/Library/Developer/SDKs/WorkflowExtensionSDK.sdk`; `FxGripWorkflow` target, headers only)
 - BEFoundation.framework (vendored, `Frameworks/`)
 - Foundation.framework / AppKit.framework / Cocoa.framework
 - CoreMedia.framework, CoreImage.framework, Metal.framework, Accelerate.framework, WebKit.framework

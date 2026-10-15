@@ -1,8 +1,8 @@
 name: Set up FxGrip build environment
 description: >
-  Selects Xcode, installs Rosetta when an x86_64 run needs it, installs Apple's FxPlug SDK from
-  its private repository into /Library/Developer/SDKs/FxPlug.sdk, and installs the link-only
-  FxFactory.framework stub from its private repository into /Library/Frameworks.
+  Selects Xcode, installs Rosetta when an x86_64 run needs it, installs Apple's FxPlug SDK and
+  Workflow Extensions SDK from their private repository into /Library/Developer/SDKs, and installs
+  the link-only FxFactory.framework stub from its private repository into /Library/Frameworks.
 
 inputs:
   sdk-repository:
@@ -14,6 +14,12 @@ inputs:
   sdk-deploy-key:
     description: Read-only SSH deploy key for the SDK repository.
     required: true
+  workflow-sdk-version:
+    description: >
+      Workflow Extensions SDK version to install, e.g. 1.0.3. Selects the tag workflow-v<version>
+      of the SDK repository, whose root holds WorkflowExtensionSDK.sdk. Empty skips the install.
+    required: false
+    default: ''
   fxfactory-repository:
     description: Private repository whose tag v<version> holds the FxFactory.framework stub at its root.
     required: true
@@ -92,6 +98,34 @@ runs:
         rm -rf .fxplug-sdk
         test -f /Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/FxPlug.framework/Headers/FxPlugSDK.h
         echo "FxPlug SDK ${SDK_VERSION} installed."
+
+    - name: Check out the Workflow Extensions SDK
+      if: inputs.workflow-sdk-version != ''
+      uses: actions/checkout@v7
+      with:
+        repository: ${{ inputs.sdk-repository }}
+        ssh-key: ${{ inputs.sdk-deploy-key }}
+        path: .workflow-sdk
+        ref: workflow-v${{ inputs.workflow-sdk-version }}
+        persist-credentials: false
+
+    - name: Install the Workflow Extensions SDK
+      if: inputs.workflow-sdk-version != ''
+      shell: bash
+      env:
+        WORKFLOW_SDK_VERSION: ${{ inputs.workflow-sdk-version }}
+      run: |
+        set -euo pipefail
+        sdk=".workflow-sdk/WorkflowExtensionSDK.sdk"
+        if [[ ! -f "$sdk/Library/Frameworks/ProExtensionHost.framework/Headers/FCPXHost.h" ]]; then
+          echo "::error::$sdk is missing from tag workflow-v${WORKFLOW_SDK_VERSION} of the SDK repository."
+          exit 1
+        fi
+        sudo mkdir -p /Library/Developer/SDKs
+        sudo cp -R "$sdk" /Library/Developer/SDKs/
+        rm -rf .workflow-sdk
+        test -f /Library/Developer/SDKs/WorkflowExtensionSDK.sdk/usr/include/ProExtension/ProExtension.h
+        echo "Workflow Extensions SDK ${WORKFLOW_SDK_VERSION} installed."
 
     - name: Check out the FxFactory stub
       uses: actions/checkout@v7

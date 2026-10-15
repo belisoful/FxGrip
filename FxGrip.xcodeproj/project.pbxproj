@@ -3303,6 +3303,7 @@
 		7A5F00000000000000000081 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ADDITIONAL_SDKS = "$(inherited) /Library/Developer/SDKs/WorkflowExtensionSDK.sdk";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -3320,6 +3321,10 @@
 					"/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/include,
+				);
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -3352,6 +3357,7 @@
 		7A5F00000000000000000082 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ADDITIONAL_SDKS = "$(inherited) /Library/Developer/SDKs/WorkflowExtensionSDK.sdk";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -3369,6 +3375,10 @@
 					"/Library/Developer/SDKs/FxPlug.sdk/Library/Frameworks/**",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/include,
+				);
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -3401,6 +3411,7 @@
 		7A5F00000000000000000083 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ADDITIONAL_SDKS = "$(inherited) /Library/Developer/SDKs/WorkflowExtensionSDK.sdk";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -3430,6 +3441,7 @@
 		7A5F00000000000000000084 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ADDITIONAL_SDKS = "$(inherited) /Library/Developer/SDKs/WorkflowExtensionSDK.sdk";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
