@@ -78,6 +78,12 @@
 /*! A shader render pass has no device, texture, or command queue, or its command buffer fails. */
 #define kFxGripError_ShaderRenderFailed			(kFxError_ThirdPartyDeveloperStart + 36004)
 
+/*! A kernel reflection JSON does not parse, or its version is not one this release reads. */
+#define kFxGripError_KernelLayoutMalformed		(kFxError_ThirdPartyDeveloperStart + 36005)
+
+/*! A kernel reflection JSON declares bindings outside the GripKernel contract. */
+#define kFxGripError_KernelLayoutInvalid		(kFxError_ThirdPartyDeveloperStart + 36006)
+
 /*! An FCPXML document could not be parsed, validated, written, or handed to Final Cut Pro. */
 #define kFxGripError_FCPXML						(kFxError_ThirdPartyDeveloperStart + 37000)
 

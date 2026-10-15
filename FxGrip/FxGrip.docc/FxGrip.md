@@ -77,6 +77,7 @@ FxGrip is adoptable in layers. A plug-in links one utility, wraps the host API, 
 ### Shader effects
 
 - <doc:Shaders>
+- <doc:Kernels>
 
 ### Web and video content
 

@@ -519,6 +519,9 @@
 				Parameters/Video/FxGripVideoViewParameter.h,
 				Parameters/WebView/FxGripWebView.h,
 				Parameters/WebView/FxGripWebViewParameter.h,
+				Shader/FxGripKernelEffect.h,
+				Shader/FxGripKernelLayout.h,
+				Shader/FxGripKernelPipeline.h,
 				Shader/FxGripShaderEffect.h,
 				Shader/FxGripShaderMetadata.h,
 				Shader/FxGripShaderPipeline.h,
@@ -623,6 +626,10 @@
 		};
 		CEA524D62D221BEF00302F8F /* FxGripTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+				Shader/Fixtures/GripBlur.metal = text;
+				Shader/Fixtures/GripInspect.metal = text;
+			};
 			path = FxGripTests;
 			sourceTree = "<group>";
 		};

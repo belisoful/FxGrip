@@ -13,6 +13,7 @@
 */
 
 #import "FxGripShaderEffect.h"
+#import "FxGripShaderEffectInternal.h"
 #import "FxGripTileableEffect+Parameters.h"
 #import "FxGripTileableEffect+ColorGamut.h"
 #import "NSDictionary+FxGripTileableEffect.h"
@@ -104,12 +105,17 @@
 			_shaderMetadataError = NARC_RETAIN(error);
 		}
 		if (_shaderMetadata != nil) {
-			_shaderPipeline = NARC_RETAIN([FxGripShaderPipeline sharedPipelineWithSource:source
-																			  metadata:_shaderMetadata
-																  fragmentFunctionName:[self shaderFragmentFunctionName]]);
+			_shaderPipeline = NARC_RETAIN([self shaderPipelineForSource:source metadata:_shaderMetadata]);
 		}
 	}
 	os_unfair_lock_unlock(&_shaderMetadataLock);
+}
+
+- (nullable FxGripShaderPipeline *)shaderPipelineForSource:(NSString *)source metadata:(FxGripShaderMetadata *)metadata
+{
+	return [FxGripShaderPipeline sharedPipelineWithSource:source
+												 metadata:metadata
+									 fragmentFunctionName:[self shaderFragmentFunctionName]];
 }
 
 - (nullable FxGripShaderPipeline *)shaderPipeline
@@ -183,7 +189,7 @@
 			quality:(FxQuality)qualityLevel
 			  error:(NSError * _Nullable *)error
 {
-	if (self.shaderPipeline == nil) {
+	if (self.shaderMetadata == nil) {
 		return YES;
 	}
 	[coder encodeObject:[self shaderValuesAtTime:renderTime] forKey:kFxGripShaderValuesCoderKey];
@@ -214,7 +220,12 @@
 	return YES;
 }
 
-/*! The texture of each keyed gradient, decoded from the plugin state the gradient parameter encodes itself into. */
+- (FxGripShaderValues *)shaderValuesInCoder:(NSCoder *)pluginCoder
+{
+	FxGripShaderValues *values = [pluginCoder decodeObjectOfClass:FxGripShaderValues.class forKey:kFxGripShaderValuesCoderKey];
+	return values ?: NARC_AUTORELEASE([FxGripShaderValues new]);
+}
+
 - (NSDictionary<NSString *, id<MTLTexture>> *)shaderGradientTexturesInCoder:(NSCoder *)pluginCoder
 														   destinationImage:(FxImageTile *)destinationImage
 {
@@ -246,10 +257,7 @@
 	if (pipeline == nil) {
 		return [self renderPassthroughDestinationImage:destinationImage sourceImages:sourceImages error:outError];
 	}
-	FxGripShaderValues *values = [pluginCoder decodeObjectOfClass:FxGripShaderValues.class forKey:kFxGripShaderValuesCoderKey];
-	if (values == nil) {
-		values = NARC_AUTORELEASE([FxGripShaderValues new]);
-	}
+	FxGripShaderValues *values = [self shaderValuesInCoder:pluginCoder];
 	FxColorPrimaries hostPrimaries = (FxColorPrimaries)[pluginCoder decodeIntegerForKey:kFxGripShaderHostPrimariesCoderKey];
 	FxImageColorInfo colorInfo = (FxImageColorInfo)[pluginCoder decodeIntegerForKey:kFxGripShaderColorInfoCoderKey];
 	return [pipeline renderDestinationImage:destinationImage

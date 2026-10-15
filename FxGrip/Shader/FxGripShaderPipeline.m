@@ -8,9 +8,12 @@
 	@discussion Introduced in FxGrip 0.1.0. The pipeline compiles the prelude and the source per device,
 	            specializes the fragment function per constant signature, reflects the uniform struct,
 	            and encodes the conversion, shader, and conversion-back passes into one command buffer.
+	            The build cache, the converter, and the tile and value helpers are shared with the
+	            kernel pipeline through FxGripShaderPipelineInternal.h.
 */
 
 #import "FxGripShaderPipeline.h"
+#import "FxGripShaderPipelineInternal.h"
 #import "FxGripMTLDeviceCache.h"
 #import "FxGripColorGamut.h"
 #import "NSDictionary+FxGripTileableEffect.h"
@@ -25,23 +28,7 @@
 /*! The key under which FxGripShaderValues archives its components. */
 #define kFxGripShaderValuesComponentsKey	@"components"
 
-/*! The largest uniform struct bound with setFragmentBytes; a larger one goes in a buffer. */
-#define kFxGripShaderInlineUniformLimit		(4096)
-
-/*! The affine map from a destination pixel to a normalized texture coordinate; matches FxGripShaderTextureMap in the prelude. */
-typedef struct {
-	simd_float4 u;
-	simd_float4 v;
-} FxGripShaderTextureMap;
-
-/*! The tile description bound to both stages; matches FxGripShaderTile in the prelude. */
-typedef struct {
-	simd_float4 destinationBounds;
-	simd_float2 pixelScale;
-	uint32_t textureCount;
-	uint32_t reserved;
-	FxGripShaderTextureMap textures[kFxGripShaderTextureMapLimit];
-} FxGripShaderTile;
+_Static_assert(sizeof(FxGripShaderTile) == 544, "FxGripShaderTile matches GripTile in GripKernel.slang");
 
 /*! The conversion pass uniform; matches FxGripShaderConversion in the prelude. */
 typedef struct {
@@ -150,8 +137,7 @@ NSUInteger FxGripShaderComponentCountForType(FxParameterType type)
 	}
 }
 
-/*! Resolves a Metal scalar or vector type to its scalar type and component count; NO for any other type. */
-static BOOL FxGripShaderScalarType(MTLDataType type, MTLDataType *scalar, NSUInteger *count)
+BOOL FxGripShaderScalarType(MTLDataType type, MTLDataType *scalar, NSUInteger *count)
 {
 	static const struct { MTLDataType first; MTLDataType scalar; } families[] = {
 		{ MTLDataTypeFloat, MTLDataTypeFloat },
@@ -250,8 +236,7 @@ static void FxGripShaderWriteScalar(MTLDataType scalar, double value, uint8_t *d
 	}
 }
 
-/*! Writes up to count components of a Metal scalar or vector type; components with no value stay as they are. */
-static void FxGripShaderWriteComponents(MTLDataType scalar, NSUInteger count, NSArray<NSNumber *> *components, uint8_t *destination)
+void FxGripShaderWriteComponents(MTLDataType scalar, NSUInteger count, NSArray<NSNumber *> *components, uint8_t *destination)
 {
 	NSUInteger size = FxGripShaderScalarSize(scalar);
 	NSUInteger written = MIN(count, components.count);
@@ -260,7 +245,7 @@ static void FxGripShaderWriteComponents(MTLDataType scalar, NSUInteger count, NS
 	}
 }
 
-static BOOL FxGripShaderFxColorPrimaries(FxGripShaderPrimaries primaries, FxColorPrimaries *colorPrimaries)
+BOOL FxGripShaderFxColorPrimaries(FxGripShaderPrimaries primaries, FxColorPrimaries *colorPrimaries)
 {
 	switch (primaries) {
 		case FxGripShaderPrimariesRec709:
@@ -301,8 +286,7 @@ static FxGripShaderTextureMap FxGripShaderMakeTextureMap(FxMatrix44 *_Nullable d
 	return map;
 }
 
-/*! The destination pixels per image-space unit along x and y. */
-static simd_float2 FxGripShaderPixelScale(FxMatrix44 *_Nullable pixelTransform)
+simd_float2 FxGripShaderPixelScale(FxMatrix44 *_Nullable pixelTransform)
 {
 	FxPoint2D origin = FxGripShaderTransformPoint(pixelTransform, (FxPoint2D){ 0.0, 0.0 });
 	FxPoint2D x = FxGripShaderTransformPoint(pixelTransform, (FxPoint2D){ 1.0, 0.0 });
@@ -322,7 +306,114 @@ static FxGripShaderTile FxGripShaderTextureTile(id<MTLTexture> texture)
 	return tile;
 }
 
-static NSError *FxGripShaderPipelineError(NSInteger code, NSString *reason, NSError *underlying)
+FxGripShaderTile FxGripShaderMakeTile(FxImageTile *destinationImage,
+									  NSDictionary<NSNumber *, FxImageTile *> *boundTiles,
+									  NSUInteger textureCount,
+									  simd_float2 pixelScale)
+{
+	FxRect destinationBounds = destinationImage.tilePixelBounds;
+	FxGripShaderTile tile = { 0 };
+	tile.destinationBounds = simd_make_float4(destinationBounds.left, destinationBounds.bottom, destinationBounds.right, destinationBounds.top);
+	tile.pixelScale = pixelScale;
+	tile.textureCount = (uint32_t)textureCount;
+	FxGripShaderTextureMap destinationMap = FxGripShaderMakeTextureMap(nil, nil, destinationBounds);
+	for (NSUInteger index = 0; index < kFxGripShaderTextureMapLimit; index++) {
+		FxImageTile *textureTile = boundTiles[@(index)];
+		tile.textures[index] = textureTile != nil
+			? FxGripShaderMakeTextureMap(destinationImage.inversePixelTransform, textureTile.pixelTransform, textureTile.tilePixelBounds)
+			: destinationMap;
+	}
+	return tile;
+}
+
+NSArray<NSString *> *FxGripShaderConstantKeys(FxGripShaderMetadata *metadata)
+{
+	NSMutableArray<NSString *> *constantKeys = [NSMutableArray array];
+	for (NSDictionary *record in metadata.allParameters) {
+		if ([record[kFxGripShaderProperty_Constant] boolValue]) {
+			[constantKeys addObject:record[kFxGripShaderProperty_Key]];
+		}
+	}
+	return [constantKeys sortedArrayUsingSelector:@selector(compare:)];
+}
+
+NSSet<NSString *> *FxGripShaderPixelUnitKeys(FxGripShaderMetadata *metadata)
+{
+	NSMutableSet<NSString *> *pixelUnitKeys = [NSMutableSet set];
+	for (NSDictionary *record in metadata.allParameters) {
+		if ([record[kFxGripShaderProperty_PixelUnits] boolValue]) {
+			[pixelUnitKeys addObject:record[kFxGripShaderProperty_Key]];
+		}
+	}
+	return pixelUnitKeys;
+}
+
+NSString *FxGripShaderConstantSignature(NSArray<NSString *> *constantKeys, FxGripShaderValues *values)
+{
+	NSMutableArray<NSString *> *entries = [NSMutableArray arrayWithCapacity:constantKeys.count];
+	for (NSString *key in constantKeys) {
+		NSMutableArray<NSString *> *components = [NSMutableArray array];
+		for (NSNumber *component in [values componentsForKey:key]) {
+			[components addObject:[NSString stringWithFormat:@"%.17g", component.doubleValue]];
+		}
+		[entries addObject:[NSString stringWithFormat:@"%@=%@", key, [components componentsJoinedByString:@","]]];
+	}
+	return [entries componentsJoinedByString:@";"];
+}
+
+FxGripShaderValues *FxGripShaderValuesScaledToPixels(FxGripShaderValues *values, NSSet<NSString *> *pixelUnitKeys, float pixelScale)
+{
+	if (pixelUnitKeys.count == 0 || pixelScale == 1.0f) {
+		return values;
+	}
+	FxGripShaderValues *scaled = NARC_AUTORELEASE([values copy]);
+	for (NSString *key in pixelUnitKeys) {
+		NSMutableArray<NSNumber *> *components = [NSMutableArray array];
+		for (NSNumber *component in [values componentsForKey:key]) {
+			[components addObject:@(component.doubleValue * pixelScale)];
+		}
+		[scaled setComponents:components forKey:key];
+	}
+	return scaled;
+}
+
+id<MTLTexture> _Nullable FxGripShaderEmptyTexture(id<MTLDevice> device)
+{
+	MTLTextureDescriptor *descriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
+																						  width:1
+																						 height:1
+																					  mipmapped:NO];
+	id<MTLTexture> texture = NARC_AUTORELEASE([device newTextureWithDescriptor:descriptor]);
+	const uint8_t transparent[4] = { 0, 0, 0, 0 };
+	[texture replaceRegion:MTLRegionMake2D(0, 0, 1, 1) mipmapLevel:0 withBytes:transparent bytesPerRow:sizeof(transparent)];
+	return texture;
+}
+
+id<MTLTexture> _Nullable FxGripShaderIntermediateTexture(id<MTLTexture> texture, MTLTextureUsage usage, id<MTLDevice> device)
+{
+	MTLTextureDescriptor *descriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:texture.pixelFormat
+																						  width:texture.width
+																						 height:texture.height
+																					  mipmapped:NO];
+	descriptor.usage = usage;
+	descriptor.storageMode = MTLStorageModePrivate;
+	return NARC_AUTORELEASE([device newTextureWithDescriptor:descriptor]);
+}
+
+id<MTLRenderCommandEncoder> FxGripShaderRenderEncoder(id<MTLTexture> target, id<MTLCommandBuffer> commandBuffer)
+{
+	MTLRenderPassDescriptor *pass = [MTLRenderPassDescriptor renderPassDescriptor];
+	pass.colorAttachments[0].texture = target;
+	pass.colorAttachments[0].loadAction = MTLLoadActionClear;
+	pass.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
+	pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+	id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor:pass];
+	MTLViewport viewport = { 0.0, 0.0, (double)target.width, (double)target.height, 0.0, 1.0 };
+	[encoder setViewport:viewport];
+	return encoder;
+}
+
+NSError *FxGripShaderPipelineError(NSInteger code, NSString *reason, NSError *underlying)
 {
 	NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
 	userInfo[NSLocalizedDescriptionKey] = reason;
@@ -333,7 +424,7 @@ static NSError *FxGripShaderPipelineError(NSInteger code, NSString *reason, NSEr
 	return [NSError errorWithDomain:FxGripPlugErrorDomain code:code userInfo:userInfo];
 }
 
-static BOOL FxGripShaderFail(NSError **error, NSInteger code, NSString *reason, NSError *underlying)
+BOOL FxGripShaderFail(NSError **error, NSInteger code, NSString *reason, NSError *underlying)
 {
 	if (error != NULL) {
 		*error = FxGripShaderPipelineError(code, reason, underlying);
@@ -469,7 +560,7 @@ static BOOL FxGripShaderFail(NSError **error, NSInteger code, NSString *reason, 
 
 @end
 
-#pragma mark - Pending build
+#pragma mark - Build cache
 
 /*! One cache entry under construction. Callers that ask for the same key wait on the group, outside the cache lock. */
 @interface FxGripShaderPendingBuild : NSObject
@@ -494,6 +585,207 @@ static BOOL FxGripShaderFail(NSError **error, NSInteger code, NSString *reason, 
 	NARC_RELEASE(_group);
 	NARC_RELEASE(_result);
 	SUPER_DEALLOC();
+}
+
+@end
+
+/*!
+	@abstract	A cache whose entries build outside its lock, with one build per key.
+	@discussion	Introduced in FxGrip 0.1.0. One lock guards the entries and the table of pending builds.
+*/
+@implementation FxGripShaderBuildCache
+{
+	NSLock *_lock;
+	NSUInteger _limit;
+	NSMutableDictionary<NSString *, id> *_entries;
+	NSMutableArray<NSString *> *_buildOrder;
+	NSMutableDictionary<NSString *, FxGripShaderPendingBuild *> *_pendingBuilds;
+}
+
+- (instancetype)init
+{
+	return [self initWithLimit:0];
+}
+
+- (instancetype)initWithLimit:(NSUInteger)limit
+{
+	self = [super init];
+	if (self != nil) {
+		_lock = [NSLock new];
+		_limit = limit;
+		_entries = [NSMutableDictionary new];
+		_buildOrder = [NSMutableArray new];
+		_pendingBuilds = [NSMutableDictionary new];
+	}
+	return self;
+}
+
+- (void)dealloc
+{
+	NARC_RELEASE(_lock);
+	NARC_RELEASE(_entries);
+	NARC_RELEASE(_buildOrder);
+	NARC_RELEASE(_pendingBuilds);
+	SUPER_DEALLOC();
+}
+
+- (id)entryForKey:(NSString *)key build:(id (^)(void))build
+{
+	[_lock lock];
+	id entry = _entries[key];
+	FxGripShaderPendingBuild *pending = nil;
+	BOOL builds = NO;
+	if (entry == nil) {
+		pending = _pendingBuilds[key];
+		if (pending == nil) {
+			pending = NARC_AUTORELEASE([FxGripShaderPendingBuild new]);
+			_pendingBuilds[key] = pending;
+			builds = YES;
+		}
+	}
+	[_lock unlock];
+
+	if (entry != nil) {
+		return entry;
+	}
+	if (!builds) {
+		dispatch_group_wait(pending.group, DISPATCH_TIME_FOREVER);
+		return pending.result;
+	}
+
+	id result = build();
+	pending.result = result;
+	[_lock lock];
+	_entries[key] = result;
+	if (_limit > 0) {
+		[_buildOrder addObject:key];
+		while (_buildOrder.count > _limit) {
+			[_entries removeObjectForKey:_buildOrder.firstObject];
+			[_buildOrder removeObjectAtIndex:0];
+		}
+	}
+	[_pendingBuilds removeObjectForKey:key];
+	[_lock unlock];
+	dispatch_group_leave(pending.group);
+	return result;
+}
+
+@end
+
+id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
+{
+	if ([entry isKindOfClass:NSError.class]) {
+		if (error != NULL) {
+			*error = entry;
+		}
+		return nil;
+	}
+	return entry;
+}
+
+#pragma mark - Converter
+
+/*!
+	@abstract	The primaries conversion passes, built from the prelude alone.
+	@discussion	Introduced in FxGrip 0.1.0. The prelude compiles once per device and the conversion
+				pipeline builds once per device and pixel format, through build caches.
+*/
+@implementation FxGripShaderConverter
+{
+	FxGripShaderBuildCache *_libraries;
+	FxGripShaderBuildCache *_states;
+}
+
++ (instancetype)sharedConverter
+{
+	static FxGripShaderConverter *converter = nil;
+	static dispatch_once_t once;
+	dispatch_once(&once, ^{
+		converter = [FxGripShaderConverter new];
+	});
+	return converter;
+}
+
+- (instancetype)init
+{
+	self = [super init];
+	if (self != nil) {
+		_libraries = [[FxGripShaderBuildCache alloc] initWithLimit:0];
+		_states = [[FxGripShaderBuildCache alloc] initWithLimit:0];
+	}
+	return self;
+}
+
+- (void)dealloc
+{
+	NARC_RELEASE(_libraries);
+	NARC_RELEASE(_states);
+	SUPER_DEALLOC();
+}
+
+- (nullable id<MTLLibrary>)libraryForDevice:(id<MTLDevice>)device error:(NSError **)error
+{
+	NSString *key = [NSString stringWithFormat:@"library|%llu", device.registryID];
+	id entry = [_libraries entryForKey:key build:^id {
+		NSError *compileError = nil;
+		id<MTLLibrary> library = [device newLibraryWithSource:FxGripShaderPrelude options:nil error:&compileError];
+		if (library != nil) {
+			return NARC_AUTORELEASE(library);
+		}
+		return FxGripShaderPipelineError(kFxGripError_ShaderCompileFailed, [NSString stringWithFormat:
+			@"The shader prelude fails to compile: %@", compileError.localizedDescription], compileError);
+	}];
+	return FxGripShaderEntryOrError(entry, error);
+}
+
+- (nullable id<MTLRenderPipelineState>)stateForDevice:(id<MTLDevice>)device
+										  pixelFormat:(MTLPixelFormat)pixelFormat
+												error:(NSError **)error
+{
+	id<MTLLibrary> library = [self libraryForDevice:device error:error];
+	if (library == nil) {
+		return nil;
+	}
+	NSString *key = [NSString stringWithFormat:@"conversion|%llu|%lu", device.registryID, (unsigned long)pixelFormat];
+	id entry = [_states entryForKey:key build:^id {
+		MTLRenderPipelineDescriptor *descriptor = NARC_AUTORELEASE([MTLRenderPipelineDescriptor new]);
+		descriptor.label = kFxGripShaderConvertFunctionName;
+		descriptor.vertexFunction = NARC_AUTORELEASE([library newFunctionWithName:kFxGripShaderVertexFunctionName]);
+		descriptor.fragmentFunction = NARC_AUTORELEASE([library newFunctionWithName:kFxGripShaderConvertFunctionName]);
+		descriptor.colorAttachments[0].pixelFormat = pixelFormat;
+		NSError *buildError = nil;
+		id<MTLRenderPipelineState> state = NARC_AUTORELEASE([device newRenderPipelineStateWithDescriptor:descriptor error:&buildError]);
+		if (state != nil) {
+			return state;
+		}
+		return FxGripShaderPipelineError(kFxGripError_ShaderCompileFailed, [NSString stringWithFormat:
+			@"The primaries conversion pipeline fails to build: %@", buildError.localizedDescription], buildError);
+	}];
+	return FxGripShaderEntryOrError(entry, error);
+}
+
+- (BOOL)encodeConversionFrom:(id<MTLTexture>)source
+						  to:(id<MTLTexture>)destination
+					  matrix:(simd_float3x3)matrix
+					   gamma:(BOOL)gamma
+			   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+					   error:(NSError **)error
+{
+	id<MTLRenderPipelineState> state = [self stateForDevice:commandBuffer.device pixelFormat:destination.pixelFormat error:error];
+	if (state == nil) {
+		return NO;
+	}
+	FxGripShaderTile tile = FxGripShaderTextureTile(destination);
+	FxGripShaderConversion conversion = { .matrix = matrix, .gamma = gamma ? 1u : 0u };
+
+	id<MTLRenderCommandEncoder> encoder = FxGripShaderRenderEncoder(destination, commandBuffer);
+	[encoder setRenderPipelineState:state];
+	[encoder setVertexBytes:&tile length:sizeof(tile) atIndex:0];
+	[encoder setFragmentTexture:source atIndex:0];
+	[encoder setFragmentBytes:&conversion length:sizeof(conversion) atIndex:0];
+	[encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+	[encoder endEncoding];
+	return YES;
 }
 
 @end
@@ -569,21 +861,16 @@ static BOOL FxGripShaderFail(NSError **error, NSInteger code, NSString *reason, 
 
 /*!
 	@abstract	Compiles a shader source, caches its pipelines per constant set, and renders a tile.
-	@discussion	Introduced in FxGrip 0.1.0. One lock guards the library, state, and conversion caches
-				and the table of pending builds. A build runs outside the lock. A caller that asks
-				for a key under construction waits for that build, and a caller that asks for any
-				other key proceeds.
+	@discussion	Introduced in FxGrip 0.1.0. The library and state caches build outside their locks. A
+				caller that asks for a key under construction waits for that build, and a caller
+				that asks for any other key proceeds.
 */
 @implementation FxGripShaderPipeline
 {
-	NSLock *_cacheLock;
 	NSArray<NSString *> *_constantKeys;
 	NSSet<NSString *> *_pixelUnitKeys;
-	NSMutableDictionary<NSString *, id> *_libraries;
-	NSMutableDictionary<NSString *, id> *_states;
-	NSMutableArray<NSString *> *_stateBuildOrder;
-	NSMutableDictionary<NSString *, id> *_conversionStates;
-	NSMutableDictionary<NSString *, FxGripShaderPendingBuild *> *_pendingBuilds;
+	FxGripShaderBuildCache *_libraries;
+	FxGripShaderBuildCache *_states;
 }
 
 + (instancetype)sharedPipelineWithSource:(NSString *)source
@@ -621,26 +908,10 @@ static BOOL FxGripShaderFail(NSError **error, NSInteger code, NSString *reason, 
 		_source = [source copy];
 		_metadata = NARC_RETAIN(metadata);
 		_fragmentFunctionName = [fragmentFunctionName copy];
-		_cacheLock = [NSLock new];
-		_libraries = [NSMutableDictionary new];
-		_states = [NSMutableDictionary new];
-		_stateBuildOrder = [NSMutableArray new];
-		_conversionStates = [NSMutableDictionary new];
-		_pendingBuilds = [NSMutableDictionary new];
-
-		NSMutableArray<NSString *> *constantKeys = [NSMutableArray array];
-		NSMutableSet<NSString *> *pixelUnitKeys = [NSMutableSet set];
-		for (NSDictionary *record in metadata.allParameters) {
-			NSString *key = record[kFxGripShaderProperty_Key];
-			if ([record[kFxGripShaderProperty_Constant] boolValue]) {
-				[constantKeys addObject:key];
-			}
-			if ([record[kFxGripShaderProperty_PixelUnits] boolValue]) {
-				[pixelUnitKeys addObject:key];
-			}
-		}
-		_constantKeys = [[constantKeys sortedArrayUsingSelector:@selector(compare:)] copy];
-		_pixelUnitKeys = [pixelUnitKeys copy];
+		_libraries = [[FxGripShaderBuildCache alloc] initWithLimit:0];
+		_states = [[FxGripShaderBuildCache alloc] initWithLimit:kFxGripShaderPipelineStateCacheLimit];
+		_constantKeys = [FxGripShaderConstantKeys(metadata) copy];
+		_pixelUnitKeys = [FxGripShaderPixelUnitKeys(metadata) copy];
 	}
 	return self;
 }
@@ -650,106 +921,18 @@ static BOOL FxGripShaderFail(NSError **error, NSInteger code, NSString *reason, 
 	NARC_RELEASE(_source);
 	NARC_RELEASE(_metadata);
 	NARC_RELEASE(_fragmentFunctionName);
-	NARC_RELEASE(_cacheLock);
 	NARC_RELEASE(_constantKeys);
 	NARC_RELEASE(_pixelUnitKeys);
 	NARC_RELEASE(_libraries);
 	NARC_RELEASE(_states);
-	NARC_RELEASE(_stateBuildOrder);
-	NARC_RELEASE(_conversionStates);
-	NARC_RELEASE(_pendingBuilds);
 	SUPER_DEALLOC();
-}
-
-#pragma mark Caching
-
-/*!
-	The cached entry for a key, building it on a miss. The build runs outside the cache lock. A caller
-	that asks for a key under construction waits for that build and returns its result. A state cache
-	keeps kFxGripShaderPipelineStateCacheLimit entries and evicts the oldest.
-*/
-- (id)entryForKey:(NSString *)key inCache:(NSMutableDictionary<NSString *, id> *)cache build:(id (^)(void))build
-{
-	[_cacheLock lock];
-	id entry = cache[key];
-	FxGripShaderPendingBuild *pending = nil;
-	BOOL builds = NO;
-	if (entry == nil) {
-		pending = _pendingBuilds[key];
-		if (pending == nil) {
-			pending = NARC_AUTORELEASE([FxGripShaderPendingBuild new]);
-			_pendingBuilds[key] = pending;
-			builds = YES;
-		}
-	}
-	[_cacheLock unlock];
-
-	if (entry != nil) {
-		return entry;
-	}
-	if (!builds) {
-		dispatch_group_wait(pending.group, DISPATCH_TIME_FOREVER);
-		return pending.result;
-	}
-
-	id result = build();
-	pending.result = result;
-	[_cacheLock lock];
-	cache[key] = result;
-	if (cache == _states) {
-		[_stateBuildOrder addObject:key];
-		while (_stateBuildOrder.count > kFxGripShaderPipelineStateCacheLimit) {
-			[_states removeObjectForKey:_stateBuildOrder.firstObject];
-			[_stateBuildOrder removeObjectAtIndex:0];
-		}
-	}
-	[_pendingBuilds removeObjectForKey:key];
-	[_cacheLock unlock];
-	dispatch_group_leave(pending.group);
-	return result;
-}
-
-/*! The entry unless it is an error, which goes to error. */
-static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
-{
-	if ([entry isKindOfClass:NSError.class]) {
-		if (error != NULL) {
-			*error = entry;
-		}
-		return nil;
-	}
-	return entry;
 }
 
 #pragma mark Constants
 
 - (NSString *)constantSignatureForValues:(FxGripShaderValues *)values
 {
-	NSMutableArray<NSString *> *entries = [NSMutableArray arrayWithCapacity:_constantKeys.count];
-	for (NSString *key in _constantKeys) {
-		NSMutableArray<NSString *> *components = [NSMutableArray array];
-		for (NSNumber *component in [values componentsForKey:key]) {
-			[components addObject:[NSString stringWithFormat:@"%.17g", component.doubleValue]];
-		}
-		[entries addObject:[NSString stringWithFormat:@"%@=%@", key, [components componentsJoinedByString:@","]]];
-	}
-	return [entries componentsJoinedByString:@";"];
-}
-
-- (FxGripShaderValues *)valuesScaledToPixels:(FxGripShaderValues *)values pixelScale:(float)pixelScale
-{
-	if (_pixelUnitKeys.count == 0 || pixelScale == 1.0f) {
-		return values;
-	}
-	FxGripShaderValues *scaled = NARC_AUTORELEASE([values copy]);
-	for (NSString *key in _pixelUnitKeys) {
-		NSMutableArray<NSNumber *> *components = [NSMutableArray array];
-		for (NSNumber *component in [values componentsForKey:key]) {
-			[components addObject:@(component.doubleValue * pixelScale)];
-		}
-		[scaled setComponents:components forKey:key];
-	}
-	return scaled;
+	return FxGripShaderConstantSignature(_constantKeys, values);
 }
 
 - (nullable MTLFunctionConstantValues *)constantValuesForFunction:(id<MTLFunction>)function
@@ -812,7 +995,7 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 - (nullable id<MTLLibrary>)libraryForDevice:(id<MTLDevice>)device error:(NSError * _Nullable *)error
 {
 	NSString *key = [NSString stringWithFormat:@"library|%llu", device.registryID];
-	id entry = [self entryForKey:key inCache:_libraries build:^id {
+	id entry = [_libraries entryForKey:key build:^id {
 		NSError *compileError = nil;
 		id<MTLLibrary> library = [device newLibraryWithSource:[self compiledSource] options:nil error:&compileError];
 		if (library != nil) {
@@ -833,7 +1016,7 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 {
 	NSString *signature = [self constantSignatureForValues:values];
 	NSString *key = [NSString stringWithFormat:@"state|%llu|%lu|%@", device.registryID, (unsigned long)pixelFormat, signature];
-	id entry = [self entryForKey:key inCache:_states build:^id {
+	id entry = [_states entryForKey:key build:^id {
 		NSError *failure = nil;
 		FxGripShaderPipelineState *state = [self buildStateForDevice:device pixelFormat:pixelFormat values:values signature:signature error:&failure];
 		return state ?: failure;
@@ -1013,94 +1196,7 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 	return shaderPrimaries != hostPrimaries;
 }
 
-- (nullable id<MTLRenderPipelineState>)conversionStateForDevice:(id<MTLDevice>)device
-													pixelFormat:(MTLPixelFormat)pixelFormat
-														  error:(NSError **)error
-{
-	id<MTLLibrary> library = [self libraryForDevice:device error:error];
-	if (library == nil) {
-		return nil;
-	}
-	NSString *key = [NSString stringWithFormat:@"conversion|%llu|%lu", device.registryID, (unsigned long)pixelFormat];
-	id entry = [self entryForKey:key inCache:_conversionStates build:^id {
-		MTLRenderPipelineDescriptor *descriptor = NARC_AUTORELEASE([MTLRenderPipelineDescriptor new]);
-		descriptor.label = kFxGripShaderConvertFunctionName;
-		descriptor.vertexFunction = NARC_AUTORELEASE([library newFunctionWithName:kFxGripShaderVertexFunctionName]);
-		descriptor.fragmentFunction = NARC_AUTORELEASE([library newFunctionWithName:kFxGripShaderConvertFunctionName]);
-		descriptor.colorAttachments[0].pixelFormat = pixelFormat;
-		NSError *buildError = nil;
-		id<MTLRenderPipelineState> state = NARC_AUTORELEASE([device newRenderPipelineStateWithDescriptor:descriptor error:&buildError]);
-		if (state != nil) {
-			return state;
-		}
-		return FxGripShaderPipelineError(kFxGripError_ShaderCompileFailed, [NSString stringWithFormat:
-			@"The primaries conversion pipeline fails to build: %@", buildError.localizedDescription], buildError);
-	}];
-	return FxGripShaderEntryOrError(entry, error);
-}
-
-- (nullable id<MTLTexture>)intermediateTextureLike:(id<MTLTexture>)texture device:(id<MTLDevice>)device
-{
-	MTLTextureDescriptor *descriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:texture.pixelFormat
-																						  width:texture.width
-																						 height:texture.height
-																					  mipmapped:NO];
-	descriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-	descriptor.storageMode = MTLStorageModePrivate;
-	return NARC_AUTORELEASE([device newTextureWithDescriptor:descriptor]);
-}
-
-- (BOOL)encodeConversionFrom:(id<MTLTexture>)source
-						  to:(id<MTLTexture>)destination
-					  matrix:(simd_float3x3)matrix
-					   gamma:(BOOL)gamma
-			   commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-					   error:(NSError **)error
-{
-	id<MTLRenderPipelineState> state = [self conversionStateForDevice:commandBuffer.device pixelFormat:destination.pixelFormat error:error];
-	if (state == nil) {
-		return NO;
-	}
-	FxGripShaderTile tile = FxGripShaderTextureTile(destination);
-	FxGripShaderConversion conversion = { .matrix = matrix, .gamma = gamma ? 1u : 0u };
-
-	id<MTLRenderCommandEncoder> encoder = [self encoderForTarget:destination commandBuffer:commandBuffer];
-	[encoder setRenderPipelineState:state];
-	[encoder setVertexBytes:&tile length:sizeof(tile) atIndex:0];
-	[encoder setFragmentTexture:source atIndex:0];
-	[encoder setFragmentBytes:&conversion length:sizeof(conversion) atIndex:0];
-	[encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
-	[encoder endEncoding];
-	return YES;
-}
-
 #pragma mark Rendering
-
-- (id<MTLRenderCommandEncoder>)encoderForTarget:(id<MTLTexture>)target commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-{
-	MTLRenderPassDescriptor *pass = [MTLRenderPassDescriptor renderPassDescriptor];
-	pass.colorAttachments[0].texture = target;
-	pass.colorAttachments[0].loadAction = MTLLoadActionClear;
-	pass.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
-	pass.colorAttachments[0].storeAction = MTLStoreActionStore;
-	id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor:pass];
-	MTLViewport viewport = { 0.0, 0.0, (double)target.width, (double)target.height, 0.0, 1.0 };
-	[encoder setViewport:viewport];
-	return encoder;
-}
-
-/*! A transparent black 1×1 texture, bound to a keyed texture argument whose parameter supplies no image. */
-- (nullable id<MTLTexture>)emptyTextureForDevice:(id<MTLDevice>)device
-{
-	MTLTextureDescriptor *descriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
-																						  width:1
-																						 height:1
-																					  mipmapped:NO];
-	id<MTLTexture> texture = NARC_AUTORELEASE([device newTextureWithDescriptor:descriptor]);
-	const uint8_t transparent[4] = { 0, 0, 0, 0 };
-	[texture replaceRegion:MTLRegionMake2D(0, 0, 1, 1) mipmapLevel:0 withBytes:transparent bytesPerRow:sizeof(transparent)];
-	return texture;
-}
 
 - (BOOL)renderDestinationImage:(FxImageTile *)destinationImage
 				  sourceImages:(nullable NSArray<FxImageTile *> *)sourceImages
@@ -1135,7 +1231,7 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 		return FxGripShaderFail(error, kFxGripError_ShaderRenderFailed, @"The destination tile has no Metal texture.", nil);
 	}
 	simd_float2 pixelScale = FxGripShaderPixelScale(destinationImage.pixelTransform);
-	FxGripShaderValues *boundValues = [self valuesScaledToPixels:values pixelScale:pixelScale.x];
+	FxGripShaderValues *boundValues = FxGripShaderValuesScaledToPixels(values, _pixelUnitKeys, pixelScale.x);
 	FxGripShaderPipelineState *state = [self stateForDevice:device pixelFormat:outputTexture.pixelFormat values:boundValues error:error];
 	if (state == nil) {
 		return NO;
@@ -1176,7 +1272,7 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 		}
 		if (texture == nil) {
 			if (emptyTexture == nil) {
-				emptyTexture = [self emptyTextureForDevice:device];
+				emptyTexture = FxGripShaderEmptyTexture(device);
 			}
 			texture = emptyTexture;
 		}
@@ -1200,6 +1296,7 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 	FxColorPrimaries shaderPrimaries = hostPrimaries;
 	FxGripShaderFxColorPrimaries(self.metadata.primaries, &shaderPrimaries);
 
+	FxGripShaderConverter *converter = FxGripShaderConverter.sharedConverter;
 	id<MTLTexture> target = outputTexture;
 	if (converts) {
 		simd_float3x3 toShader = FxGripGamutConversionMatrix(hostPrimaries, shaderPrimaries);
@@ -1211,41 +1308,30 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 			}
 			id<MTLTexture> conversion = [converted objectForKey:texture];
 			if (conversion == nil) {
-				conversion = [self intermediateTextureLike:texture device:device];
+				conversion = FxGripShaderIntermediateTexture(texture, MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead, device);
 				if (conversion == nil) {
 					return FxGripShaderFail(error, kFxGripError_ShaderRenderFailed, @"The primaries conversion texture fails to allocate.", nil);
 				}
-				if (![self encodeConversionFrom:texture to:conversion matrix:toShader gamma:gamma commandBuffer:commandBuffer error:error]) {
+				if (![converter encodeConversionFrom:texture to:conversion matrix:toShader gamma:gamma commandBuffer:commandBuffer error:error]) {
 					return NO;
 				}
 				[converted setObject:conversion forKey:texture];
 			}
 			boundTextures[index] = conversion;
 		}
-		target = [self intermediateTextureLike:outputTexture device:device];
+		target = FxGripShaderIntermediateTexture(outputTexture, MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead, device);
 		if (target == nil) {
 			return FxGripShaderFail(error, kFxGripError_ShaderRenderFailed, @"The primaries conversion texture fails to allocate.", nil);
 		}
 	}
 
-	FxRect destinationBounds = destinationImage.tilePixelBounds;
-	FxGripShaderTile tile = { 0 };
-	tile.destinationBounds = simd_make_float4(destinationBounds.left, destinationBounds.bottom, destinationBounds.right, destinationBounds.top);
-	tile.pixelScale = pixelScale;
-	FxGripShaderTextureMap destinationMap = FxGripShaderMakeTextureMap(nil, nil, destinationBounds);
 	NSUInteger textureCount = 0;
 	for (NSNumber *index in boundTextures) {
 		textureCount = MAX(textureCount, index.unsignedIntegerValue + 1);
 	}
-	tile.textureCount = (uint32_t)textureCount;
-	for (NSUInteger index = 0; index < kFxGripShaderTextureMapLimit; index++) {
-		FxImageTile *textureTile = boundTiles[@(index)];
-		tile.textures[index] = textureTile != nil
-			? FxGripShaderMakeTextureMap(destinationImage.inversePixelTransform, textureTile.pixelTransform, textureTile.tilePixelBounds)
-			: destinationMap;
-	}
+	FxGripShaderTile tile = FxGripShaderMakeTile(destinationImage, boundTiles, textureCount, pixelScale);
 
-	id<MTLRenderCommandEncoder> encoder = [self encoderForTarget:target commandBuffer:commandBuffer];
+	id<MTLRenderCommandEncoder> encoder = FxGripShaderRenderEncoder(target, commandBuffer);
 	[encoder setRenderPipelineState:state.renderPipelineState];
 	[encoder setVertexBytes:&tile length:sizeof(tile) atIndex:0];
 	[encoder setFragmentBytes:&tile length:sizeof(tile) atIndex:kFxGripShaderTileBufferIndex];
@@ -1264,7 +1350,7 @@ static id _Nullable FxGripShaderEntryOrError(id entry, NSError **error)
 
 	if (converts) {
 		simd_float3x3 toHost = FxGripGamutConversionMatrix(shaderPrimaries, hostPrimaries);
-		if (![self encodeConversionFrom:target to:outputTexture matrix:toHost gamma:gamma commandBuffer:commandBuffer error:error]) {
+		if (![converter encodeConversionFrom:target to:outputTexture matrix:toHost gamma:gamma commandBuffer:commandBuffer error:error]) {
 			return NO;
 		}
 	}

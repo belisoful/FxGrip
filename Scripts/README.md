@@ -39,6 +39,74 @@ Scripts/make-fcpxml-schema.py --dtd-dir /path/to/dtds --json /tmp/fcpxml-schema.
 Run it after a Final Cut Pro update adds a DTD version, then update the latest-version pin in
 `FxGripTests/FCPXML/FxGripFCPXMLSchemaTests.m`.
 
+## `fxgrip-slang.sh`
+
+Compiles a Slang compute kernel written against `GripKernel.slang` into the Metal source and the
+reflection JSON that `FxGripKernelEffect` loads at runtime. It runs the command the Kernels DocC
+article specifies:
+
+```bash
+slangc -I <module dir> <kernel>.slang -target metal -entry fxGripKernel -stage compute \
+       -line-directive-mode standard -reflection-json <kernel>.json -o <kernel>.metal
+```
+
+`slangc` comes from `$FXGRIP_SLANGC`, then the `PATH`. The module directory comes from
+`$FXGRIP_KERNEL_MODULE_DIR`, then `FxGrip/Shader` in this checkout, then
+`FxGrip.framework/Resources` in `$BUILT_PRODUCTS_DIR`. The framework ships `GripKernel.slang` in its
+`Resources` folder, so a plug-in project that links FxGrip passes
+`-I "$BUILT_PRODUCTS_DIR/FxGrip.framework/Resources"`. The script compiles from the kernel's own
+directory, so the emitted `#line` directives name `<kernel>.slang` without a path.
+
+```bash
+# Write Blur.metal and Blur.json beside Blur.slang
+Scripts/fxgrip-slang.sh Blur.slang
+
+# Write the three files into one directory, with another entry point
+Scripts/fxgrip-slang.sh --entry blurKernel --output-dir build/kernels --copy-source Blur.slang
+```
+
+### The Xcode build rule
+
+A plug-in project builds each kernel at compile time and bundles the three files as resources.
+Xcode feeds a build rule's output files to its other rules, so a `.metal` written to
+`$(DERIVED_FILE_DIR)` compiles into `default.metallib` and a `.json` there is dropped with "no rule
+to process file". Writing the outputs into the product's `Resources` folder avoids both: the files
+land in the bundle as they are, and the `.metal` text stays a resource the framework compiles at
+runtime.
+
+1. In the target's Build Rules, add a rule that processes "Source files with names matching"
+	`*.slang` using a custom script.
+2. Script:
+	```bash
+	"${FXGRIP_ROOT}/Scripts/fxgrip-slang.sh" \
+		--output-dir "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}" \
+		--copy-source "${INPUT_FILE_PATH}"
+	```
+	where `FXGRIP_ROOT` is a build setting naming the FxGrip checkout, or the script is copied into
+	the plug-in project. Set `FXGRIP_SLANGC` in the target's build settings, or put `slangc` on the
+	`PATH` Xcode runs scripts with.
+3. Output files:
+	```
+	$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/$(INPUT_FILE_BASE).slang
+	$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/$(INPUT_FILE_BASE).metal
+	$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/$(INPUT_FILE_BASE).json
+	```
+4. Add each `.slang` file to the target's Compile Sources phase, which is where the rule runs.
+	The rule copies the `.slang` into the bundle, so the file is not also listed in Copy Bundle
+	Resources.
+
+The kernel effect subclass then names the kernel by its bundled URL:
+
+```objc
+- (NSURL *)kernelURL
+{
+    return [[NSBundle bundleForClass:self.class] URLForResource:@"Blur" withExtension:@"slang"];
+}
+```
+
+A kernel that fails to compile fails the build with `slangc`'s diagnostics, which name the Slang
+source lines.
+
 ## `pluginkit-manager.sh`
 
 A thin, developer-friendly wrapper around the macOS `pluginkit(8)` CLI for

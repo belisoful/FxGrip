@@ -202,6 +202,9 @@ FOUNDATION_EXPORT const unsigned char FxGripVersionString[];
 #import <FxGrip/FxGripShaderMetadata.h>
 #import <FxGrip/FxGripShaderPipeline.h>
 #import <FxGrip/FxGripShaderEffect.h>
+#import <FxGrip/FxGripKernelLayout.h>
+#import <FxGrip/FxGripKernelPipeline.h>
+#import <FxGrip/FxGripKernelEffect.h>
 
 #import <FxGrip/FxGripSpaceMotion.h>
 #import <FxGrip/FxGripSpaceEffect.h>

@@ -15,6 +15,10 @@ plugin state, and ``FxGripShaderPipeline`` compiles the source, sets the functio
 packs the uniform struct, converts the primaries, and draws each tile. The subclass finds a
 parameter by its key through ``FxGripShaderEffect/shaderParameterForKey:``.
 
+The same metadata block declares the parameters of a Slang compute kernel. ``FxGripKernelEffect``
+renders a kernel written against the GripKernel module in place of a fragment function, with the
+bindings read from the reflection JSON `slangc` emits (see <doc:Kernels>).
+
 A subclass supplies the source:
 
 ```objc

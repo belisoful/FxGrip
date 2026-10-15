@@ -45,7 +45,8 @@ NS_ASSUME_NONNULL_BEGIN
 	constant, packs the other bound parameters into the uniform struct by key, and converts
 	the primaries when the metadata declares rec709 or rec2020. An effect with no shader
 	pipeline passes its first source image through. The geometry callbacks keep the inherited
-	same-size defaults.
+	same-size defaults. FxGripKernelEffect subclasses this effect to render a Slang compute
+	kernel in place of a fragment function.
 */
 @interface FxGripShaderEffect : FxGripTileableEffect <FxGripTileableEffectCoderState>
 

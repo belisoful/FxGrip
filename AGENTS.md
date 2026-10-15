@@ -32,6 +32,14 @@ xcodebuild test -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -d
 xcodebuild docbuild -project FxGrip.xcodeproj -scheme FxGrip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
 ```
 
+The kernel tests run on checked-in `slangc` output. One test also runs `slangc` itself when the
+test process finds it through `FXGRIP_SLANGC` or the `PATH`, and skips otherwise; CI has no
+`slangc`. To run it locally, pass the path through the test runner:
+
+```bash
+TEST_RUNNER_FXGRIP_SLANGC=/path/to/slangc xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destination 'platform=macOS' -only-testing:FxGripTests/FxGripKernelPipelineTests test
+```
+
 ### Full Check (required before commit)
 
 Code is commit-ready only when every check below passes.
@@ -103,6 +111,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
   - `Workflow/` — the plug-in side of the link to a Final Cut Pro workflow extension (`FxGripWorkflowMailbox`, the App Group mailbox both sides share, and `FxGripWorkflowRelay`, the extension gated by the `workflow` plugin property)
   - `Inference/` — ML inference layer (`FxGripInferenceBackend` protocol, `FxGripInferenceRequest`, `FxGripInferenceResult`, `FxGripInferenceBridge`, `FxGripPassthroughBackend`, and the `FxGripMLImageEffect`, `FxGripMLVideoEffect`, `FxGripMLImageGenerator`, `FxGripMLVideoGenerator` templates)
   - `OnScreenControls/` — on-screen controls (`FxGripOnScreenControl` base class, `FxGripOSCPart`, `FxGripOSCPathPart`, `FxGripPointOSC`, `FxGripObjectTrackerOSC`, the `FxGripOSC.metal` shader)
+  - `Shader/` — shader effects (`FxGripShaderMetadata`, the JSON5 metadata scanner; `FxGripShaderPipeline` and `FxGripShaderEffect`, the Metal fragment path; `FxGripKernelLayout`, `FxGripKernelPipeline`, and `FxGripKernelEffect`, the Slang compute kernel path; `GripKernel.slang`, the kernel module shipped as a framework resource). `FxGripTests/Shader/Fixtures/` holds kernels with the `.metal` and `.json` that `slangc` emitted for them, so the tests need no `slangc`; regenerate them with `Scripts/fxgrip-slang.sh` after a module change.
   - `Parameters/` — parameter model (`FxGripParameter`, `FxGripParameterFlags`, the `*Library.m` parameter library fragments, `NSView+FxGrip`)
     - `Common/` — classes for the standard FxPlug parameter types, plus the convenience header `FxGripAllParameters.h`
     - `Analyzer/`, `Banner/`, `Capsule/`, `Curve/`, `CurveSet/`, `Divider/`, `LiveImage/`, `ObjectTracker/`, `Point/`, `Presets/`, `Progress/`, `Random/`, `Section/`, `Status/`, `Switch/`, `TrackingOpacity/`, `Video/`, `WebView/` — one folder per FxGrip custom control
@@ -128,7 +137,7 @@ xcodebuild -project FxGrip.xcodeproj -scheme FxGrip -configuration Debug -destin
 - `FxGrip.xctestplan` — Test plan configuration (parallelizable)
 - `Frameworks/` — vendored binary frameworks (see below)
 - `Information/` — reference material (design documents, FCP preset XML samples)
-- `Scripts/` — developer tooling (`make-fxfactory-stub.sh`, `make-fcpxml-schema.py`, `pluginkit-manager.sh`), documented in `Scripts/README.md`
+- `Scripts/` — developer tooling (`make-fxfactory-stub.sh`, `make-fcpxml-schema.py`, `fxgrip-slang.sh`, `pluginkit-manager.sh`), documented in `Scripts/README.md`
 - `agents/` — `FxPlug_ChangeLog.md`, the symbol-level change log of the FxPlug SDK
 - `.github/` — CI and dependency-watch workflows, the `setup-fxgrip` composite action, issue and pull request templates, Dependabot
 
