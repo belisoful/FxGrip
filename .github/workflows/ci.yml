@@ -23,7 +23,7 @@ env:
   WORKFLOW_SDK_VERSION: ${{ vars.WORKFLOW_SDK_VERSION || '1.0.3' }}
   # Private repository whose tag v<version> holds the link-only FxFactory.framework stub.
   FXFACTORY_REPOSITORY: ${{ vars.FXFACTORY_REPOSITORY || 'belisoful/FxFactory-SDK' }}
-  FXFACTORY_VERSION: ${{ vars.FXFACTORY_VERSION || '9.0.6' }}
+  FXFACTORY_VERSION: ${{ vars.FXFACTORY_VERSION || '9.0.7' }}
   # Empty selects the newest release Xcode on the runner.
   XCODE_VERSION: ${{ vars.XCODE_VERSION || '' }}
 

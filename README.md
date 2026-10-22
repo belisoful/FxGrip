@@ -82,7 +82,7 @@ These Actions variables are optional overrides:
 | `FXPLUG_SDK_REPOSITORY` | `belisoful/FxPlug-SDK` | Repository that holds the FxPlug SDK installers. |
 | `FXPLUG_SDK_VERSION` | `4.3.5` | FxPlug SDK version to install. Selects the tag `v<version>`. |
 | `FXFACTORY_REPOSITORY` | `belisoful/FxFactory-SDK` | Repository that holds the FxFactory stubs. |
-| `FXFACTORY_VERSION` | `9.0.6` | FxFactory stub version to install. Selects the tag `v<version>`. |
+| `FXFACTORY_VERSION` | `9.0.7` | FxFactory stub version to install. Selects the tag `v<version>`. |
 | `XCODE_VERSION` | newest release Xcode on the runner | Xcode to select, e.g. `26.2`. |
 
 The *Dependency watch* workflow checks https://fxfactory.com/download/ daily and opens an issue when an FxFactory release is newer than the newest stub. Apple lists FxPlug SDK releases only behind an Apple Developer sign-in, so a weekly scheduled Claude task on a maintainer's Mac checks the downloads page and opens an issue for a newer SDK.
